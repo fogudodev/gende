@@ -61,18 +61,18 @@ const Clients = () => {
 
   return (
     <DashboardLayout title="Clientes" subtitle="Base de clientes e histórico">
-      <div className="flex items-center justify-between mb-8">
-        <div className="relative">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-8">
+        <div className="relative flex-1">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
             placeholder="Buscar cliente..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="pl-9 pr-4 py-2.5 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30 w-[320px] transition-all"
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all"
           />
         </div>
-        <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2.5 rounded-xl gradient-primary text-primary-foreground text-sm font-semibold hover-lift">
+        <button onClick={openCreate} className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl gradient-primary text-primary-foreground text-sm font-semibold hover-lift shrink-0">
           <Plus size={16} />
           Novo Cliente
         </button>
@@ -88,50 +88,98 @@ const Clients = () => {
           <p className="text-sm mt-1">{search ? "Tente outro termo de busca" : "Crie seu primeiro cliente clicando no botão acima"}</p>
         </div>
       ) : (
-        <div className="glass-card rounded-2xl overflow-hidden">
-          <div className="grid grid-cols-[1fr_1fr_1fr_120px_80px] gap-4 px-6 py-3 border-b border-border/50 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            <span>Cliente</span>
-            <span>Telefone</span>
-            <span>Email</span>
-            <span>Cadastro</span>
-            <span>Ações</span>
-          </div>
-          {filtered.map((client, i) => (
-            <motion.div
-              key={client.id}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3, delay: i * 0.03 }}
-              className="grid grid-cols-[1fr_1fr_1fr_120px_80px] gap-4 px-6 py-4 border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors items-center"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full gradient-accent flex items-center justify-center text-sm font-semibold text-accent-foreground">
-                  {client.name.charAt(0)}
+        <div className="space-y-3 sm:space-y-0">
+          {/* Desktop table header */}
+          <div className="hidden sm:grid glass-card rounded-2xl overflow-hidden">
+            <div className="grid grid-cols-[1fr_1fr_1fr_120px_80px] gap-4 px-6 py-3 border-b border-border/50 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <span>Cliente</span>
+              <span>Telefone</span>
+              <span>Email</span>
+              <span>Cadastro</span>
+              <span>Ações</span>
+            </div>
+            {filtered.map((client, i) => (
+              <motion.div
+                key={client.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3, delay: i * 0.03 }}
+                className="grid grid-cols-[1fr_1fr_1fr_120px_80px] gap-4 px-6 py-4 border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors items-center"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full gradient-accent flex items-center justify-center text-sm font-semibold text-accent-foreground shrink-0">
+                    {client.name.charAt(0)}
+                  </div>
+                  <span className="text-sm font-medium text-foreground truncate">{client.name}</span>
                 </div>
-                <span className="text-sm font-medium text-foreground">{client.name}</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Phone size={13} />
-                {client.phone || "—"}
-              </div>
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Mail size={13} />
-                {client.email || "—"}
-              </div>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <CalendarDays size={13} />
-                {format(new Date(client.created_at), "dd/MM/yyyy")}
-              </div>
-              <div className="flex items-center gap-1">
-                <button onClick={() => openEdit(client)} className="p-1.5 rounded-lg hover:bg-muted/50 transition-colors">
-                  <Pencil size={14} className="text-muted-foreground" />
-                </button>
-                <button onClick={() => handleDelete(client.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
-                  <Trash2 size={14} className="text-destructive" />
-                </button>
-              </div>
-            </motion.div>
-          ))}
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground truncate">
+                  <Phone size={13} className="shrink-0" />
+                  {client.phone || "—"}
+                </div>
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground truncate">
+                  <Mail size={13} className="shrink-0" />
+                  {client.email || "—"}
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <CalendarDays size={13} className="shrink-0" />
+                  {format(new Date(client.created_at), "dd/MM/yyyy")}
+                </div>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => openEdit(client)} className="p-1.5 rounded-lg hover:bg-muted/50 transition-colors">
+                    <Pencil size={14} className="text-muted-foreground" />
+                  </button>
+                  <button onClick={() => handleDelete(client.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
+                    <Trash2 size={14} className="text-destructive" />
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Mobile cards */}
+          <div className="sm:hidden space-y-3">
+            {filtered.map((client, i) => (
+              <motion.div
+                key={client.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: i * 0.03 }}
+                className="glass-card rounded-2xl p-4"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-full gradient-accent flex items-center justify-center text-sm font-semibold text-accent-foreground shrink-0">
+                      {client.name.charAt(0)}
+                    </div>
+                    <span className="text-sm font-semibold text-foreground truncate">{client.name}</span>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button onClick={() => openEdit(client)} className="p-1.5 rounded-lg hover:bg-muted/50 transition-colors">
+                      <Pencil size={14} className="text-muted-foreground" />
+                    </button>
+                    <button onClick={() => handleDelete(client.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
+                      <Trash2 size={14} className="text-destructive" />
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-1.5 text-xs text-muted-foreground">
+                  {client.phone && (
+                    <div className="flex items-center gap-1.5">
+                      <Phone size={12} className="shrink-0" /> {client.phone}
+                    </div>
+                  )}
+                  {client.email && (
+                    <div className="flex items-center gap-1.5">
+                      <Mail size={12} className="shrink-0" /> {client.email}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1.5">
+                    <CalendarDays size={12} className="shrink-0" /> {format(new Date(client.created_at), "dd/MM/yyyy")}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       )}
 
