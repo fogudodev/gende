@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import AdminWhatsAppLogs from "@/components/admin/AdminWhatsAppLogs";
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,6 +22,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 import AdminMessageUsage from "@/components/admin/AdminMessageUsage";
+import AdminCreateProfessional from "@/components/admin/AdminCreateProfessional";
 
 type Section = "overview" | "professionals" | "bookings" | "finance" | "whatsapp" | "whatsapp-logs" | "plan-limits" | "message-usage";
 
@@ -122,6 +123,7 @@ const ProfessionalsSection = () => {
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [blockReason, setBlockReason] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
   const qc = useQueryClient();
 
   const filtered = (professionals || []).filter((p) =>
@@ -166,15 +168,30 @@ const ProfessionalsSection = () => {
 
   return (
     <div className="space-y-4">
-      <div className="relative max-w-sm">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar profissional..."
-          className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-muted/50 border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30"
-        />
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 max-w-sm">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar profissional..."
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-muted/50 border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30"
+          />
+        </div>
+        <button
+          onClick={() => setShowCreate(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl gradient-accent text-accent-foreground text-sm font-semibold transition-all hover:opacity-90"
+        >
+          <Users size={16} />
+          Cadastrar Profissional
+        </button>
       </div>
+
+      <AdminCreateProfessional
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        onCreated={() => qc.invalidateQueries({ queryKey: ["admin-professionals"] })}
+      />
 
       <div className="space-y-3">
         {filtered.map((p) => {
