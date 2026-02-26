@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   User, CreditCard, Clock, Globe, Shield, MessageSquare,
   ArrowLeft, Save, Loader2, CheckCircle2, QrCode, Power,
-  Palette, Eye, EyeOff, Crown, AlertTriangle,
+  Palette, Eye, EyeOff, Crown, AlertTriangle, Camera, ImageIcon, X,
 } from "lucide-react";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useWorkingHours, getDayName, useUpsertWorkingHours } from "@/hooks/useWorkingHours";
@@ -105,11 +105,15 @@ const Settings = () => {
 /* ===================== PROFILE SECTION ===================== */
 const ProfileSection = () => {
   const { data: professional, isLoading } = useProfessional();
+  const { user } = useAuth();
   const qc = useQueryClient();
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [form, setForm] = useState({
     name: "", business_name: "", email: "", phone: "",
     bio: "", slug: "", primary_color: "#C4922A",
+    avatar_url: "", logo_url: "",
   });
 
   useEffect(() => {
@@ -122,9 +126,75 @@ const ProfileSection = () => {
         bio: professional.bio || "",
         slug: professional.slug || "",
         primary_color: professional.primary_color || "#C4922A",
+        avatar_url: professional.avatar_url || "",
+        logo_url: professional.logo_url || "",
       });
     }
   }, [professional]);
+
+  const uploadFile = async (file: File, type: "avatar" | "logo") => {
+    if (!user || !professional) return;
+    const isAvatar = type === "avatar";
+    isAvatar ? setUploadingAvatar(true) : setUploadingLogo(true);
+
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const allowed = ["jpg", "jpeg", "png", "webp", "gif"];
+      if (!allowed.includes(ext)) {
+        toast.error("Formato não suportado. Use JPG, PNG ou WebP.");
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Arquivo muito grande. Máximo 5MB.");
+        return;
+      }
+
+      const path = `${user.id}/${type}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("professionals")
+        .upload(path, file, { upsert: true, contentType: file.type });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("professionals")
+        .getPublicUrl(path);
+
+      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+
+      const updateField = isAvatar ? "avatar_url" : "logo_url";
+      const { error: dbError } = await supabase
+        .from("professionals")
+        .update({ [updateField]: publicUrl })
+        .eq("id", professional.id);
+
+      if (dbError) throw dbError;
+
+      setForm((prev) => ({ ...prev, [updateField]: publicUrl }));
+      qc.invalidateQueries({ queryKey: ["professional"] });
+      toast.success(`${isAvatar ? "Foto" : "Logo"} atualizada!`);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao fazer upload");
+    } finally {
+      isAvatar ? setUploadingAvatar(false) : setUploadingLogo(false);
+    }
+  };
+
+  const removeImage = async (type: "avatar" | "logo") => {
+    if (!professional) return;
+    const updateField = type === "avatar" ? "avatar_url" : "logo_url";
+    const { error } = await supabase
+      .from("professionals")
+      .update({ [updateField]: null })
+      .eq("id", professional.id);
+
+    if (!error) {
+      setForm((prev) => ({ ...prev, [updateField]: "" }));
+      qc.invalidateQueries({ queryKey: ["professional"] });
+      toast.success("Imagem removida");
+    }
+  };
 
   const handleSave = async () => {
     if (!professional) return;
@@ -158,6 +228,34 @@ const ProfileSection = () => {
   return (
     <div className="space-y-6">
       <SectionHeader icon={User} title="Perfil e Página Pública" />
+
+      {/* Avatar & Logo Upload */}
+      <div className="glass-card rounded-2xl p-6 space-y-5">
+        <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+          <Camera size={16} className="text-accent" /> Foto e Logo
+        </h3>
+        <div className="flex flex-wrap gap-6">
+          {/* Avatar */}
+          <ImageUploadCard
+            label="Foto de Perfil"
+            imageUrl={form.avatar_url}
+            uploading={uploadingAvatar}
+            icon={<User size={24} className="text-muted-foreground" />}
+            onUpload={(f) => uploadFile(f, "avatar")}
+            onRemove={() => removeImage("avatar")}
+            rounded
+          />
+          {/* Logo */}
+          <ImageUploadCard
+            label="Logo do Negócio"
+            imageUrl={form.logo_url}
+            uploading={uploadingLogo}
+            icon={<ImageIcon size={24} className="text-muted-foreground" />}
+            onUpload={(f) => uploadFile(f, "logo")}
+            onRemove={() => removeImage("logo")}
+          />
+        </div>
+      </div>
 
       <div className="glass-card rounded-2xl p-6 space-y-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -703,6 +801,42 @@ const PasswordField = ({ label, value, onChange, show }: { label: string; value:
       maxLength={72}
       className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all text-sm"
     />
+  </div>
+);
+
+const ImageUploadCard = ({
+  label, imageUrl, uploading, icon, onUpload, onRemove, rounded,
+}: {
+  label: string; imageUrl: string; uploading: boolean;
+  icon: React.ReactNode; onUpload: (f: File) => void; onRemove: () => void;
+  rounded?: boolean;
+}) => (
+  <div className="flex flex-col items-center gap-2">
+    <div className={cn(
+      "w-24 h-24 relative group overflow-hidden border-2 border-dashed border-border bg-muted/30 flex items-center justify-center",
+      rounded ? "rounded-full" : "rounded-2xl"
+    )}>
+      {imageUrl ? (
+        <>
+          <img src={imageUrl} alt={label} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+            <label className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 cursor-pointer transition-colors">
+              <Camera size={14} className="text-white" />
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0])} />
+            </label>
+            <button onClick={onRemove} className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors">
+              <X size={14} className="text-white" />
+            </button>
+          </div>
+        </>
+      ) : (
+        <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
+          {uploading ? <Loader2 size={20} className="animate-spin text-accent" /> : icon}
+          <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0])} />
+        </label>
+      )}
+    </div>
+    <span className="text-xs text-muted-foreground">{label}</span>
   </div>
 );
 
