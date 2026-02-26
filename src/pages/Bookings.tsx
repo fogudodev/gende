@@ -491,105 +491,48 @@ const getBlockedForDay = (blockedTimes: any[], date: Date) => {
 };
 
 // ─── Day View ───
+const HOUR_HEIGHT = 64; // px per hour slot
+
 const DayView = ({ bookings, blockedTimes, selectedDate, onSlotClick, onBookingClick, commissionBookingIds }: {
   bookings: any[]; blockedTimes: any[]; selectedDate: Date; onSlotClick: (slot: string) => void; onBookingClick: (b: any) => void; commissionBookingIds: Set<string>;
 }) => {
-  // Pre-calculate which hours are "covered" by a booking (not the start hour)
-  const coveredHours = new Set<number>();
-  const startHourBookings = new Map<number, any[]>();
-
-  bookings.forEach(b => {
-    if (b.status === "cancelled") return;
-    const bStart = new Date(b.start_time);
-    const bEnd = new Date(b.end_time);
-    const startH = bStart.getHours();
-    const endH = bEnd.getHours();
-    const endM = bEnd.getMinutes();
-
-    // Mark intermediate hours as covered
-    for (let h = startH + 1; h < endH; h++) {
-      coveredHours.add(h);
-    }
-    // If end is exactly on the hour or past it, the hour before end is also covered
-    if (endH > startH + 1 || (endH === startH + 1 && endM > 0)) {
-      for (let h = startH + 1; h <= (endM > 0 ? endH : endH - 1); h++) {
-        if (h > startH) coveredHours.add(h);
-      }
-    }
-
-    // Group bookings by their start hour
-    if (!startHourBookings.has(startH)) startHourBookings.set(startH, []);
-    startHourBookings.get(startH)!.push(b);
-  });
+  const startHour = DAY_HOURS[0]; // 7
 
   return (
     <div className="glass-card rounded-2xl p-4 sm:p-6 overflow-hidden">
-      <div className="space-y-0">
+      <div className="relative" style={{ marginLeft: "56px" }}>
+        {/* Hour labels + grid lines */}
         {DAY_HOURS.map(hour => {
           const hourStr = String(hour).padStart(2, "0");
-          const hourBookingsArr = startHourBookings.get(hour) || [];
-          const isCovered = coveredHours.has(hour) && hourBookingsArr.length === 0;
+          const top = (hour - startHour) * HOUR_HEIGHT;
           const hourBlocked = getBlockedForHour(blockedTimes, selectedDate, hour);
           const isBlocked = hourBlocked.length > 0;
 
           return (
-            <div key={hour} className="flex items-stretch min-h-[52px] group">
-              <span className="w-14 text-[11px] font-medium text-muted-foreground pt-2 shrink-0">{hourStr}:00</span>
-              <div className={`flex-1 min-w-0 border-t border-border/20 pl-3 py-0.5 ${isBlocked && hourBookingsArr.length === 0 && !isCovered ? "bg-red-500/5" : ""}`}>
-                {isCovered ? (
-                  <div className="h-full min-h-[36px] flex items-center">
-                    <div className="w-full h-[2px] bg-primary/20 rounded-full" />
-                  </div>
-                ) : isBlocked && hourBookingsArr.length === 0 ? (
-                  <div className="flex items-center gap-2 h-full min-h-[36px] px-3 rounded-xl bg-red-500/10 border border-red-500/20 border-l-[3px] border-l-red-500">
+            <div
+              key={hour}
+              className="absolute left-0 right-0 group"
+              style={{ top: `${top}px`, height: `${HOUR_HEIGHT}px` }}
+            >
+              <span
+                className="absolute text-[11px] font-medium text-muted-foreground"
+                style={{ left: "-56px", top: "4px", width: "48px" }}
+              >
+                {hourStr}:00
+              </span>
+              <div className={`absolute inset-0 border-t border-border/20 ${isBlocked ? "bg-red-500/5" : ""}`}>
+                {isBlocked && (
+                  <div className="flex items-center gap-2 h-full px-3 mx-1 my-1 rounded-xl bg-red-500/10 border border-red-500/20 border-l-[3px] border-l-red-500">
                     <Ban size={13} className="text-red-400 shrink-0" />
                     <span className="text-xs text-red-400 font-medium truncate">
                       {hourBlocked[0]?.reason || "Ausência"}
                     </span>
                   </div>
-                ) : hourBookingsArr.length > 0 ? (
-                  hourBookingsArr.map(booking => {
-                    const endTime = format(new Date(booking.end_time), "HH:mm");
-                    const startTime = format(new Date(booking.start_time), "HH:mm");
-                    const durationHours = Math.ceil(booking.duration_minutes / 60);
-                    const spanHeight = durationHours > 1 ? `${durationHours * 52 - 8}px` : "auto";
-
-                    return (
-                      <motion.div
-                        key={booking.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        style={durationHours > 1 ? { minHeight: spanHeight } : undefined}
-                        className={`rounded-xl p-2.5 sm:p-3 border-l-[3px] ${statusColors[booking.status] || "border-l-muted bg-muted/5"} cursor-pointer hover:shadow-md transition-all mb-1 overflow-hidden`}
-                        onClick={() => onBookingClick(booking)}
-                      >
-                        <div className="flex items-start justify-between gap-1.5">
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold text-foreground truncate">
-                              {booking.client_name || booking.clients?.name || "—"}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground truncate">
-                              {startTime}-{endTime} • {booking.services?.name || "—"} • R$ {Number(booking.price).toFixed(2)}
-                            </p>
-                          </div>
-                          <div className="flex flex-col items-end gap-1 shrink-0">
-                            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap ${statusBadgeClass[booking.status] || "bg-gray-500/20 text-gray-400"}`}>
-                              {statusLabels[booking.status]}
-                            </span>
-                            {commissionBookingIds.has(booking.id) && (
-                              <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-accent/15 text-accent whitespace-nowrap" title="Comissão gerada">
-                                <Coins size={10} /> Comissão
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </motion.div>
-                    );
-                  })
-                ) : (
+                )}
+                {!isBlocked && (
                   <div
                     onClick={() => onSlotClick(`${hourStr}:00`)}
-                    className="h-full min-h-[36px] rounded-xl hover:bg-muted/20 transition-colors cursor-pointer flex items-center justify-center opacity-0 group-hover:opacity-100"
+                    className="h-full rounded-xl hover:bg-muted/20 transition-colors cursor-pointer flex items-center justify-center opacity-0 group-hover:opacity-100"
                   >
                     <Plus size={14} className="text-muted-foreground/50" />
                   </div>
@@ -598,6 +541,53 @@ const DayView = ({ bookings, blockedTimes, selectedDate, onSlotClick, onBookingC
             </div>
           );
         })}
+
+        {/* Booking cards — positioned absolutely to span full duration */}
+        {bookings.filter(b => b.status !== "cancelled").map(booking => {
+          const bStart = new Date(booking.start_time);
+          const bEnd = new Date(booking.end_time);
+          const startMin = bStart.getHours() * 60 + bStart.getMinutes();
+          const endMin = bEnd.getHours() * 60 + bEnd.getMinutes();
+          const topPx = ((startMin - startHour * 60) / 60) * HOUR_HEIGHT + 2;
+          const heightPx = ((endMin - startMin) / 60) * HOUR_HEIGHT - 4;
+          const startTime = format(bStart, "HH:mm");
+          const endTime = format(bEnd, "HH:mm");
+
+          return (
+            <motion.div
+              key={booking.id}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className={`absolute left-1 right-1 z-10 rounded-xl p-2.5 sm:p-3 border-l-[3px] ${statusColors[booking.status] || "border-l-muted bg-muted/5"} cursor-pointer hover:shadow-md transition-all overflow-hidden`}
+              style={{ top: `${topPx}px`, height: `${heightPx}px` }}
+              onClick={() => onBookingClick(booking)}
+            >
+              <div className="flex items-start justify-between gap-1.5 h-full">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-foreground truncate">
+                    {booking.client_name || booking.clients?.name || "—"}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    {startTime}-{endTime} • {booking.services?.name || "—"} • R$ {Number(booking.price).toFixed(2)}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap ${statusBadgeClass[booking.status] || "bg-gray-500/20 text-gray-400"}`}>
+                    {statusLabels[booking.status]}
+                  </span>
+                  {commissionBookingIds.has(booking.id) && (
+                    <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-accent/15 text-accent whitespace-nowrap" title="Comissão gerada">
+                      <Coins size={10} /> Comissão
+                    </span>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
+
+        {/* Spacer to define total height */}
+        <div style={{ height: `${DAY_HOURS.length * HOUR_HEIGHT}px` }} />
       </div>
       {!bookings.length && !blockedTimes.length && (
         <p className="text-center text-muted-foreground text-sm mt-4 pb-2">Nenhum agendamento para este dia</p>
