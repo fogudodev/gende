@@ -1,7 +1,9 @@
 import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion } from "framer-motion";
-import { Plus, Clock, DollarSign, MoreVertical, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Clock, DollarSign, MoreVertical, Pencil, Trash2, Loader2, Download, Upload } from "lucide-react";
+import { exportToCSV, importCSVFile } from "@/lib/csv-utils";
+import { toast as sonnerToast } from "sonner";
 import { useServices, useCreateService, useUpdateService, useDeleteService } from "@/hooks/useServices";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -75,10 +77,64 @@ const Services = () => {
             </button>
           ))}
         </div>
-        <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2.5 rounded-xl gradient-primary text-primary-foreground text-sm font-semibold hover-lift">
-          <Plus size={16} />
-          Novo Serviço
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              if (!services?.length) return;
+              exportToCSV(services.map(s => ({
+                nome: s.name,
+                duracao_min: s.duration_minutes,
+                preco: s.price,
+                categoria: s.category || "Geral",
+                ativo: s.active ? "Sim" : "Não",
+                descricao: s.description || "",
+              })), "servicos", [
+                { key: "nome", label: "Nome" },
+                { key: "duracao_min", label: "Duração (min)" },
+                { key: "preco", label: "Preço" },
+                { key: "categoria", label: "Categoria" },
+                { key: "ativo", label: "Ativo" },
+                { key: "descricao", label: "Descrição" },
+              ]);
+            }}
+            className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-muted/50 text-muted-foreground text-sm font-medium hover:bg-muted transition-colors"
+            title="Exportar CSV"
+          >
+            <Download size={16} />
+          </button>
+          <button
+            onClick={async () => {
+              try {
+                const rows = await importCSVFile();
+                let count = 0;
+                for (const row of rows) {
+                  const name = row["Nome"] || row["nome"] || "";
+                  if (!name) continue;
+                  await createService.mutateAsync({
+                    name,
+                    duration_minutes: Number(row["Duração (min)"] || row["duracao_min"] || 30),
+                    price: Number(row["Preço"] || row["preco"] || 0),
+                    category: row["Categoria"] || row["categoria"] || "Geral",
+                    active: (row["Ativo"] || row["ativo"] || "Sim").toLowerCase() !== "não",
+                    description: row["Descrição"] || row["descricao"] || "",
+                  });
+                  count++;
+                }
+                toast.success(`${count} serviço(s) importado(s)!`);
+              } catch (e: any) {
+                toast.error(e.message || "Erro ao importar");
+              }
+            }}
+            className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-muted/50 text-muted-foreground text-sm font-medium hover:bg-muted transition-colors"
+            title="Importar CSV"
+          >
+            <Upload size={16} />
+          </button>
+          <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2.5 rounded-xl gradient-primary text-primary-foreground text-sm font-semibold hover-lift">
+            <Plus size={16} />
+            Novo Serviço
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
