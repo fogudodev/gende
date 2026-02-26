@@ -60,6 +60,8 @@ export const STRIPE_PLANS = {
       maxEmployees: 5,
       maxEmployeesHardLimit: 20,
       additionalEmployeePrice: 7,
+      additionalEmployeePriceId: "price_1T5EBbFjVGP9lWs0mTpdPlol",
+      additionalEmployeeProductId: "prod_U3KrydRhlXjRr4",
     },
   },
 } as const;

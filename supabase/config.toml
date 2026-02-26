@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.admin-create-professional]
 verify_jwt = false
+
+[functions.sync-employee-billing]
+verify_jwt = false

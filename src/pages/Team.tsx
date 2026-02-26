@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Plus, Pencil, Trash2, UserPlus, Users } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Team = () => {
   const { data: professional } = useProfessional();
@@ -82,11 +83,26 @@ const Team = () => {
     }
     setDialogOpen(false);
     resetForm();
+
+    // Sync billing with Stripe after employee changes
+    syncEmployeeBilling(editing ? activeCount : activeCount + 1);
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Tem certeza que deseja remover este funcionário?")) return;
     await deleteEmployee.mutateAsync(id);
+    // Sync billing after removal
+    syncEmployeeBilling(activeCount - 1);
+  };
+
+  const syncEmployeeBilling = async (newActiveCount: number) => {
+    try {
+      await supabase.functions.invoke("sync-employee-billing", {
+        body: { activeEmployeeCount: newActiveCount },
+      });
+    } catch (err) {
+      console.error("Failed to sync employee billing:", err);
+    }
   };
 
   if (professional?.account_type !== "salon") {
