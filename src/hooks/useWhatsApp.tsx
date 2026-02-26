@@ -71,3 +71,32 @@ export const useWhatsAppLogs = (limit = 50) => {
     enabled: !!professional?.id,
   });
 };
+
+/**
+ * Trigger a WhatsApp automation (booking_created, reminder_24h, etc.)
+ * This calls the edge function with the trigger-automation action.
+ */
+export const triggerWhatsAppAutomation = async (
+  professionalId: string,
+  bookingId: string,
+  triggerType: string
+) => {
+  try {
+    const { data, error } = await supabase.functions.invoke("whatsapp", {
+      body: {
+        action: "trigger-automation",
+        professionalId,
+        bookingId,
+        triggerType,
+      },
+    });
+    if (error) {
+      console.error("WhatsApp automation error:", error);
+      return { success: false };
+    }
+    return data;
+  } catch (err) {
+    console.error("WhatsApp automation error:", err);
+    return { success: false };
+  }
+};
