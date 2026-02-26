@@ -219,6 +219,7 @@ export type Database = {
       }
       professionals: {
         Row: {
+          account_type: Database["public"]["Enums"]["account_type"]
           avatar_url: string | null
           bio: string | null
           blocked_reason: string | null
@@ -240,6 +241,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_type?: Database["public"]["Enums"]["account_type"]
           avatar_url?: string | null
           bio?: string | null
           blocked_reason?: string | null
@@ -261,6 +263,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_type?: Database["public"]["Enums"]["account_type"]
           avatar_url?: string | null
           bio?: string | null
           blocked_reason?: string | null
@@ -282,6 +285,62 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      salon_employees: {
+        Row: {
+          avatar_url: string | null
+          commission_percentage: number
+          created_at: string
+          email: string | null
+          has_login: boolean
+          id: string
+          is_active: boolean
+          name: string
+          phone: string | null
+          salon_id: string
+          specialty: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          commission_percentage?: number
+          created_at?: string
+          email?: string | null
+          has_login?: boolean
+          id?: string
+          is_active?: boolean
+          name: string
+          phone?: string | null
+          salon_id: string
+          specialty?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          commission_percentage?: number
+          created_at?: string
+          email?: string | null
+          has_login?: boolean
+          id?: string
+          is_active?: boolean
+          name?: string
+          phone?: string | null
+          salon_id?: string
+          specialty?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salon_employees_salon_id_fkey"
+            columns: ["salon_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       services: {
         Row: {
@@ -625,6 +684,7 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
+      account_type: "autonomous" | "salon"
       app_role: "admin" | "professional" | "user"
       automation_trigger:
         | "booking_created"
@@ -772,6 +832,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_type: ["autonomous", "salon"],
       app_role: ["admin", "professional", "user"],
       automation_trigger: [
         "booking_created",
