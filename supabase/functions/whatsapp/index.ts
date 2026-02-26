@@ -13,6 +13,18 @@ const getEvolutionHeaders = () => ({
 
 const EVOLUTION_URL = () => Deno.env.get("EVOLUTION_API_URL") || "";
 
+/**
+ * Replace template variables in a message string.
+ * Supported: {nome}, {servico}, {data}, {horario}, {link}
+ */
+function replaceVars(template: string, vars: Record<string, string>): string {
+  let result = template;
+  for (const [key, value] of Object.entries(vars)) {
+    result = result.replaceAll(`{${key}}`, value || "");
+  }
+  return result;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -52,7 +64,6 @@ serve(async (req) => {
         });
         const data = await res.json();
 
-        // Save instance to DB
         await supabase.from("whatsapp_instances").upsert({
           professional_id: professionalId,
           instance_name: instanceName,
@@ -83,7 +94,6 @@ serve(async (req) => {
         });
         const data = await res.json();
 
-        // Update status in DB
         if (params.professionalId) {
           const status = data.instance?.state === "open" ? "connected" : "disconnected";
           await supabase.from("whatsapp_instances")
@@ -109,10 +119,145 @@ serve(async (req) => {
         break;
       }
 
+      case "trigger-automation": {
+        const { professionalId, bookingId, triggerType } = params;
+
+        // Get professional with custom messages
+        const { data: prof } = await supabase
+          .from("professionals")
+          .select("id, slug, welcome_message, reminder_message, confirmation_message, business_name, name")
+          .eq("id", professionalId)
+          .single();
+
+        if (!prof) {
+          result = { success: false, error: "Profissional não encontrado" };
+          break;
+        }
+
+        // Get WhatsApp instance
+        const { data: inst } = await supabase
+          .from("whatsapp_instances")
+          .select("instance_name, status")
+          .eq("professional_id", professionalId)
+          .single();
+
+        if (!inst || inst.status !== "connected") {
+          result = { success: false, error: "WhatsApp não conectado" };
+          break;
+        }
+
+        // Get automation config
+        const { data: automation } = await supabase
+          .from("whatsapp_automations")
+          .select("*")
+          .eq("professional_id", professionalId)
+          .eq("trigger_type", triggerType)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (!automation) {
+          result = { success: false, error: "Automação não ativa ou não encontrada" };
+          break;
+        }
+
+        // Get booking details
+        const { data: booking } = await supabase
+          .from("bookings")
+          .select("*, services:service_id(name)")
+          .eq("id", bookingId)
+          .single();
+
+        if (!booking) {
+          result = { success: false, error: "Agendamento não encontrado" };
+          break;
+        }
+
+        const phone = booking.client_phone;
+        if (!phone) {
+          result = { success: false, error: "Cliente sem telefone" };
+          break;
+        }
+
+        // Build the link
+        const slug = prof.slug || "";
+        const bookingLink = slug ? `gende.io/${slug}` : "";
+
+        // Format date/time
+        const startDate = new Date(booking.start_time);
+        const dataFormatted = startDate.toLocaleDateString("pt-BR", {
+          day: "2-digit", month: "2-digit", year: "numeric"
+        });
+        const horarioFormatted = startDate.toLocaleTimeString("pt-BR", {
+          hour: "2-digit", minute: "2-digit"
+        });
+
+        const serviceName = (booking as any).services?.name || "serviço";
+
+        const templateVars: Record<string, string> = {
+          nome: booking.client_name || "Cliente",
+          servico: serviceName,
+          data: dataFormatted,
+          horario: horarioFormatted,
+          link: bookingLink,
+        };
+
+        // Choose the right template based on trigger type
+        let messageTemplate = automation.message_template;
+
+        // Override with professional's custom messages if available
+        if (triggerType === "booking_created" && prof.confirmation_message) {
+          messageTemplate = prof.confirmation_message;
+          // Append slug link
+          if (bookingLink) {
+            messageTemplate += `\n\n📅 Agende novamente: ${bookingLink}`;
+          }
+        } else if ((triggerType === "reminder_24h" || triggerType === "reminder_3h") && prof.reminder_message) {
+          messageTemplate = prof.reminder_message;
+        } else if (triggerType === "post_service" && prof.welcome_message) {
+          // welcome_message is used as a greeting/thank you for post-service
+          messageTemplate = prof.welcome_message;
+          if (bookingLink) {
+            messageTemplate += `\n\n📅 Agende novamente: ${bookingLink}`;
+          }
+        } else if (triggerType === "reactivation_30d") {
+          // Use welcome_message with link for reactivation
+          if (prof.welcome_message) {
+            messageTemplate = prof.welcome_message;
+          }
+          if (bookingLink) {
+            messageTemplate += `\n\n✨ Sentimos sua falta! Agende pelo link: ${bookingLink}`;
+          }
+        }
+
+        const finalMessage = replaceVars(messageTemplate, templateVars);
+
+        // Send the message
+        const sendRes = await fetch(`${EVOLUTION_URL()}/message/sendText/${inst.instance_name}`, {
+          method: "POST",
+          headers: getEvolutionHeaders(),
+          body: JSON.stringify({ number: phone, text: finalMessage }),
+        });
+        const sendData = await sendRes.json();
+
+        // Log the message
+        await supabase.from("whatsapp_logs").insert({
+          professional_id: professionalId,
+          automation_id: automation.id,
+          booking_id: bookingId,
+          recipient_phone: phone,
+          message_content: finalMessage,
+          status: sendRes.ok ? "sent" : "failed",
+          sent_at: sendRes.ok ? new Date().toISOString() : null,
+          error_message: sendRes.ok ? null : JSON.stringify(sendData),
+        });
+
+        result = { success: sendRes.ok, data: sendData };
+        break;
+      }
+
       case "notify-commission": {
         const { professionalId, employeeId, commissionAmount, bookingAmount, percentage } = params;
 
-        // Get employee phone
         const { data: employee } = await supabase
           .from("salon_employees")
           .select("name, phone")
@@ -124,7 +269,6 @@ serve(async (req) => {
           break;
         }
 
-        // Get WhatsApp instance
         const { data: inst } = await supabase
           .from("whatsapp_instances")
           .select("instance_name, status")
@@ -145,7 +289,6 @@ serve(async (req) => {
         });
         const sendData = await sendRes.json();
 
-        // Log the message
         await supabase.from("whatsapp_logs").insert({
           professional_id: professionalId,
           recipient_phone: employee.phone,
@@ -162,7 +305,6 @@ serve(async (req) => {
       case "notify-commission-paid": {
         const { professionalId, employeeIds, totalAmount } = params;
 
-        // Get WhatsApp instance
         const { data: inst } = await supabase
           .from("whatsapp_instances")
           .select("instance_name, status")
@@ -214,7 +356,6 @@ serve(async (req) => {
       }
 
       case "webhook": {
-        // Handle incoming WhatsApp messages
         const { data: webhookData } = params;
         if (webhookData?.event === "messages.upsert") {
           const message = webhookData.data;
@@ -222,7 +363,6 @@ serve(async (req) => {
           const phone = message?.key?.remoteJid?.replace("@s.whatsapp.net", "");
 
           if (text && phone) {
-            // Find booking by phone
             const { data: bookings } = await supabase
               .from("bookings")
               .select("id, status, professional_id")

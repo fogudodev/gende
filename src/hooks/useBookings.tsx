@@ -169,10 +169,17 @@ export const useCreateBooking = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
       qc.invalidateQueries({ queryKey: ["bookings"] });
       qc.invalidateQueries({ queryKey: ["bookings-week"] });
       qc.invalidateQueries({ queryKey: ["bookings-month"] });
+
+      // Trigger booking_created WhatsApp automation (fire and forget)
+      if (data && professional) {
+        import("./useWhatsApp").then(({ triggerWhatsAppAutomation }) => {
+          triggerWhatsAppAutomation(professional.id, data.id, "booking_created");
+        });
+      }
     },
   });
 };
