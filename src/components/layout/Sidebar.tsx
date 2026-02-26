@@ -21,6 +21,7 @@ import {
   Package,
   Ticket,
   QrCode,
+  Star,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 
@@ -33,6 +34,7 @@ const baseNavItems = [
   { icon: CreditCard, label: "Financeiro", path: "/finance" },
   { icon: Globe, label: "Página Pública", path: "/public-page" },
   { icon: BarChart3, label: "Relatórios", path: "/reports" },
+  { icon: Star, label: "Avaliações", path: "/reviews" },
   { icon: Settings, label: "Configurações", path: "/settings" },
 ];
 
