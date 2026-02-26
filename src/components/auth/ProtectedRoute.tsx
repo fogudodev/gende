@@ -3,6 +3,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { useIsAdmin } from "@/hooks/useAdmin";
 import { ShieldAlert } from "lucide-react";
 import UpgradeModal from "@/components/layout/UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
@@ -45,10 +46,11 @@ const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading, signOut } = useAuth();
   const { data: professional, isLoading: profLoading } = useProfessional();
   const { isLocked, requiredPlan, isLoading: planLoading } = useFeatureAccess();
+  const { data: isAdmin, isLoading: adminLoading } = useIsAdmin();
   const location = useLocation();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
-  if (loading || profLoading || planLoading) {
+  if (loading || profLoading || planLoading || adminLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-8 h-8 border-3 border-accent/30 border-t-accent rounded-full animate-spin" />
@@ -85,9 +87,9 @@ const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     );
   }
 
-  // Check if the current route's feature is locked by the user's plan
+  // Admin bypasses all plan restrictions
   const featureKey = ROUTE_TO_FEATURE[location.pathname];
-  if (featureKey && isLocked(featureKey)) {
+  if (featureKey && !isAdmin && isLocked(featureKey)) {
     const label = ROUTE_TO_LABEL[location.pathname] || featureKey;
     const plan = requiredPlan(featureKey);
 
