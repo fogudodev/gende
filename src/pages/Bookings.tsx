@@ -3,7 +3,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion } from "framer-motion";
 import {
   Plus, ChevronLeft, ChevronRight, Loader2, Clock, User, Scissors,
-  Trash2, Phone, CalendarDays, CalendarRange, List,
+  Trash2, Phone, CalendarDays, CalendarRange, List, Ban,
 } from "lucide-react";
 import {
   useBookings, useBookingsWeek, useBookingsMonth,
@@ -254,6 +254,8 @@ const Bookings = () => {
       ) : viewMode === "day" ? (
         <DayView
           bookings={dayBookings || []}
+          blockedTimes={blockedTimes || []}
+          selectedDate={selectedDate}
           onSlotClick={slot => openCreate(slot)}
           onBookingClick={setDetailBooking}
         />
@@ -261,6 +263,7 @@ const Bookings = () => {
         <WeekView
           days={weekDays}
           bookings={weekBookings || []}
+          blockedTimes={blockedTimes || []}
           onDayClick={d => { setSelectedDate(d); setViewMode("day"); }}
           onBookingClick={setDetailBooking}
           onSlotClick={(slot, date) => openCreate(slot, date)}
@@ -269,6 +272,7 @@ const Bookings = () => {
         <MonthView
           grid={monthGrid}
           bookings={monthBookings || []}
+          blockedTimes={blockedTimes || []}
           selectedDate={selectedDate}
           onDayClick={d => { setSelectedDate(d); setViewMode("day"); }}
         />
@@ -442,9 +446,35 @@ const Bookings = () => {
   );
 };
 
+// Helper: get blocked times affecting a specific hour on a specific date
+const getBlockedForHour = (blockedTimes: any[], date: Date, hour: number) => {
+  return blockedTimes.filter(bt => {
+    const btStart = new Date(bt.start_time);
+    const btEnd = new Date(bt.end_time);
+    const hourStart = new Date(date);
+    hourStart.setHours(hour, 0, 0, 0);
+    const hourEnd = new Date(date);
+    hourEnd.setHours(hour, 59, 59, 999);
+    return btStart <= hourEnd && btEnd >= hourStart;
+  });
+};
+
+// Helper: check if a day has any blocked time
+const getBlockedForDay = (blockedTimes: any[], date: Date) => {
+  const dayStart = new Date(date);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(date);
+  dayEnd.setHours(23, 59, 59, 999);
+  return blockedTimes.filter(bt => {
+    const btStart = new Date(bt.start_time);
+    const btEnd = new Date(bt.end_time);
+    return btStart <= dayEnd && btEnd >= dayStart;
+  });
+};
+
 // ─── Day View ───
-const DayView = ({ bookings, onSlotClick, onBookingClick }: {
-  bookings: any[]; onSlotClick: (slot: string) => void; onBookingClick: (b: any) => void;
+const DayView = ({ bookings, blockedTimes, selectedDate, onSlotClick, onBookingClick }: {
+  bookings: any[]; blockedTimes: any[]; selectedDate: Date; onSlotClick: (slot: string) => void; onBookingClick: (b: any) => void;
 }) => {
   return (
     <div className="glass-card rounded-2xl p-4 sm:p-6">
@@ -455,13 +485,21 @@ const DayView = ({ bookings, onSlotClick, onBookingClick }: {
             const bh = new Date(b.start_time).getHours();
             return bh === hour;
           });
+          const hourBlocked = getBlockedForHour(blockedTimes, selectedDate, hour);
+          const isBlocked = hourBlocked.length > 0;
           return (
             <div key={hour} className="flex items-stretch min-h-[52px] group">
               <span className="w-14 text-[11px] font-medium text-muted-foreground pt-2 shrink-0">{hourStr}:00</span>
-              <div className="flex-1 border-t border-border/20 pl-3 py-0.5">
-                {hourBookings.length > 0 ? (
+              <div className={`flex-1 border-t border-border/20 pl-3 py-0.5 ${isBlocked && hourBookings.length === 0 ? "bg-red-500/5" : ""}`}>
+                {isBlocked && hourBookings.length === 0 ? (
+                  <div className="flex items-center gap-2 h-full min-h-[36px] px-3 rounded-xl bg-red-500/10 border border-red-500/20 border-l-[3px] border-l-red-500">
+                    <Ban size={13} className="text-red-400 shrink-0" />
+                    <span className="text-xs text-red-400 font-medium truncate">
+                      {hourBlocked[0]?.reason || "Ausência"}
+                    </span>
+                  </div>
+                ) : hourBookings.length > 0 ? (
                   hourBookings.map(booking => {
-                    const startMin = new Date(booking.start_time).getMinutes();
                     const endTime = format(new Date(booking.end_time), "HH:mm");
                     const startTime = format(new Date(booking.start_time), "HH:mm");
                     return (
@@ -501,7 +539,7 @@ const DayView = ({ bookings, onSlotClick, onBookingClick }: {
           );
         })}
       </div>
-      {!bookings.length && (
+      {!bookings.length && !blockedTimes.length && (
         <p className="text-center text-muted-foreground text-sm mt-4 pb-2">Nenhum agendamento para este dia</p>
       )}
     </div>
@@ -509,8 +547,8 @@ const DayView = ({ bookings, onSlotClick, onBookingClick }: {
 };
 
 // ─── Week View ───
-const WeekView = ({ days, bookings, onDayClick, onBookingClick, onSlotClick }: {
-  days: Date[]; bookings: any[]; onDayClick: (d: Date) => void; onBookingClick: (b: any) => void; onSlotClick: (slot: string, date: Date) => void;
+const WeekView = ({ days, bookings, blockedTimes, onDayClick, onBookingClick, onSlotClick }: {
+  days: Date[]; bookings: any[]; blockedTimes: any[]; onDayClick: (d: Date) => void; onBookingClick: (b: any) => void; onSlotClick: (slot: string, date: Date) => void;
 }) => {
   return (
     <div className="glass-card rounded-2xl p-4 overflow-x-auto">
@@ -518,16 +556,37 @@ const WeekView = ({ days, bookings, onDayClick, onBookingClick, onSlotClick }: {
       <div className="sm:hidden space-y-3">
         {days.map(day => {
           const dayBookings = bookings.filter(b => isSameDay(new Date(b.start_time), day));
+          const dayBlocked = getBlockedForDay(blockedTimes, day);
           const isTodayDate = isToday(day);
           return (
             <div key={day.toISOString()} className={`rounded-xl p-3 ${isTodayDate ? "bg-primary/10 border border-primary/30" : "bg-muted/20"}`}>
               <div className="flex items-center justify-between mb-2 cursor-pointer" onClick={() => onDayClick(day)}>
-                <div>
-                  <p className="text-xs text-muted-foreground capitalize">{format(day, "EEE", { locale: ptBR })}</p>
-                  <p className={`text-lg font-bold ${isTodayDate ? "text-primary" : "text-foreground"}`}>{format(day, "dd")}</p>
+                <div className="flex items-center gap-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground capitalize">{format(day, "EEE", { locale: ptBR })}</p>
+                    <p className={`text-lg font-bold ${isTodayDate ? "text-primary" : "text-foreground"}`}>{format(day, "dd")}</p>
+                  </div>
+                  {dayBlocked.length > 0 && (
+                    <span className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-destructive/15 text-destructive">
+                      <Ban size={10} /> Ausência
+                    </span>
+                  )}
                 </div>
                 <span className="text-xs text-muted-foreground">{dayBookings.length} agendamento{dayBookings.length !== 1 ? "s" : ""}</span>
               </div>
+              {dayBlocked.length > 0 && (
+                <div className="mb-1">
+                  {dayBlocked.slice(0, 1).map(bt => (
+                    <div key={bt.id} className="text-xs p-2 rounded-lg border-l-2 border-l-destructive bg-destructive/10 flex items-center gap-1.5">
+                      <Ban size={11} className="text-destructive shrink-0" />
+                      <span className="text-destructive font-medium truncate">{bt.reason || "Ausência"}</span>
+                      <span className="text-muted-foreground text-[10px] ml-auto shrink-0">
+                        {format(new Date(bt.start_time), "HH:mm")}-{format(new Date(bt.end_time), "HH:mm")}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
               {dayBookings.length > 0 ? (
                 <div className="space-y-1">
                   {dayBookings.slice(0, 3).map(b => (
@@ -544,14 +603,14 @@ const WeekView = ({ days, bookings, onDayClick, onBookingClick, onSlotClick }: {
                     <p className="text-[10px] text-muted-foreground text-center">+{dayBookings.length - 3} mais</p>
                   )}
                 </div>
-              ) : (
+              ) : dayBlocked.length === 0 ? (
                 <button
                   onClick={() => onSlotClick("09:00", day)}
                   className="w-full text-xs text-muted-foreground/50 py-2 hover:text-primary transition-colors"
                 >
                   + Agendar
                 </button>
-              )}
+              ) : null}
             </div>
           );
         })}
@@ -561,6 +620,7 @@ const WeekView = ({ days, bookings, onDayClick, onBookingClick, onSlotClick }: {
       <div className="hidden sm:grid grid-cols-7 gap-2">
         {days.map(day => {
           const dayBookings = bookings.filter(b => isSameDay(new Date(b.start_time), day));
+          const dayBlocked = getBlockedForDay(blockedTimes, day);
           const isTodayDate = isToday(day);
           return (
             <div key={day.toISOString()} className="min-h-[200px]">
@@ -572,6 +632,12 @@ const WeekView = ({ days, bookings, onDayClick, onBookingClick, onSlotClick }: {
                 <p className={`text-lg font-bold ${isTodayDate ? "text-primary" : "text-foreground"}`}>{format(day, "dd")}</p>
               </div>
               <div className="space-y-1">
+                {dayBlocked.map(bt => (
+                  <div key={bt.id} className="text-[10px] p-1.5 rounded-lg border-l-2 border-l-destructive bg-destructive/10 truncate flex items-center gap-1">
+                    <Ban size={10} className="text-destructive shrink-0" />
+                    <span className="text-destructive font-medium truncate">{bt.reason || "Ausência"}</span>
+                  </div>
+                ))}
                 {dayBookings.map(b => (
                   <div
                     key={b.id}
@@ -582,7 +648,7 @@ const WeekView = ({ days, bookings, onDayClick, onBookingClick, onSlotClick }: {
                     <span className="text-muted-foreground"> {b.client_name || b.clients?.name || ""}</span>
                   </div>
                 ))}
-                {dayBookings.length === 0 && (
+                {dayBookings.length === 0 && dayBlocked.length === 0 && (
                   <button
                     onClick={() => onSlotClick("09:00", day)}
                     className="w-full text-[10px] text-muted-foreground/30 py-4 hover:text-primary/50 transition-colors"
@@ -600,8 +666,8 @@ const WeekView = ({ days, bookings, onDayClick, onBookingClick, onSlotClick }: {
 };
 
 // ─── Month View ───
-const MonthView = ({ grid, bookings, selectedDate, onDayClick }: {
-  grid: (Date | null)[]; bookings: any[]; selectedDate: Date; onDayClick: (d: Date) => void;
+const MonthView = ({ grid, bookings, blockedTimes, selectedDate, onDayClick }: {
+  grid: (Date | null)[]; bookings: any[]; blockedTimes: any[]; selectedDate: Date; onDayClick: (d: Date) => void;
 }) => {
   const dayNames = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
@@ -616,28 +682,39 @@ const MonthView = ({ grid, bookings, selectedDate, onDayClick }: {
         {grid.map((day, i) => {
           if (!day) return <div key={`empty-${i}`} />;
           const dayBookings = bookings.filter(b => isSameDay(new Date(b.start_time), day));
+          const dayBlocked = getBlockedForDay(blockedTimes, day);
           const isTodayDate = isToday(day);
           return (
             <div
               key={day.toISOString()}
               onClick={() => onDayClick(day)}
               className={`min-h-[60px] sm:min-h-[80px] p-1.5 rounded-xl cursor-pointer transition-colors ${
-                isTodayDate ? "bg-primary/15 border border-primary/30" : "hover:bg-muted/30"
+                isTodayDate ? "bg-primary/15 border border-primary/30" : dayBlocked.length > 0 ? "bg-destructive/5" : "hover:bg-muted/30"
               }`}
             >
-              <p className={`text-xs font-semibold mb-0.5 ${isTodayDate ? "text-primary" : "text-foreground"}`}>
-                {format(day, "d")}
-              </p>
+              <div className="flex items-center gap-1">
+                <p className={`text-xs font-semibold mb-0.5 ${isTodayDate ? "text-primary" : "text-foreground"}`}>
+                  {format(day, "d")}
+                </p>
+                {dayBlocked.length > 0 && (
+                  <Ban size={10} className="text-destructive mb-0.5" />
+                )}
+              </div>
+              {dayBlocked.length > 0 && (
+                <div className="text-[9px] px-1 py-0.5 rounded bg-destructive/15 text-destructive font-medium truncate mb-0.5">
+                  {dayBlocked[0]?.reason || "Ausência"}
+                </div>
+              )}
               {dayBookings.length > 0 && (
                 <div className="space-y-0.5">
-                  {dayBookings.slice(0, 2).map(b => (
+                  {dayBookings.slice(0, dayBlocked.length > 0 ? 1 : 2).map(b => (
                     <div key={b.id} className={`text-[9px] px-1 py-0.5 rounded border-l-2 truncate ${statusColors[b.status]}`}>
                       <span className="font-medium">{format(new Date(b.start_time), "HH:mm")}</span>
                       <span className="hidden sm:inline text-muted-foreground"> {b.client_name || ""}</span>
                     </div>
                   ))}
-                  {dayBookings.length > 2 && (
-                    <p className="text-[9px] text-primary font-medium">+{dayBookings.length - 2}</p>
+                  {dayBookings.length > (dayBlocked.length > 0 ? 1 : 2) && (
+                    <p className="text-[9px] text-primary font-medium">+{dayBookings.length - (dayBlocked.length > 0 ? 1 : 2)}</p>
                   )}
                 </div>
               )}
