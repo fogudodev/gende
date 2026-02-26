@@ -7,6 +7,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Map all product IDs to plan names
+const PRODUCT_TO_PLAN: Record<string, string> = {
+  "prod_U3DqJqyo9urw60": "essencial",
+  "prod_U3KXrtuJF9WAOC": "essencial",
+  "prod_U3DrWGOLjl8pSx": "enterprise",
+  "prod_U3KZFQMZF4cxPs": "enterprise",
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -35,7 +43,7 @@ serve(async (req) => {
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
 
     if (customers.data.length === 0) {
-      return new Response(JSON.stringify({ subscribed: false, plan: "free" }), {
+      return new Response(JSON.stringify({ subscribed: false, plan: "none" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
@@ -49,20 +57,17 @@ serve(async (req) => {
     });
 
     if (subscriptions.data.length === 0) {
-      return new Response(JSON.stringify({ subscribed: false, plan: "free" }), {
+      return new Response(JSON.stringify({ subscribed: false, plan: "none" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
 
     const subscription = subscriptions.data[0];
-    const productId = subscription.items.data[0].price.product;
+    const productId = subscription.items.data[0].price.product as string;
     const subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
 
-    // Map product to plan
-    let plan = "free";
-    if (productId === "prod_U3DqJqyo9urw60") plan = "starter";
-    if (productId === "prod_U3DrWGOLjl8pSx") plan = "pro";
+    const plan = PRODUCT_TO_PLAN[productId] || "none";
 
     return new Response(JSON.stringify({
       subscribed: true,

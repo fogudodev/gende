@@ -7,10 +7,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PLANS = {
-  starter: "price_1T57OUFjVGP9lWs08ZViwOdY",
-  pro: "price_1T57PnFjVGP9lWs0YWLEVvBZ",
-};
+// All valid price IDs (monthly + annual)
+const VALID_PRICES = [
+  "price_1T57OUFjVGP9lWs08ZViwOdY", // essencial monthly
+  "price_1T5DskFjVGP9lWs0IjaVXqPL", // essencial annual
+  "price_1T57PnFjVGP9lWs0YWLEVvBZ", // enterprise monthly
+  "price_1T5Du2FjVGP9lWs0iO6PN4eF", // enterprise annual
+];
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -30,7 +33,7 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated");
 
     const { priceId } = await req.json();
-    if (!priceId || !Object.values(PLANS).includes(priceId)) {
+    if (!priceId || !VALID_PRICES.includes(priceId)) {
       throw new Error("Invalid price ID");
     }
 
