@@ -103,7 +103,7 @@ const Auth = () => {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full rounded-full py-3 md:py-4 h-auto text-base md:text-lg font-semibold bg-accent text-accent-foreground hover:bg-accent/90 transition-all duration-300 mt-4"
+              className="w-full rounded-full py-3 md:py-4 h-auto text-base md:text-lg font-semibold bg-accent text-accent-foreground hover:bg-accent/90 transition-all duration-300 mt-4 border border-foreground/20"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-accent-foreground/30 border-t-accent-foreground rounded-full animate-spin" />
