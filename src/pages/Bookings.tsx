@@ -3,7 +3,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion } from "framer-motion";
 import {
   Plus, ChevronLeft, ChevronRight, Loader2, Clock, User, Scissors,
-  Trash2, Phone, CalendarDays, CalendarRange, List, Ban,
+  Trash2, Phone, CalendarDays, CalendarRange, List, Ban, Coins,
 } from "lucide-react";
 import {
   useBookings, useBookingsWeek, useBookingsMonth,
@@ -12,6 +12,7 @@ import {
 } from "@/hooks/useBookings";
 import { useServices } from "@/hooks/useServices";
 import { useBlockedTimes } from "@/hooks/useBlockedTimes";
+import { useCommissions } from "@/hooks/useCommissions";
 import {
   format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths,
   setHours, setMinutes, startOfWeek, eachDayOfInterval, endOfWeek,
@@ -67,9 +68,17 @@ const Bookings = () => {
   const { data: monthBookings, isLoading: monthLoading } = useBookingsMonth(selectedDate);
   const { data: services } = useServices();
   const { data: blockedTimes } = useBlockedTimes();
+  const { data: commissions } = useCommissions();
   const createBooking = useCreateBooking();
   const updateBooking = useUpdateBooking();
   const deleteBooking = useDeleteBooking();
+
+  // Set of booking IDs that have auto-generated commissions
+  const bookingIdsWithCommission = useMemo(() => {
+    const set = new Set<string>();
+    commissions?.forEach((c) => { if (c.booking_id) set.add(c.booking_id); });
+    return set;
+  }, [commissions]);
 
   // Form state
   const [formService, setFormService] = useState("");
@@ -258,6 +267,7 @@ const Bookings = () => {
           selectedDate={selectedDate}
           onSlotClick={slot => openCreate(slot)}
           onBookingClick={setDetailBooking}
+          commissionBookingIds={bookingIdsWithCommission}
         />
       ) : viewMode === "week" ? (
         <WeekView
@@ -422,6 +432,14 @@ const Bookings = () => {
                     <p className="text-sm text-foreground">{detailBooking.notes}</p>
                   </div>
                 )}
+                {bookingIdsWithCommission.has(detailBooking.id) && (
+                  <div className="glass-card rounded-xl p-3 border border-accent/20 bg-accent/5">
+                    <div className="flex items-center gap-2">
+                      <Coins size={14} className="text-accent" />
+                      <p className="text-xs font-medium text-accent">Comissão gerada automaticamente</p>
+                    </div>
+                  </div>
+                )}
                 <div>
                   <Label className="text-xs text-muted-foreground mb-1.5">Alterar Status</Label>
                   <Select value={detailBooking.status} onValueChange={v => handleStatusChange(detailBooking.id, v)}>
@@ -473,8 +491,8 @@ const getBlockedForDay = (blockedTimes: any[], date: Date) => {
 };
 
 // ─── Day View ───
-const DayView = ({ bookings, blockedTimes, selectedDate, onSlotClick, onBookingClick }: {
-  bookings: any[]; blockedTimes: any[]; selectedDate: Date; onSlotClick: (slot: string) => void; onBookingClick: (b: any) => void;
+const DayView = ({ bookings, blockedTimes, selectedDate, onSlotClick, onBookingClick, commissionBookingIds }: {
+  bookings: any[]; blockedTimes: any[]; selectedDate: Date; onSlotClick: (slot: string) => void; onBookingClick: (b: any) => void; commissionBookingIds: Set<string>;
 }) => {
   return (
     <div className="glass-card rounded-2xl p-4 sm:p-6">
@@ -510,7 +528,7 @@ const DayView = ({ bookings, blockedTimes, selectedDate, onSlotClick, onBookingC
                         className={`rounded-xl p-3 border-l-[3px] ${statusColors[booking.status] || "border-l-muted bg-muted/5"} cursor-pointer hover:shadow-md transition-all mb-1`}
                         onClick={() => onBookingClick(booking)}
                       >
-                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center justify-between gap-2">
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-foreground truncate">
                               {booking.client_name || booking.clients?.name || "—"}
@@ -519,9 +537,16 @@ const DayView = ({ bookings, blockedTimes, selectedDate, onSlotClick, onBookingC
                               {startTime}-{endTime} • {booking.services?.name || "—"} • R$ {Number(booking.price).toFixed(2)}
                             </p>
                           </div>
-                          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 ${statusBadgeClass[booking.status] || "bg-gray-500/20 text-gray-400"}`}>
-                            {statusLabels[booking.status]}
-                          </span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {commissionBookingIds.has(booking.id) && (
+                              <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-accent/15 text-accent" title="Comissão gerada">
+                                <Coins size={10} /> Comissão
+                              </span>
+                            )}
+                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${statusBadgeClass[booking.status] || "bg-gray-500/20 text-gray-400"}`}>
+                              {statusLabels[booking.status]}
+                            </span>
+                          </div>
                         </div>
                       </motion.div>
                     );
