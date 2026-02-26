@@ -1,21 +1,31 @@
-import { Bell, Search, Sun, Moon } from "lucide-react";
+import { Bell, Search, Sun, Moon, Menu } from "lucide-react";
 import { useTheme } from "next-themes";
 
 interface TopBarProps {
   title: string;
   subtitle?: string;
+  onMenuClick?: () => void;
 }
 
-const TopBar = ({ title, subtitle }: TopBarProps) => {
+const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
   const { theme, setTheme } = useTheme();
 
   return (
     <header className="h-14 md:h-[64px] border-b border-border px-4 md:px-6 flex items-center justify-between bg-background/80 backdrop-blur-xl sticky top-0 z-40">
-      <div>
-        <h1 className="text-base md:text-lg font-bold text-foreground font-display">{title}</h1>
-        {subtitle && (
-          <p className="text-[10px] md:text-xs text-muted-foreground hidden sm:block">{subtitle}</p>
-        )}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onMenuClick}
+          className="p-2 rounded-lg hover:bg-secondary/50 transition-colors md:hidden"
+          aria-label="Abrir menu"
+        >
+          <Menu size={20} className="text-foreground" />
+        </button>
+        <div>
+          <h1 className="text-base md:text-lg font-bold text-foreground font-display">{title}</h1>
+          {subtitle && (
+            <p className="text-[10px] md:text-xs text-muted-foreground hidden sm:block">{subtitle}</p>
+          )}
+        </div>
       </div>
       <div className="flex items-center gap-2 md:gap-3">
         <div className="relative hidden sm:block">

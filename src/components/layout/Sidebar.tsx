@@ -31,12 +31,21 @@ const navItems = [
   { icon: Settings, label: "Configurações", path: "/settings" },
 ];
 
-// Bottom nav items for mobile (max 5)
-const mobileNavItems = navItems.slice(0, 5);
+// Bottom nav items for mobile (4 items)
+const mobileNavItems = [
+  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+  { icon: CalendarDays, label: "Agenda", path: "/bookings" },
+  { icon: Users, label: "Clientes", path: "/clients" },
+  { icon: CreditCard, label: "Financeiro", path: "/finance" },
+];
 
-const Sidebar = () => {
+interface SidebarProps {
+  mobileOpen: boolean;
+  setMobileOpen: (open: boolean) => void;
+}
+
+const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
   const [expanded, setExpanded] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
@@ -52,29 +61,22 @@ const Sidebar = () => {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex flex-col items-center gap-0.5 py-1.5 px-2 rounded-lg transition-colors ${
+              className={`flex flex-col items-center gap-0.5 py-1.5 px-3 rounded-lg transition-colors ${
                 isActive ? "text-accent" : "text-muted-foreground"
               }`}
             >
               <item.icon size={20} />
-              <span className="text-[10px] font-medium">{item.label.split(" ")[0]}</span>
+              <span className="text-[10px] font-medium">{item.label}</span>
             </Link>
           );
         })}
-        <button
-          onClick={() => setMobileOpen(true)}
-          className="flex flex-col items-center gap-0.5 py-1.5 px-2 rounded-lg text-muted-foreground"
-        >
-          <Menu size={20} />
-          <span className="text-[10px] font-medium">Mais</span>
-        </button>
       </nav>
 
-      {/* Mobile drawer */}
+      {/* Mobile drawer - slides from left */}
       {mobileOpen && (
         <div className="fixed inset-0 z-[60] md:hidden">
           <div className="absolute inset-0 bg-foreground/40" onClick={() => setMobileOpen(false)} />
-          <div className="absolute right-0 top-0 h-full w-72 bg-card border-l border-border p-4 flex flex-col animate-fade-in">
+          <div className="absolute left-0 top-0 h-full w-72 bg-card border-r border-border p-4 flex flex-col animate-fade-in">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <img src={logo} alt="Glow" className="w-8 h-8 rounded-lg" />
