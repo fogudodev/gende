@@ -6,6 +6,7 @@ import HeroSection from "@/components/dashboard/HeroSection";
 import CustomerJourney from "@/components/dashboard/CustomerJourney";
 import ServicesOverview from "@/components/dashboard/ServicesOverview";
 import TicketsChart from "@/components/dashboard/TicketsChart";
+import MessageUsage from "@/components/dashboard/MessageUsage";
 import { DollarSign, CalendarDays, Users, TrendingUp } from "lucide-react";
 
 const Index = () => {
@@ -35,6 +36,9 @@ const Index = () => {
             <TodaySchedule />
           </div>
         </div>
+
+        {/* Message Usage */}
+        <MessageUsage />
 
         {/* Services + Charts */}
         <ServicesOverview />

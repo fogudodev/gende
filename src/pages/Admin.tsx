@@ -20,7 +20,9 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-type Section = "overview" | "professionals" | "bookings" | "finance" | "whatsapp" | "plan-limits";
+import AdminMessageUsage from "@/components/admin/AdminMessageUsage";
+
+type Section = "overview" | "professionals" | "bookings" | "finance" | "whatsapp" | "plan-limits" | "message-usage";
 
 const Admin = () => {
   const [activeSection, setActiveSection] = useState<Section>("overview");
@@ -32,6 +34,7 @@ const Admin = () => {
     { id: "finance" as Section, icon: DollarSign, label: "Financeiro" },
     { id: "whatsapp" as Section, icon: MessageSquare, label: "WhatsApp" },
     { id: "plan-limits" as Section, icon: Sliders, label: "Limites de Plano" },
+    { id: "message-usage" as Section, icon: MessageSquare, label: "Uso de Mensagens" },
   ];
 
   return (
@@ -68,6 +71,7 @@ const Admin = () => {
           {activeSection === "finance" && <FinanceSection />}
           {activeSection === "whatsapp" && <WhatsAppSection />}
           {activeSection === "plan-limits" && <PlanLimitsSection />}
+          {activeSection === "message-usage" && <AdminMessageUsage />}
         </motion.div>
       </AnimatePresence>
     </DashboardLayout>
