@@ -5,9 +5,18 @@ import {
   User, CreditCard, Clock, Globe, Shield, MessageSquare,
   ArrowLeft, Save, Loader2, CheckCircle2, QrCode, Power,
   Palette, Eye, EyeOff, Crown, AlertTriangle, Camera, ImageIcon, X,
+  Plus, Trash2, CalendarOff, Plane, Calendar as CalendarIcon,
 } from "lucide-react";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useWorkingHours, getDayName, useUpsertWorkingHours } from "@/hooks/useWorkingHours";
+import { useBlockedTimes, useCreateBlockedTime, useDeleteBlockedTime } from "@/hooks/useBlockedTimes";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useWhatsAppInstance, useWhatsAppAutomations, useToggleAutomation } from "@/hooks/useWhatsApp";
 import { useAuth } from "@/hooks/useAuth";
@@ -347,10 +356,32 @@ const DEFAULT_HOURS = Array.from({ length: 7 }, (_, i) => ({
   is_active: i >= 1 && i <= 5,
 }));
 
+const REASON_PRESETS = [
+  { label: "Falta", icon: "🚫" },
+  { label: "Férias", icon: "🏖️" },
+  { label: "Viagem", icon: "✈️" },
+  { label: "Consulta médica", icon: "🏥" },
+  { label: "Outro", icon: "📝" },
+];
+
 const WorkingHoursSection = () => {
   const { data: hours, isLoading } = useWorkingHours();
   const upsert = useUpsertWorkingHours();
+  const { data: blockedTimes, isLoading: blockedLoading } = useBlockedTimes();
+  const createBlocked = useCreateBlockedTime();
+  const deleteBlocked = useDeleteBlockedTime();
+
   const [local, setLocal] = useState(DEFAULT_HOURS);
+  const [showAddBlocked, setShowAddBlocked] = useState(false);
+
+  // Blocked time form
+  const [blockedType, setBlockedType] = useState<"period" | "hours">("period");
+  const [blockedStartDate, setBlockedStartDate] = useState("");
+  const [blockedEndDate, setBlockedEndDate] = useState("");
+  const [blockedDate, setBlockedDate] = useState("");
+  const [blockedStartTime, setBlockedStartTime] = useState("09:00");
+  const [blockedEndTime, setBlockedEndTime] = useState("18:00");
+  const [blockedReason, setBlockedReason] = useState("Falta");
 
   useEffect(() => {
     if (hours && hours.length > 0) {
@@ -377,12 +408,63 @@ const WorkingHoursSection = () => {
     });
   };
 
-  if (isLoading) return <LoadingState />;
+  const handleAddBlocked = async () => {
+    let startTime: string;
+    let endTime: string;
+
+    if (blockedType === "period") {
+      if (!blockedStartDate || !blockedEndDate) {
+        toast.error("Selecione as datas de início e fim");
+        return;
+      }
+      startTime = new Date(`${blockedStartDate}T00:00:00`).toISOString();
+      endTime = new Date(`${blockedEndDate}T23:59:59`).toISOString();
+    } else {
+      if (!blockedDate) {
+        toast.error("Selecione a data");
+        return;
+      }
+      startTime = new Date(`${blockedDate}T${blockedStartTime}:00`).toISOString();
+      endTime = new Date(`${blockedDate}T${blockedEndTime}:00`).toISOString();
+    }
+
+    try {
+      await createBlocked.mutateAsync({
+        start_time: startTime,
+        end_time: endTime,
+        reason: blockedReason,
+      });
+      toast.success("Ausência registrada!");
+      setShowAddBlocked(false);
+      setBlockedStartDate("");
+      setBlockedEndDate("");
+      setBlockedDate("");
+      setBlockedReason("Falta");
+    } catch {
+      toast.error("Erro ao registrar ausência");
+    }
+  };
+
+  const handleDeleteBlocked = async (id: string) => {
+    try {
+      await deleteBlocked.mutateAsync(id);
+      toast.success("Ausência removida");
+    } catch {
+      toast.error("Erro ao remover");
+    }
+  };
+
+  if (isLoading || blockedLoading) return <LoadingState />;
+
+  const now = new Date();
+  const futureBlocked = (blockedTimes || []).filter(b => new Date(b.end_time) >= now);
+  const pastBlocked = (blockedTimes || []).filter(b => new Date(b.end_time) < now);
 
   return (
     <div className="space-y-6">
       <SectionHeader icon={Clock} title="Horários de Trabalho" />
 
+      {/* Working hours grid */}
       <div className="glass-card rounded-2xl p-6 space-y-3">
         {local.map((h) => (
           <div key={h.day_of_week} className="flex items-center gap-3 py-2">
@@ -414,6 +496,201 @@ const WorkingHoursSection = () => {
       </div>
 
       <SaveButton saving={upsert.isPending} onClick={handleSave} />
+
+      {/* Blocked Times / Absences */}
+      <div className="pt-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <CalendarOff size={20} className="text-accent" />
+            <h2 className="text-lg font-bold text-foreground">Ausências</h2>
+          </div>
+          <button
+            onClick={() => setShowAddBlocked(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
+          >
+            <Plus size={14} /> Nova ausência
+          </button>
+        </div>
+
+        {futureBlocked.length === 0 ? (
+          <div className="glass-card rounded-2xl p-8 text-center">
+            <Plane size={32} className="mx-auto text-muted-foreground/30 mb-3" />
+            <p className="text-sm text-muted-foreground">Nenhuma ausência programada</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">Registre férias, faltas ou horários indisponíveis</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {futureBlocked.map(bt => {
+              const start = new Date(bt.start_time);
+              const end = new Date(bt.end_time);
+              const isFullDay = start.getHours() === 0 && end.getHours() === 23;
+              const isSameDate = format(start, "yyyy-MM-dd") === format(end, "yyyy-MM-dd");
+              const isMultiDay = !isSameDate && isFullDay;
+
+              return (
+                <motion.div
+                  key={bt.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="glass-card rounded-xl p-4 flex items-center justify-between group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0">
+                      <CalendarOff size={18} className="text-destructive" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{bt.reason || "Ausência"}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {isMultiDay ? (
+                          `${format(start, "dd/MM/yyyy", { locale: ptBR })} → ${format(end, "dd/MM/yyyy", { locale: ptBR })}`
+                        ) : isSameDate && !isFullDay ? (
+                          `${format(start, "dd/MM/yyyy", { locale: ptBR })} • ${format(start, "HH:mm")} - ${format(end, "HH:mm")}`
+                        ) : (
+                          `${format(start, "dd/MM/yyyy", { locale: ptBR })} (dia inteiro)`
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteBlocked(bt.id)}
+                    className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+
+        {pastBlocked.length > 0 && (
+          <details className="mt-4">
+            <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
+              {pastBlocked.length} ausência{pastBlocked.length > 1 ? "s" : ""} passada{pastBlocked.length > 1 ? "s" : ""}
+            </summary>
+            <div className="space-y-1 mt-2 opacity-50">
+              {pastBlocked.map(bt => (
+                <div key={bt.id} className="flex items-center justify-between glass-card rounded-lg p-3">
+                  <div>
+                    <p className="text-xs font-medium text-foreground">{bt.reason || "Ausência"}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {format(new Date(bt.start_time), "dd/MM/yyyy")} → {format(new Date(bt.end_time), "dd/MM/yyyy")}
+                    </p>
+                  </div>
+                  <button onClick={() => handleDeleteBlocked(bt.id)} className="p-1 text-muted-foreground hover:text-destructive">
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </details>
+        )}
+      </div>
+
+      {/* Add Blocked Time Dialog */}
+      <Dialog open={showAddBlocked} onOpenChange={setShowAddBlocked}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarOff size={18} className="text-primary" />
+              Nova Ausência
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            {/* Reason presets */}
+            <div>
+              <Label className="text-xs text-muted-foreground mb-2 block">Motivo</Label>
+              <div className="flex flex-wrap gap-2">
+                {REASON_PRESETS.map(r => (
+                  <button
+                    key={r.label}
+                    onClick={() => setBlockedReason(r.label)}
+                    className={cn(
+                      "text-xs px-3 py-1.5 rounded-lg border transition-all font-medium",
+                      blockedReason === r.label
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-muted/30 text-foreground border-border/30 hover:border-primary/50"
+                    )}
+                  >
+                    {r.icon} {r.label}
+                  </button>
+                ))}
+              </div>
+              {blockedReason === "Outro" && (
+                <Input
+                  placeholder="Descreva o motivo..."
+                  className="mt-2"
+                  onChange={e => setBlockedReason(e.target.value || "Outro")}
+                />
+              )}
+            </div>
+
+            {/* Type toggle */}
+            <div>
+              <Label className="text-xs text-muted-foreground mb-2 block">Tipo de ausência</Label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setBlockedType("period")}
+                  className={cn(
+                    "flex-1 text-xs py-2.5 rounded-xl border transition-all font-medium flex items-center justify-center gap-1.5",
+                    blockedType === "period"
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-muted/30 text-foreground border-border/30"
+                  )}
+                >
+                  <CalendarIcon size={13} /> Dia(s) inteiro(s)
+                </button>
+                <button
+                  onClick={() => setBlockedType("hours")}
+                  className={cn(
+                    "flex-1 text-xs py-2.5 rounded-xl border transition-all font-medium flex items-center justify-center gap-1.5",
+                    blockedType === "hours"
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-muted/30 text-foreground border-border/30"
+                  )}
+                >
+                  <Clock size={13} /> Horário específico
+                </button>
+              </div>
+            </div>
+
+            {blockedType === "period" ? (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1.5">Data início</Label>
+                  <Input type="date" value={blockedStartDate} onChange={e => setBlockedStartDate(e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1.5">Data fim</Label>
+                  <Input type="date" value={blockedEndDate} onChange={e => setBlockedEndDate(e.target.value)} />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1.5">Data</Label>
+                  <Input type="date" value={blockedDate} onChange={e => setBlockedDate(e.target.value)} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-muted-foreground mb-1.5">De</Label>
+                    <Input type="time" value={blockedStartTime} onChange={e => setBlockedStartTime(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground mb-1.5">Até</Label>
+                    <Input type="time" value={blockedEndTime} onChange={e => setBlockedEndTime(e.target.value)} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <Button onClick={handleAddBlocked} disabled={createBlocked.isPending} className="w-full">
+              {createBlocked.isPending && <Loader2 className="animate-spin mr-2" size={16} />}
+              Registrar Ausência
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
