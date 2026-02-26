@@ -47,6 +47,19 @@ export const useCreateCommission = () => {
         .select()
         .single();
       if (error) throw error;
+
+      // Send WhatsApp notification (fire-and-forget)
+      supabase.functions.invoke("whatsapp", {
+        body: {
+          action: "notify-commission",
+          professionalId: professional!.id,
+          employeeId: commission.employee_id,
+          commissionAmount: commission.commission_amount,
+          bookingAmount: commission.booking_amount,
+          percentage: commission.commission_percentage,
+        },
+      }).catch(() => {}); // non-blocking
+
       return data;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["commissions"] }); },

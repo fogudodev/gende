@@ -109,6 +109,56 @@ serve(async (req) => {
         break;
       }
 
+      case "notify-commission": {
+        const { professionalId, employeeId, commissionAmount, bookingAmount, percentage } = params;
+
+        // Get employee phone
+        const { data: employee } = await supabase
+          .from("salon_employees")
+          .select("name, phone")
+          .eq("id", employeeId)
+          .single();
+
+        if (!employee?.phone) {
+          result = { success: false, error: "Funcionário sem telefone cadastrado" };
+          break;
+        }
+
+        // Get WhatsApp instance
+        const { data: inst } = await supabase
+          .from("whatsapp_instances")
+          .select("instance_name, status")
+          .eq("professional_id", professionalId)
+          .single();
+
+        if (!inst || inst.status !== "connected") {
+          result = { success: false, error: "WhatsApp não conectado" };
+          break;
+        }
+
+        const msg = `💰 *Nova comissão pendente!*\n\nOlá ${employee.name}! Você tem uma nova comissão:\n\n💇 Valor do serviço: R$ ${Number(bookingAmount).toFixed(2)}\n📊 Percentual: ${percentage}%\n💵 Sua comissão: *R$ ${Number(commissionAmount).toFixed(2)}*\n\nAguarde o repasse pelo gestor. 😊`;
+
+        const sendRes = await fetch(`${EVOLUTION_URL()}/message/sendText/${inst.instance_name}`, {
+          method: "POST",
+          headers: getEvolutionHeaders(),
+          body: JSON.stringify({ number: employee.phone, text: msg }),
+        });
+        const sendData = await sendRes.json();
+
+        // Log the message
+        await supabase.from("whatsapp_logs").insert({
+          professional_id: professionalId,
+          recipient_phone: employee.phone,
+          message_content: msg,
+          status: sendRes.ok ? "sent" : "failed",
+          sent_at: sendRes.ok ? new Date().toISOString() : null,
+          error_message: sendRes.ok ? null : JSON.stringify(sendData),
+        });
+
+        result = { success: sendRes.ok, data: sendData };
+        break;
+      }
+
       case "webhook": {
         // Handle incoming WhatsApp messages
         const { data: webhookData } = params;
