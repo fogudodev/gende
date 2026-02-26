@@ -135,6 +135,113 @@ export type Database = {
           },
         ]
       }
+      campaign_contacts: {
+        Row: {
+          campaign_id: string
+          client_id: string | null
+          client_name: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          phone: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          campaign_id: string
+          client_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          phone: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          campaign_id?: string
+          client_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          phone?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_contacts_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_contacts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          failed_count: number
+          id: string
+          message: string
+          name: string
+          professional_id: string
+          scheduled_at: string | null
+          sent_count: number
+          started_at: string | null
+          status: string
+          target_type: string
+          total_contacts: number
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          failed_count?: number
+          id?: string
+          message: string
+          name: string
+          professional_id: string
+          scheduled_at?: string | null
+          sent_count?: number
+          started_at?: string | null
+          status?: string
+          target_type?: string
+          total_contacts?: number
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          failed_count?: number
+          id?: string
+          message?: string
+          name?: string
+          professional_id?: string
+          scheduled_at?: string | null
+          sent_count?: number
+          started_at?: string | null
+          status?: string
+          target_type?: string
+          total_contacts?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           created_at: string
@@ -289,6 +396,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "coupons_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_message_usage: {
+        Row: {
+          campaigns_sent: number
+          created_at: string
+          id: string
+          professional_id: string
+          reminders_sent: number
+          usage_date: string
+        }
+        Insert: {
+          campaigns_sent?: number
+          created_at?: string
+          id?: string
+          professional_id: string
+          reminders_sent?: number
+          usage_date?: string
+        }
+        Update: {
+          campaigns_sent?: number
+          created_at?: string
+          id?: string
+          professional_id?: string
+          reminders_sent?: number
+          usage_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_message_usage_professional_id_fkey"
             columns: ["professional_id"]
             isOneToOne: false
             referencedRelation: "professionals"
@@ -453,6 +595,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      plan_limits: {
+        Row: {
+          campaign_max_contacts: number
+          campaign_min_interval_hours: number
+          created_at: string
+          daily_campaigns: number
+          daily_reminders: number
+          id: string
+          plan_id: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_max_contacts?: number
+          campaign_min_interval_hours?: number
+          created_at?: string
+          daily_campaigns?: number
+          daily_reminders?: number
+          id?: string
+          plan_id: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_max_contacts?: number
+          campaign_min_interval_hours?: number
+          created_at?: string
+          daily_campaigns?: number
+          daily_reminders?: number
+          id?: string
+          plan_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       products: {
         Row: {

@@ -6,12 +6,13 @@ import {
   ArrowLeft, Loader2, Search, MoreHorizontal, Eye, Trash2,
   CheckCircle2, XCircle, Crown, TrendingUp, Building2,
   Ban, UserCheck, ToggleLeft, ToggleRight, Globe, MessageCircle as MsgIcon,
-  BarChart3, ChevronDown, ChevronUp, ShieldAlert, X,
+  BarChart3, ChevronDown, ChevronUp, ShieldAlert, X, Save, Sliders,
 } from "lucide-react";
 import {
   useAdminStats, useAllProfessionals, useAllBookings,
   useAllPayments, useAllWhatsAppInstances,
 } from "@/hooks/useAdmin";
+import { usePlanLimits, useUpdatePlanLimits } from "@/hooks/useCampaigns";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -19,7 +20,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-type Section = "overview" | "professionals" | "bookings" | "finance" | "whatsapp";
+type Section = "overview" | "professionals" | "bookings" | "finance" | "whatsapp" | "plan-limits";
 
 const Admin = () => {
   const [activeSection, setActiveSection] = useState<Section>("overview");
@@ -30,6 +31,7 @@ const Admin = () => {
     { id: "bookings" as Section, icon: CalendarDays, label: "Agendamentos" },
     { id: "finance" as Section, icon: DollarSign, label: "Financeiro" },
     { id: "whatsapp" as Section, icon: MessageSquare, label: "WhatsApp" },
+    { id: "plan-limits" as Section, icon: Sliders, label: "Limites de Plano" },
   ];
 
   return (
@@ -65,6 +67,7 @@ const Admin = () => {
           {activeSection === "bookings" && <BookingsSection />}
           {activeSection === "finance" && <FinanceSection />}
           {activeSection === "whatsapp" && <WhatsAppSection />}
+          {activeSection === "plan-limits" && <PlanLimitsSection />}
         </motion.div>
       </AnimatePresence>
     </DashboardLayout>
@@ -523,6 +526,86 @@ const WhatsAppSection = () => {
           <div className="p-8 text-center text-muted-foreground text-sm">Nenhuma instância WhatsApp</div>
         )}
       </div>
+    </div>
+  );
+};
+
+/* ===================== PLAN LIMITS ===================== */
+const PlanLimitsSection = () => {
+  const { data: planLimits, isLoading } = usePlanLimits();
+  const updateLimits = useUpdatePlanLimits();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState({ daily_reminders: 0, daily_campaigns: 0, campaign_max_contacts: 0, campaign_min_interval_hours: 6 });
+
+  const startEdit = (plan: any) => {
+    setEditingId(plan.id);
+    setForm({
+      daily_reminders: plan.daily_reminders,
+      daily_campaigns: plan.daily_campaigns,
+      campaign_max_contacts: plan.campaign_max_contacts,
+      campaign_min_interval_hours: plan.campaign_min_interval_hours,
+    });
+  };
+
+  const handleSave = async (id: string) => {
+    try {
+      await updateLimits.mutateAsync({ id, ...form });
+      toast.success("Limites atualizados");
+      setEditingId(null);
+    } catch {
+      toast.error("Erro ao atualizar");
+    }
+  };
+
+  if (isLoading) return <Loading />;
+
+  const planLabels: Record<string, string> = { free: "Free", starter: "Starter", pro: "Pro" };
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">Configure os limites de mensagens para cada plano. Use <strong className="text-foreground">-1</strong> para ilimitado.</p>
+      {(planLimits || []).map((plan: any) => {
+        const isEditing = editingId === plan.id;
+        return (
+          <div key={plan.id} className="glass-card rounded-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-foreground text-lg">{planLabels[plan.plan_id] || plan.plan_id}</h3>
+              {!isEditing ? (
+                <button onClick={() => startEdit(plan)} className="text-xs font-semibold text-accent hover:underline">Editar</button>
+              ) : (
+                <button onClick={() => handleSave(plan.id)} disabled={updateLimits.isPending}
+                  className="flex items-center gap-1 text-xs font-semibold text-accent hover:underline disabled:opacity-50">
+                  <Save size={12} /> Salvar
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {[
+                { key: "daily_reminders", label: "Lembretes/dia" },
+                { key: "daily_campaigns", label: "Campanhas/dia" },
+                { key: "campaign_max_contacts", label: "Contatos/campanha" },
+                { key: "campaign_min_interval_hours", label: "Intervalo (horas)" },
+              ].map(({ key, label }) => (
+                <div key={key}>
+                  <label className="text-xs text-muted-foreground block mb-1">{label}</label>
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      value={(form as any)[key]}
+                      onChange={(e) => setForm(prev => ({ ...prev, [key]: parseInt(e.target.value) || 0 }))}
+                      className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+                    />
+                  ) : (
+                    <p className="text-foreground font-semibold text-lg">
+                      {(plan as any)[key] === -1 ? "∞" : (plan as any)[key]}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };

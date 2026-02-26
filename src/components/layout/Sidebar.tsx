@@ -24,6 +24,7 @@ import {
   Star,
   FileBarChart,
   Activity,
+  Megaphone,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 
@@ -33,6 +34,7 @@ const baseNavItems = [
   { icon: Scissors, label: "Serviços", path: "/services" },
   { icon: Users, label: "Clientes", path: "/clients" },
   { icon: MessageCircle, label: "WhatsApp", path: "/automations" },
+  { icon: Megaphone, label: "Campanhas", path: "/campaigns" },
   { icon: CreditCard, label: "Financeiro", path: "/finance" },
   { icon: Globe, label: "Página Pública", path: "/public-page" },
   { icon: BarChart3, label: "Relatórios", path: "/reports" },

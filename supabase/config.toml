@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.whatsapp]
 verify_jwt = false
+
+[functions.send-reminders]
+verify_jwt = false
+
+[functions.send-campaign]
+verify_jwt = false
