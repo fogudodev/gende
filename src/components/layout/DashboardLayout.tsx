@@ -12,9 +12,10 @@ const DashboardLayout = ({ children, title, subtitle }: DashboardLayoutProps) =>
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
-      <div className="ml-[260px] transition-all duration-300">
+      {/* Desktop: offset for sidebar. Mobile: full width with bottom padding for nav */}
+      <div className="md:ml-[72px] transition-all duration-300 pb-20 md:pb-0">
         <TopBar title={title} subtitle={subtitle} />
-        <main className="p-8">{children}</main>
+        <main className="p-4 md:p-6 lg:p-8">{children}</main>
       </div>
     </div>
   );
