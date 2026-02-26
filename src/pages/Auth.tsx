@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, ArrowRight, Plus } from "lucide-react";
+import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -10,10 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { signIn, signUp } = useAuth();
@@ -23,25 +21,11 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
-    if (isLogin) {
-      const { error } = await signIn(email, password);
-      if (error) {
-        toast.error(error.message === "Invalid login credentials" ? "Email ou senha incorretos" : error.message);
-      } else {
-        navigate("/");
-      }
+    const { error } = await signIn(email, password);
+    if (error) {
+      toast.error(error.message === "Invalid login credentials" ? "Email ou senha incorretos" : error.message);
     } else {
-      if (password.length < 6) {
-        toast.error("A senha deve ter pelo menos 6 caracteres");
-        setLoading(false);
-        return;
-      }
-      const { error } = await signUp(email, password, name);
-      if (error) {
-        toast.error(error.message);
-      } else {
-        toast.success("Conta criada! Verifique seu email para confirmar.");
-      }
+      navigate("/");
     }
     setLoading(false);
   };
@@ -68,39 +52,19 @@ const Auth = () => {
           className="w-full max-w-md"
         >
           {/* Header */}
-          <div className="flex items-center justify-between mb-12">
+          <div className="flex items-center mb-12">
             <img src={logo} alt="Glow" className="w-12 h-12 rounded-2xl shadow-lg" />
-            <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <span className="w-7 h-7 rounded-full border border-border flex items-center justify-center">
-                <Plus size={14} />
-              </span>
-              {isLogin ? "Criar conta" : "Fazer login"}
-            </button>
           </div>
 
           {/* Title */}
           <h1 className="text-4xl md:text-5xl font-bold mb-10 tracking-tight">
-            {isLogin ? "Entrar" : "Criar conta"}
+            Entrar
           </h1>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {!isLogin && (
-              <div className="space-y-2">
-                <Label className="text-muted-foreground text-sm pl-2">Nome completo</Label>
-                <Input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Seu nome"
-                  required={!isLogin}
-                  className="bg-card border-border text-foreground placeholder:text-muted-foreground rounded-full py-3 md:py-4 px-6 md:px-8 text-base md:text-lg h-auto focus:border-accent focus:ring-accent transition-all duration-300 hover:bg-secondary"
-                />
-              </div>
-            )}
+
+
 
             <div className="space-y-2">
               <Label className="text-muted-foreground text-sm pl-2">Email</Label>
@@ -146,24 +110,12 @@ const Auth = () => {
               ) : (
                 <>
                   <ArrowRight size={18} />
-                  {isLogin ? "Entrar" : "Criar conta"}
+                  Entrar
                 </>
               )}
             </Button>
           </form>
 
-          {/* Footer */}
-          <div className="mt-10 text-center">
-            <p className="text-sm text-muted-foreground">
-              {isLogin ? "Não tem conta?" : "Já tem conta?"}{" "}
-              <button
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-accent font-semibold hover:underline"
-              >
-                {isLogin ? "Crie uma agora" : "Faça login"}
-              </button>
-            </p>
-          </div>
         </motion.div>
       </div>
     </div>
