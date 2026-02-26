@@ -243,7 +243,7 @@ const PublicPage = () => {
           >
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground whitespace-nowrap">…/p/</span>
+                <span className="text-sm text-muted-foreground whitespace-nowrap">gende.io/</span>
                 <Input
                   value={slug}
                   onChange={(e) => handleSlugChange(e.target.value)}
@@ -279,7 +279,7 @@ const PublicPage = () => {
 
               {slug && !slugError && (
                 <p className="text-xs text-muted-foreground">
-                  Sua página: <span className="text-accent font-medium">/p/{slug}</span>
+                  Sua página: <span className="text-accent font-medium">gende.io/{slug}</span>
                 </p>
               )}
             </div>
