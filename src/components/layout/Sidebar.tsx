@@ -75,8 +75,8 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
       {/* Mobile drawer - slides from left */}
       {mobileOpen && (
         <div className="fixed inset-0 z-[60] md:hidden">
-          <div className="absolute inset-0 bg-foreground/40" onClick={() => setMobileOpen(false)} />
-          <div className="absolute left-0 top-0 h-full w-72 bg-card border-r border-border p-4 flex flex-col animate-fade-in">
+          <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm animate-overlay-in" onClick={() => setMobileOpen(false)} />
+          <div className="absolute left-0 top-0 h-full w-72 bg-card/95 backdrop-blur-xl border-r border-border p-4 flex flex-col animate-slide-in-left shadow-2xl">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <img src={logo} alt="Glow" className="w-8 h-8 rounded-lg" />
