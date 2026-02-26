@@ -1,4 +1,5 @@
-import { Bell, Search } from "lucide-react";
+import { Bell, Search, Sun, Moon } from "lucide-react";
+import { useTheme } from "next-themes";
 
 interface TopBarProps {
   title: string;
@@ -6,6 +7,8 @@ interface TopBarProps {
 }
 
 const TopBar = ({ title, subtitle }: TopBarProps) => {
+  const { theme, setTheme } = useTheme();
+
   return (
     <header className="h-14 md:h-[64px] border-b border-border px-4 md:px-6 flex items-center justify-between bg-background/80 backdrop-blur-xl sticky top-0 z-40">
       <div>
@@ -23,6 +26,17 @@ const TopBar = ({ title, subtitle }: TopBarProps) => {
             className="pl-8 pr-3 py-1.5 rounded-lg bg-secondary/50 border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 w-[160px] md:w-[200px] transition-all"
           />
         </div>
+        <button
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className="p-2 rounded-lg hover:bg-secondary/50 transition-colors"
+          aria-label="Alternar tema"
+        >
+          {theme === "dark" ? (
+            <Sun size={16} className="text-muted-foreground hover:text-foreground transition-colors" />
+          ) : (
+            <Moon size={16} className="text-muted-foreground hover:text-foreground transition-colors" />
+          )}
+        </button>
         <button className="relative p-2 rounded-lg hover:bg-secondary/50 transition-colors">
           <Bell size={16} className="text-muted-foreground" />
           <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
