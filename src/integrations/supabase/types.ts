@@ -221,10 +221,15 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          blocked_reason: string | null
           business_name: string | null
           created_at: string
           email: string
+          feature_public_page: boolean
+          feature_reports: boolean
+          feature_whatsapp: boolean
           id: string
+          is_blocked: boolean
           logo_url: string | null
           name: string
           phone: string | null
@@ -237,10 +242,15 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          blocked_reason?: string | null
           business_name?: string | null
           created_at?: string
           email?: string
+          feature_public_page?: boolean
+          feature_reports?: boolean
+          feature_whatsapp?: boolean
           id?: string
+          is_blocked?: boolean
           logo_url?: string | null
           name?: string
           phone?: string | null
@@ -253,10 +263,15 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          blocked_reason?: string | null
           business_name?: string | null
           created_at?: string
           email?: string
+          feature_public_page?: boolean
+          feature_reports?: boolean
+          feature_whatsapp?: boolean
           id?: string
+          is_blocked?: boolean
           logo_url?: string | null
           name?: string
           phone?: string | null
