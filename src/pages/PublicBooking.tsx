@@ -16,6 +16,10 @@ import {
   Sparkles,
   CalendarDays,
   Loader2,
+  Users,
+  QrCode,
+  Copy,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -29,6 +33,14 @@ type Professional = {
   logo_url: string | null;
   primary_color: string | null;
   slug: string | null;
+  account_type: "autonomous" | "salon";
+};
+
+type Employee = {
+  id: string;
+  name: string;
+  specialty: string | null;
+  avatar_url: string | null;
 };
 
 type Service = {
@@ -45,15 +57,28 @@ type Slot = {
   end_time: string;
 };
 
+type PaymentConfig = {
+  pix_key: string | null;
+  pix_key_type: string | null;
+  pix_beneficiary_name: string | null;
+  signal_enabled: boolean;
+  signal_type: string;
+  signal_value: number;
+  accept_pix: boolean;
+};
+
 const PublicBooking = () => {
   const { slug } = useParams<{ slug: string }>();
   const [professional, setProfessional] = useState<Professional | null>(null);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [paymentConfig, setPaymentConfig] = useState<PaymentConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
   // Wizard state
-  const [step, setStep] = useState(0); // 0=service, 1=date/time, 2=form, 3=success
+  const [step, setStep] = useState(0);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [slots, setSlots] = useState<Slot[]>([]);
@@ -62,34 +87,64 @@ const PublicBooking = () => {
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [pixCopied, setPixCopied] = useState(false);
+
+  const isSalon = professional?.account_type === "salon";
+  // Steps: salon = 0:employee, 1:service, 2:date, 3:form, 4:success
+  // autonomous = 0:service, 1:date, 2:form, 3:success
+  const totalSteps = isSalon ? 5 : 4;
+  const stepOffset = isSalon ? 0 : -1; // maps logical step
 
   useEffect(() => {
-    const fetchProfessional = async () => {
+    const fetchData = async () => {
       if (!slug) return;
-      const { data, error } = await supabase
+      const { data: prof, error } = await supabase
         .from("professionals")
-        .select("id, name, business_name, bio, avatar_url, logo_url, primary_color, slug")
+        .select("id, name, business_name, bio, avatar_url, logo_url, primary_color, slug, account_type")
         .eq("slug", slug)
         .single();
 
-      if (error || !data) {
+      if (error || !prof) {
         setNotFound(true);
         setLoading(false);
         return;
       }
-      setProfessional(data);
+      setProfessional(prof);
 
-      const { data: svc } = await supabase
-        .from("services")
-        .select("*")
-        .eq("professional_id", data.id)
-        .eq("active", true)
-        .order("sort_order", { ascending: true });
+      // Fetch services, employees, and payment config in parallel
+      const [svcRes, empRes, payRes] = await Promise.all([
+        supabase
+          .from("services")
+          .select("*")
+          .eq("professional_id", prof.id)
+          .eq("active", true)
+          .order("sort_order", { ascending: true }),
+        prof.account_type === "salon"
+          ? supabase
+              .from("salon_employees")
+              .select("id, name, specialty, avatar_url")
+              .eq("salon_id", prof.id)
+              .eq("is_active", true)
+              .order("name")
+          : Promise.resolve({ data: [] }),
+        supabase
+          .from("payment_config")
+          .select("pix_key, pix_key_type, pix_beneficiary_name, signal_enabled, signal_type, signal_value, accept_pix")
+          .eq("professional_id", prof.id)
+          .maybeSingle(),
+      ]);
 
-      setServices(svc || []);
+      setServices(svcRes.data || []);
+      setEmployees(empRes.data || []);
+      setPaymentConfig(payRes.data || null);
       setLoading(false);
+
+      // If autonomous, start at service step
+      if (prof.account_type !== "salon") {
+        setStep(0);
+      }
     };
-    fetchProfessional();
+    fetchData();
   }, [slug]);
 
   useEffect(() => {
@@ -104,11 +159,7 @@ const PublicBooking = () => {
       });
       if (!error && data && typeof data === "object" && "success" in (data as any)) {
         const result = data as any;
-        if (result.success) {
-          setSlots(result.slots || []);
-        } else {
-          setSlots([]);
-        }
+        setSlots(result.success ? result.slots || [] : []);
       } else {
         setSlots([]);
       }
@@ -148,11 +199,35 @@ const PublicBooking = () => {
 
     const result = data as any;
     if (result?.success) {
-      setStep(3);
+      // If salon and employee selected, update the booking with employee_id
+      if (isSalon && selectedEmployee) {
+        await supabase
+          .from("bookings")
+          .update({ employee_id: selectedEmployee.id })
+          .eq("id", result.booking_id);
+      }
+      setStep(isSalon ? 4 : 3);
     } else {
       toast.error(result?.error || "Erro ao agendar");
     }
     setSubmitting(false);
+  };
+
+  const copyPixKey = () => {
+    if (paymentConfig?.pix_key) {
+      navigator.clipboard.writeText(paymentConfig.pix_key);
+      setPixCopied(true);
+      toast.success("Chave PIX copiada!");
+      setTimeout(() => setPixCopied(false), 3000);
+    }
+  };
+
+  const getSignalAmount = () => {
+    if (!paymentConfig?.signal_enabled || !selectedService) return null;
+    if (paymentConfig.signal_type === "percentage") {
+      return (Number(selectedService.price) * paymentConfig.signal_value) / 100;
+    }
+    return paymentConfig.signal_value;
   };
 
   const accentColor = professional?.primary_color || "#C4922A";
@@ -183,7 +258,19 @@ const PublicBooking = () => {
     return acc;
   }, {});
 
-  const stepTitles = ["Escolha o serviço", "Data e horário", "Seus dados", "Agendado!"];
+  // Determine current logical step for progress bar
+  const successStep = isSalon ? 4 : 3;
+  const formStep = isSalon ? 3 : 2;
+  const dateStep = isSalon ? 2 : 1;
+  const serviceStep = isSalon ? 1 : 0;
+  const employeeStep = 0; // salon only
+
+  const progressSteps = isSalon ? 4 : 3; // exclude success
+  const currentProgress = step;
+
+  const stepLabels = isSalon
+    ? ["Profissional", "Serviço", "Data e horário", "Confirmação", "Agendado!"]
+    : ["Serviço", "Data e horário", "Confirmação", "Agendado!"];
 
   return (
     <div className="min-h-screen bg-background">
@@ -210,36 +297,114 @@ const PublicBooking = () => {
       </div>
 
       {/* Progress */}
-      {step < 3 && (
+      {step < successStep && (
         <div className="max-w-2xl mx-auto px-6 pt-6">
           <div className="flex items-center gap-2 mb-1">
-            {[0, 1, 2].map((s) => (
+            {Array.from({ length: progressSteps }).map((_, i) => (
               <div
-                key={s}
+                key={i}
                 className={cn(
                   "h-1.5 flex-1 rounded-full transition-all duration-300",
-                  s <= step ? "bg-accent" : "bg-muted"
+                  i <= step ? "bg-accent" : "bg-muted"
                 )}
               />
             ))}
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Passo {step + 1} de 3 — {stepTitles[step]}
+            Passo {step + 1} de {progressSteps} — {stepLabels[step]}
           </p>
         </div>
       )}
 
       <div className="max-w-2xl mx-auto px-6 py-6">
         <AnimatePresence mode="wait">
-          {/* Step 0: Service Selection */}
-          {step === 0 && (
+          {/* Step 0 (Salon): Employee Selection */}
+          {isSalon && step === employeeStep && (
             <motion.div
-              key="step0"
+              key="step-employee"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               className="space-y-6"
             >
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <Users size={18} className="text-accent" />
+                Escolha o profissional
+              </h2>
+
+              <div className="grid grid-cols-2 gap-3">
+                {employees.map((emp) => (
+                  <button
+                    key={emp.id}
+                    onClick={() => {
+                      setSelectedEmployee(emp);
+                      setStep(serviceStep);
+                    }}
+                    className="glass-card rounded-2xl p-5 text-center hover-lift transition-all group"
+                  >
+                    {emp.avatar_url ? (
+                      <img
+                        src={emp.avatar_url}
+                        alt={emp.name}
+                        className="w-16 h-16 rounded-full mx-auto mb-3 object-cover"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full mx-auto mb-3 bg-accent/10 flex items-center justify-center">
+                        <User size={24} className="text-accent" />
+                      </div>
+                    )}
+                    <h3 className="font-semibold text-foreground text-sm group-hover:text-accent transition-colors">
+                      {emp.name}
+                    </h3>
+                    {emp.specialty && (
+                      <p className="text-xs text-muted-foreground mt-1">{emp.specialty}</p>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {employees.length === 0 && (
+                <div className="glass-card rounded-2xl p-8 text-center">
+                  <p className="text-muted-foreground">Nenhum profissional disponível no momento.</p>
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {/* Service Selection */}
+          {step === serviceStep && (
+            <motion.div
+              key="step-service"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-6"
+            >
+              {isSalon && (
+                <button
+                  onClick={() => setStep(employeeStep)}
+                  className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <ArrowLeft size={14} />
+                  Voltar
+                </button>
+              )}
+
+              {/* Selected employee summary (salon) */}
+              {isSalon && selectedEmployee && (
+                <div className="glass-card rounded-2xl p-4 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                    <User size={16} className="text-accent" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-foreground text-sm">{selectedEmployee.name}</p>
+                    {selectedEmployee.specialty && (
+                      <p className="text-xs text-muted-foreground">{selectedEmployee.specialty}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
                 <Sparkles size={18} className="text-accent" />
                 Escolha o serviço
@@ -256,13 +421,11 @@ const PublicBooking = () => {
                         key={s.id}
                         onClick={() => {
                           setSelectedService(s);
-                          setStep(1);
+                          setStep(dateStep);
                           setSelectedDate(undefined);
                           setSelectedSlot(null);
                         }}
-                        className={cn(
-                          "w-full glass-card rounded-2xl p-5 text-left hover-lift transition-all group"
-                        )}
+                        className="w-full glass-card rounded-2xl p-5 text-left hover-lift transition-all group"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
@@ -299,24 +462,23 @@ const PublicBooking = () => {
             </motion.div>
           )}
 
-          {/* Step 1: Date & Time */}
-          {step === 1 && selectedService && (
+          {/* Date & Time */}
+          {step === dateStep && selectedService && (
             <motion.div
-              key="step1"
+              key="step-date"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               className="space-y-6"
             >
               <button
-                onClick={() => setStep(0)}
+                onClick={() => setStep(serviceStep)}
                 className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 <ArrowLeft size={14} />
                 Voltar
               </button>
 
-              {/* Selected service summary */}
               <div className="glass-card rounded-2xl p-4 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
                   <Sparkles size={16} className="text-accent" />
@@ -386,7 +548,7 @@ const PublicBooking = () => {
                   {selectedSlot && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6">
                       <button
-                        onClick={() => setStep(2)}
+                        onClick={() => setStep(formStep)}
                         className="w-full py-3 rounded-xl gradient-accent text-accent-foreground font-semibold text-sm flex items-center justify-center gap-2 hover-lift"
                       >
                         Continuar
@@ -399,17 +561,17 @@ const PublicBooking = () => {
             </motion.div>
           )}
 
-          {/* Step 2: Client form */}
-          {step === 2 && selectedService && selectedSlot && (
+          {/* Form + PIX */}
+          {step === formStep && selectedService && selectedSlot && (
             <motion.div
-              key="step2"
+              key="step-form"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               className="space-y-6"
             >
               <button
-                onClick={() => setStep(1)}
+                onClick={() => setStep(dateStep)}
                 className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 <ArrowLeft size={14} />
@@ -420,6 +582,12 @@ const PublicBooking = () => {
               <div className="glass-card rounded-2xl p-5 space-y-3">
                 <h3 className="font-semibold text-foreground text-sm">Resumo do agendamento</h3>
                 <div className="space-y-2 text-sm">
+                  {isSalon && selectedEmployee && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Profissional</span>
+                      <span className="font-medium text-foreground">{selectedEmployee.name}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Serviço</span>
                     <span className="font-medium text-foreground">{selectedService.name}</span>
@@ -438,13 +606,66 @@ const PublicBooking = () => {
                     </span>
                   </div>
                   <div className="flex justify-between border-t border-border pt-2">
-                    <span className="text-muted-foreground">Valor</span>
+                    <span className="text-muted-foreground">Valor total</span>
                     <span className="font-semibold text-accent">
                       {Number(selectedService.price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                     </span>
                   </div>
+                  {getSignalAmount() && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Sinal (reserva)</span>
+                      <span className="font-semibold text-accent">
+                        {getSignalAmount()!.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
+
+              {/* PIX Payment Info */}
+              {paymentConfig?.accept_pix && paymentConfig?.pix_key && paymentConfig?.signal_enabled && getSignalAmount() && (
+                <div className="glass-card rounded-2xl p-5 space-y-4 border-accent/20 border">
+                  <div className="flex items-center gap-2">
+                    <QrCode size={18} className="text-accent" />
+                    <h3 className="font-semibold text-foreground text-sm">Pagamento do Sinal via PIX</h3>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Para confirmar seu agendamento, envie o sinal de{" "}
+                    <span className="font-semibold text-accent">
+                      {getSignalAmount()!.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                    </span>{" "}
+                    via PIX.
+                  </p>
+                  <div className="bg-muted/50 rounded-xl p-4 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Tipo</span>
+                      <span className="font-medium text-foreground capitalize">
+                        {paymentConfig.pix_key_type || "Chave"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Chave</span>
+                      <span className="font-medium text-foreground font-mono text-xs">
+                        {paymentConfig.pix_key}
+                      </span>
+                    </div>
+                    {paymentConfig.pix_beneficiary_name && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Favorecido</span>
+                        <span className="font-medium text-foreground">{paymentConfig.pix_beneficiary_name}</span>
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={copyPixKey}
+                    className="w-full py-2.5 rounded-xl border border-accent/30 text-accent font-medium text-sm flex items-center justify-center gap-2 hover:bg-accent/5 transition-colors"
+                  >
+                    {pixCopied ? <Check size={14} /> : <Copy size={14} />}
+                    {pixCopied ? "Copiada!" : "Copiar chave PIX"}
+                  </button>
+                </div>
+              )}
 
               <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
                 <User size={18} className="text-accent" />
@@ -502,10 +723,10 @@ const PublicBooking = () => {
             </motion.div>
           )}
 
-          {/* Step 3: Success */}
-          {step === 3 && selectedService && selectedSlot && (
+          {/* Success */}
+          {step === successStep && selectedService && selectedSlot && (
             <motion.div
-              key="step3"
+              key="step-success"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="text-center py-10 space-y-6"
@@ -527,6 +748,12 @@ const PublicBooking = () => {
               </div>
 
               <div className="glass-card rounded-2xl p-5 text-left space-y-2 text-sm max-w-sm mx-auto">
+                {isSalon && selectedEmployee && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Profissional</span>
+                    <span className="font-medium text-foreground">{selectedEmployee.name}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Serviço</span>
                   <span className="font-medium text-foreground">{selectedService.name}</span>
@@ -545,9 +772,34 @@ const PublicBooking = () => {
                 </div>
               </div>
 
+              {/* PIX reminder on success */}
+              {paymentConfig?.accept_pix && paymentConfig?.pix_key && paymentConfig?.signal_enabled && getSignalAmount() && (
+                <div className="glass-card rounded-2xl p-5 text-left space-y-3 max-w-sm mx-auto border border-accent/20">
+                  <div className="flex items-center gap-2">
+                    <QrCode size={16} className="text-accent" />
+                    <p className="text-sm font-semibold text-foreground">Não esqueça o sinal!</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Envie{" "}
+                    <span className="font-semibold text-accent">
+                      {getSignalAmount()!.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                    </span>{" "}
+                    via PIX para confirmar sua reserva.
+                  </p>
+                  <button
+                    onClick={copyPixKey}
+                    className="w-full py-2 rounded-xl border border-accent/30 text-accent font-medium text-xs flex items-center justify-center gap-2 hover:bg-accent/5 transition-colors"
+                  >
+                    {pixCopied ? <Check size={12} /> : <Copy size={12} />}
+                    {pixCopied ? "Copiada!" : `Copiar chave: ${paymentConfig.pix_key}`}
+                  </button>
+                </div>
+              )}
+
               <button
                 onClick={() => {
-                  setStep(0);
+                  setStep(isSalon ? employeeStep : serviceStep);
+                  setSelectedEmployee(null);
                   setSelectedService(null);
                   setSelectedDate(undefined);
                   setSelectedSlot(null);
