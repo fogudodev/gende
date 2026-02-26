@@ -495,7 +495,7 @@ const DayView = ({ bookings, blockedTimes, selectedDate, onSlotClick, onBookingC
   bookings: any[]; blockedTimes: any[]; selectedDate: Date; onSlotClick: (slot: string) => void; onBookingClick: (b: any) => void; commissionBookingIds: Set<string>;
 }) => {
   return (
-    <div className="glass-card rounded-2xl p-4 sm:p-6">
+    <div className="glass-card rounded-2xl p-4 sm:p-6 overflow-hidden">
       <div className="space-y-0">
         {DAY_HOURS.map(hour => {
           const hourStr = String(hour).padStart(2, "0");
@@ -508,7 +508,7 @@ const DayView = ({ bookings, blockedTimes, selectedDate, onSlotClick, onBookingC
           return (
             <div key={hour} className="flex items-stretch min-h-[52px] group">
               <span className="w-14 text-[11px] font-medium text-muted-foreground pt-2 shrink-0">{hourStr}:00</span>
-              <div className={`flex-1 border-t border-border/20 pl-3 py-0.5 ${isBlocked && hourBookings.length === 0 ? "bg-red-500/5" : ""}`}>
+              <div className={`flex-1 min-w-0 border-t border-border/20 pl-3 py-0.5 ${isBlocked && hourBookings.length === 0 ? "bg-red-500/5" : ""}`}>
                 {isBlocked && hourBookings.length === 0 ? (
                   <div className="flex items-center gap-2 h-full min-h-[36px] px-3 rounded-xl bg-red-500/10 border border-red-500/20 border-l-[3px] border-l-red-500">
                     <Ban size={13} className="text-red-400 shrink-0" />
