@@ -72,7 +72,7 @@ const CustomerJourney = () => {
       </div>
 
       {/* Client avatars row */}
-      <div className="mb-5 flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
+      <div className="mb-5 flex items-center gap-2 overflow-x-auto pb-3 pt-1 px-1 scrollbar-thin">
         {uniqueClients.map((client) => {
           const isSelected = selectedClient === client.name;
           return (
