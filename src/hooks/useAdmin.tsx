@@ -100,3 +100,18 @@ export const useAllWhatsAppInstances = () => {
     },
   });
 };
+
+export const useAllWhatsAppLogs = (limit = 200) => {
+  return useQuery({
+    queryKey: ["admin-whatsapp-logs", limit],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("whatsapp_logs")
+        .select("*, professionals(name, business_name)")
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return data;
+    },
+  });
+};

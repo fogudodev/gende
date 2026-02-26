@@ -377,6 +377,48 @@ serve(async (req) => {
                 await supabase.from("bookings").update({ status: "confirmed" }).eq("id", booking.id);
               } else if (text === "CANCELAR" || text === "2") {
                 await supabase.from("bookings").update({ status: "cancelled" }).eq("id", booking.id);
+              } else if (text === "REMARCAR" || text === "3") {
+                // Cancel current booking
+                await supabase.from("bookings").update({ status: "cancelled" }).eq("id", booking.id);
+
+                // Get professional slug for rebooking link
+                const { data: prof } = await supabase
+                  .from("professionals")
+                  .select("slug, business_name, name")
+                  .eq("id", booking.professional_id)
+                  .single();
+
+                const slug = prof?.slug || "";
+                const profName = prof?.business_name || prof?.name || "profissional";
+
+                if (slug) {
+                  // Get WhatsApp instance to send rebooking link
+                  const { data: inst } = await supabase
+                    .from("whatsapp_instances")
+                    .select("instance_name, status")
+                    .eq("professional_id", booking.professional_id)
+                    .single();
+
+                  if (inst && inst.status === "connected") {
+                    const rebookMsg = `📅 *Reagendamento*\n\nSeu agendamento anterior foi cancelado. Para remarcar, acesse o link abaixo e escolha um novo horário:\n\n🔗 gende.io/${slug}\n\nEstamos à disposição! 😊`;
+
+                    await fetch(`${EVOLUTION_URL()}/message/sendText/${inst.instance_name}`, {
+                      method: "POST",
+                      headers: getEvolutionHeaders(),
+                      body: JSON.stringify({ number: phone, text: rebookMsg }),
+                    });
+
+                    // Log the rebooking message
+                    await supabase.from("whatsapp_logs").insert({
+                      professional_id: booking.professional_id,
+                      booking_id: booking.id,
+                      recipient_phone: phone,
+                      message_content: rebookMsg,
+                      status: "sent",
+                      sent_at: new Date().toISOString(),
+                    });
+                  }
+                }
               }
             }
           }
