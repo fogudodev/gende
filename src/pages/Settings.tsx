@@ -26,7 +26,7 @@ import { STRIPE_PLANS } from "@/lib/stripe-plans";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-type Section = "system" | "profile" | "hours" | "subscription" | "whatsapp" | "security";
+type Section = "system" | "hours" | "subscription" | "whatsapp" | "security";
 
 const TRIGGER_LABELS: Record<string, string> = {
   booking_created: "Agendamento criado",
@@ -47,7 +47,6 @@ const Settings = () => {
 
   const sections = [
     { id: "system" as Section, icon: Palette, title: "Aparência do Sistema", description: "Logo, nome e cores do painel" },
-    { id: "profile" as Section, icon: User, title: "Perfil e Página Pública", description: "Dados pessoais, slug, cores e logo" },
     { id: "hours" as Section, icon: Clock, title: "Horários de Trabalho", description: "Defina seus dias e horários de atendimento" },
     { id: "subscription" as Section, icon: CreditCard, title: "Assinatura", description: "Plano atual e gerenciamento" },
     { id: "whatsapp" as Section, icon: MessageSquare, title: "Automação WhatsApp", description: "QR Code, instância e automações" },
@@ -100,7 +99,6 @@ const Settings = () => {
               </button>
 
               {activeSection === "system" && <SystemAppearanceSection />}
-              {activeSection === "profile" && <ProfileSection />}
               {activeSection === "hours" && <WorkingHoursSection />}
               {activeSection === "subscription" && <SubscriptionSection />}
               {activeSection === "whatsapp" && <WhatsAppSection />}

@@ -1,13 +1,14 @@
 import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, Product } from "@/hooks/useProducts";
+import { useCreateExpense } from "@/hooks/useExpenses";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Package, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Search, MinusCircle } from "lucide-react";
 import { toast } from "sonner";
 
 const Products = () => {
@@ -15,8 +16,11 @@ const Products = () => {
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
   const deleteProduct = useDeleteProduct();
+  const createExpense = useCreateExpense();
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [consumeDialog, setConsumeDialog] = useState<Product | null>(null);
+  const [consumeQty, setConsumeQty] = useState(1);
   const [editing, setEditing] = useState<Product | null>(null);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState({
@@ -57,6 +61,33 @@ const Products = () => {
   const handleDelete = async (id: string) => {
     if (!confirm("Remover este produto?")) return;
     await deleteProduct.mutateAsync(id);
+  };
+
+  const handleConsume = async () => {
+    if (!consumeDialog || consumeQty < 1) return;
+    if (consumeQty > consumeDialog.stock_quantity) {
+      toast.error("Quantidade maior que estoque disponível");
+      return;
+    }
+    const totalCost = consumeDialog.cost_price * consumeQty;
+    // Decrement stock
+    await updateProduct.mutateAsync({
+      id: consumeDialog.id,
+      stock_quantity: consumeDialog.stock_quantity - consumeQty,
+    });
+    // Auto-register expense
+    if (totalCost > 0) {
+      await createExpense.mutateAsync({
+        description: `Consumo: ${consumeQty}x ${consumeDialog.name}`,
+        amount: totalCost,
+        category: "Produtos",
+        expense_date: new Date().toISOString().split("T")[0],
+        employee_id: null,
+      });
+    }
+    toast.success(`${consumeQty}x ${consumeDialog.name} consumido(s)`);
+    setConsumeDialog(null);
+    setConsumeQty(1);
   };
 
   const filtered = products?.filter(p => p.name.toLowerCase().includes(search.toLowerCase())) || [];
@@ -146,6 +177,14 @@ const Products = () => {
                   <Badge variant="secondary">{p.stock_quantity} em estoque</Badge>
                   <Badge variant={p.is_active ? "default" : "secondary"}>{p.is_active ? "Ativo" : "Inativo"}</Badge>
                 </div>
+                {p.stock_quantity > 0 && (
+                  <button
+                    onClick={() => { setConsumeDialog(p); setConsumeQty(1); }}
+                    className="mt-2 flex items-center gap-1.5 text-xs text-accent hover:underline"
+                  >
+                    <MinusCircle size={13} /> Registrar consumo
+                  </button>
+                )}
                 {p.cost_price > 0 && (
                   <p className="text-xs text-muted-foreground mt-2">Custo: R$ {Number(p.cost_price).toFixed(2)} · Margem: {((p.price - p.cost_price) / p.price * 100).toFixed(0)}%</p>
                 )}
@@ -160,6 +199,33 @@ const Products = () => {
             <Button onClick={() => setDialogOpen(true)} className="gap-2"><Plus size={16} />Adicionar produto</Button>
           </div>
         )}
+
+        {/* Consume Dialog */}
+        <Dialog open={!!consumeDialog} onOpenChange={(o) => { if (!o) setConsumeDialog(null); }}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Registrar Consumo</DialogTitle>
+            </DialogHeader>
+            {consumeDialog && (
+              <div className="space-y-4 mt-2">
+                <p className="text-sm text-muted-foreground">
+                  Produto: <span className="font-medium text-foreground">{consumeDialog.name}</span>
+                </p>
+                <p className="text-sm text-muted-foreground">Estoque atual: {consumeDialog.stock_quantity} | Custo unitário: R$ {Number(consumeDialog.cost_price).toFixed(2)}</p>
+                <div className="space-y-2">
+                  <Label>Quantidade</Label>
+                  <Input type="number" min={1} max={consumeDialog.stock_quantity} value={consumeQty} onChange={(e) => setConsumeQty(Number(e.target.value))} />
+                </div>
+                <p className="text-sm font-medium text-foreground">
+                  Despesa gerada: R$ {(consumeDialog.cost_price * consumeQty).toFixed(2)}
+                </p>
+                <Button onClick={handleConsume} className="w-full" disabled={updateProduct.isPending || createExpense.isPending}>
+                  Confirmar consumo
+                </Button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
