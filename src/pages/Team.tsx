@@ -31,6 +31,16 @@ const Team = () => {
     has_login: false,
   });
 
+  // Employee limits for Enterprise plan
+  const MAX_EMPLOYEES_BASE = 5;
+  const MAX_EMPLOYEES_HARD = 20;
+  const ADDITIONAL_PRICE = 7;
+  const activeCount = employees?.filter(e => e.is_active).length ?? 0;
+  const isAtHardLimit = activeCount >= MAX_EMPLOYEES_HARD;
+  const isAboveBase = activeCount >= MAX_EMPLOYEES_BASE;
+  const additionalCost = Math.max(0, activeCount - MAX_EMPLOYEES_BASE) * ADDITIONAL_PRICE;
+  const nextAdditionalCost = Math.max(0, activeCount + 1 - MAX_EMPLOYEES_BASE) * ADDITIONAL_PRICE;
+
   const resetForm = () => {
     setForm({ name: "", email: "", phone: "", specialty: "", commission_percentage: 50, is_active: true, has_login: false });
     setEditing(null);
@@ -53,6 +63,17 @@ const Team = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) return toast.error("Nome é obrigatório");
+
+    if (!editing && isAtHardLimit) {
+      return toast.error(`Limite máximo de ${MAX_EMPLOYEES_HARD} profissionais atingido.`);
+    }
+
+    if (!editing && isAboveBase) {
+      const newCost = nextAdditionalCost;
+      if (!confirm(`Você já possui ${activeCount} profissionais. Ao adicionar mais um, o custo adicional será de R$ ${newCost},00/mês. Deseja continuar?`)) {
+        return;
+      }
+    }
 
     if (editing) {
       await updateEmployee.mutateAsync({ id: editing.id, ...form });
@@ -85,6 +106,24 @@ const Team = () => {
   return (
     <DashboardLayout title="Equipe">
       <div className="space-y-6">
+        {/* Employee limit info banner */}
+        {employees && employees.length > 0 && (
+          <div className={`rounded-xl border p-3 text-sm flex items-center justify-between ${
+            isAtHardLimit ? "border-destructive/50 bg-destructive/5 text-destructive" :
+            isAboveBase ? "border-accent/50 bg-accent/5 text-accent" :
+            "border-border bg-muted/30 text-muted-foreground"
+          }`}>
+            <span>
+              <strong>{activeCount}</strong> de {MAX_EMPLOYEES_BASE} profissionais inclusos
+              {isAboveBase && !isAtHardLimit && (
+                <> · <strong>{activeCount - MAX_EMPLOYEES_BASE}</strong> extra(s) = <strong>+R$ {additionalCost},00</strong>/mês</>
+              )}
+              {isAtHardLimit && " · Limite máximo atingido"}
+            </span>
+            <span className="text-xs opacity-60">máx {MAX_EMPLOYEES_HARD}</span>
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Equipe</h1>
@@ -92,7 +131,7 @@ const Team = () => {
           </div>
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
-              <Button className="gap-2">
+              <Button className="gap-2" disabled={isAtHardLimit}>
                 <UserPlus size={16} />
                 Adicionar
               </Button>
