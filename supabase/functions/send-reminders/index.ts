@@ -32,34 +32,74 @@ serve(async (req) => {
     const now = new Date();
     const results: Array<{ type: string; bookingId: string; success: boolean; error?: string }> = [];
 
-    // Get bookings needing 24h reminder (between 23-25 hours from now)
+    // ── 1. Standard reminders (24h and 3h) ──
     const h24_start = new Date(now.getTime() + 23 * 60 * 60 * 1000).toISOString();
     const h24_end = new Date(now.getTime() + 25 * 60 * 60 * 1000).toISOString();
-
-    // Get bookings needing 3h reminder (between 2.5-3.5 hours from now)
     const h3_start = new Date(now.getTime() + 2.5 * 60 * 60 * 1000).toISOString();
     const h3_end = new Date(now.getTime() + 3.5 * 60 * 60 * 1000).toISOString();
 
     const { data: bookings24h } = await supabase
       .from("bookings")
-      .select("id, professional_id, client_name, client_phone, start_time, service_id, services:service_id(name)")
+      .select("id, professional_id, client_name, client_phone, start_time, service_id, employee_id, services:service_id(name)")
       .in("status", ["pending", "confirmed"])
       .gte("start_time", h24_start)
       .lte("start_time", h24_end);
 
     const { data: bookings3h } = await supabase
       .from("bookings")
-      .select("id, professional_id, client_name, client_phone, start_time, service_id, services:service_id(name)")
+      .select("id, professional_id, client_name, client_phone, start_time, service_id, employee_id, services:service_id(name)")
       .in("status", ["pending", "confirmed"])
       .gte("start_time", h3_start)
       .lte("start_time", h3_end);
 
+    // ── 2. Post-sale review (completed 23-25h ago) ──
+    const postSale_start = new Date(now.getTime() - 25 * 60 * 60 * 1000).toISOString();
+    const postSale_end = new Date(now.getTime() - 23 * 60 * 60 * 1000).toISOString();
+
+    const { data: completedBookings } = await supabase
+      .from("bookings")
+      .select("id, professional_id, client_name, client_phone, start_time, service_id, employee_id, services:service_id(name), updated_at")
+      .eq("status", "completed")
+      .gte("updated_at", postSale_start)
+      .lte("updated_at", postSale_end);
+
+    // ── 3. Maintenance reminders (services with maintenance_interval_days) ──
+    // Find completed bookings where maintenance is due in 2-3 days
+    const { data: servicesWithMaintenance } = await supabase
+      .from("services")
+      .select("id, name, maintenance_interval_days, professional_id")
+      .not("maintenance_interval_days", "is", null)
+      .gt("maintenance_interval_days", 0);
+
+    let maintenanceBookings: any[] = [];
+    if (servicesWithMaintenance && servicesWithMaintenance.length > 0) {
+      for (const svc of servicesWithMaintenance) {
+        // Check for completed bookings where maintenance date is approaching (3 days before)
+        const maintenanceDue = new Date(now.getTime() - (svc.maintenance_interval_days - 3) * 24 * 60 * 60 * 1000);
+        const maintenanceDueEnd = new Date(now.getTime() - (svc.maintenance_interval_days - 2) * 24 * 60 * 60 * 1000);
+
+        const { data: dueBookings } = await supabase
+          .from("bookings")
+          .select("id, professional_id, client_name, client_phone, start_time, service_id, employee_id")
+          .eq("status", "completed")
+          .eq("service_id", svc.id)
+          .gte("start_time", maintenanceDue.toISOString())
+          .lte("start_time", maintenanceDueEnd.toISOString());
+
+        if (dueBookings) {
+          maintenanceBookings.push(...dueBookings.map(b => ({ ...b, services: { name: svc.name }, maintenance_interval_days: svc.maintenance_interval_days })));
+        }
+      }
+    }
+
     const allBookings = [
       ...((bookings24h || []).map(b => ({ ...b, triggerType: "reminder_24h" }))),
       ...((bookings3h || []).map(b => ({ ...b, triggerType: "reminder_3h" }))),
+      ...((completedBookings || []).map(b => ({ ...b, triggerType: "post_sale_review" }))),
+      ...(maintenanceBookings.map(b => ({ ...b, triggerType: "maintenance_reminder" }))),
     ];
 
-    // Group by professional to check limits
+    // Group by professional
     const byProfessional: Record<string, typeof allBookings> = {};
     for (const b of allBookings) {
       if (!b.client_phone) continue;
@@ -68,8 +108,6 @@ serve(async (req) => {
     }
 
     for (const [profId, bookings] of Object.entries(byProfessional)) {
-      // Check if already sent a reminder for these bookings (check logs)
-      // Get professional data
       const { data: prof } = await supabase
         .from("professionals")
         .select("id, slug, reminder_message, business_name, name")
@@ -78,7 +116,6 @@ serve(async (req) => {
 
       if (!prof) continue;
 
-      // Get WhatsApp instance
       const { data: inst } = await supabase
         .from("whatsapp_instances")
         .select("instance_name, status")
@@ -87,17 +124,15 @@ serve(async (req) => {
 
       if (!inst || inst.status !== "connected") continue;
 
-      // Get automation config
       const { data: automations } = await supabase
         .from("whatsapp_automations")
         .select("*")
         .eq("professional_id", profId)
-        .in("trigger_type", ["reminder_24h", "reminder_3h"])
+        .in("trigger_type", ["reminder_24h", "reminder_3h", "post_sale_review", "maintenance_reminder"])
         .eq("is_active", true);
 
       const activeAutomations = new Map((automations || []).map(a => [a.trigger_type, a]));
 
-      // Get subscription to check plan
       const { data: sub } = await supabase
         .from("subscriptions")
         .select("plan_id")
@@ -106,7 +141,6 @@ serve(async (req) => {
 
       const planId = sub?.plan_id || "free";
 
-      // Get plan limits
       const { data: limits } = await supabase
         .from("plan_limits")
         .select("*")
@@ -115,7 +149,6 @@ serve(async (req) => {
 
       const dailyLimit = limits?.daily_reminders ?? 5;
 
-      // Get today's usage
       const today = now.toISOString().split("T")[0];
       const { data: usage } = await supabase
         .from("daily_message_usage")
@@ -127,7 +160,6 @@ serve(async (req) => {
       let remindersSent = usage?.reminders_sent || 0;
 
       for (const booking of bookings) {
-        // Check daily limit (-1 = unlimited)
         if (dailyLimit !== -1 && remindersSent >= dailyLimit) {
           results.push({ type: booking.triggerType, bookingId: booking.id, success: false, error: "Limite diário atingido" });
           continue;
@@ -136,7 +168,7 @@ serve(async (req) => {
         const automation = activeAutomations.get(booking.triggerType);
         if (!automation) continue;
 
-        // Check if already sent this reminder
+        // Check if already sent
         const { data: existingLog } = await supabase
           .from("whatsapp_logs")
           .select("id")
@@ -146,15 +178,25 @@ serve(async (req) => {
 
         if (existingLog && existingLog.length > 0) continue;
 
-        // Build message
         const startDate = new Date(booking.start_time);
         const dataFormatted = startDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
         const horarioFormatted = startDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
         const serviceName = (booking as any).services?.name || "serviço";
+        const bookingLink = prof.slug ? `https://gende.io/${prof.slug}` : "";
+        const reviewLink = prof.slug ? `https://gende.io/${prof.slug}?review=true&booking=${booking.id}${booking.employee_id ? `&employee=${booking.employee_id}` : ""}` : "";
 
         let messageTemplate = automation.message_template;
-        if (prof.reminder_message) {
-          messageTemplate = prof.reminder_message;
+
+        if (booking.triggerType === "reminder_24h" || booking.triggerType === "reminder_3h") {
+          if (prof.reminder_message) messageTemplate = prof.reminder_message;
+        } else if (booking.triggerType === "post_sale_review") {
+          if (!messageTemplate || messageTemplate.trim() === "") {
+            messageTemplate = `Olá {nome}! Como foi seu atendimento de {servico}? Adoraríamos saber sua opinião!\n\n⭐ Deixe sua avaliação: {link_avaliacao}\n\nSua opinião é muito importante para nós! 😊`;
+          }
+        } else if (booking.triggerType === "maintenance_reminder") {
+          if (!messageTemplate || messageTemplate.trim() === "") {
+            messageTemplate = `Olá {nome}! Está chegando a hora da sua manutenção de {servico}. Que tal agendar?\n\n📅 Agendar: {link}\n\nEstamos te esperando! 😊`;
+          }
         }
 
         const finalMessage = replaceVars(messageTemplate, {
@@ -162,10 +204,10 @@ serve(async (req) => {
           servico: serviceName,
           data: dataFormatted,
           horario: horarioFormatted,
-          link: prof.slug ? `gende.io/${prof.slug}` : "",
+          link: bookingLink,
+          link_avaliacao: reviewLink,
         });
 
-        // Send via Evolution API
         const sendRes = await fetch(`${EVOLUTION_URL}/message/sendText/${inst.instance_name}`, {
           method: "POST",
           headers: { "Content-Type": "application/json", apikey: EVOLUTION_KEY },
@@ -173,7 +215,6 @@ serve(async (req) => {
         });
         const sendData = await sendRes.json();
 
-        // Log the message
         await supabase.from("whatsapp_logs").insert({
           professional_id: profId,
           automation_id: automation.id,
@@ -185,14 +226,10 @@ serve(async (req) => {
           error_message: sendRes.ok ? null : JSON.stringify(sendData),
         });
 
-        if (sendRes.ok) {
-          remindersSent++;
-        }
-
+        if (sendRes.ok) remindersSent++;
         results.push({ type: booking.triggerType, bookingId: booking.id, success: sendRes.ok });
       }
 
-      // Update daily usage
       await supabase.from("daily_message_usage").upsert({
         professional_id: profId,
         usage_date: today,

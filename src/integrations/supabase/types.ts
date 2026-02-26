@@ -906,6 +906,7 @@ export type Database = {
           description: string | null
           duration_minutes: number
           id: string
+          maintenance_interval_days: number | null
           name: string
           price: number
           professional_id: string
@@ -919,6 +920,7 @@ export type Database = {
           description?: string | null
           duration_minutes?: number
           id?: string
+          maintenance_interval_days?: number | null
           name: string
           price?: number
           professional_id: string
@@ -932,6 +934,7 @@ export type Database = {
           description?: string | null
           duration_minutes?: number
           id?: string
+          maintenance_interval_days?: number | null
           name?: string
           price?: number
           professional_id?: string
@@ -1248,6 +1251,8 @@ export type Database = {
         | "reminder_3h"
         | "post_service"
         | "reactivation_30d"
+        | "maintenance_reminder"
+        | "post_sale_review"
       booking_status:
         | "pending"
         | "confirmed"
@@ -1396,6 +1401,8 @@ export const Constants = {
         "reminder_3h",
         "post_service",
         "reactivation_30d",
+        "maintenance_reminder",
+        "post_sale_review",
       ],
       booking_status: [
         "pending",

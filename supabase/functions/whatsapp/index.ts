@@ -13,10 +13,6 @@ const getEvolutionHeaders = () => ({
 
 const EVOLUTION_URL = () => Deno.env.get("EVOLUTION_API_URL") || "";
 
-/**
- * Replace template variables in a message string.
- * Supported: {nome}, {servico}, {data}, {horario}, {link}
- */
 function replaceVars(template: string, vars: Record<string, string>): string {
   let result = template;
   for (const [key, value] of Object.entries(vars)) {
@@ -122,31 +118,22 @@ serve(async (req) => {
       case "trigger-automation": {
         const { professionalId, bookingId, triggerType } = params;
 
-        // Get professional with custom messages
         const { data: prof } = await supabase
           .from("professionals")
           .select("id, slug, welcome_message, reminder_message, confirmation_message, business_name, name")
           .eq("id", professionalId)
           .single();
 
-        if (!prof) {
-          result = { success: false, error: "Profissional não encontrado" };
-          break;
-        }
+        if (!prof) { result = { success: false, error: "Profissional não encontrado" }; break; }
 
-        // Get WhatsApp instance
         const { data: inst } = await supabase
           .from("whatsapp_instances")
           .select("instance_name, status")
           .eq("professional_id", professionalId)
           .single();
 
-        if (!inst || inst.status !== "connected") {
-          result = { success: false, error: "WhatsApp não conectado" };
-          break;
-        }
+        if (!inst || inst.status !== "connected") { result = { success: false, error: "WhatsApp não conectado" }; break; }
 
-        // Get automation config
         const { data: automation } = await supabase
           .from("whatsapp_automations")
           .select("*")
@@ -155,42 +142,26 @@ serve(async (req) => {
           .eq("is_active", true)
           .maybeSingle();
 
-        if (!automation) {
-          result = { success: false, error: "Automação não ativa ou não encontrada" };
-          break;
-        }
+        if (!automation) { result = { success: false, error: "Automação não ativa ou não encontrada" }; break; }
 
-        // Get booking details
         const { data: booking } = await supabase
           .from("bookings")
           .select("*, services:service_id(name)")
           .eq("id", bookingId)
           .single();
 
-        if (!booking) {
-          result = { success: false, error: "Agendamento não encontrado" };
-          break;
-        }
+        if (!booking) { result = { success: false, error: "Agendamento não encontrado" }; break; }
 
         const phone = booking.client_phone;
-        if (!phone) {
-          result = { success: false, error: "Cliente sem telefone" };
-          break;
-        }
+        if (!phone) { result = { success: false, error: "Cliente sem telefone" }; break; }
 
-        // Build the link
         const slug = prof.slug || "";
-        const bookingLink = slug ? `gende.io/${slug}` : "";
+        const bookingLink = slug ? `https://gende.io/${slug}` : "";
+        const reviewLink = slug ? `https://gende.io/${slug}?review=true&booking=${bookingId}${booking.employee_id ? `&employee=${booking.employee_id}` : ""}` : "";
 
-        // Format date/time
         const startDate = new Date(booking.start_time);
-        const dataFormatted = startDate.toLocaleDateString("pt-BR", {
-          day: "2-digit", month: "2-digit", year: "numeric"
-        });
-        const horarioFormatted = startDate.toLocaleTimeString("pt-BR", {
-          hour: "2-digit", minute: "2-digit"
-        });
-
+        const dataFormatted = startDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+        const horarioFormatted = startDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
         const serviceName = (booking as any).services?.name || "serviço";
 
         const templateVars: Record<string, string> = {
@@ -199,39 +170,31 @@ serve(async (req) => {
           data: dataFormatted,
           horario: horarioFormatted,
           link: bookingLink,
+          link_avaliacao: reviewLink,
         };
 
-        // Choose the right template based on trigger type
         let messageTemplate = automation.message_template;
 
-        // Override with professional's custom messages if available
         if (triggerType === "booking_created" && prof.confirmation_message) {
           messageTemplate = prof.confirmation_message;
-          // Append slug link
-          if (bookingLink) {
-            messageTemplate += `\n\n📅 Agende novamente: ${bookingLink}`;
-          }
+          if (bookingLink) messageTemplate += `\n\n📅 Agende novamente: ${bookingLink}`;
         } else if ((triggerType === "reminder_24h" || triggerType === "reminder_3h") && prof.reminder_message) {
           messageTemplate = prof.reminder_message;
-        } else if (triggerType === "post_service" && prof.welcome_message) {
-          // welcome_message is used as a greeting/thank you for post-service
-          messageTemplate = prof.welcome_message;
-          if (bookingLink) {
-            messageTemplate += `\n\n📅 Agende novamente: ${bookingLink}`;
-          }
+        } else if (triggerType === "post_service") {
+          if (prof.welcome_message) messageTemplate = prof.welcome_message;
+          if (bookingLink) messageTemplate += `\n\n📅 Agende novamente: ${bookingLink}`;
+        } else if (triggerType === "post_sale_review") {
+          // Post-sale review request 24h after service
+          messageTemplate = automation.message_template || `Olá {nome}! Como foi seu atendimento de {servico}? Adoraríamos saber sua opinião!\n\n⭐ Deixe sua avaliação: {link_avaliacao}\n\nSua opinião é muito importante para nós! 😊`;
+        } else if (triggerType === "maintenance_reminder") {
+          messageTemplate = automation.message_template || `Olá {nome}! Está chegando a hora da sua manutenção de {servico}. Agende seu horário!\n\n📅 Agendar: {link}\n\nEstamos te esperando! 😊`;
         } else if (triggerType === "reactivation_30d") {
-          // Use welcome_message with link for reactivation
-          if (prof.welcome_message) {
-            messageTemplate = prof.welcome_message;
-          }
-          if (bookingLink) {
-            messageTemplate += `\n\n✨ Sentimos sua falta! Agende pelo link: ${bookingLink}`;
-          }
+          if (prof.welcome_message) messageTemplate = prof.welcome_message;
+          if (bookingLink) messageTemplate += `\n\n✨ Sentimos sua falta! Agende pelo link: ${bookingLink}`;
         }
 
         const finalMessage = replaceVars(messageTemplate, templateVars);
 
-        // Send the message
         const sendRes = await fetch(`${EVOLUTION_URL()}/message/sendText/${inst.instance_name}`, {
           method: "POST",
           headers: getEvolutionHeaders(),
@@ -239,7 +202,6 @@ serve(async (req) => {
         });
         const sendData = await sendRes.json();
 
-        // Log the message
         await supabase.from("whatsapp_logs").insert({
           professional_id: professionalId,
           automation_id: automation.id,
@@ -264,10 +226,7 @@ serve(async (req) => {
           .eq("id", employeeId)
           .single();
 
-        if (!employee?.phone) {
-          result = { success: false, error: "Funcionário sem telefone cadastrado" };
-          break;
-        }
+        if (!employee?.phone) { result = { success: false, error: "Funcionário sem telefone cadastrado" }; break; }
 
         const { data: inst } = await supabase
           .from("whatsapp_instances")
@@ -275,10 +234,7 @@ serve(async (req) => {
           .eq("professional_id", professionalId)
           .single();
 
-        if (!inst || inst.status !== "connected") {
-          result = { success: false, error: "WhatsApp não conectado" };
-          break;
-        }
+        if (!inst || inst.status !== "connected") { result = { success: false, error: "WhatsApp não conectado" }; break; }
 
         const msg = `💰 *Nova comissão pendente!*\n\nOlá ${employee.name}! Você tem uma nova comissão:\n\n💇 Valor do serviço: R$ ${Number(bookingAmount).toFixed(2)}\n📊 Percentual: ${percentage}%\n💵 Sua comissão: *R$ ${Number(commissionAmount).toFixed(2)}*\n\nAguarde o repasse pelo gestor. 😊`;
 
@@ -311,10 +267,7 @@ serve(async (req) => {
           .eq("professional_id", professionalId)
           .single();
 
-        if (!inst || inst.status !== "connected") {
-          result = { success: false, error: "WhatsApp não conectado" };
-          break;
-        }
+        if (!inst || inst.status !== "connected") { result = { success: false, error: "WhatsApp não conectado" }; break; }
 
         const results: Array<{ employeeId: string; success: boolean }> = [];
 
@@ -325,10 +278,7 @@ serve(async (req) => {
             .eq("id", empId)
             .single();
 
-          if (!employee?.phone) {
-            results.push({ employeeId: empId, success: false });
-            continue;
-          }
+          if (!employee?.phone) { results.push({ employeeId: empId, success: false }); continue; }
 
           const msg = `✅ *Comissão paga!*\n\nOlá ${employee.name}! Suas comissões foram pagas.\n\n💵 Valor total: *R$ ${Number(totalAmount).toFixed(2)}*\n\nObrigado pelo excelente trabalho! 🎉`;
 
@@ -378,10 +328,8 @@ serve(async (req) => {
               } else if (text === "CANCELAR" || text === "2") {
                 await supabase.from("bookings").update({ status: "cancelled" }).eq("id", booking.id);
               } else if (text === "REMARCAR" || text === "3") {
-                // Cancel current booking
                 await supabase.from("bookings").update({ status: "cancelled" }).eq("id", booking.id);
 
-                // Get professional slug for rebooking link
                 const { data: prof } = await supabase
                   .from("professionals")
                   .select("slug, business_name, name")
@@ -389,10 +337,7 @@ serve(async (req) => {
                   .single();
 
                 const slug = prof?.slug || "";
-                const profName = prof?.business_name || prof?.name || "profissional";
-
                 if (slug) {
-                  // Get WhatsApp instance to send rebooking link
                   const { data: inst } = await supabase
                     .from("whatsapp_instances")
                     .select("instance_name, status")
@@ -400,7 +345,7 @@ serve(async (req) => {
                     .single();
 
                   if (inst && inst.status === "connected") {
-                    const rebookMsg = `📅 *Reagendamento*\n\nSeu agendamento anterior foi cancelado. Para remarcar, acesse o link abaixo e escolha um novo horário:\n\n🔗 gende.io/${slug}\n\nEstamos à disposição! 😊`;
+                    const rebookMsg = `📅 *Reagendamento*\n\nSeu agendamento anterior foi cancelado. Para remarcar, acesse o link abaixo e escolha um novo horário:\n\n🔗 https://gende.io/${slug}\n\nEstamos à disposição! 😊`;
 
                     await fetch(`${EVOLUTION_URL()}/message/sendText/${inst.instance_name}`, {
                       method: "POST",
@@ -408,7 +353,6 @@ serve(async (req) => {
                       body: JSON.stringify({ number: phone, text: rebookMsg }),
                     });
 
-                    // Log the rebooking message
                     await supabase.from("whatsapp_logs").insert({
                       professional_id: booking.professional_id,
                       booking_id: booking.id,

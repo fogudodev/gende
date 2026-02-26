@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar } from "@/components/ui/calendar";
@@ -70,6 +70,7 @@ type PaymentConfig = {
 
 const PublicBooking = () => {
   const { slug } = useParams<{ slug: string }>();
+  const [searchParams] = useSearchParams();
   const [professional, setProfessional] = useState<Professional | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [services, setServices] = useState<Service[]>([]);
@@ -152,6 +153,42 @@ const PublicBooking = () => {
     };
     fetchData();
   }, [slug]);
+
+  // Handle review link from WhatsApp (?review=true&booking=X&employee=Y)
+  useEffect(() => {
+    if (!professional) return;
+    const isReview = searchParams.get("review") === "true";
+    const reviewBookingId = searchParams.get("booking");
+    const reviewEmployeeId = searchParams.get("employee");
+
+    if (isReview && reviewBookingId) {
+      setBookingId(reviewBookingId);
+      // Set to success step directly to show review form
+      const successStep = professional.account_type === "salon" ? 4 : 3;
+      setStep(successStep);
+      setClientName("Cliente"); // placeholder, will be updated from booking
+
+      // Fetch booking details to populate client info
+      (async () => {
+        const { data: booking } = await supabase
+          .from("bookings")
+          .select("client_name, client_phone, employee_id")
+          .eq("id", reviewBookingId)
+          .single();
+        if (booking) {
+          setClientName(booking.client_name || "Cliente");
+          setClientPhone(booking.client_phone || "");
+          if (booking.employee_id && employees.length > 0) {
+            const emp = employees.find(e => e.id === booking.employee_id);
+            if (emp) setSelectedEmployee(emp);
+          } else if (reviewEmployeeId && employees.length > 0) {
+            const emp = employees.find(e => e.id === reviewEmployeeId);
+            if (emp) setSelectedEmployee(emp);
+          }
+        }
+      })();
+    }
+  }, [professional, employees, searchParams]);
 
   useEffect(() => {
     if (!selectedDate || !selectedService || !professional) return;
