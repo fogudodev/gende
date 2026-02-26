@@ -20,6 +20,7 @@ import {
   QrCode,
   Copy,
   Check,
+  Star,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -88,6 +89,11 @@ const PublicBooking = () => {
   const [clientPhone, setClientPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [pixCopied, setPixCopied] = useState(false);
+  const [bookingId, setBookingId] = useState<string | null>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   const isSalon = professional?.account_type === "salon";
   // Steps: salon = 0:employee, 1:service, 2:date, 3:form, 4:success
@@ -206,6 +212,7 @@ const PublicBooking = () => {
           .update({ employee_id: selectedEmployee.id })
           .eq("id", result.booking_id);
       }
+      setBookingId(result.booking_id);
       setStep(isSalon ? 4 : 3);
     } else {
       toast.error(result?.error || "Erro ao agendar");
@@ -220,6 +227,27 @@ const PublicBooking = () => {
       toast.success("Chave PIX copiada!");
       setTimeout(() => setPixCopied(false), 3000);
     }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!professional || reviewSubmitted) return;
+    setSubmittingReview(true);
+    const { error } = await supabase.from("reviews").insert({
+      professional_id: professional.id,
+      booking_id: bookingId,
+      employee_id: selectedEmployee?.id || null,
+      client_name: clientName.trim(),
+      client_phone: clientPhone.replace(/\D/g, ""),
+      rating: reviewRating,
+      comment: reviewComment.trim() || null,
+    });
+    if (!error) {
+      setReviewSubmitted(true);
+      toast.success("Avaliação enviada! Obrigado.");
+    } else {
+      toast.error("Erro ao enviar avaliação");
+    }
+    setSubmittingReview(false);
   };
 
   const getSignalAmount = () => {
@@ -796,6 +824,52 @@ const PublicBooking = () => {
                 </div>
               )}
 
+              {/* Review Form */}
+              {!reviewSubmitted ? (
+                <div className="glass-card rounded-2xl p-5 text-left space-y-4 max-w-sm mx-auto">
+                  <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+                    <Star size={16} className="text-warning" />
+                    Como foi sua experiência?
+                  </h3>
+                  <div className="flex items-center justify-center gap-2">
+                    {[1, 2, 3, 4, 5].map(s => (
+                      <button
+                        key={s}
+                        onClick={() => setReviewRating(s)}
+                        className="transition-transform hover:scale-110"
+                      >
+                        <Star
+                          size={28}
+                          className={cn(
+                            "transition-colors",
+                            s <= reviewRating ? "text-warning fill-warning" : "text-muted-foreground"
+                          )}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={reviewComment}
+                    onChange={e => setReviewComment(e.target.value)}
+                    placeholder="Conte como foi (opcional)"
+                    maxLength={500}
+                    rows={3}
+                    className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none"
+                  />
+                  <button
+                    onClick={handleSubmitReview}
+                    disabled={submittingReview}
+                    className="w-full py-2.5 rounded-xl gradient-accent text-accent-foreground font-medium text-sm flex items-center justify-center gap-2 hover-lift disabled:opacity-50"
+                  >
+                    {submittingReview ? <Loader2 size={14} className="animate-spin" /> : "Enviar avaliação"}
+                  </button>
+                </div>
+              ) : (
+                <p className="text-sm text-success font-medium flex items-center justify-center gap-2">
+                  <CheckCircle2 size={16} /> Obrigado pela avaliação!
+                </p>
+              )}
+
               <button
                 onClick={() => {
                   setStep(isSalon ? employeeStep : serviceStep);
@@ -805,6 +879,10 @@ const PublicBooking = () => {
                   setSelectedSlot(null);
                   setClientName("");
                   setClientPhone("");
+                  setReviewRating(5);
+                  setReviewComment("");
+                  setReviewSubmitted(false);
+                  setBookingId(null);
                 }}
                 className="text-sm text-accent font-semibold hover:underline"
               >
