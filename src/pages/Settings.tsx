@@ -26,7 +26,7 @@ import { STRIPE_PLANS } from "@/lib/stripe-plans";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-type Section = "profile" | "hours" | "subscription" | "whatsapp" | "security";
+type Section = "system" | "profile" | "hours" | "subscription" | "whatsapp" | "security";
 
 const TRIGGER_LABELS: Record<string, string> = {
   booking_created: "Agendamento criado",
@@ -46,6 +46,7 @@ const Settings = () => {
   const [activeSection, setActiveSection] = useState<Section | null>(null);
 
   const sections = [
+    { id: "system" as Section, icon: Palette, title: "Aparência do Sistema", description: "Logo, nome e cores do painel" },
     { id: "profile" as Section, icon: User, title: "Perfil e Página Pública", description: "Dados pessoais, slug, cores e logo" },
     { id: "hours" as Section, icon: Clock, title: "Horários de Trabalho", description: "Defina seus dias e horários de atendimento" },
     { id: "subscription" as Section, icon: CreditCard, title: "Assinatura", description: "Plano atual e gerenciamento" },
@@ -98,6 +99,7 @@ const Settings = () => {
                 <ArrowLeft size={14} /> Voltar
               </button>
 
+              {activeSection === "system" && <SystemAppearanceSection />}
               {activeSection === "profile" && <ProfileSection />}
               {activeSection === "hours" && <WorkingHoursSection />}
               {activeSection === "subscription" && <SubscriptionSection />}
@@ -110,6 +112,260 @@ const Settings = () => {
     </DashboardLayout>
   );
 };
+
+/* ===================== SYSTEM APPEARANCE ===================== */
+const ACCENT_PRESETS = [
+  "#FF0066", "#C4922A", "#E67E22", "#E74C3C", "#9B59B6",
+  "#3498DB", "#1ABC9C", "#2ECC71", "#F39C12", "#D35400",
+  "#8E44AD", "#2980B9",
+];
+
+const SIDEBAR_PRESETS = [
+  "#09090B", "#0F172A", "#1A1A2E", "#0D1117",
+  "#1E1E2E", "#2D2D3F", "#111827", "#18181B",
+];
+
+function hexToHsl(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+    else if (max === g) h = ((b - r) / d + 2) / 6;
+    else h = ((r - g) / d + 4) / 6;
+  }
+  return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+}
+
+const SystemAppearanceSection = () => {
+  const { data: professional, isLoading } = useProfessional();
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  const [businessName, setBusinessName] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
+  const [accentColor, setAccentColor] = useState("#FF0066");
+  const [sidebarColor, setSidebarColor] = useState("#09090B");
+
+  useEffect(() => {
+    if (professional) {
+      setBusinessName(professional.business_name || professional.name || "");
+      setLogoUrl(professional.logo_url || "");
+      setAccentColor((professional as any).system_accent_color || professional.primary_color || "#FF0066");
+      setSidebarColor((professional as any).system_sidebar_color || "#09090B");
+    }
+  }, [professional]);
+
+  const uploadLogo = async (file: File) => {
+    if (!user || !professional) return;
+    setUploadingLogo(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      if (!["jpg", "jpeg", "png", "webp"].includes(ext)) {
+        toast.error("Use JPG, PNG ou WebP."); return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Máximo 5MB."); return;
+      }
+      const path = `${user.id}/logo.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("professionals").upload(path, file, { upsert: true, contentType: file.type });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("professionals").getPublicUrl(path);
+      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      await supabase.from("professionals").update({ logo_url: publicUrl }).eq("id", professional.id);
+      setLogoUrl(publicUrl);
+      qc.invalidateQueries({ queryKey: ["professional"] });
+      toast.success("Logo atualizada!");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao fazer upload");
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const removeLogo = async () => {
+    if (!professional) return;
+    await supabase.from("professionals").update({ logo_url: null }).eq("id", professional.id);
+    setLogoUrl("");
+    qc.invalidateQueries({ queryKey: ["professional"] });
+    toast.success("Logo removida");
+  };
+
+  const handleSave = async () => {
+    if (!professional) return;
+    setSaving(true);
+
+    const { error } = await supabase
+      .from("professionals")
+      .update({
+        business_name: businessName.trim(),
+        system_accent_color: accentColor,
+        system_sidebar_color: sidebarColor,
+      } as any)
+      .eq("id", professional.id);
+
+    if (error) {
+      toast.error("Erro ao salvar");
+    } else {
+      // Apply colors immediately
+      applySystemColors(accentColor, sidebarColor);
+      toast.success("Aparência atualizada!");
+      qc.invalidateQueries({ queryKey: ["professional"] });
+    }
+    setSaving(false);
+  };
+
+  if (isLoading) return <LoadingState />;
+
+  return (
+    <div className="space-y-6">
+      <SectionHeader icon={Palette} title="Aparência do Sistema" />
+
+      {/* Logo & Name */}
+      <div className="glass-card rounded-2xl p-6 space-y-5">
+        <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+          <Camera size={16} className="text-accent" /> Logo e Nome do Menu
+        </h3>
+        <div className="flex items-center gap-5">
+          <ImageUploadCard
+            label="Logo"
+            imageUrl={logoUrl}
+            uploading={uploadingLogo}
+            icon={<ImageIcon size={24} className="text-muted-foreground" />}
+            onUpload={uploadLogo}
+            onRemove={removeLogo}
+          />
+          <div className="flex-1">
+            <label className="text-sm font-medium text-foreground mb-1.5 block">Nome exibido no menu</label>
+            <input
+              type="text"
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              maxLength={30}
+              placeholder="Nome do seu negócio"
+              className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all text-sm"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* System Accent Color */}
+      <div className="glass-card rounded-2xl p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <Palette size={18} className="text-accent" />
+          <h3 className="font-semibold text-foreground">Cor de Destaque (Accent)</h3>
+        </div>
+        <p className="text-xs text-muted-foreground">Usada em botões, ícones ativos e destaques do sistema.</p>
+        <div className="flex flex-wrap gap-3">
+          {ACCENT_PRESETS.map((c) => (
+            <button
+              key={c}
+              onClick={() => setAccentColor(c)}
+              className={cn(
+                "w-9 h-9 rounded-xl transition-all",
+                accentColor === c ? "ring-2 ring-offset-2 ring-accent scale-110" : "hover:scale-105"
+              )}
+              style={{ backgroundColor: c }}
+            />
+          ))}
+          <label className="w-9 h-9 rounded-xl border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-accent transition-colors overflow-hidden relative">
+            <Palette size={14} className="text-muted-foreground" />
+            <input type="color" value={accentColor} onChange={(e) => setAccentColor(e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer" />
+          </label>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl" style={{ backgroundColor: accentColor }} />
+          <span className="text-sm text-muted-foreground font-mono">{accentColor}</span>
+        </div>
+      </div>
+
+      {/* Sidebar Color */}
+      <div className="glass-card rounded-2xl p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <Palette size={18} className="text-accent" />
+          <h3 className="font-semibold text-foreground">Cor da Sidebar</h3>
+        </div>
+        <p className="text-xs text-muted-foreground">Cor de fundo do menu lateral.</p>
+        <div className="flex flex-wrap gap-3">
+          {SIDEBAR_PRESETS.map((c) => (
+            <button
+              key={c}
+              onClick={() => setSidebarColor(c)}
+              className={cn(
+                "w-9 h-9 rounded-xl transition-all border border-border/30",
+                sidebarColor === c ? "ring-2 ring-offset-2 ring-accent scale-110" : "hover:scale-105"
+              )}
+              style={{ backgroundColor: c }}
+            />
+          ))}
+          <label className="w-9 h-9 rounded-xl border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-accent transition-colors overflow-hidden relative">
+            <Palette size={14} className="text-muted-foreground" />
+            <input type="color" value={sidebarColor} onChange={(e) => setSidebarColor(e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer" />
+          </label>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl border border-border/30" style={{ backgroundColor: sidebarColor }} />
+          <span className="text-sm text-muted-foreground font-mono">{sidebarColor}</span>
+        </div>
+      </div>
+
+      {/* Preview */}
+      <div className="glass-card rounded-2xl p-6 space-y-3">
+        <h3 className="font-semibold text-foreground text-sm">Preview</h3>
+        <div className="flex rounded-xl overflow-hidden border border-border/50 h-24">
+          <div className="w-16 flex flex-col items-center justify-center gap-2 py-3" style={{ backgroundColor: sidebarColor }}>
+            {logoUrl ? (
+              <img src={logoUrl} alt="" className="w-8 h-8 rounded-lg object-cover" />
+            ) : (
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: accentColor }}>
+                {businessName?.[0]?.toUpperCase() || "G"}
+              </div>
+            )}
+            <div className="w-6 h-1 rounded-full" style={{ backgroundColor: accentColor }} />
+            <div className="w-6 h-0.5 rounded-full bg-white/20" />
+            <div className="w-6 h-0.5 rounded-full bg-white/20" />
+          </div>
+          <div className="flex-1 bg-background p-3 flex flex-col justify-center">
+            <div className="h-2 w-20 rounded-full bg-foreground/20 mb-2" />
+            <div className="flex gap-2">
+              <div className="h-8 w-16 rounded-lg" style={{ backgroundColor: accentColor, opacity: 0.2 }} />
+              <div className="h-8 w-16 rounded-lg bg-muted" />
+              <div className="h-8 w-16 rounded-lg bg-muted" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <SaveButton saving={saving} onClick={handleSave} />
+    </div>
+  );
+};
+
+/** Apply system colors as CSS variables on :root */
+export function applySystemColors(accent?: string | null, sidebar?: string | null) {
+  if (!accent && !sidebar) return;
+  const root = document.documentElement;
+  if (accent) {
+    const hsl = hexToHsl(accent);
+    root.style.setProperty("--primary", hsl);
+    root.style.setProperty("--accent", hsl);
+    root.style.setProperty("--ring", hsl);
+    root.style.setProperty("--sidebar-primary", hsl);
+    root.style.setProperty("--sidebar-ring", hsl);
+  }
+  if (sidebar) {
+    const hsl = hexToHsl(sidebar);
+    root.style.setProperty("--sidebar-background", hsl);
+  }
+}
 
 /* ===================== PROFILE SECTION ===================== */
 const ProfileSection = () => {

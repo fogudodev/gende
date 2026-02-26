@@ -529,6 +529,8 @@ export type Database = {
           reminder_message: string | null
           slug: string | null
           stripe_customer_id: string | null
+          system_accent_color: string | null
+          system_sidebar_color: string | null
           text_color: string | null
           updated_at: string
           user_id: string
@@ -560,6 +562,8 @@ export type Database = {
           reminder_message?: string | null
           slug?: string | null
           stripe_customer_id?: string | null
+          system_accent_color?: string | null
+          system_sidebar_color?: string | null
           text_color?: string | null
           updated_at?: string
           user_id: string
@@ -591,6 +595,8 @@ export type Database = {
           reminder_message?: string | null
           slug?: string | null
           stripe_customer_id?: string | null
+          system_accent_color?: string | null
+          system_sidebar_color?: string | null
           text_color?: string | null
           updated_at?: string
           user_id?: string

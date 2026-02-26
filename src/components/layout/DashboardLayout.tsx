@@ -1,6 +1,8 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
+import { useProfessional } from "@/hooks/useProfessional";
+import { applySystemColors } from "@/pages/Settings";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -10,6 +12,16 @@ interface DashboardLayoutProps {
 
 const DashboardLayout = ({ children, title, subtitle }: DashboardLayoutProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { data: professional } = useProfessional();
+
+  useEffect(() => {
+    if (professional) {
+      applySystemColors(
+        (professional as any).system_accent_color,
+        (professional as any).system_sidebar_color
+      );
+    }
+  }, [professional]);
 
   return (
     <div className="min-h-screen bg-background">
