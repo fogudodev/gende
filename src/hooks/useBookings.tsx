@@ -2,7 +2,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfessional } from "./useProfessional";
 import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
-import { format, startOfDay, endOfDay } from "date-fns";
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek } from "date-fns";
+
+const BUFFER_MINUTES = 10;
 
 export const useBookings = (date?: Date) => {
   const { data: professional } = useProfessional();
@@ -30,6 +32,94 @@ export const useBookings = (date?: Date) => {
   });
 };
 
+export const useBookingsWeek = (date: Date) => {
+  const { data: professional } = useProfessional();
+  const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
+
+  return useQuery({
+    queryKey: ["bookings-week", professional?.id, format(weekStart, "yyyy-MM-dd")],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*, services(name, category), clients(name, phone, email)")
+        .eq("professional_id", professional!.id)
+        .gte("start_time", startOfDay(weekStart).toISOString())
+        .lte("start_time", endOfDay(weekEnd).toISOString())
+        .order("start_time", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!professional?.id,
+  });
+};
+
+export const useBookingsMonth = (date: Date) => {
+  const { data: professional } = useProfessional();
+  const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
+  const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+
+  return useQuery({
+    queryKey: ["bookings-month", professional?.id, format(monthStart, "yyyy-MM")],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*, services(name, category), clients(name, phone, email)")
+        .eq("professional_id", professional!.id)
+        .gte("start_time", startOfDay(monthStart).toISOString())
+        .lte("start_time", endOfDay(monthEnd).toISOString())
+        .order("start_time", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!professional?.id,
+  });
+};
+
+/**
+ * Generate available time slots for a given date considering existing bookings.
+ * Each booking blocks: start_time to end_time + BUFFER_MINUTES
+ */
+export const getAvailableSlots = (
+  existingBookings: any[],
+  serviceDurationMinutes: number,
+  startHour = 7,
+  endHour = 21,
+  intervalMinutes = 10
+) => {
+  const slots: string[] = [];
+
+  for (let h = startHour; h <= endHour; h++) {
+    for (let m = 0; m < 60; m += intervalMinutes) {
+      if (h === endHour && m > 0) break;
+      const slotStr = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+      slots.push(slotStr);
+    }
+  }
+
+  // Filter out slots that conflict with existing bookings (+ buffer)
+  const activeBookings = (existingBookings || []).filter(b => b.status !== "cancelled");
+
+  return slots.filter(slot => {
+    const [sh, sm] = slot.split(":").map(Number);
+    const slotStartMin = sh * 60 + sm;
+    const slotEndMin = slotStartMin + serviceDurationMinutes;
+
+    for (const booking of activeBookings) {
+      const bStart = new Date(booking.start_time);
+      const bEnd = new Date(booking.end_time);
+      const bStartMin = bStart.getHours() * 60 + bStart.getMinutes();
+      const bEndMin = bEnd.getHours() * 60 + bEnd.getMinutes() + BUFFER_MINUTES;
+
+      // Check overlap: slot [slotStart, slotEnd) vs blocked [bStartMin, bEndMin)
+      if (slotStartMin < bEndMin && slotEndMin > bStartMin) {
+        return false;
+      }
+    }
+    return true;
+  });
+};
+
 export const useCreateBooking = () => {
   const qc = useQueryClient();
   const { data: professional } = useProfessional();
@@ -44,7 +134,11 @@ export const useCreateBooking = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["bookings"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["bookings"] });
+      qc.invalidateQueries({ queryKey: ["bookings-week"] });
+      qc.invalidateQueries({ queryKey: ["bookings-month"] });
+    },
   });
 };
 
@@ -62,7 +156,11 @@ export const useUpdateBooking = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["bookings"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["bookings"] });
+      qc.invalidateQueries({ queryKey: ["bookings-week"] });
+      qc.invalidateQueries({ queryKey: ["bookings-month"] });
+    },
   });
 };
 
@@ -74,6 +172,10 @@ export const useDeleteBooking = () => {
       const { error } = await supabase.from("bookings").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["bookings"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["bookings"] });
+      qc.invalidateQueries({ queryKey: ["bookings-week"] });
+      qc.invalidateQueries({ queryKey: ["bookings-month"] });
+    },
   });
 };
