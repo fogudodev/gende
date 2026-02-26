@@ -34,9 +34,9 @@ const Auth = () => {
     <div className="min-h-screen bg-background text-foreground flex flex-col relative overflow-hidden">
       {/* Wavy SVG Divider */}
       <div className="absolute top-0 left-0 w-full">
-        <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
+        <svg viewBox="0 0 1440 320" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
           <path
-            d="M0,64 C360,120 720,0 1080,64 C1260,96 1380,80 1440,72 L1440,0 L0,0 Z"
+            d="M0,160 C360,280 720,40 1080,160 C1260,220 1380,200 1440,180 L1440,0 L0,0 Z"
             fill="hsl(var(--accent))"
             fillOpacity="0.15"
           />
