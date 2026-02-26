@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.send-campaign]
 verify_jwt = false
+
+[functions.admin-create-professional]
+verify_jwt = false
