@@ -56,6 +56,7 @@ export type Database = {
           client_phone: string | null
           created_at: string
           duration_minutes: number
+          employee_id: string | null
           end_time: string
           id: string
           notes: string | null
@@ -73,6 +74,7 @@ export type Database = {
           client_phone?: string | null
           created_at?: string
           duration_minutes?: number
+          employee_id?: string | null
           end_time: string
           id?: string
           notes?: string | null
@@ -90,6 +92,7 @@ export type Database = {
           client_phone?: string | null
           created_at?: string
           duration_minutes?: number
+          employee_id?: string | null
           end_time?: string
           id?: string
           notes?: string | null
@@ -107,6 +110,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "salon_employees"
             referencedColumns: ["id"]
           },
           {
