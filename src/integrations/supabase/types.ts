@@ -176,6 +176,67 @@ export type Database = {
           },
         ]
       }
+      commissions: {
+        Row: {
+          booking_amount: number
+          booking_id: string | null
+          commission_amount: number
+          commission_percentage: number
+          created_at: string
+          employee_id: string
+          id: string
+          paid_at: string | null
+          professional_id: string
+          status: string
+        }
+        Insert: {
+          booking_amount?: number
+          booking_id?: string | null
+          commission_amount?: number
+          commission_percentage?: number
+          created_at?: string
+          employee_id: string
+          id?: string
+          paid_at?: string | null
+          professional_id: string
+          status?: string
+        }
+        Update: {
+          booking_amount?: number
+          booking_id?: string | null
+          commission_amount?: number
+          commission_percentage?: number
+          created_at?: string
+          employee_id?: string
+          id?: string
+          paid_at?: string | null
+          professional_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commissions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commissions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "salon_employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commissions_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coupons: {
         Row: {
           code: string
@@ -228,6 +289,57 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "coupons_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          description: string
+          employee_id: string | null
+          expense_date: string
+          id: string
+          professional_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          created_at?: string
+          description: string
+          employee_id?: string | null
+          expense_date?: string
+          id?: string
+          professional_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          description?: string
+          employee_id?: string | null
+          expense_date?: string
+          id?: string
+          professional_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "salon_employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_professional_id_fkey"
             columns: ["professional_id"]
             isOneToOne: false
             referencedRelation: "professionals"
@@ -460,6 +572,67 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      reviews: {
+        Row: {
+          booking_id: string | null
+          client_name: string
+          client_phone: string | null
+          comment: string | null
+          created_at: string
+          employee_id: string | null
+          id: string
+          is_public: boolean
+          professional_id: string
+          rating: number
+        }
+        Insert: {
+          booking_id?: string | null
+          client_name: string
+          client_phone?: string | null
+          comment?: string | null
+          created_at?: string
+          employee_id?: string | null
+          id?: string
+          is_public?: boolean
+          professional_id: string
+          rating?: number
+        }
+        Update: {
+          booking_id?: string | null
+          client_name?: string
+          client_phone?: string | null
+          comment?: string | null
+          created_at?: string
+          employee_id?: string | null
+          id?: string
+          is_public?: boolean
+          professional_id?: string
+          rating?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "salon_employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       salon_employees: {
         Row: {
