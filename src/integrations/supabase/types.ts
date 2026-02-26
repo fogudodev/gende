@@ -166,6 +166,121 @@ export type Database = {
           },
         ]
       }
+      coupons: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          min_amount: number | null
+          professional_id: string
+          updated_at: string
+          used_count: number
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          min_amount?: number | null
+          professional_id: string
+          updated_at?: string
+          used_count?: number
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          min_amount?: number | null
+          professional_id?: string
+          updated_at?: string
+          used_count?: number
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupons_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_config: {
+        Row: {
+          accept_card: boolean
+          accept_cash: boolean
+          accept_pix: boolean
+          created_at: string
+          id: string
+          pix_beneficiary_name: string | null
+          pix_key: string | null
+          pix_key_type: string | null
+          professional_id: string
+          signal_enabled: boolean
+          signal_type: string
+          signal_value: number
+          updated_at: string
+        }
+        Insert: {
+          accept_card?: boolean
+          accept_cash?: boolean
+          accept_pix?: boolean
+          created_at?: string
+          id?: string
+          pix_beneficiary_name?: string | null
+          pix_key?: string | null
+          pix_key_type?: string | null
+          professional_id: string
+          signal_enabled?: boolean
+          signal_type?: string
+          signal_value?: number
+          updated_at?: string
+        }
+        Update: {
+          accept_card?: boolean
+          accept_cash?: boolean
+          accept_pix?: boolean
+          created_at?: string
+          id?: string
+          pix_beneficiary_name?: string | null
+          pix_key?: string | null
+          pix_key_type?: string | null
+          professional_id?: string
+          signal_enabled?: boolean
+          signal_type?: string
+          signal_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_config_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: true
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -210,6 +325,56 @@ export type Database = {
           },
           {
             foreignKeyName: "payments_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          category: string | null
+          cost_price: number
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          price: number
+          professional_id: string
+          stock_quantity: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          cost_price?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          price?: number
+          professional_id: string
+          stock_quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          cost_price?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number
+          professional_id?: string
+          stock_quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_professional_id_fkey"
             columns: ["professional_id"]
             isOneToOne: false
             referencedRelation: "professionals"

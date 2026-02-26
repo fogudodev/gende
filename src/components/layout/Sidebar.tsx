@@ -18,6 +18,9 @@ import {
   Menu,
   X,
   UserPlus,
+  Package,
+  Ticket,
+  QrCode,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 
@@ -35,6 +38,9 @@ const baseNavItems = [
 
 const salonOnlyItems = [
   { icon: UserPlus, label: "Equipe", path: "/team" },
+  { icon: Package, label: "Produtos", path: "/products" },
+  { icon: Ticket, label: "Cupons", path: "/coupons" },
+  { icon: QrCode, label: "Pagamento", path: "/payment-settings" },
 ];
 
 // Bottom nav items for mobile (4 items)
