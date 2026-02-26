@@ -1,5 +1,6 @@
 import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import AdminWhatsAppLogs from "@/components/admin/AdminWhatsAppLogs";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, CreditCard, CalendarDays, DollarSign, MessageSquare,
@@ -22,7 +23,7 @@ import { ptBR } from "date-fns/locale";
 
 import AdminMessageUsage from "@/components/admin/AdminMessageUsage";
 
-type Section = "overview" | "professionals" | "bookings" | "finance" | "whatsapp" | "plan-limits" | "message-usage";
+type Section = "overview" | "professionals" | "bookings" | "finance" | "whatsapp" | "whatsapp-logs" | "plan-limits" | "message-usage";
 
 const Admin = () => {
   const [activeSection, setActiveSection] = useState<Section>("overview");
@@ -33,6 +34,7 @@ const Admin = () => {
     { id: "bookings" as Section, icon: CalendarDays, label: "Agendamentos" },
     { id: "finance" as Section, icon: DollarSign, label: "Financeiro" },
     { id: "whatsapp" as Section, icon: MessageSquare, label: "WhatsApp" },
+    { id: "whatsapp-logs" as Section, icon: MessageSquare, label: "Logs WhatsApp" },
     { id: "plan-limits" as Section, icon: Sliders, label: "Limites de Plano" },
     { id: "message-usage" as Section, icon: MessageSquare, label: "Uso de Mensagens" },
   ];
@@ -70,6 +72,7 @@ const Admin = () => {
           {activeSection === "bookings" && <BookingsSection />}
           {activeSection === "finance" && <FinanceSection />}
           {activeSection === "whatsapp" && <WhatsAppSection />}
+          {activeSection === "whatsapp-logs" && <AdminWhatsAppLogs />}
           {activeSection === "plan-limits" && <PlanLimitsSection />}
           {activeSection === "message-usage" && <AdminMessageUsage />}
         </motion.div>
