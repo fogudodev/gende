@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useAdmin";
 import { useProfessional } from "@/hooks/useProfessional";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import {
   LayoutDashboard,
   Scissors,
@@ -15,7 +16,6 @@ import {
   BarChart3,
   LogOut,
   ShieldCheck,
-  Menu,
   X,
   UserPlus,
   Package,
@@ -25,33 +25,35 @@ import {
   FileBarChart,
   Activity,
   Megaphone,
+  Lock,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
+import UpgradeModal from "./UpgradeModal";
+import type { FeatureKey } from "@/lib/stripe-plans";
 
-const baseNavItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-  { icon: CalendarDays, label: "Agendamentos", path: "/bookings" },
-  { icon: Scissors, label: "Serviços", path: "/services" },
-  { icon: Users, label: "Clientes", path: "/clients" },
-  { icon: MessageCircle, label: "WhatsApp", path: "/automations" },
-  { icon: Megaphone, label: "Campanhas", path: "/campaigns" },
-  { icon: CreditCard, label: "Financeiro", path: "/finance" },
-  { icon: Globe, label: "Página Pública", path: "/public-page" },
-  { icon: Package, label: "Produtos", path: "/products" },
-  { icon: Ticket, label: "Cupons", path: "/coupons" },
-  { icon: BarChart3, label: "Relatórios", path: "/reports" },
-  { icon: Star, label: "Avaliações", path: "/reviews" },
-  { icon: Settings, label: "Configurações", path: "/settings" },
+const baseNavItems: { icon: any; label: string; path: string; featureKey: FeatureKey }[] = [
+  { icon: LayoutDashboard, label: "Dashboard", path: "/", featureKey: "dashboard" },
+  { icon: CalendarDays, label: "Agendamentos", path: "/bookings", featureKey: "bookings" },
+  { icon: Scissors, label: "Serviços", path: "/services", featureKey: "services" },
+  { icon: Users, label: "Clientes", path: "/clients", featureKey: "clients" },
+  { icon: MessageCircle, label: "WhatsApp", path: "/automations", featureKey: "automations" },
+  { icon: Megaphone, label: "Campanhas", path: "/campaigns", featureKey: "campaigns" },
+  { icon: CreditCard, label: "Financeiro", path: "/finance", featureKey: "finance" },
+  { icon: Globe, label: "Página Pública", path: "/public-page", featureKey: "public-page" },
+  { icon: Package, label: "Produtos", path: "/products", featureKey: "products" },
+  { icon: Ticket, label: "Cupons", path: "/coupons", featureKey: "coupons" },
+  { icon: BarChart3, label: "Relatórios", path: "/reports", featureKey: "reports" },
+  { icon: Star, label: "Avaliações", path: "/reviews", featureKey: "reviews" },
+  { icon: Settings, label: "Configurações", path: "/settings", featureKey: "settings" },
 ];
 
-const salonOnlyItems = [
-  { icon: UserPlus, label: "Equipe", path: "/team" },
-  { icon: QrCode, label: "Pagamento", path: "/payment-settings" },
-  { icon: FileBarChart, label: "Comissões", path: "/commission-report" },
-  { icon: Activity, label: "Desempenho", path: "/team-performance" },
+const salonOnlyItems: { icon: any; label: string; path: string; featureKey: FeatureKey }[] = [
+  { icon: UserPlus, label: "Equipe", path: "/team", featureKey: "team" },
+  { icon: QrCode, label: "Pagamento", path: "/payment-settings", featureKey: "payment-settings" },
+  { icon: FileBarChart, label: "Comissões", path: "/commission-report", featureKey: "commission-report" },
+  { icon: Activity, label: "Desempenho", path: "/team-performance", featureKey: "team-performance" },
 ];
 
-// Bottom nav items for mobile (4 items)
 const mobileNavItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
   { icon: CalendarDays, label: "Agenda", path: "/bookings" },
@@ -66,11 +68,14 @@ interface SidebarProps {
 
 const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
   const [expanded, setExpanded] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [upgradeFeature, setUpgradeFeature] = useState<{ name: string; featureKey: FeatureKey } | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { data: isAdmin } = useIsAdmin();
   const { data: professional } = useProfessional();
+  const { isLocked, requiredPlan } = useFeatureAccess();
 
   const isSalon = professional?.account_type === "salon";
   const displayName = professional?.business_name || professional?.name || "Gende";
@@ -79,8 +84,20 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
     ? [...baseNavItems.slice(0, 4), ...salonOnlyItems, ...baseNavItems.slice(4)]
     : baseNavItems;
 
+  const handleLockedClick = (label: string, featureKey: FeatureKey) => {
+    setUpgradeFeature({ name: label, featureKey });
+    setUpgradeOpen(true);
+  };
+
   return (
     <>
+      <UpgradeModal
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        requiredPlan={upgradeFeature ? requiredPlan(upgradeFeature.featureKey) : null}
+        featureName={upgradeFeature?.name}
+      />
+
       {/* Mobile bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 flex items-center justify-around h-16 md:hidden safe-area-bottom">
         {mobileNavItems.map((item) => {
@@ -100,7 +117,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
         })}
       </nav>
 
-      {/* Mobile drawer - slides from left */}
+      {/* Mobile drawer */}
       {mobileOpen && (
         <div className="fixed inset-0 z-[60] md:hidden">
           <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm animate-overlay-in" onClick={() => setMobileOpen(false)} />
@@ -117,6 +134,25 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
             <nav className="flex-1 space-y-1">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.path;
+                const locked = isLocked(item.featureKey);
+
+                if (locked) {
+                  return (
+                    <button
+                      key={item.path}
+                      onClick={() => {
+                        setMobileOpen(false);
+                        handleLockedClick(item.label, item.featureKey);
+                      }}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground/50 cursor-pointer"
+                    >
+                      <item.icon size={18} />
+                      <span className="text-sm font-medium">{item.label}</span>
+                      <Lock size={12} className="ml-auto text-muted-foreground/40" />
+                    </button>
+                  );
+                }
+
                 return (
                   <Link
                     key={item.path}
@@ -180,6 +216,26 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
         <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
+            const locked = isLocked(item.featureKey);
+
+            if (locked) {
+              return (
+                <button
+                  key={item.path}
+                  onClick={() => handleLockedClick(item.label, item.featureKey)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg w-full text-sidebar-foreground/30 cursor-pointer hover:bg-sidebar-accent/20 transition-all duration-200 group"
+                >
+                  <item.icon size={18} className="text-sidebar-foreground/25" />
+                  {expanded && (
+                    <>
+                      <span className="text-sm font-medium">{item.label}</span>
+                      <Lock size={11} className="ml-auto text-sidebar-foreground/20" />
+                    </>
+                  )}
+                </button>
+              );
+            }
+
             return (
               <Link
                 key={item.path}

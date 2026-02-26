@@ -954,8 +954,10 @@ const SubscriptionSection = () => {
   const { data: subscription, isLoading } = useSubscription();
   const [loadingPortal, setLoadingPortal] = useState(false);
   const [loadingCheckout, setLoadingCheckout] = useState<string | null>(null);
+  const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
 
-  const currentPlan = subscription?.plan_id || "free";
+  const currentPlan = subscription?.plan_id || "none";
+  const normalizedPlan = currentPlan === "free" ? "none" : currentPlan === "starter" ? "essencial" : currentPlan === "pro" ? "enterprise" : currentPlan;
 
   const handleCheckout = async (priceId: string) => {
     setLoadingCheckout(priceId);
@@ -989,9 +991,35 @@ const SubscriptionSection = () => {
     <div className="space-y-6">
       <SectionHeader icon={CreditCard} title="Assinatura" />
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Billing toggle */}
+      <div className="flex items-center justify-center gap-2">
+        <button
+          onClick={() => setBilling("monthly")}
+          className={cn(
+            "text-xs px-5 py-2 rounded-xl font-medium transition-all",
+            billing === "monthly" ? "gradient-accent text-accent-foreground" : "bg-muted text-muted-foreground"
+          )}
+        >
+          Mensal
+        </button>
+        <button
+          onClick={() => setBilling("annual")}
+          className={cn(
+            "text-xs px-5 py-2 rounded-xl font-medium transition-all flex items-center gap-1.5",
+            billing === "annual" ? "gradient-accent text-accent-foreground" : "bg-muted text-muted-foreground"
+          )}
+        >
+          Anual <span className="text-[9px] bg-accent/20 px-1.5 py-0.5 rounded-full">2 meses grátis</span>
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {(Object.entries(STRIPE_PLANS) as [string, typeof STRIPE_PLANS[keyof typeof STRIPE_PLANS]][]).map(([id, plan]) => {
-          const isCurrent = id === currentPlan;
+          const isCurrent = id === normalizedPlan;
+          const price = billing === "annual" ? plan.priceAnnual : plan.priceMonthly;
+          const period = billing === "annual" ? "/ano" : "/mês";
+          const priceId = billing === "annual" ? plan.priceIdAnnual : plan.priceId;
+
           return (
             <div
               key={id}
@@ -1008,7 +1036,12 @@ const SubscriptionSection = () => {
                   </span>
                 )}
               </div>
-              <p className="text-2xl font-bold text-foreground">{plan.price}<span className="text-xs text-muted-foreground font-normal">/mês</span></p>
+              <p className="text-2xl font-bold text-foreground">{price}<span className="text-xs text-muted-foreground font-normal">{period}</span></p>
+              {billing === "annual" && (
+                <p className="text-[10px] text-muted-foreground -mt-2">
+                  <span className="line-through">{id === "essencial" ? "R$ 598,80" : "R$ 1.198,80"}</span>
+                </p>
+              )}
               <ul className="space-y-1.5">
                 {plan.features.map((f, i) => (
                   <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
@@ -1017,13 +1050,13 @@ const SubscriptionSection = () => {
                   </li>
                 ))}
               </ul>
-              {!isCurrent && plan.priceId && (
+              {!isCurrent && priceId && (
                 <button
-                  onClick={() => handleCheckout(plan.priceId!)}
-                  disabled={loadingCheckout === plan.priceId}
+                  onClick={() => handleCheckout(priceId)}
+                  disabled={loadingCheckout === priceId}
                   className="w-full py-2 rounded-xl gradient-accent text-accent-foreground text-xs font-semibold hover-lift disabled:opacity-50"
                 >
-                  {loadingCheckout === plan.priceId ? <Loader2 className="w-4 h-4 mx-auto animate-spin" /> : "Assinar"}
+                  {loadingCheckout === priceId ? <Loader2 className="w-4 h-4 mx-auto animate-spin" /> : "Assinar"}
                 </button>
               )}
             </div>
@@ -1031,7 +1064,7 @@ const SubscriptionSection = () => {
         })}
       </div>
 
-      {currentPlan !== "free" && (
+      {normalizedPlan !== "none" && (
         <div className="glass-card rounded-2xl p-5 flex items-center justify-between">
           <div>
             <p className="text-sm font-semibold text-foreground">Gerenciar assinatura</p>
