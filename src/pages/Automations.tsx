@@ -9,6 +9,8 @@ const triggerLabels: Record<string, string> = {
   reminder_24h: "24h antes",
   reminder_3h: "3h antes",
   post_service: "Após conclusão",
+  post_sale_review: "24h após conclusão",
+  maintenance_reminder: "Manutenção próxima",
   reactivation_30d: "30 dias inativo",
 };
 
@@ -16,7 +18,9 @@ const triggerDescriptions: Record<string, string> = {
   booking_created: "Enviada automaticamente após um novo agendamento",
   reminder_24h: "Lembrete enviado 24 horas antes do horário",
   reminder_3h: "Lembrete enviado 3 horas antes do horário",
-  post_service: "Agradecimento e solicitação de avaliação",
+  post_service: "Agradecimento após conclusão do serviço",
+  post_sale_review: "Pedido de avaliação 24h após o serviço — avaliação vai para o profissional/funcionário que atendeu",
+  maintenance_reminder: "Lembrete quando a manutenção do serviço está próxima",
   reactivation_30d: "Enviada para clientes inativos há 30 dias",
 };
 

@@ -188,7 +188,7 @@ serve(async (req) => {
         for (const contact of contacts) {
           const finalMessage = replaceVars(message, {
             nome: contact.client_name || "Cliente",
-            link: prof?.slug ? `gende.io/${prof.slug}` : "",
+            link: prof?.slug ? `https://gende.io/${prof.slug}` : "",
             negocio: prof?.business_name || prof?.name || "",
           });
 

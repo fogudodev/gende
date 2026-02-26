@@ -15,7 +15,7 @@ import type { Tables } from "@/integrations/supabase/types";
 
 type Service = Tables<"services">;
 
-const defaultForm = { name: "", duration_minutes: 30, price: 0, category: "Geral", active: true, description: "" };
+const defaultForm = { name: "", duration_minutes: 30, price: 0, category: "Geral", active: true, description: "", maintenance_interval_days: 0 };
 
 const Services = () => {
   const { data: services, isLoading } = useServices();
@@ -34,7 +34,7 @@ const Services = () => {
   const openCreate = () => { setEditing(null); setForm(defaultForm); setDialogOpen(true); };
   const openEdit = (s: Service) => {
     setEditing(s);
-    setForm({ name: s.name, duration_minutes: s.duration_minutes, price: Number(s.price), category: s.category || "Geral", active: s.active, description: s.description || "" });
+    setForm({ name: s.name, duration_minutes: s.duration_minutes, price: Number(s.price), category: s.category || "Geral", active: s.active, description: s.description || "", maintenance_interval_days: (s as any).maintenance_interval_days || 0 });
     setDialogOpen(true);
   };
 
@@ -216,6 +216,7 @@ const Services = () => {
             </div>
             <div><Label>Categoria</Label><Input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} /></div>
             <div><Label>Descrição</Label><Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} /></div>
+            <div><Label>Intervalo de Manutenção (dias)</Label><Input type="number" min={0} value={form.maintenance_interval_days} onChange={e => setForm(f => ({ ...f, maintenance_interval_days: +e.target.value }))} placeholder="0 = sem manutenção" /><p className="text-xs text-muted-foreground mt-1">Defina para receber lembrete automático de retorno</p></div>
             <div className="flex items-center gap-3">
               <Switch checked={form.active} onCheckedChange={v => setForm(f => ({ ...f, active: v }))} />
               <Label>Ativo</Label>
