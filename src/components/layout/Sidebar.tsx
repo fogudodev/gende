@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useAdmin";
+import { useProfessional } from "@/hooks/useProfessional";
 import {
   LayoutDashboard,
   Scissors,
@@ -16,10 +17,11 @@ import {
   ShieldCheck,
   Menu,
   X,
+  UserPlus,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 
-const navItems = [
+const baseNavItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
   { icon: CalendarDays, label: "Agendamentos", path: "/bookings" },
   { icon: Scissors, label: "Serviços", path: "/services" },
@@ -29,6 +31,10 @@ const navItems = [
   { icon: Globe, label: "Página Pública", path: "/public-page" },
   { icon: BarChart3, label: "Relatórios", path: "/reports" },
   { icon: Settings, label: "Configurações", path: "/settings" },
+];
+
+const salonOnlyItems = [
+  { icon: UserPlus, label: "Equipe", path: "/team" },
 ];
 
 // Bottom nav items for mobile (4 items)
@@ -50,6 +56,12 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { data: isAdmin } = useIsAdmin();
+  const { data: professional } = useProfessional();
+
+  const isSalon = professional?.account_type === "salon";
+  const navItems = isSalon
+    ? [...baseNavItems.slice(0, 4), ...salonOnlyItems, ...baseNavItems.slice(4)]
+    : baseNavItems;
 
   return (
     <>

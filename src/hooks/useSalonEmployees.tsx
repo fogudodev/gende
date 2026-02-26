@@ -44,7 +44,7 @@ export const useCreateSalonEmployee = () => {
   const { data: professional } = useProfessional();
 
   return useMutation({
-    mutationFn: async (employee: Omit<SalonEmployee, "id" | "salon_id" | "user_id" | "created_at" | "updated_at">) => {
+    mutationFn: async (employee: { name: string; email?: string; phone?: string; specialty?: string; commission_percentage?: number; is_active?: boolean; has_login?: boolean }) => {
       const { data, error } = await supabase
         .from("salon_employees")
         .insert({ ...employee, salon_id: professional!.id })
