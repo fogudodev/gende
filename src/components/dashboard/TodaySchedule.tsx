@@ -1,25 +1,28 @@
 import { motion } from "framer-motion";
-import { Clock } from "lucide-react";
+import { Clock, Loader2 } from "lucide-react";
+import { useBookings } from "@/hooks/useBookings";
+import { format } from "date-fns";
 
-const appointments = [
-  { time: "09:00", client: "Ana Silva", service: "Corte + Escova", status: "confirmed" },
-  { time: "10:30", client: "Maria Santos", service: "Coloração", status: "confirmed" },
-  { time: "13:00", client: "Julia Oliveira", service: "Manicure + Pedicure", status: "pending" },
-  { time: "14:30", client: "Carla Lima", service: "Hidratação", status: "confirmed" },
-  { time: "16:00", client: "Beatriz Costa", service: "Corte Masculino", status: "pending" },
-];
-
-const statusStyles = {
+const statusStyles: Record<string, string> = {
   confirmed: "bg-success/10 text-success",
   pending: "bg-warning/10 text-warning",
+  completed: "bg-accent/10 text-accent",
+  cancelled: "bg-destructive/10 text-destructive",
 };
 
-const statusLabels = {
+const statusLabels: Record<string, string> = {
   confirmed: "Confirmado",
   pending: "Pendente",
+  completed: "Concluído",
+  cancelled: "Cancelado",
+  no_show: "Faltou",
 };
 
 const TodaySchedule = () => {
+  const { data: bookings, isLoading } = useBookings(new Date());
+
+  const upcoming = (bookings || []).filter(b => b.status !== "cancelled");
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -30,34 +33,38 @@ const TodaySchedule = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold text-foreground">Agenda de Hoje</h3>
-          <p className="text-sm text-muted-foreground">{appointments.length} agendamentos</p>
+          <p className="text-sm text-muted-foreground">{upcoming.length} agendamentos</p>
         </div>
         <Clock size={18} className="text-muted-foreground" />
       </div>
-      <div className="space-y-3">
-        {appointments.map((apt, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: 0.5 + i * 0.08 }}
-            className="flex items-center gap-4 p-3 rounded-xl hover:bg-muted/30 transition-colors group"
-          >
-            <span className="text-sm font-semibold text-accent min-w-[48px]">{apt.time}</span>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">{apt.client}</p>
-              <p className="text-xs text-muted-foreground truncate">{apt.service}</p>
-            </div>
-            <span
-              className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                statusStyles[apt.status as keyof typeof statusStyles]
-              }`}
+      {isLoading ? (
+        <div className="flex justify-center py-8"><Loader2 className="animate-spin text-muted-foreground" size={24} /></div>
+      ) : !upcoming.length ? (
+        <p className="text-sm text-muted-foreground text-center py-8">Nenhum agendamento hoje</p>
+      ) : (
+        <div className="space-y-3">
+          {upcoming.map((apt, i) => (
+            <motion.div
+              key={apt.id}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: 0.5 + i * 0.08 }}
+              className="flex items-center gap-4 p-3 rounded-xl hover:bg-muted/30 transition-colors group"
             >
-              {statusLabels[apt.status as keyof typeof statusLabels]}
-            </span>
-          </motion.div>
-        ))}
-      </div>
+              <span className="text-sm font-semibold text-accent min-w-[48px]">
+                {format(new Date(apt.start_time), "HH:mm")}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{apt.client_name || apt.clients?.name || "—"}</p>
+                <p className="text-xs text-muted-foreground truncate">{apt.services?.name || "—"}</p>
+              </div>
+              <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusStyles[apt.status] || "bg-muted text-muted-foreground"}`}>
+                {statusLabels[apt.status] || apt.status}
+              </span>
+            </motion.div>
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 };
