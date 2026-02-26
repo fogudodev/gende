@@ -1,7 +1,8 @@
 import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion } from "framer-motion";
-import { Plus, Search, Phone, Mail, CalendarDays, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Search, Phone, Mail, CalendarDays, Pencil, Trash2, Loader2, Download, Upload } from "lucide-react";
+import { exportToCSV, importCSVFile } from "@/lib/csv-utils";
 import { useClients, useCreateClient, useUpdateClient, useDeleteClient } from "@/hooks/useClients";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -72,10 +73,60 @@ const Clients = () => {
             className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all"
           />
         </div>
-        <button onClick={openCreate} className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl gradient-primary text-primary-foreground text-sm font-semibold hover-lift shrink-0">
-          <Plus size={16} />
-          Novo Cliente
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => {
+              if (!clients?.length) return;
+              exportToCSV(clients.map(c => ({
+                nome: c.name,
+                telefone: c.phone || "",
+                email: c.email || "",
+                notas: c.notes || "",
+                cadastro: format(new Date(c.created_at), "dd/MM/yyyy"),
+              })), "clientes", [
+                { key: "nome", label: "Nome" },
+                { key: "telefone", label: "Telefone" },
+                { key: "email", label: "Email" },
+                { key: "notas", label: "Notas" },
+                { key: "cadastro", label: "Cadastro" },
+              ]);
+            }}
+            className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-muted/50 text-muted-foreground text-sm font-medium hover:bg-muted transition-colors"
+            title="Exportar CSV"
+          >
+            <Download size={16} />
+          </button>
+          <button
+            onClick={async () => {
+              try {
+                const rows = await importCSVFile();
+                let count = 0;
+                for (const row of rows) {
+                  const name = row["Nome"] || row["nome"] || "";
+                  if (!name) continue;
+                  await createClient.mutateAsync({
+                    name,
+                    phone: row["Telefone"] || row["telefone"] || "",
+                    email: row["Email"] || row["email"] || "",
+                    notes: row["Notas"] || row["notas"] || "",
+                  });
+                  count++;
+                }
+                toast.success(`${count} cliente(s) importado(s)!`);
+              } catch (e: any) {
+                toast.error(e.message || "Erro ao importar");
+              }
+            }}
+            className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-muted/50 text-muted-foreground text-sm font-medium hover:bg-muted transition-colors"
+            title="Importar CSV"
+          >
+            <Upload size={16} />
+          </button>
+          <button onClick={openCreate} className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl gradient-primary text-primary-foreground text-sm font-semibold hover-lift shrink-0">
+            <Plus size={16} />
+            Novo Cliente
+          </button>
+        </div>
       </div>
 
       {isLoading ? (

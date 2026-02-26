@@ -3,7 +3,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion } from "framer-motion";
 import {
   Plus, ChevronLeft, ChevronRight, Loader2, Clock, User, Scissors,
-  Trash2, Phone, CalendarDays, CalendarRange, List, Ban, Coins,
+  Trash2, Phone, CalendarDays, CalendarRange, List, Ban, Coins, Download, Upload,
 } from "lucide-react";
 import {
   useBookings, useBookingsWeek, useBookingsMonth,
@@ -27,6 +27,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { exportToCSV, importCSVFile } from "@/lib/csv-utils";
+import { format as fnsFormat } from "date-fns";
 
 type ViewMode = "day" | "week" | "month";
 
@@ -244,6 +246,70 @@ const Bookings = () => {
             className="px-3 py-2 rounded-xl bg-muted/50 text-muted-foreground text-xs font-medium hover:bg-muted transition-colors"
           >
             Hoje
+          </button>
+          <button
+            onClick={() => {
+              const allBookings = currentBookings || [];
+              exportToCSV(allBookings.map(b => ({
+                cliente: b.client_name || "",
+                telefone: b.client_phone || "",
+                servico: b.services?.name || "",
+                inicio: b.start_time,
+                fim: b.end_time,
+                status: b.status,
+                preco: b.price,
+                notas: b.notes || "",
+              })), `agendamentos-${format(selectedDate, "yyyy-MM-dd")}`, [
+                { key: "cliente", label: "Cliente" },
+                { key: "telefone", label: "Telefone" },
+                { key: "servico", label: "Serviço" },
+                { key: "inicio", label: "Início" },
+                { key: "fim", label: "Fim" },
+                { key: "status", label: "Status" },
+                { key: "preco", label: "Preço" },
+                { key: "notas", label: "Notas" },
+              ]);
+            }}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-muted/50 text-muted-foreground text-xs font-medium hover:bg-muted transition-colors"
+            title="Exportar CSV"
+          >
+            <Download size={14} />
+          </button>
+          <button
+            onClick={async () => {
+              try {
+                const rows = await importCSVFile();
+                let count = 0;
+                for (const row of rows) {
+                  const serviceName = row["Serviço"] || row["servico"] || "";
+                  const svc = activeServices.find(s => s.name.toLowerCase() === serviceName.toLowerCase());
+                  if (!svc) continue;
+                  const startTime = row["Início"] || row["inicio"] || "";
+                  if (!startTime) continue;
+                  const start = new Date(startTime);
+                  const end = new Date(start.getTime() + svc.duration_minutes * 60000);
+                  await createBooking.mutateAsync({
+                    service_id: svc.id,
+                    start_time: start.toISOString(),
+                    end_time: end.toISOString(),
+                    client_name: row["Cliente"] || row["cliente"] || "Importado",
+                    client_phone: row["Telefone"] || row["telefone"] || "",
+                    notes: row["Notas"] || row["notas"] || "",
+                    status: (row["Status"] || row["status"] || "confirmed") as any,
+                    price: svc.price,
+                    duration_minutes: svc.duration_minutes,
+                  });
+                  count++;
+                }
+                toast.success(`${count} agendamento(s) importado(s)!`);
+              } catch (e: any) {
+                toast.error(e.message || "Erro ao importar");
+              }
+            }}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-muted/50 text-muted-foreground text-xs font-medium hover:bg-muted transition-colors"
+            title="Importar CSV"
+          >
+            <Upload size={14} />
           </button>
           <button
             onClick={() => openCreate()}
