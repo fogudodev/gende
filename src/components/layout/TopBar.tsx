@@ -1,5 +1,6 @@
 import { Bell, Search, Sun, Moon, Menu } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useProfessional } from "@/hooks/useProfessional";
 
 interface TopBarProps {
   title: string;
@@ -9,6 +10,7 @@ interface TopBarProps {
 
 const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
   const { theme, setTheme } = useTheme();
+  const { data: professional } = useProfessional();
 
   return (
     <header className="h-14 md:h-[64px] border-b border-border px-4 md:px-6 flex items-center justify-between bg-background/80 backdrop-blur-xl sticky top-0 z-40">
@@ -51,9 +53,13 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
           <Bell size={16} className="text-muted-foreground" />
           <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
         </button>
-        <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-primary-foreground text-xs font-semibold shadow-lg stat-glow">
-          A
-        </div>
+        {professional?.avatar_url ? (
+          <img src={professional.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover shadow-lg" />
+        ) : (
+          <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-primary-foreground text-xs font-semibold shadow-lg stat-glow">
+            {(professional?.name || "U")[0].toUpperCase()}
+          </div>
+        )}
       </div>
     </header>
   );

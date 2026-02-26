@@ -71,6 +71,8 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
   const { data: professional } = useProfessional();
 
   const isSalon = professional?.account_type === "salon";
+  const displayName = professional?.business_name || professional?.name || "Gende";
+  const displayLogo = professional?.logo_url || logo;
   const navItems = isSalon
     ? [...baseNavItems.slice(0, 4), ...salonOnlyItems, ...baseNavItems.slice(4)]
     : baseNavItems;
@@ -103,8 +105,8 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
           <div className="absolute left-0 top-0 h-full w-72 bg-card/95 backdrop-blur-xl border-r border-border p-4 flex flex-col animate-slide-in-left shadow-2xl">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
-                <img src={logo} alt="Glow" className="w-8 h-8 rounded-lg" />
-                <span className="font-bold text-foreground">glow</span>
+                <img src={displayLogo} alt={displayName} className="w-8 h-8 rounded-lg object-cover" />
+                <span className="font-bold text-foreground">{displayName}</span>
               </div>
               <button onClick={() => setMobileOpen(false)} className="p-1 text-muted-foreground">
                 <X size={20} />
@@ -167,9 +169,9 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
         onMouseLeave={() => setExpanded(false)}
       >
         <div className="flex items-center gap-3 px-4 h-[64px] border-b border-sidebar-border">
-          <img src={logo} alt="Glow" className="w-9 h-9 rounded-xl" />
+          <img src={displayLogo} alt={displayName} className="w-9 h-9 rounded-xl object-cover" />
           {expanded && (
-            <span className="text-lg font-bold text-sidebar-foreground tracking-tight">glow</span>
+            <span className="text-lg font-bold text-sidebar-foreground tracking-tight">{displayName}</span>
           )}
         </div>
 
