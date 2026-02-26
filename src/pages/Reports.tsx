@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion } from "framer-motion";
-import { BarChart3, TrendingUp, Users, Scissors, Calendar, DollarSign, Loader2, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { BarChart3, TrendingUp, Users, Scissors, Calendar, DollarSign, Loader2, ArrowUpRight, ArrowDownRight, Download } from "lucide-react";
 import { useBookings } from "@/hooks/useBookings";
 import { useClients } from "@/hooks/useClients";
 import { useServices } from "@/hooks/useServices";
@@ -23,8 +23,51 @@ const Reports = () => {
   const { data: services } = useServices();
   const { data: expenses } = useExpenses();
   const [tab, setTab] = useState<Tab>("revenue");
+  const [exporting, setExporting] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
 
   const isLoading = loadingBookings;
+
+  const handleExportPDF = useCallback(async () => {
+    if (!reportRef.current) return;
+    setExporting(true);
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+      const { jsPDF } = await import("jspdf");
+      const element = reportRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        backgroundColor: "#09090B",
+        useCORS: true,
+        logging: false,
+      });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      let heightLeft = pdfHeight;
+      let position = 0;
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - pdfHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
+        heightLeft -= pageHeight;
+      }
+
+      const tabLabel = tab === "revenue" ? "Receita" : tab === "conversion" ? "Conversao" : tab === "retention" ? "Retencao" : "Servicos";
+      pdf.save(`Relatorio_${tabLabel}_${new Date().toISOString().split("T")[0]}.pdf`);
+    } catch (err) {
+      console.error("PDF export error:", err);
+    } finally {
+      setExporting(false);
+    }
+  }, [tab]);
 
   // === REVENUE DATA ===
   const revenueData = useMemo(() => {
@@ -152,31 +195,41 @@ const Reports = () => {
 
   return (
     <DashboardLayout title="Relatórios" subtitle="Análises e métricas do negócio">
-      <div className="flex gap-2 mb-6 flex-wrap">
-        {tabs.map(t => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all",
-              tab === t.id ? "gradient-accent text-accent-foreground" : "glass-card text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <t.icon size={16} />
-            {t.label}
-          </button>
-        ))}
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <div className="flex gap-2 flex-wrap">
+          {tabs.map(t => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all",
+                tab === t.id ? "gradient-accent text-accent-foreground" : "glass-card text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <t.icon size={16} />
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={handleExportPDF}
+          disabled={isLoading || exporting}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl glass-card text-sm font-medium text-muted-foreground hover:text-foreground transition-all disabled:opacity-50"
+        >
+          {exporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+          Exportar PDF
+        </button>
       </div>
 
       {isLoading ? (
         <div className="flex justify-center py-20"><Loader2 className="animate-spin text-muted-foreground" size={32} /></div>
       ) : (
-        <>
+        <div ref={reportRef}>
           {tab === "revenue" && <RevenueTab data={revenueData} />}
           {tab === "conversion" && <ConversionTab data={conversionData} />}
           {tab === "retention" && <RetentionTab data={retentionData} />}
           {tab === "services" && <ServicesTab data={servicesData} />}
-        </>
+        </div>
       )}
     </DashboardLayout>
   );
