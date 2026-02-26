@@ -85,7 +85,9 @@ export const getAvailableSlots = (
   serviceDurationMinutes: number,
   startHour = 7,
   endHour = 21,
-  intervalMinutes = 10
+  intervalMinutes = 10,
+  blockedTimes: any[] = [],
+  slotDate?: Date
 ) => {
   const slots: string[] = [];
 
@@ -105,17 +107,50 @@ export const getAvailableSlots = (
     const slotStartMin = sh * 60 + sm;
     const slotEndMin = slotStartMin + serviceDurationMinutes;
 
+    // Check against bookings
     for (const booking of activeBookings) {
       const bStart = new Date(booking.start_time);
       const bEnd = new Date(booking.end_time);
       const bStartMin = bStart.getHours() * 60 + bStart.getMinutes();
       const bEndMin = bEnd.getHours() * 60 + bEnd.getMinutes() + BUFFER_MINUTES;
 
-      // Check overlap: slot [slotStart, slotEnd) vs blocked [bStartMin, bEndMin)
       if (slotStartMin < bEndMin && slotEndMin > bStartMin) {
         return false;
       }
     }
+
+    // Check against blocked times (ausências)
+    for (const bt of blockedTimes || []) {
+      const btStart = new Date(bt.start_time);
+      const btEnd = new Date(bt.end_time);
+
+      // If slotDate is provided, check if blocked time overlaps this date
+      if (slotDate) {
+        const dayStart = new Date(slotDate);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(slotDate);
+        dayEnd.setHours(23, 59, 59, 999);
+
+        // Skip if blocked time doesn't overlap this day at all
+        if (btEnd <= dayStart || btStart >= dayEnd) continue;
+
+        // Full-day block: if blocked period spans the entire day
+        if (btStart <= dayStart && btEnd >= dayEnd) return false;
+      }
+
+      const btStartMin = btStart.getHours() * 60 + btStart.getMinutes();
+      const btEndMin = btEnd.getHours() * 60 + btEnd.getMinutes();
+
+      // For multi-day blocks that start before this day, block from 00:00
+      const effectiveStartMin = slotDate && btStart < slotDate ? 0 : btStartMin;
+      // For multi-day blocks that end after this day, block until 24:00
+      const effectiveEndMin = slotDate && btEnd > new Date(slotDate.getFullYear(), slotDate.getMonth(), slotDate.getDate(), 23, 59) ? 24 * 60 : btEndMin;
+
+      if (slotStartMin < effectiveEndMin && slotEndMin > effectiveStartMin) {
+        return false;
+      }
+    }
+
     return true;
   });
 };
