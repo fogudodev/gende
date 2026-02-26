@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import {
   LayoutDashboard,
   Scissors,
@@ -12,6 +13,7 @@ import {
   ChevronRight,
   Globe,
   BarChart3,
+  LogOut,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 
@@ -30,6 +32,8 @@ const navItems = [
 const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
 
   return (
     <aside
@@ -76,13 +80,22 @@ const Sidebar = () => {
         })}
       </nav>
 
-      {/* Collapse toggle */}
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        className="flex items-center justify-center h-12 border-t border-sidebar-border text-sidebar-foreground/40 hover:text-sidebar-foreground transition-colors"
-      >
-        {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-      </button>
+      {/* Bottom actions */}
+      <div className="border-t border-sidebar-border">
+        <button
+          onClick={async () => { await signOut(); navigate("/auth"); }}
+          className="flex items-center gap-3 w-full px-6 py-3 text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors"
+        >
+          <LogOut size={18} />
+          {!collapsed && <span className="text-sm">Sair</span>}
+        </button>
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="flex items-center justify-center w-full h-10 text-sidebar-foreground/40 hover:text-sidebar-foreground transition-colors"
+        >
+          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+        </button>
+      </div>
     </aside>
   );
 };
