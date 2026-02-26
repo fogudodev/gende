@@ -11,6 +11,7 @@ import {
   getAvailableSlots,
 } from "@/hooks/useBookings";
 import { useServices } from "@/hooks/useServices";
+import { useBlockedTimes } from "@/hooks/useBlockedTimes";
 import {
   format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths,
   setHours, setMinutes, startOfWeek, eachDayOfInterval, endOfWeek,
@@ -65,6 +66,7 @@ const Bookings = () => {
   const { data: weekBookings, isLoading: weekLoading } = useBookingsWeek(selectedDate);
   const { data: monthBookings, isLoading: monthLoading } = useBookingsMonth(selectedDate);
   const { data: services } = useServices();
+  const { data: blockedTimes } = useBlockedTimes();
   const createBooking = useCreateBooking();
   const updateBooking = useUpdateBooking();
   const deleteBooking = useDeleteBooking();
@@ -84,11 +86,10 @@ const Bookings = () => {
   // Available time slots considering existing bookings + 10min buffer
   const availableSlots = useMemo(() => {
     if (!selectedService || !dayBookings) return [];
-    // Get bookings for the form date
     const bookingsForDate = (viewMode === "day" ? dayBookings : (weekBookings || monthBookings || []))
       ?.filter(b => isSameDay(new Date(b.start_time), formDate)) || [];
-    return getAvailableSlots(bookingsForDate, selectedService.duration_minutes);
-  }, [selectedService, dayBookings, weekBookings, monthBookings, formDate, viewMode]);
+    return getAvailableSlots(bookingsForDate, selectedService.duration_minutes, 7, 21, 10, blockedTimes || [], formDate);
+  }, [selectedService, dayBookings, weekBookings, monthBookings, formDate, viewMode, blockedTimes]);
 
   const resetForm = () => {
     setFormService("");
