@@ -1,88 +1,77 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion } from "framer-motion";
-import { MessageCircle, Zap, Clock, CheckCircle2, XCircle, ToggleLeft, ToggleRight, Send } from "lucide-react";
+import { MessageCircle, Zap, Clock, CheckCircle2, Send, ToggleLeft, ToggleRight, Loader2 } from "lucide-react";
+import { useWhatsAppInstance, useWhatsAppAutomations, useToggleAutomation, useWhatsAppLogs } from "@/hooks/useWhatsApp";
+import { toast } from "sonner";
 
-const automations = [
-  {
-    name: "Confirmação de Agendamento",
-    description: "Enviada automaticamente após um novo agendamento",
-    trigger: "Novo booking",
-    status: true,
-    sent: 342,
-    delivered: 338,
-  },
-  {
-    name: "Lembrete 24h",
-    description: "Lembrete enviado 24 horas antes do horário",
-    trigger: "24h antes",
-    status: true,
-    sent: 289,
-    delivered: 285,
-  },
-  {
-    name: "Lembrete 3h",
-    description: "Lembrete enviado 3 horas antes do horário",
-    trigger: "3h antes",
-    status: true,
-    sent: 275,
-    delivered: 271,
-  },
-  {
-    name: "Pós Atendimento",
-    description: "Agradecimento e solicitação de avaliação",
-    trigger: "Após conclusão",
-    status: false,
-    sent: 156,
-    delivered: 150,
-  },
-  {
-    name: "Reativação de Cliente",
-    description: "Enviada para clientes inativos há 30 dias",
-    trigger: "30 dias inativo",
-    status: false,
-    sent: 45,
-    delivered: 40,
-  },
-];
+const triggerLabels: Record<string, string> = {
+  booking_created: "Novo booking",
+  reminder_24h: "24h antes",
+  reminder_3h: "3h antes",
+  post_service: "Após conclusão",
+  reactivation_30d: "30 dias inativo",
+};
+
+const triggerDescriptions: Record<string, string> = {
+  booking_created: "Enviada automaticamente após um novo agendamento",
+  reminder_24h: "Lembrete enviado 24 horas antes do horário",
+  reminder_3h: "Lembrete enviado 3 horas antes do horário",
+  post_service: "Agradecimento e solicitação de avaliação",
+  reactivation_30d: "Enviada para clientes inativos há 30 dias",
+};
 
 const Automations = () => {
+  const { data: instance, isLoading: loadingInstance } = useWhatsAppInstance();
+  const { data: automations, isLoading: loadingAuto } = useWhatsAppAutomations();
+  const { data: logs } = useWhatsAppLogs();
+  const toggleAutomation = useToggleAutomation();
+
+  const isLoading = loadingInstance || loadingAuto;
+
+  const handleToggle = async (id: string, currentState: boolean) => {
+    try {
+      await toggleAutomation.mutateAsync({ id, is_active: !currentState });
+      toast.success(!currentState ? "Automação ativada" : "Automação desativada");
+    } catch { toast.error("Erro ao alterar automação"); }
+  };
+
+  const totalSent = (logs || []).filter(l => l.status === "sent" || l.status === "delivered").length;
+  const totalDelivered = (logs || []).filter(l => l.status === "delivered").length;
+  const deliveryRate = totalSent > 0 ? ((totalDelivered / totalSent) * 100).toFixed(1) : "0";
+
   return (
     <DashboardLayout title="Automações WhatsApp" subtitle="Configure mensagens automáticas">
       {/* Connection Status */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-card rounded-2xl p-6 mb-8 flex items-center justify-between"
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-2xl p-6 mb-8 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center">
-            <MessageCircle size={22} className="text-success" />
+          <div className={`w-12 h-12 rounded-xl ${instance?.status === "connected" ? "bg-success/10" : "bg-warning/10"} flex items-center justify-center`}>
+            <MessageCircle size={22} className={instance?.status === "connected" ? "text-success" : "text-warning"} />
           </div>
           <div>
-            <h3 className="font-semibold text-foreground">WhatsApp Conectado</h3>
-            <p className="text-sm text-muted-foreground">+55 11 99999-0000 • Ativo</p>
+            <h3 className="font-semibold text-foreground">
+              {instance?.status === "connected" ? "WhatsApp Conectado" : instance ? "WhatsApp Desconectado" : "WhatsApp não configurado"}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {instance?.phone_number ? `${instance.phone_number} • ${instance.status}` : "Configure nas configurações"}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-success animate-pulse" />
-          <span className="text-sm font-medium text-success">Online</span>
+          <span className={`w-2.5 h-2.5 rounded-full ${instance?.status === "connected" ? "bg-success animate-pulse" : "bg-muted-foreground"}`} />
+          <span className={`text-sm font-medium ${instance?.status === "connected" ? "text-success" : "text-muted-foreground"}`}>
+            {instance?.status === "connected" ? "Online" : "Offline"}
+          </span>
         </div>
       </motion.div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
         {[
-          { label: "Mensagens Enviadas", value: "1.107", icon: Send },
-          { label: "Taxa de Entrega", value: "97.2%", icon: CheckCircle2 },
-          { label: "Respostas Recebidas", value: "423", icon: MessageCircle },
+          { label: "Mensagens Enviadas", value: String(totalSent), icon: Send },
+          { label: "Taxa de Entrega", value: `${deliveryRate}%`, icon: CheckCircle2 },
+          { label: "Total de Logs", value: String((logs || []).length), icon: MessageCircle },
         ].map((stat, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 + i * 0.05 }}
-            className="glass-card rounded-2xl p-5 flex items-center gap-4"
-          >
+          <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.05 }} className="glass-card rounded-2xl p-5 flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
               <stat.icon size={18} className="text-accent" />
             </div>
@@ -95,45 +84,38 @@ const Automations = () => {
       </div>
 
       {/* Automations List */}
-      <div className="space-y-4">
-        {automations.map((auto, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 + i * 0.06 }}
-            className="glass-card rounded-2xl p-5 flex items-center justify-between hover-lift"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl gradient-accent/10 bg-accent/10 flex items-center justify-center">
-                <Zap size={18} className="text-accent" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground">{auto.name}</h3>
-                <p className="text-sm text-muted-foreground">{auto.description}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-8">
-              <div className="text-right">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Clock size={12} />
-                  {auto.trigger}
+      {isLoading ? (
+        <div className="flex justify-center py-12"><Loader2 className="animate-spin text-muted-foreground" size={28} /></div>
+      ) : !automations?.length ? (
+        <p className="text-center text-muted-foreground py-12">Nenhuma automação configurada</p>
+      ) : (
+        <div className="space-y-4">
+          {automations.map((auto, i) => (
+            <motion.div key={auto.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.06 }} className="glass-card rounded-2xl p-5 flex items-center justify-between hover-lift">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                  <Zap size={18} className="text-accent" />
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {auto.sent} enviadas • {auto.delivered} entregues
-                </p>
+                <div>
+                  <h3 className="font-semibold text-foreground">{triggerDescriptions[auto.trigger_type]?.split(" ")[0] || auto.trigger_type}</h3>
+                  <p className="text-sm text-muted-foreground">{triggerDescriptions[auto.trigger_type] || ""}</p>
+                </div>
               </div>
-              <button className="text-muted-foreground hover:text-foreground transition-colors">
-                {auto.status ? (
-                  <ToggleRight size={28} className="text-success" />
-                ) : (
-                  <ToggleLeft size={28} />
-                )}
-              </button>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+              <div className="flex items-center gap-8">
+                <div className="text-right">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Clock size={12} />
+                    {triggerLabels[auto.trigger_type] || auto.trigger_type}
+                  </div>
+                </div>
+                <button onClick={() => handleToggle(auto.id, auto.is_active)} className="text-muted-foreground hover:text-foreground transition-colors">
+                  {auto.is_active ? <ToggleRight size={28} className="text-success" /> : <ToggleLeft size={28} />}
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
     </DashboardLayout>
   );
 };
