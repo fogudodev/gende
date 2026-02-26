@@ -1,26 +1,6 @@
-import { Plus } from "lucide-react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-
-const fakeBookings = {
-  pending: [
-    { id: "1", name: "Mariana Silva", initials: "MS" },
-    { id: "2", name: "João Oliveira", initials: "JO" },
-    { id: "3", name: "Carla Souza", initials: "CS" },
-  ],
-  confirmed: [
-    { id: "4", name: "Juliana Costa", initials: "JC" },
-    { id: "5", name: "Pedro Santos", initials: "PS" },
-    { id: "6", name: "Ana Lima", initials: "AL" },
-    { id: "7", name: "Bruno Dias", initials: "BD" },
-  ],
-  completed: [
-    { id: "8", name: "Fernanda Gomes", initials: "FG" },
-    { id: "9", name: "Rafael Rocha", initials: "RR" },
-  ],
-  cancelled: [
-    { id: "10", name: "Patrícia Martins", initials: "PM" },
-  ],
-};
+import { useBookings } from "@/hooks/useBookings";
 
 const stages = [
   { key: "pending", title: "Pendentes", description: "Aguardando confirmação", color: "bg-warning" },
@@ -29,7 +9,52 @@ const stages = [
   { key: "cancelled", title: "Cancelados", description: "Foram cancelados", color: "bg-destructive" },
 ];
 
+const getInitials = (name: string) => {
+  const parts = name.trim().split(" ");
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+};
+
 const CustomerJourney = () => {
+  const { data: bookings } = useBookings();
+  const [selectedClient, setSelectedClient] = useState<string | null>(null);
+
+  // Group bookings by status
+  const grouped = useMemo(() => {
+    const map: Record<string, any[]> = { pending: [], confirmed: [], completed: [], cancelled: [] };
+    (bookings || []).forEach(b => {
+      const status = b.status as string;
+      if (map[status]) map[status].push(b);
+      // no_show goes to cancelled
+      if (status === "no_show" && map.cancelled) map.cancelled.push(b);
+    });
+    return map;
+  }, [bookings]);
+
+  // Unique clients from bookings
+  const uniqueClients = useMemo(() => {
+    const seen = new Map<string, { name: string; id: string }>();
+    (bookings || []).forEach(b => {
+      const name = b.client_name || b.clients?.name || "";
+      if (name && !seen.has(name)) {
+        seen.set(name, { name, id: b.id });
+      }
+    });
+    return Array.from(seen.values());
+  }, [bookings]);
+
+  // Filter by selected client
+  const filteredGrouped = useMemo(() => {
+    if (!selectedClient) return grouped;
+    const filtered: Record<string, any[]> = {};
+    for (const key in grouped) {
+      filtered[key] = grouped[key].filter(b =>
+        (b.client_name || b.clients?.name || "") === selectedClient
+      );
+    }
+    return filtered;
+  }, [grouped, selectedClient]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -42,29 +67,38 @@ const CustomerJourney = () => {
           Jornada do Cliente
         </h2>
         <p className="text-muted-foreground text-xs md:text-sm">
-          Acompanhe o progresso dos agendamentos
+          {selectedClient ? `Filtrando: ${selectedClient}` : "Acompanhe o progresso dos agendamentos"}
         </p>
       </div>
 
-      {/* Avatars row */}
+      {/* Client avatars row */}
       <div className="mb-5 flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
-        {Object.values(fakeBookings).flat().slice(0, 8).map((b, i) => (
-          <div
-            key={b.id}
-            className="flex-shrink-0 w-9 h-9 md:w-10 md:h-10 rounded-full gradient-primary flex items-center justify-center text-white text-[10px] md:text-xs font-semibold border-2 border-background shadow-md hover:scale-110 transition-transform cursor-pointer"
-          >
-            {b.initials}
-          </div>
-        ))}
-        <button className="flex-shrink-0 w-9 h-9 md:w-10 md:h-10 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center hover:border-primary/50 transition-colors">
-          <Plus className="w-4 h-4 text-muted-foreground" />
-        </button>
+        {uniqueClients.map((client) => {
+          const isSelected = selectedClient === client.name;
+          return (
+            <button
+              key={client.id}
+              onClick={() => setSelectedClient(isSelected ? null : client.name)}
+              className={`flex-shrink-0 w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center text-[10px] md:text-xs font-semibold border-2 shadow-md hover:scale-110 transition-all cursor-pointer ${
+                isSelected
+                  ? "gradient-primary text-white border-primary ring-2 ring-primary/30 scale-110"
+                  : "gradient-primary text-white border-background"
+              }`}
+              title={client.name}
+            >
+              {getInitials(client.name)}
+            </button>
+          );
+        })}
+        {uniqueClients.length === 0 && (
+          <p className="text-xs text-muted-foreground">Nenhum agendamento encontrado</p>
+        )}
       </div>
 
       {/* Kanban stages */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {stages.map((stage) => {
-          const items = fakeBookings[stage.key as keyof typeof fakeBookings];
+          const items = filteredGrouped[stage.key] || [];
           return (
             <div key={stage.key} className="flex flex-col">
               <div className="mb-2.5 flex items-center gap-2">
@@ -76,29 +110,37 @@ const CustomerJourney = () => {
               </div>
 
               <div className="space-y-2 flex-1">
-                {items.map((booking) => (
-                  <div
-                    key={booking.id}
-                    className="bg-secondary/40 rounded-xl p-3 hover:bg-secondary/70 transition-all duration-200 border border-border/50 hover:border-primary/20 cursor-pointer group"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div
-                        className={`w-7 h-7 md:w-8 md:h-8 rounded-full ${stage.color}/20 flex items-center justify-center text-[10px] md:text-xs font-bold flex-shrink-0`}
-                        style={{ color: `hsl(var(--${stage.color.replace("bg-", "")}))` }}
-                      >
-                        {booking.initials}
-                      </div>
-                      <p className="text-xs md:text-sm font-medium text-foreground truncate">
-                        {booking.name}
-                      </p>
-                    </div>
+                {items.length === 0 ? (
+                  <div className="bg-secondary/20 rounded-xl p-3 text-center">
+                    <p className="text-[10px] text-muted-foreground">Nenhum</p>
                   </div>
-                ))}
-
-                <button className="w-full py-2 rounded-xl border border-dashed border-border hover:border-primary/30 text-muted-foreground hover:text-primary transition-colors text-[10px] md:text-xs flex items-center justify-center gap-1">
-                  <Plus className="w-3 h-3" />
-                  Adicionar
-                </button>
+                ) : (
+                  items.map((booking) => {
+                    const name = booking.client_name || booking.clients?.name || "—";
+                    return (
+                      <div
+                        key={booking.id}
+                        className="bg-secondary/40 rounded-xl p-3 hover:bg-secondary/70 transition-all duration-200 border border-border/50 hover:border-primary/20 cursor-pointer group"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div
+                            className={`w-7 h-7 md:w-8 md:h-8 rounded-full ${stage.color}/20 flex items-center justify-center text-[10px] md:text-xs font-bold flex-shrink-0`}
+                          >
+                            {getInitials(name)}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs md:text-sm font-medium text-foreground truncate">
+                              {name}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground truncate">
+                              {booking.services?.name || "—"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
           );
