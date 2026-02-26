@@ -26,6 +26,7 @@ import {
   Activity,
   Megaphone,
   Lock,
+  Shield,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 import UpgradeModal from "./UpgradeModal";
@@ -258,13 +259,9 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
               <div className="my-2 border-t border-sidebar-border" />
               <Link
                 to="/admin"
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
-                  location.pathname === "/admin"
-                    ? "bg-sidebar-accent text-sidebar-primary"
-                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                }`}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
               >
-                <ShieldCheck size={18} className={location.pathname === "/admin" ? "text-sidebar-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground"} />
+                <Shield size={18} className="text-sidebar-foreground/50 group-hover:text-sidebar-foreground" />
                 {expanded && <span className="text-sm font-medium">Admin Master</span>}
               </Link>
             </>
