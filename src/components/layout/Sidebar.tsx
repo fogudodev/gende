@@ -37,6 +37,8 @@ const baseNavItems = [
   { icon: Megaphone, label: "Campanhas", path: "/campaigns" },
   { icon: CreditCard, label: "Financeiro", path: "/finance" },
   { icon: Globe, label: "Página Pública", path: "/public-page" },
+  { icon: Package, label: "Produtos", path: "/products" },
+  { icon: Ticket, label: "Cupons", path: "/coupons" },
   { icon: BarChart3, label: "Relatórios", path: "/reports" },
   { icon: Star, label: "Avaliações", path: "/reviews" },
   { icon: Settings, label: "Configurações", path: "/settings" },
@@ -44,8 +46,6 @@ const baseNavItems = [
 
 const salonOnlyItems = [
   { icon: UserPlus, label: "Equipe", path: "/team" },
-  { icon: Package, label: "Produtos", path: "/products" },
-  { icon: Ticket, label: "Cupons", path: "/coupons" },
   { icon: QrCode, label: "Pagamento", path: "/payment-settings" },
   { icon: FileBarChart, label: "Comissões", path: "/commission-report" },
   { icon: Activity, label: "Desempenho", path: "/team-performance" },
