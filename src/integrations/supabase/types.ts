@@ -508,9 +508,13 @@ export type Database = {
         Row: {
           account_type: Database["public"]["Enums"]["account_type"]
           avatar_url: string | null
+          bg_color: string | null
           bio: string | null
           blocked_reason: string | null
           business_name: string | null
+          component_color: string | null
+          confirmation_message: string | null
+          cover_url: string | null
           created_at: string
           email: string
           feature_public_page: boolean
@@ -522,17 +526,26 @@ export type Database = {
           name: string
           phone: string | null
           primary_color: string | null
+          reminder_message: string | null
           slug: string | null
           stripe_customer_id: string | null
+          text_color: string | null
           updated_at: string
           user_id: string
+          welcome_description: string | null
+          welcome_message: string | null
+          welcome_title: string | null
         }
         Insert: {
           account_type?: Database["public"]["Enums"]["account_type"]
           avatar_url?: string | null
+          bg_color?: string | null
           bio?: string | null
           blocked_reason?: string | null
           business_name?: string | null
+          component_color?: string | null
+          confirmation_message?: string | null
+          cover_url?: string | null
           created_at?: string
           email?: string
           feature_public_page?: boolean
@@ -544,17 +557,26 @@ export type Database = {
           name?: string
           phone?: string | null
           primary_color?: string | null
+          reminder_message?: string | null
           slug?: string | null
           stripe_customer_id?: string | null
+          text_color?: string | null
           updated_at?: string
           user_id: string
+          welcome_description?: string | null
+          welcome_message?: string | null
+          welcome_title?: string | null
         }
         Update: {
           account_type?: Database["public"]["Enums"]["account_type"]
           avatar_url?: string | null
+          bg_color?: string | null
           bio?: string | null
           blocked_reason?: string | null
           business_name?: string | null
+          component_color?: string | null
+          confirmation_message?: string | null
+          cover_url?: string | null
           created_at?: string
           email?: string
           feature_public_page?: boolean
@@ -566,10 +588,15 @@ export type Database = {
           name?: string
           phone?: string | null
           primary_color?: string | null
+          reminder_message?: string | null
           slug?: string | null
           stripe_customer_id?: string | null
+          text_color?: string | null
           updated_at?: string
           user_id?: string
+          welcome_description?: string | null
+          welcome_message?: string | null
+          welcome_title?: string | null
         }
         Relationships: []
       }
