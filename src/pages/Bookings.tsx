@@ -525,27 +525,27 @@ const DayView = ({ bookings, blockedTimes, selectedDate, onSlotClick, onBookingC
                         key={booking.id}
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className={`rounded-xl p-3 border-l-[3px] ${statusColors[booking.status] || "border-l-muted bg-muted/5"} cursor-pointer hover:shadow-md transition-all mb-1`}
+                        className={`rounded-xl p-2.5 sm:p-3 border-l-[3px] ${statusColors[booking.status] || "border-l-muted bg-muted/5"} cursor-pointer hover:shadow-md transition-all mb-1 overflow-hidden`}
                         onClick={() => onBookingClick(booking)}
                       >
-                          <div className="flex items-center justify-between gap-2">
-                          <div className="min-w-0">
+                        <div className="flex items-start justify-between gap-1.5">
+                          <div className="min-w-0 flex-1">
                             <p className="text-sm font-semibold text-foreground truncate">
                               {booking.client_name || booking.clients?.name || "—"}
                             </p>
-                            <p className="text-xs text-muted-foreground truncate">
+                            <p className="text-[11px] text-muted-foreground truncate">
                               {startTime}-{endTime} • {booking.services?.name || "—"} • R$ {Number(booking.price).toFixed(2)}
                             </p>
                           </div>
-                          <div className="flex items-center gap-1.5 shrink-0">
+                          <div className="flex flex-col items-end gap-1 shrink-0">
+                            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap ${statusBadgeClass[booking.status] || "bg-gray-500/20 text-gray-400"}`}>
+                              {statusLabels[booking.status]}
+                            </span>
                             {commissionBookingIds.has(booking.id) && (
-                              <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-accent/15 text-accent" title="Comissão gerada">
+                              <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-accent/15 text-accent whitespace-nowrap" title="Comissão gerada">
                                 <Coins size={10} /> Comissão
                               </span>
                             )}
-                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${statusBadgeClass[booking.status] || "bg-gray-500/20 text-gray-400"}`}>
-                              {statusLabels[booking.status]}
-                            </span>
                           </div>
                         </div>
                       </motion.div>
