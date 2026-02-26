@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsAdmin } from "@/hooks/useAdmin";
 import {
   LayoutDashboard,
   Scissors,
@@ -14,6 +15,7 @@ import {
   Globe,
   BarChart3,
   LogOut,
+  ShieldCheck,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 
@@ -34,6 +36,7 @@ const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { data: isAdmin } = useIsAdmin();
 
   return (
     <aside
@@ -78,6 +81,32 @@ const Sidebar = () => {
             </Link>
           );
         })}
+
+        {/* Admin link */}
+        {isAdmin && (
+          <>
+            <div className="my-2 border-t border-sidebar-border" />
+            <Link
+              to="/admin"
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
+                location.pathname === "/admin"
+                  ? "bg-sidebar-accent text-sidebar-primary"
+                  : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+              }`}
+            >
+              <ShieldCheck
+                size={20}
+                className={location.pathname === "/admin" ? "text-sidebar-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground"}
+              />
+              {!collapsed && (
+                <span className="text-sm font-medium">Admin Master</span>
+              )}
+              {location.pathname === "/admin" && !collapsed && (
+                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-sidebar-primary" />
+              )}
+            </Link>
+          </>
+        )}
       </nav>
 
       {/* Bottom actions */}

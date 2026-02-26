@@ -16,6 +16,7 @@ import Settings from "./pages/Settings";
 import Reports from "./pages/Reports";
 import PublicPage from "./pages/PublicPage";
 import PublicBooking from "./pages/PublicBooking";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
             <Route path="/public-page" element={<ProtectedRoute><PublicPage /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
             <Route path="/p/:slug" element={<PublicBooking />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
