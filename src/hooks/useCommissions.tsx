@@ -69,13 +69,41 @@ export const useCreateCommission = () => {
 
 export const usePayCommission = () => {
   const qc = useQueryClient();
+  const { data: professional } = useProfessional();
   return useMutation({
     mutationFn: async (ids: string[]) => {
+      // Get commissions to calculate totals per employee
+      const { data: comms, error: fetchErr } = await supabase
+        .from("commissions")
+        .select("employee_id, commission_amount")
+        .in("id", ids);
+      if (fetchErr) throw fetchErr;
+
       const { error } = await supabase
         .from("commissions")
         .update({ status: "paid", paid_at: new Date().toISOString() })
         .in("id", ids);
       if (error) throw error;
+
+      // Aggregate totals per employee for notification
+      if (comms && professional?.id) {
+        const empTotals: Record<string, number> = {};
+        comms.forEach((c) => {
+          empTotals[c.employee_id] = (empTotals[c.employee_id] || 0) + c.commission_amount;
+        });
+
+        // Send payment notifications (fire-and-forget, one per employee)
+        for (const [empId, total] of Object.entries(empTotals)) {
+          supabase.functions.invoke("whatsapp", {
+            body: {
+              action: "notify-commission-paid",
+              professionalId: professional.id,
+              employeeIds: [empId],
+              totalAmount: total,
+            },
+          }).catch(() => {});
+        }
+      }
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["commissions"] }); toast.success("Comissões pagas!"); },
     onError: (e: Error) => toast.error("Erro: " + e.message),

@@ -22,6 +22,7 @@ import {
   Ticket,
   QrCode,
   Star,
+  FileBarChart,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 
@@ -43,6 +44,7 @@ const salonOnlyItems = [
   { icon: Package, label: "Produtos", path: "/products" },
   { icon: Ticket, label: "Cupons", path: "/coupons" },
   { icon: QrCode, label: "Pagamento", path: "/payment-settings" },
+  { icon: FileBarChart, label: "Comissões", path: "/commission-report" },
 ];
 
 // Bottom nav items for mobile (4 items)

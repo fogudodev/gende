@@ -159,6 +159,60 @@ serve(async (req) => {
         break;
       }
 
+      case "notify-commission-paid": {
+        const { professionalId, employeeIds, totalAmount } = params;
+
+        // Get WhatsApp instance
+        const { data: inst } = await supabase
+          .from("whatsapp_instances")
+          .select("instance_name, status")
+          .eq("professional_id", professionalId)
+          .single();
+
+        if (!inst || inst.status !== "connected") {
+          result = { success: false, error: "WhatsApp não conectado" };
+          break;
+        }
+
+        const results: Array<{ employeeId: string; success: boolean }> = [];
+
+        for (const empId of employeeIds) {
+          const { data: employee } = await supabase
+            .from("salon_employees")
+            .select("name, phone")
+            .eq("id", empId)
+            .single();
+
+          if (!employee?.phone) {
+            results.push({ employeeId: empId, success: false });
+            continue;
+          }
+
+          const msg = `✅ *Comissão paga!*\n\nOlá ${employee.name}! Suas comissões foram pagas.\n\n💵 Valor total: *R$ ${Number(totalAmount).toFixed(2)}*\n\nObrigado pelo excelente trabalho! 🎉`;
+
+          const sendRes = await fetch(`${EVOLUTION_URL()}/message/sendText/${inst.instance_name}`, {
+            method: "POST",
+            headers: getEvolutionHeaders(),
+            body: JSON.stringify({ number: employee.phone, text: msg }),
+          });
+          const sendData = await sendRes.json();
+
+          await supabase.from("whatsapp_logs").insert({
+            professional_id: professionalId,
+            recipient_phone: employee.phone,
+            message_content: msg,
+            status: sendRes.ok ? "sent" : "failed",
+            sent_at: sendRes.ok ? new Date().toISOString() : null,
+            error_message: sendRes.ok ? null : JSON.stringify(sendData),
+          });
+
+          results.push({ employeeId: empId, success: sendRes.ok });
+        }
+
+        result = { success: true, results };
+        break;
+      }
+
       case "webhook": {
         // Handle incoming WhatsApp messages
         const { data: webhookData } = params;

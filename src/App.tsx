@@ -23,6 +23,7 @@ import Products from "./pages/Products";
 import Coupons from "./pages/Coupons";
 import PaymentSettings from "./pages/PaymentSettings";
 import Reviews from "./pages/Reviews";
+import CommissionReport from "./pages/CommissionReport";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ const App = () => (
               <Route path="/coupons" element={<ProtectedRoute><Coupons /></ProtectedRoute>} />
               <Route path="/payment-settings" element={<ProtectedRoute><PaymentSettings /></ProtectedRoute>} />
               <Route path="/reviews" element={<ProtectedRoute><Reviews /></ProtectedRoute>} />
+              <Route path="/commission-report" element={<ProtectedRoute><CommissionReport /></ProtectedRoute>} />
               <Route path="/p/:slug" element={<PublicBooking />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
