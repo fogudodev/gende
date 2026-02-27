@@ -102,6 +102,7 @@ const PublicBooking = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [paymentConfig, setPaymentConfig] = useState<PaymentConfig | null>(null);
   const [employeeServiceMap, setEmployeeServiceMap] = useState<{employee_id: string; service_id: string}[]>([]);
+  const [reviewStats, setReviewStats] = useState<{avg: number; count: number} | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -191,7 +192,7 @@ const PublicBooking = () => {
       if (error || !prof) { setNotFound(true); setLoading(false); return; }
       setProfessional(prof);
 
-      const [svcRes, empRes, payRes, empSvcRes] = await Promise.all([
+      const [svcRes, empRes, payRes, empSvcRes, reviewRes] = await Promise.all([
         supabase.from("services").select("*").eq("professional_id", prof.id).eq("active", true).order("sort_order", { ascending: true }),
         prof.account_type === "salon"
           ? supabase.from("salon_employees").select("id, name, specialty, avatar_url").eq("salon_id", prof.id).eq("is_active", true).order("name")
@@ -200,11 +201,16 @@ const PublicBooking = () => {
         prof.account_type === "salon"
           ? supabase.from("employee_services").select("employee_id, service_id")
           : Promise.resolve({ data: [] }),
+        supabase.from("reviews").select("rating").eq("professional_id", prof.id).eq("is_public", true),
       ]);
       setServices(svcRes.data || []);
       setEmployees(empRes.data || []);
       setPaymentConfig(payRes.data || null);
       setEmployeeServiceMap(empSvcRes.data || []);
+      if (reviewRes.data && reviewRes.data.length > 0) {
+        const avg = reviewRes.data.reduce((sum, r) => sum + r.rating, 0) / reviewRes.data.length;
+        setReviewStats({ avg: Math.round(avg * 10) / 10, count: reviewRes.data.length });
+      }
       setLoading(false);
     };
     fetchData();
@@ -417,7 +423,14 @@ const PublicBooking = () => {
             )}
             <div>
               <p className="font-bold text-sm" style={{ color: textPrimary }}>{professional.business_name || professional.name}</p>
-              {professional.bio && <p className="text-xs" style={{ color: textMuted }}>{professional.bio.slice(0, 40)}</p>}
+              {professional.bio && <p className="text-xs" style={{ color: accent }}>{professional.bio.slice(0, 40)}</p>}
+              {reviewStats && (
+                <div className="flex items-center gap-1 mt-0.5">
+                  <Star size={11} className="fill-amber-400 text-amber-400" />
+                  <span className="text-[11px] font-semibold" style={{ color: textPrimary }}>{reviewStats.avg}</span>
+                  <span className="text-[10px]" style={{ color: textMuted }}>({reviewStats.count} avaliações)</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -460,6 +473,7 @@ const PublicBooking = () => {
               clientPhone={clientPhone}
               setClientPhone={setClientPhone}
               onNext={goNext}
+              reviewStats={reviewStats}
             />
           )}
 
@@ -646,8 +660,8 @@ const PublicBooking = () => {
 /* ═══════════════════════════════════════════════════ */
 
 /* ── Step 1: Client Info ── */
-function Step1ClientInfo({ professional, accent, clientName, setClientName, clientPhone, setClientPhone, onNext }: {
-  professional: Professional; accent: string; clientName: string; setClientName: (v: string) => void; clientPhone: string; setClientPhone: (v: string) => void; onNext: () => void;
+function Step1ClientInfo({ professional, accent, clientName, setClientName, clientPhone, setClientPhone, onNext, reviewStats }: {
+  professional: Professional; accent: string; clientName: string; setClientName: (v: string) => void; clientPhone: string; setClientPhone: (v: string) => void; onNext: () => void; reviewStats: {avg: number; count: number} | null;
 }) {
   const [errors, setErrors] = useState({ name: "", phone: "" });
   const validate = () => {
@@ -682,7 +696,14 @@ function Step1ClientInfo({ professional, accent, clientName, setClientName, clie
             )}
             <div>
               <span className="text-white font-bold text-lg drop-shadow-md block">{professional.business_name || professional.name}</span>
-              {professional.bio && <span className="text-white/70 text-xs drop-shadow">{professional.bio.slice(0, 50)}</span>}
+              {professional.bio && <span className="text-white/70 text-xs drop-shadow block">{professional.bio.slice(0, 50)}</span>}
+              {reviewStats && (
+                <div className="flex items-center gap-1 mt-0.5">
+                  <Star size={11} className="fill-amber-400 text-amber-400" />
+                  <span className="text-white text-[11px] font-semibold drop-shadow">{reviewStats.avg}</span>
+                  <span className="text-white/60 text-[10px] drop-shadow">({reviewStats.count} avaliações)</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
