@@ -25,10 +25,13 @@ const AdminUsers = () => {
   const [showCreateSupport, setShowCreateSupport] = useState(false);
   const qc = useQueryClient();
 
+  const supportUserIds = new Set((supportUsers || []).map((s: any) => s.user_id));
+
   const filtered = (professionals || []).filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
+    !supportUserIds.has(p.user_id) &&
+    (p.name.toLowerCase().includes(search.toLowerCase()) ||
     p.email.toLowerCase().includes(search.toLowerCase()) ||
-    (p.business_name || "").toLowerCase().includes(search.toLowerCase())
+    (p.business_name || "").toLowerCase().includes(search.toLowerCase()))
   );
 
   const toggleBlock = async (profId: string, currentlyBlocked: boolean) => {
