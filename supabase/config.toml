@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.whatsapp-webhook]
 verify_jwt = false
+
+[functions.conversation-timeout]
+verify_jwt = false

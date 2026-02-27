@@ -63,19 +63,93 @@ serve(async (req) => {
         .insert({ user_id: newUser.user.id, role: "support" });
     }
 
-    // Update phone on professional record
-    if (phone) {
-      const { data: prof } = await supabase
-        .from("professionals")
-        .select("id")
-        .eq("user_id", newUser.user.id)
-        .single();
+    // Update phone on professional record and get professional ID
+    let professionalId: string | null = null;
+    const { data: prof } = await supabase
+      .from("professionals")
+      .select("id")
+      .eq("user_id", newUser.user.id)
+      .single();
 
-      if (prof) {
+    if (prof) {
+      professionalId = prof.id;
+      if (phone) {
         await supabase
           .from("professionals")
           .update({ phone })
           .eq("id", prof.id);
+      }
+    }
+
+    // Auto-create WhatsApp instance with webhook
+    let whatsappInstanceCreated = false;
+    if (professionalId && !isSupport) {
+      try {
+        const evolutionUrl = Deno.env.get("EVOLUTION_API_URL") || "";
+        const evolutionKey = Deno.env.get("EVOLUTION_API_KEY") || "";
+        const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+        
+        if (evolutionUrl && evolutionKey) {
+          const instanceName = `gende_${professionalId.replace(/-/g, "").substring(0, 16)}`;
+          
+          // Create instance
+          const createRes = await fetch(`${evolutionUrl}/instance/create`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", apikey: evolutionKey },
+            body: JSON.stringify({
+              instanceName,
+              integration: "WHATSAPP-BAILEYS",
+              qrcode: true,
+            }),
+          });
+          
+          if (createRes.ok) {
+            // Save instance in DB
+            await supabase.from("whatsapp_instances").upsert({
+              professional_id: professionalId,
+              instance_name: instanceName,
+              instance_id: instanceName,
+              status: "disconnected",
+            }, { onConflict: "professional_id" });
+
+            // Configure webhook
+            const webhookUrl = `${supabaseUrl}/functions/v1/whatsapp-webhook`;
+            await fetch(`${evolutionUrl}/webhook/set/${instanceName}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", apikey: evolutionKey },
+              body: JSON.stringify({
+                url: webhookUrl,
+                webhook_by_events: false,
+                webhook_base64: true,
+                events: [
+                  "MESSAGES_UPSERT",
+                  "CONNECTION_UPDATE",
+                  "QRCODE_UPDATED",
+                ],
+              }),
+            });
+
+            whatsappInstanceCreated = true;
+          }
+        }
+      } catch (instanceErr) {
+        console.error("WhatsApp instance creation error:", instanceErr);
+      }
+    }
+
+    // Create default automations for the professional
+    if (professionalId && !isSupport) {
+      const defaultTriggers = [
+        "booking_created", "reminder_24h", "reminder_3h",
+        "post_service", "post_sale_review", "maintenance_reminder", "reactivation_30d"
+      ];
+      for (const trigger of defaultTriggers) {
+        await supabase.from("whatsapp_automations").insert({
+          professional_id: professionalId,
+          trigger_type: trigger,
+          message_template: "",
+          is_active: trigger === "booking_created" || trigger === "reminder_24h",
+        }).onConflict("professional_id,trigger_type" as any);
       }
     }
 
@@ -129,6 +203,7 @@ serve(async (req) => {
         success: true,
         userId: newUser.user.id,
         whatsappSent,
+        whatsappInstanceCreated,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
