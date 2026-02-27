@@ -3,11 +3,14 @@ import AdminLayout from "@/components/layout/AdminLayout";
 import { useAllWhatsAppLogs } from "@/hooks/useAdmin";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, MessageSquare, Calendar, Zap, Search, Filter } from "lucide-react";
+import { Loader2, MessageSquare, Calendar, Zap, Search, Filter, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
 
 type LogTab = "whatsapp" | "bookings" | "google-calendar";
 
@@ -93,8 +96,18 @@ const AdminLogsPage = () => {
 };
 
 /* ============ WhatsApp Logs ============ */
+const formatErrorMessage = (error: string) => {
+  try {
+    const parsed = JSON.parse(error);
+    return JSON.stringify(parsed, null, 2);
+  } catch {
+    return error;
+  }
+};
+
 const WhatsAppLogsTab = ({ search }: { search: string }) => {
   const { data: logs, isLoading } = useAllWhatsAppLogs(500);
+  const [selectedLog, setSelectedLog] = useState<any | null>(null);
 
   if (isLoading) return <LoadingSkeleton />;
 
@@ -111,44 +124,122 @@ const WhatsAppLogsTab = ({ search }: { search: string }) => {
   });
 
   return (
-    <div className="glass-card rounded-2xl overflow-hidden">
-      <div className="p-4 border-b border-border flex items-center justify-between">
-        <span className="text-sm font-medium text-foreground">{filtered.length} registros</span>
-      </div>
-      <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
-        <table className="w-full text-sm">
-          <thead className="sticky top-0 bg-card z-10">
-            <tr className="border-b border-border">
-              <th className="text-left p-3 text-muted-foreground font-medium">Data</th>
-              <th className="text-left p-3 text-muted-foreground font-medium">Profissional</th>
-              <th className="text-left p-3 text-muted-foreground font-medium">Telefone</th>
-              <th className="text-left p-3 text-muted-foreground font-medium">Status</th>
-              <th className="text-left p-3 text-muted-foreground font-medium">Mensagem</th>
-              <th className="text-left p-3 text-muted-foreground font-medium">Erro</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((log) => (
-              <tr key={log.id} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
-                <td className="p-3 text-muted-foreground text-xs whitespace-nowrap">
-                  {format(new Date(log.created_at), "dd/MM HH:mm", { locale: ptBR })}
-                </td>
-                <td className="p-3 text-foreground text-xs">{(log.professionals as any)?.name || "—"}</td>
-                <td className="p-3 text-muted-foreground text-xs font-mono">{log.recipient_phone}</td>
-                <td className="p-3">
-                  <StatusBadge status={log.status} />
-                </td>
-                <td className="p-3 text-muted-foreground text-xs max-w-[200px] truncate">{log.message_content}</td>
-                <td className="p-3 text-red-400 text-xs max-w-[150px] truncate">{log.error_message || "—"}</td>
+    <>
+      <div className="glass-card rounded-2xl overflow-hidden">
+        <div className="p-4 border-b border-border flex items-center justify-between">
+          <span className="text-sm font-medium text-foreground">{filtered.length} registros</span>
+        </div>
+        <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-card z-10">
+              <tr className="border-b border-border">
+                <th className="text-left p-3 text-muted-foreground font-medium">Data</th>
+                <th className="text-left p-3 text-muted-foreground font-medium">Profissional</th>
+                <th className="text-left p-3 text-muted-foreground font-medium">Telefone</th>
+                <th className="text-left p-3 text-muted-foreground font-medium">Status</th>
+                <th className="text-left p-3 text-muted-foreground font-medium">Mensagem</th>
+                <th className="text-left p-3 text-muted-foreground font-medium">Erro</th>
               </tr>
-            ))}
-            {filtered.length === 0 && (
-              <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Nenhum log encontrado</td></tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.map((log) => (
+                <tr
+                  key={log.id}
+                  onClick={() => setSelectedLog(log)}
+                  className="border-b border-border/30 hover:bg-muted/20 transition-colors cursor-pointer"
+                >
+                  <td className="p-3 text-muted-foreground text-xs whitespace-nowrap">
+                    {format(new Date(log.created_at), "dd/MM HH:mm", { locale: ptBR })}
+                  </td>
+                  <td className="p-3 text-foreground text-xs">{(log.professionals as any)?.name || "—"}</td>
+                  <td className="p-3 text-muted-foreground text-xs font-mono">{log.recipient_phone}</td>
+                  <td className="p-3">
+                    <StatusBadge status={log.status} />
+                  </td>
+                  <td className="p-3 text-muted-foreground text-xs max-w-[200px] truncate">{log.message_content}</td>
+                  <td className="p-3 text-red-400 text-xs max-w-[150px] truncate">{log.error_message || "—"}</td>
+                </tr>
+              ))}
+              {filtered.length === 0 && (
+                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Nenhum log encontrado</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+
+      {/* Detail Modal */}
+      <Dialog open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              Detalhes do Log
+              {selectedLog && <StatusBadge status={selectedLog.status} />}
+            </DialogTitle>
+            <DialogDescription>Informações completas da mensagem</DialogDescription>
+          </DialogHeader>
+
+          {selectedLog && (
+            <div className="space-y-4 text-sm">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-muted-foreground text-xs mb-1">Profissional</p>
+                  <p className="text-foreground font-medium">{(selectedLog.professionals as any)?.name || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs mb-1">Destinatário</p>
+                  <p className="text-foreground font-mono">{selectedLog.recipient_phone}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs mb-1">Data/Hora</p>
+                  <p className="text-foreground">{format(new Date(selectedLog.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs mb-1">Enviado em</p>
+                  <p className="text-foreground">
+                    {selectedLog.sent_at
+                      ? format(new Date(selectedLog.sent_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })
+                      : "—"}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-muted-foreground text-xs mb-1">Mensagem Completa</p>
+                <div className="bg-muted/50 rounded-xl p-3 whitespace-pre-wrap text-foreground text-xs leading-relaxed border border-border">
+                  {selectedLog.message_content}
+                </div>
+              </div>
+
+              {selectedLog.error_message && (
+                <div>
+                  <p className="text-red-400 text-xs mb-1 font-semibold flex items-center gap-1">
+                    <AlertTriangle size={12} /> Erro Completo
+                  </p>
+                  <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-3 text-red-400 text-xs font-mono whitespace-pre-wrap break-all leading-relaxed">
+                    {formatErrorMessage(selectedLog.error_message)}
+                  </div>
+                </div>
+              )}
+
+              {selectedLog.booking_id && (
+                <div>
+                  <p className="text-muted-foreground text-xs mb-1">ID do Agendamento</p>
+                  <p className="text-foreground font-mono text-xs">{selectedLog.booking_id}</p>
+                </div>
+              )}
+
+              {selectedLog.automation_id && (
+                <div>
+                  <p className="text-muted-foreground text-xs mb-1">ID da Automação</p>
+                  <p className="text-foreground font-mono text-xs">{selectedLog.automation_id}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
