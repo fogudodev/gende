@@ -5,74 +5,43 @@ import { useIsAdmin } from "@/hooks/useAdmin";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import {
+  LayoutDashboard,
+  Scissors,
+  Users,
+  MessageCircle,
+  Settings,
+  CreditCard,
+  Globe,
+  BarChart3,
   LogOut,
+  ShieldCheck,
   X,
+  UserPlus,
+  Package,
+  Ticket,
+  QrCode,
+  Star,
+  FileBarChart,
+  Activity,
+  Megaphone,
   Lock,
   Shield,
+  Wallet,
+  Headphones,
+  Bot,
   ChevronDown,
+  MessageSquare,
+  Send,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
+import calendarIcon from "@/assets/icon-calendar.png";
+
+// Wrapper component for the custom calendar icon
+const CalendarIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
+  <img src={calendarIcon} alt="" width={size} height={size} className={`inline-block dark:invert ${className || ''}`} />
+);
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
-
-// Custom icon imports
-import iconDashboard from "@/assets/icons/icon-dashboard.png";
-import iconCalendar from "@/assets/icons/icon-calendar.png";
-import iconScissors from "@/assets/icons/icon-scissors.png";
-import iconUsers from "@/assets/icons/icon-users.png";
-import iconMessage from "@/assets/icons/icon-message.png";
-import iconMegaphone from "@/assets/icons/icon-megaphone.png";
-import iconChat from "@/assets/icons/icon-chat.png";
-import iconWallet from "@/assets/icons/icon-wallet.png";
-import iconHeadphones from "@/assets/icons/icon-headphones.png";
-import iconBot from "@/assets/icons/icon-bot.png";
-import iconCreditcard from "@/assets/icons/icon-creditcard.png";
-import iconGlobe from "@/assets/icons/icon-globe.png";
-import iconPackage from "@/assets/icons/icon-package.png";
-import iconTicket from "@/assets/icons/icon-ticket.png";
-import iconChart from "@/assets/icons/icon-chart.png";
-import iconStar from "@/assets/icons/icon-star.png";
-import iconSettings from "@/assets/icons/icon-settings.png";
-import iconTeam from "@/assets/icons/icon-team.png";
-import iconCommission from "@/assets/icons/icon-commission.png";
-import iconPerformance from "@/assets/icons/icon-performance.png";
-
-// Generic wrapper for custom PNG icons — renders at correct size with gray tint
-const makeIcon = (src: string) => {
-  const IconComponent = ({ size = 18, className }: { size?: number; className?: string }) => (
-    <img
-      src={src}
-      alt=""
-      width={size}
-      height={size}
-      className={`inline-block opacity-60 dark:invert ${className || ''}`}
-      style={{ objectFit: 'contain' }}
-    />
-  );
-  IconComponent.displayName = 'CustomIcon';
-  return IconComponent;
-};
-
-const DashboardIcon = makeIcon(iconDashboard);
-const CalendarIcon = makeIcon(iconCalendar);
-const ScissorsIcon = makeIcon(iconScissors);
-const UsersIcon = makeIcon(iconUsers);
-const MessageIcon = makeIcon(iconMessage);
-const MegaphoneIcon = makeIcon(iconMegaphone);
-const ChatIcon = makeIcon(iconChat);
-const WalletIcon = makeIcon(iconWallet);
-const HeadphonesIcon = makeIcon(iconHeadphones);
-const BotIcon = makeIcon(iconBot);
-const CreditcardIcon = makeIcon(iconCreditcard);
-const GlobeIcon = makeIcon(iconGlobe);
-const PackageIcon = makeIcon(iconPackage);
-const TicketIcon = makeIcon(iconTicket);
-const ChartIcon = makeIcon(iconChart);
-const StarIcon = makeIcon(iconStar);
-const SettingsIcon = makeIcon(iconSettings);
-const TeamIcon = makeIcon(iconTeam);
-const CommissionIcon = makeIcon(iconCommission);
-const PerformanceIcon = makeIcon(iconPerformance);
 
 interface NavItem {
   icon: any;
@@ -92,56 +61,56 @@ interface NavGroup {
 type NavEntry = NavItem & { type?: "item" } | NavGroup;
 
 const standaloneItems: NavItem[] = [
-  { icon: DashboardIcon, label: "Dashboard", path: "/", featureKey: "dashboard" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/", featureKey: "dashboard" },
   { icon: CalendarIcon, label: "Agendamentos", path: "/bookings", featureKey: "bookings" },
-  { icon: ScissorsIcon, label: "Serviços", path: "/services", featureKey: "services" },
-  { icon: UsersIcon, label: "Clientes", path: "/clients", featureKey: "clients" },
+  { icon: Scissors, label: "Serviços", path: "/services", featureKey: "services" },
+  { icon: Users, label: "Clientes", path: "/clients", featureKey: "clients" },
 ];
 
 const whatsappGroup: NavGroup = {
   type: "group",
-  icon: MessageIcon,
+  icon: MessageCircle,
   label: "WhatsApp",
   featureKey: "automations",
   children: [
-    { icon: MessageIcon, label: "Automações", path: "/automations", featureKey: "automations" },
-    { icon: MegaphoneIcon, label: "Campanhas", path: "/campaigns", featureKey: "campaigns" },
+    { icon: MessageCircle, label: "Automações", path: "/automations", featureKey: "automations" },
+    { icon: Megaphone, label: "Campanhas", path: "/campaigns", featureKey: "campaigns" },
   ],
 };
 
 const communicationGroup: NavGroup = {
   type: "group",
-  icon: ChatIcon,
+  icon: MessageSquare,
   label: "Comunicação",
   featureKey: "settings",
   children: [
-    { icon: WalletIcon, label: "Chat Pagamento", path: "/payment-chat", featureKey: "settings" },
-    { icon: HeadphonesIcon, label: "Chat Suporte", path: "/support-chat", featureKey: "settings" },
-    { icon: BotIcon, label: "Assistente IA", path: "/ai-assistant", featureKey: "settings" },
+    { icon: Wallet, label: "Chat Pagamento", path: "/payment-chat", featureKey: "settings" },
+    { icon: Headphones, label: "Chat Suporte", path: "/support-chat", featureKey: "settings" },
+    { icon: Bot, label: "Assistente IA", path: "/ai-assistant", featureKey: "settings" },
   ],
 };
 
 const afterGroupItems: NavItem[] = [
-  { icon: CreditcardIcon, label: "Financeiro", path: "/finance", featureKey: "finance" },
-  { icon: GlobeIcon, label: "Página Pública", path: "/public-page", featureKey: "public-page" },
-  { icon: PackageIcon, label: "Produtos", path: "/products", featureKey: "products" },
-  { icon: TicketIcon, label: "Cupons", path: "/coupons", featureKey: "coupons" },
-  { icon: ChartIcon, label: "Relatórios", path: "/reports", featureKey: "reports" },
-  { icon: StarIcon, label: "Avaliações", path: "/reviews", featureKey: "reviews" },
-  { icon: SettingsIcon, label: "Configurações", path: "/settings", featureKey: "settings" },
+  { icon: CreditCard, label: "Financeiro", path: "/finance", featureKey: "finance" },
+  { icon: Globe, label: "Página Pública", path: "/public-page", featureKey: "public-page" },
+  { icon: Package, label: "Produtos", path: "/products", featureKey: "products" },
+  { icon: Ticket, label: "Cupons", path: "/coupons", featureKey: "coupons" },
+  { icon: BarChart3, label: "Relatórios", path: "/reports", featureKey: "reports" },
+  { icon: Star, label: "Avaliações", path: "/reviews", featureKey: "reviews" },
+  { icon: Settings, label: "Configurações", path: "/settings", featureKey: "settings" },
 ];
 
 const salonOnlyItems: NavItem[] = [
-  { icon: TeamIcon, label: "Equipe", path: "/team", featureKey: "team" },
-  { icon: CommissionIcon, label: "Comissões", path: "/commission-report", featureKey: "commission-report" },
-  { icon: PerformanceIcon, label: "Desempenho", path: "/team-performance", featureKey: "team-performance" },
+  { icon: UserPlus, label: "Equipe", path: "/team", featureKey: "team" },
+  { icon: FileBarChart, label: "Comissões", path: "/commission-report", featureKey: "commission-report" },
+  { icon: Activity, label: "Desempenho", path: "/team-performance", featureKey: "team-performance" },
 ];
 
 const mobileNavItems = [
-  { icon: DashboardIcon, label: "Dashboard", path: "/" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
   { icon: CalendarIcon, label: "Agenda", path: "/bookings" },
-  { icon: UsersIcon, label: "Clientes", path: "/clients" },
-  { icon: CreditcardIcon, label: "Financeiro", path: "/finance" },
+  { icon: Users, label: "Clientes", path: "/clients" },
+  { icon: CreditCard, label: "Financeiro", path: "/finance" },
 ];
 
 interface SidebarProps {
@@ -369,7 +338,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
                         : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                     }`}
                   >
-                    <Shield size={18} />
+                    <ShieldCheck size={18} />
                     <span className="text-sm font-medium">Admin Master</span>
                   </Link>
                 </>
