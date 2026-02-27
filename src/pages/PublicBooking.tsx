@@ -99,6 +99,7 @@ const PublicBooking = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [paymentConfig, setPaymentConfig] = useState<PaymentConfig | null>(null);
+  const [employeeServiceMap, setEmployeeServiceMap] = useState<{employee_id: string; service_id: string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -172,16 +173,20 @@ const PublicBooking = () => {
       if (error || !prof) { setNotFound(true); setLoading(false); return; }
       setProfessional(prof);
 
-      const [svcRes, empRes, payRes] = await Promise.all([
+      const [svcRes, empRes, payRes, empSvcRes] = await Promise.all([
         supabase.from("services").select("*").eq("professional_id", prof.id).eq("active", true).order("sort_order", { ascending: true }),
         prof.account_type === "salon"
           ? supabase.from("salon_employees").select("id, name, specialty, avatar_url").eq("salon_id", prof.id).eq("is_active", true).order("name")
           : Promise.resolve({ data: [] }),
         supabase.from("payment_config").select("pix_key, pix_key_type, pix_beneficiary_name, signal_enabled, signal_type, signal_value, accept_pix").eq("professional_id", prof.id).maybeSingle(),
+        prof.account_type === "salon"
+          ? supabase.from("employee_services").select("employee_id, service_id")
+          : Promise.resolve({ data: [] }),
       ]);
       setServices(svcRes.data || []);
       setEmployees(empRes.data || []);
       setPaymentConfig(payRes.data || null);
+      setEmployeeServiceMap(empSvcRes.data || []);
       setLoading(false);
     };
     fetchData();
@@ -319,7 +324,17 @@ const PublicBooking = () => {
   const today = useMemo(() => new Date(), []);
   const days14 = useMemo(() => Array.from({ length: 14 }, (_, i) => { const d = new Date(today); d.setDate(today.getDate() + i); return d; }), [today]);
 
-  const groupedServices = services.reduce<Record<string, Service[]>>((acc, s) => {
+  // Filter services by selected employee's assigned services (if salon & employee selected & has assignments)
+  const filteredServices = useMemo(() => {
+    if (!isSalon || !selectedEmployee) return services;
+    const employeeAssignments = employeeServiceMap.filter(es => es.employee_id === selectedEmployee.id);
+    // If employee has no assignments, show all services (backwards compatible)
+    if (employeeAssignments.length === 0) return services;
+    const assignedServiceIds = new Set(employeeAssignments.map(es => es.service_id));
+    return services.filter(s => assignedServiceIds.has(s.id));
+  }, [services, selectedEmployee, employeeServiceMap, isSalon]);
+
+  const groupedServices = filteredServices.reduce<Record<string, Service[]>>((acc, s) => {
     const cat = s.category || "Geral";
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(s);
@@ -427,7 +442,7 @@ const PublicBooking = () => {
           {/* ═══ Service Selection ═══ */}
           {step === serviceStep && !confirmed && (
             <Step3Services
-              services={services}
+              services={filteredServices}
               groupedServices={groupedServices}
               selected={selectedService}
               selectedEmployee={selectedEmployee}

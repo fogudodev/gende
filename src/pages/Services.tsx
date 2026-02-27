@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion } from "framer-motion";
-import { Plus, Clock, DollarSign, MoreVertical, Pencil, Trash2, Loader2, Download, Upload } from "lucide-react";
+import { Plus, Clock, DollarSign, MoreVertical, Pencil, Trash2, Loader2, Download, Upload, Users } from "lucide-react";
 import { exportToCSV, importCSVFile } from "@/lib/csv-utils";
 import { toast as sonnerToast } from "sonner";
 import { useServices, useCreateService, useUpdateService, useDeleteService } from "@/hooks/useServices";
+import { useSalonEmployees } from "@/hooks/useSalonEmployees";
+import { useAllEmployeeServices } from "@/hooks/useEmployeeServices";
+import { useProfessional } from "@/hooks/useProfessional";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,9 +22,27 @@ const defaultForm = { name: "", duration_minutes: 30, price: 0, category: "Geral
 
 const Services = () => {
   const { data: services, isLoading } = useServices();
+  const { data: professional } = useProfessional();
+  const { data: employees } = useSalonEmployees();
+  const { data: allEmployeeServices } = useAllEmployeeServices(professional?.id);
+  const isSalon = professional?.account_type === "salon";
   const createService = useCreateService();
   const updateService = useUpdateService();
   const deleteService = useDeleteService();
+
+  // Build a map: serviceId -> employee names
+  const serviceEmployeeMap = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    if (!allEmployeeServices || !employees) return map;
+    for (const es of allEmployeeServices) {
+      const emp = employees.find(e => e.id === es.employee_id);
+      if (emp) {
+        if (!map[es.service_id]) map[es.service_id] = [];
+        map[es.service_id].push(emp.name);
+      }
+    }
+    return map;
+  }, [allEmployeeServices, employees]);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Service | null>(null);
@@ -189,14 +210,26 @@ const Services = () => {
                   <span>R$ {Number(service.price).toFixed(0)}</span>
                 </div>
               </div>
-              <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-between">
-                <span
-                  className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                    service.active ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {service.active ? "Ativo" : "Inativo"}
-                </span>
+              <div className="mt-4 pt-4 border-t border-border/50 flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span
+                    className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                      service.active ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {service.active ? "Ativo" : "Inativo"}
+                  </span>
+                </div>
+                {isSalon && serviceEmployeeMap[service.id] && serviceEmployeeMap[service.id].length > 0 && (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <Users size={12} className="text-muted-foreground flex-shrink-0" />
+                    {serviceEmployeeMap[service.id].map((name) => (
+                      <span key={name} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent/10 text-accent">
+                        {name}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </motion.div>
           ))}
