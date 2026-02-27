@@ -55,7 +55,7 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
           )}
         </div>
       </div>
-      <div className="flex items-center gap-2 md:gap-3">
+      <div className="flex items-center gap-1.5 md:gap-3 shrink-0">
         <div className="relative hidden sm:block">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
@@ -66,7 +66,7 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
         </div>
         <button
           onClick={() => setRenewalOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/10 hover:bg-accent/20 text-accent text-xs font-semibold transition-colors"
+          className="flex items-center gap-1.5 px-2 md:px-3 py-1.5 rounded-lg bg-accent/10 hover:bg-accent/20 text-accent text-xs font-semibold transition-colors"
           title="Gerenciar plano"
         >
           <Crown size={14} />
@@ -76,7 +76,7 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
         </button>
         <button
           onClick={() => navigate("/ai-assistant")}
-          className="p-2 rounded-lg hover:bg-accent/10 transition-colors"
+          className="hidden sm:flex p-2 rounded-lg hover:bg-accent/10 transition-colors"
           aria-label="Assistente IA"
           title="Assistente IA"
         >
@@ -84,7 +84,7 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
         </button>
         <button
           onClick={() => navigate("/support-chat")}
-          className="p-2 rounded-lg hover:bg-secondary/50 transition-colors"
+          className="hidden sm:flex p-2 rounded-lg hover:bg-secondary/50 transition-colors"
           aria-label="Chat de suporte"
           title="Suporte"
         >
