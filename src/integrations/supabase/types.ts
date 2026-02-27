@@ -720,6 +720,54 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_reviews: {
+        Row: {
+          booking_id: string | null
+          client_name: string
+          client_phone: string | null
+          comment: string | null
+          created_at: string
+          id: string
+          professional_id: string
+          rating: number
+        }
+        Insert: {
+          booking_id?: string | null
+          client_name: string
+          client_phone?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          professional_id: string
+          rating?: number
+        }
+        Update: {
+          booking_id?: string | null
+          client_name?: string
+          client_phone?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          professional_id?: string
+          rating?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_reviews_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category: string | null

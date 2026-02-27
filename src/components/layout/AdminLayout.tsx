@@ -20,6 +20,7 @@ import {
   UserCog,
   Headphones,
   Wallet,
+  Star,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 
@@ -38,6 +39,7 @@ const adminNavItems = [
   { icon: Headphones, label: "Chat Suporte", path: "/admin/support-chat" },
   { icon: Wallet, label: "Chat Pagamento", path: "/admin/payment-chat" },
   { icon: FileText, label: "Logs", path: "/admin/logs" },
+  { icon: Star, label: "Avaliações Plataforma", path: "/admin/platform-reviews" },
 ];
 
 const mobileAdminNavItems = [
