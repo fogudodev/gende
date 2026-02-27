@@ -662,31 +662,30 @@ function Step1ClientInfo({ professional, accent, clientName, setClientName, clie
   return (
     <div className="flex flex-col min-h-[calc(100vh-60px)] md:min-h-[calc(860px-60px)]">
       {/* Hero */}
-      <div className="relative">
-        <div className="relative h-56 overflow-hidden">
+      <div className="relative h-56 overflow-visible">
+        <div className="absolute inset-0 overflow-hidden">
           {professional.cover_url ? (
             <img src={professional.cover_url} alt="" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${accent}, ${accent}88)` }} />
           )}
-          <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, transparent 0%, ${accent}22 50%, ${professional.bg_color || "#F8F5FF"} 90%)` }} />
-          <div className="absolute bottom-5 left-5 right-5">
-            <div className="flex items-center gap-3">
-              {professional.logo_url ? (
-                <img src={professional.logo_url} alt="" className="w-11 h-11 rounded-2xl object-cover border-2 border-white/40 shadow-lg" />
-              ) : (
-                <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-white text-base font-bold shadow-lg" style={{ background: `${accent}dd`, backdropFilter: "blur(8px)" }}>
-                  {(professional.business_name || professional.name)?.[0]?.toUpperCase()}
-                </div>
-              )}
-              <div>
-                <span className="text-white font-bold text-lg drop-shadow-md block">{professional.business_name || professional.name}</span>
-                {professional.bio && <span className="text-white/70 text-xs drop-shadow">{professional.bio.slice(0, 50)}</span>}
+          <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, transparent 0%, ${professional.bg_color || "#F8F5FF"}00 30%, ${professional.bg_color || "#F8F5FF"} 100%)` }} />
+        </div>
+        <div className="absolute bottom-5 left-5 right-5 z-10">
+          <div className="flex items-center gap-3">
+            {professional.logo_url ? (
+              <img src={professional.logo_url} alt="" className="w-11 h-11 rounded-2xl object-cover border-2 border-white/40 shadow-lg" />
+            ) : (
+              <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-white text-base font-bold shadow-lg" style={{ background: `${accent}dd`, backdropFilter: "blur(8px)" }}>
+                {(professional.business_name || professional.name)?.[0]?.toUpperCase()}
               </div>
+            )}
+            <div>
+              <span className="text-white font-bold text-lg drop-shadow-md block">{professional.business_name || professional.name}</span>
+              {professional.bio && <span className="text-white/70 text-xs drop-shadow">{professional.bio.slice(0, 50)}</span>}
             </div>
           </div>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-10 pointer-events-none" style={{ background: `linear-gradient(to bottom, transparent, ${professional.bg_color || "#F8F5FF"})`, boxShadow: `0 4px 16px ${professional.bg_color || "#F8F5FF"}` }} />
       </div>
 
       <div className="flex-1 px-5 pt-3 pb-8 flex flex-col">
