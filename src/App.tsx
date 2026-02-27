@@ -59,8 +59,8 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <ImpersonationBanner />
           <BrowserRouter>
+            <ImpersonationBanner />
             <Routes>
               <Route path="/auth" element={<Auth />} />
               
