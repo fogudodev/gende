@@ -40,6 +40,7 @@ import scissorsIcon from "@/assets/icon-scissors.png";
 import clientsIcon from "@/assets/icon-clients.png";
 import teamIcon from "@/assets/icon-team.png";
 import commissionIcon from "@/assets/icon-commission.png";
+import performanceIcon from "@/assets/icon-performance.png";
 
 // Wrapper component for custom icons
 const CalendarIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
@@ -64,6 +65,10 @@ const TeamIcon = ({ size = 18, className }: { size?: number; className?: string 
 
 const CommissionIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
   <img src={commissionIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
+);
+
+const PerformanceIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
+  <img src={performanceIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
 );
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
@@ -128,7 +133,7 @@ const afterGroupItems: NavItem[] = [
 const salonOnlyItems: NavItem[] = [
   { icon: TeamIcon, label: "Equipe", path: "/team", featureKey: "team" },
   { icon: CommissionIcon, label: "Comissões", path: "/commission-report", featureKey: "commission-report" },
-  { icon: Activity, label: "Desempenho", path: "/team-performance", featureKey: "team-performance" },
+  { icon: PerformanceIcon, label: "Desempenho", path: "/team-performance", featureKey: "team-performance" },
 ];
 
 const mobileNavItems = [
