@@ -6,14 +6,18 @@ import { ptBR } from "date-fns/locale";
 import {
   Search, Loader2, CheckCircle2, XCircle, Clock,
   MessageSquare, AlertTriangle, Phone, Filter,
-  Send, RefreshCw,
+  Send,
 } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
 
 const AdminWhatsAppLogs = () => {
   const { data: logs, isLoading } = useAllWhatsAppLogs(500);
   const { data: instances } = useAllWhatsAppInstances();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedLog, setSelectedLog] = useState<any | null>(null);
 
   if (isLoading) {
     return (
@@ -35,7 +39,6 @@ const AdminWhatsAppLogs = () => {
     return matchesSearch && matchesStatus;
   });
 
-  // Stats
   const totalSent = allLogs.filter((l) => l.status === "sent").length;
   const totalFailed = allLogs.filter((l) => l.status === "failed").length;
   const totalQueued = allLogs.filter((l) => l.status === "queued").length;
@@ -46,6 +49,15 @@ const AdminWhatsAppLogs = () => {
     failed: { label: "Falhou", color: "bg-red-500/10 text-red-500", icon: XCircle },
     queued: { label: "Na fila", color: "bg-yellow-500/10 text-yellow-600", icon: Clock },
     delivered: { label: "Entregue", color: "bg-blue-500/10 text-blue-500", icon: Send },
+  };
+
+  const formatErrorMessage = (error: string) => {
+    try {
+      const parsed = JSON.parse(error);
+      return JSON.stringify(parsed, null, 2);
+    } catch {
+      return error;
+    }
   };
 
   return (
@@ -117,7 +129,11 @@ const AdminWhatsAppLogs = () => {
                 const config = statusConfig[log.status] || statusConfig.queued;
                 const StatusIcon = config.icon;
                 return (
-                  <tr key={log.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                  <tr
+                    key={log.id}
+                    onClick={() => setSelectedLog(log)}
+                    className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer"
+                  >
                     <td className="p-4">
                       <span className={cn("inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold", config.color)}>
                         <StatusIcon size={12} />
@@ -131,18 +147,14 @@ const AdminWhatsAppLogs = () => {
                       {log.recipient_phone}
                     </td>
                     <td className="p-4 max-w-[300px]">
-                      <p className="text-foreground text-xs truncate" title={log.message_content}>
-                        {log.message_content}
-                      </p>
+                      <p className="text-foreground text-xs truncate">{log.message_content}</p>
                     </td>
                     <td className="p-4 text-muted-foreground text-xs whitespace-nowrap">
                       {format(new Date(log.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}
                     </td>
                     <td className="p-4 max-w-[200px]">
                       {log.error_message ? (
-                        <p className="text-red-400 text-xs truncate" title={log.error_message}>
-                          {log.error_message}
-                        </p>
+                        <p className="text-red-400 text-xs truncate">{log.error_message}</p>
                       ) : (
                         <span className="text-muted-foreground text-xs">—</span>
                       )}
@@ -161,6 +173,85 @@ const AdminWhatsAppLogs = () => {
         )}
       </div>
       <p className="text-xs text-muted-foreground">{filtered.length} logs encontrados</p>
+
+      {/* Detail Modal */}
+      <Dialog open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              Detalhes do Log
+              {selectedLog && (
+                <span className={cn(
+                  "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold",
+                  statusConfig[selectedLog.status]?.color || "bg-muted text-muted-foreground"
+                )}>
+                  {statusConfig[selectedLog.status]?.label || selectedLog.status}
+                </span>
+              )}
+            </DialogTitle>
+            <DialogDescription>Informações completas da mensagem</DialogDescription>
+          </DialogHeader>
+
+          {selectedLog && (
+            <div className="space-y-4 text-sm">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-muted-foreground text-xs mb-1">Profissional</p>
+                  <p className="text-foreground font-medium">{selectedLog.professionals?.name || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs mb-1">Destinatário</p>
+                  <p className="text-foreground font-mono">{selectedLog.recipient_phone}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs mb-1">Data/Hora</p>
+                  <p className="text-foreground">{format(new Date(selectedLog.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs mb-1">Enviado em</p>
+                  <p className="text-foreground">
+                    {selectedLog.sent_at
+                      ? format(new Date(selectedLog.sent_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })
+                      : "—"}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-muted-foreground text-xs mb-1">Mensagem Completa</p>
+                <div className="bg-muted/50 rounded-xl p-3 whitespace-pre-wrap text-foreground text-xs leading-relaxed border border-border">
+                  {selectedLog.message_content}
+                </div>
+              </div>
+
+              {selectedLog.error_message && (
+                <div>
+                  <p className="text-red-400 text-xs mb-1 font-semibold flex items-center gap-1">
+                    <AlertTriangle size={12} /> Erro Completo
+                  </p>
+                  <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-3 text-red-400 text-xs font-mono whitespace-pre-wrap break-all leading-relaxed">
+                    {formatErrorMessage(selectedLog.error_message)}
+                  </div>
+                </div>
+              )}
+
+              {selectedLog.booking_id && (
+                <div>
+                  <p className="text-muted-foreground text-xs mb-1">ID do Agendamento</p>
+                  <p className="text-foreground font-mono text-xs">{selectedLog.booking_id}</p>
+                </div>
+              )}
+
+              {selectedLog.automation_id && (
+                <div>
+                  <p className="text-muted-foreground text-xs mb-1">ID da Automação</p>
+                  <p className="text-foreground font-mono text-xs">{selectedLog.automation_id}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
