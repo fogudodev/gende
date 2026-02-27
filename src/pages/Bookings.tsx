@@ -68,6 +68,7 @@ const Bookings = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [detailBooking, setDetailBooking] = useState<any>(null);
   const [paymentMethod, setPaymentMethod] = useState("");
+  const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [bookingPayments, setBookingPayments] = useState<any[]>([]);
 
@@ -98,6 +99,7 @@ const Bookings = () => {
   useEffect(() => {
     if (detailBooking?.id) {
       setPaymentMethod("");
+      setPaymentAmount("");
       supabase
         .from("payments")
         .select("id, amount, status, payment_method, created_at")
@@ -121,12 +123,21 @@ const Bookings = () => {
       toast.info("Este agendamento já está totalmente pago.");
       return;
     }
+    const amount = paymentAmount ? parseFloat(paymentAmount) : remaining;
+    if (isNaN(amount) || amount <= 0) {
+      toast.error("Informe um valor válido.");
+      return;
+    }
+    if (amount > remaining) {
+      toast.error(`Valor máximo restante: R$ ${remaining.toFixed(2)}`);
+      return;
+    }
     setPaymentLoading(true);
     try {
       const { error } = await supabase.from("payments").insert({
         professional_id: professional.id,
         booking_id: detailBooking.id,
-        amount: remaining,
+        amount,
         payment_method: paymentMethod,
         status: "completed",
       });
@@ -138,6 +149,7 @@ const Bookings = () => {
         .eq("booking_id", detailBooking.id);
       setBookingPayments(data || []);
       setPaymentMethod("");
+      setPaymentAmount("");
     } catch {
       toast.error("Erro ao registrar pagamento");
     } finally {
@@ -658,6 +670,22 @@ const Bookings = () => {
                           </button>
                         ))}
                       </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-1">Valor (R$)</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0.01"
+                          max={((detailBooking.price || 0) - totalPaid).toFixed(2)}
+                          placeholder={((detailBooking.price || 0) - totalPaid).toFixed(2)}
+                          value={paymentAmount}
+                          onChange={e => setPaymentAmount(e.target.value)}
+                          className="h-9"
+                        />
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          Restante: R$ {((detailBooking.price || 0) - totalPaid).toFixed(2)} — deixe vazio para pagar tudo
+                        </p>
+                      </div>
                       <Button
                         onClick={handleRegisterPayment}
                         disabled={!paymentMethod || paymentLoading}
@@ -665,7 +693,7 @@ const Bookings = () => {
                         className="w-full"
                       >
                         {paymentLoading ? <Loader2 className="animate-spin mr-2" size={14} /> : <DollarSign size={14} className="mr-1" />}
-                        Registrar R$ {((detailBooking.price || 0) - totalPaid).toFixed(2)}
+                        Registrar R$ {(paymentAmount ? parseFloat(paymentAmount) || 0 : (detailBooking.price || 0) - totalPaid).toFixed(2)}
                       </Button>
                     </div>
                   )}
