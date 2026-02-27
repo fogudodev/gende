@@ -1630,6 +1630,7 @@ export type Database = {
         Returns: Json
       }
       get_my_professional_id: { Args: never; Returns: string }
+      get_reception_salon_id: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
