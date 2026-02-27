@@ -1,18 +1,18 @@
 import { useState, useMemo } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion } from "framer-motion";
-import { Plus, Clock, DollarSign, MoreVertical, Pencil, Trash2, Loader2, Download, Upload, Users } from "lucide-react";
+import { Plus, Clock, DollarSign, MoreVertical, Pencil, Trash2, Loader2, Download, Upload, Users, Search, Scissors } from "lucide-react";
 import { exportToCSV, importCSVFile } from "@/lib/csv-utils";
-import { toast as sonnerToast } from "sonner";
 import { useServices, useCreateService, useUpdateService, useDeleteService } from "@/hooks/useServices";
 import { useSalonEmployees } from "@/hooks/useSalonEmployees";
 import { useAllEmployeeServices } from "@/hooks/useEmployeeServices";
 import { useProfessional } from "@/hooks/useProfessional";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -30,7 +30,6 @@ const Services = () => {
   const updateService = useUpdateService();
   const deleteService = useDeleteService();
 
-  // Build a map: serviceId -> employee names
   const serviceEmployeeMap = useMemo(() => {
     const map: Record<string, string[]> = {};
     if (!allEmployeeServices || !employees) return map;
@@ -48,9 +47,22 @@ const Services = () => {
   const [editing, setEditing] = useState<Service | null>(null);
   const [form, setForm] = useState(defaultForm);
   const [activeCategory, setActiveCategory] = useState("Todos");
+  const [search, setSearch] = useState("");
 
   const categories = ["Todos", ...new Set((services || []).map(s => s.category || "Geral"))];
-  const filtered = activeCategory === "Todos" ? services : services?.filter(s => s.category === activeCategory);
+
+  const filtered = useMemo(() => {
+    let list = services || [];
+    if (activeCategory !== "Todos") list = list.filter(s => s.category === activeCategory);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(s => s.name.toLowerCase().includes(q) || (s.description || "").toLowerCase().includes(q));
+    }
+    return list;
+  }, [services, activeCategory, search]);
+
+  const activeCount = (services || []).filter(s => s.active).length;
+  const totalCount = (services || []).length;
 
   const openCreate = () => { setEditing(null); setForm(defaultForm); setDialogOpen(true); };
   const openEdit = (s: Service) => {
@@ -80,187 +92,289 @@ const Services = () => {
     } catch { toast.error("Erro ao excluir serviço"); }
   };
 
+  const handleExport = () => {
+    if (!services?.length) return;
+    exportToCSV(services.map(s => ({
+      nome: s.name,
+      duracao_min: s.duration_minutes,
+      preco: s.price,
+      categoria: s.category || "Geral",
+      ativo: s.active ? "Sim" : "Não",
+      descricao: s.description || "",
+    })), "servicos", [
+      { key: "nome", label: "Nome" },
+      { key: "duracao_min", label: "Duração (min)" },
+      { key: "preco", label: "Preço" },
+      { key: "categoria", label: "Categoria" },
+      { key: "ativo", label: "Ativo" },
+      { key: "descricao", label: "Descrição" },
+    ]);
+  };
+
+  const handleImport = async () => {
+    try {
+      const rows = await importCSVFile();
+      let count = 0;
+      for (const row of rows) {
+        const name = row["Nome"] || row["nome"] || "";
+        if (!name) continue;
+        await createService.mutateAsync({
+          name,
+          duration_minutes: Number(row["Duração (min)"] || row["duracao_min"] || 30),
+          price: Number(row["Preço"] || row["preco"] || 0),
+          category: row["Categoria"] || row["categoria"] || "Geral",
+          active: (row["Ativo"] || row["ativo"] || "Sim").toLowerCase() !== "não",
+          description: row["Descrição"] || row["descricao"] || "",
+        });
+        count++;
+      }
+      toast.success(`${count} serviço(s) importado(s)!`);
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao importar");
+    }
+  };
+
+  const formatCurrency = (v: number) =>
+    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
   return (
     <DashboardLayout title="Serviços" subtitle="Gerencie seus serviços e preços">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex gap-2 flex-wrap">
+      {/* Stats summary */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div className="glass-card rounded-xl p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Scissors size={18} className="text-primary" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Total</p>
+            <p className="text-lg font-bold text-foreground">{totalCount}</p>
+          </div>
+        </div>
+        <div className="glass-card rounded-xl p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center">
+            <span className="w-2.5 h-2.5 rounded-full bg-success" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Ativos</p>
+            <p className="text-lg font-bold text-foreground">{activeCount}</p>
+          </div>
+        </div>
+        <div className="glass-card rounded-xl p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-muted/30 flex items-center justify-center">
+            <span className="w-2.5 h-2.5 rounded-full bg-muted-foreground" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Inativos</p>
+            <p className="text-lg font-bold text-foreground">{totalCount - activeCount}</p>
+          </div>
+        </div>
+        <div className="glass-card rounded-xl p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+            <DollarSign size={18} className="text-accent" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Categorias</p>
+            <p className="text-lg font-bold text-foreground">{categories.length - 1}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Toolbar */}
+      <div className="glass-card rounded-xl p-3 md:p-4 mb-6 space-y-3">
+        {/* Search + Actions row */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar serviço..."
+              className="pl-9 bg-secondary/30 border-border/50"
+            />
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Button variant="outline" size="icon" onClick={handleExport} title="Exportar CSV" className="h-10 w-10">
+              <Download size={16} />
+            </Button>
+            <Button variant="outline" size="icon" onClick={handleImport} title="Importar CSV" className="h-10 w-10">
+              <Upload size={16} />
+            </Button>
+            <Button onClick={openCreate} className="gap-2 gradient-primary text-primary-foreground font-semibold">
+              <Plus size={16} />
+              <span className="hidden sm:inline">Novo Serviço</span>
+              <span className="sm:hidden">Novo</span>
+            </Button>
+          </div>
+        </div>
+
+        {/* Category pills */}
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
                 cat === activeCategory
-                  ? "gradient-accent text-accent-foreground shadow-sm"
-                  : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
               }`}
             >
               {cat}
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => {
-              if (!services?.length) return;
-              exportToCSV(services.map(s => ({
-                nome: s.name,
-                duracao_min: s.duration_minutes,
-                preco: s.price,
-                categoria: s.category || "Geral",
-                ativo: s.active ? "Sim" : "Não",
-                descricao: s.description || "",
-              })), "servicos", [
-                { key: "nome", label: "Nome" },
-                { key: "duracao_min", label: "Duração (min)" },
-                { key: "preco", label: "Preço" },
-                { key: "categoria", label: "Categoria" },
-                { key: "ativo", label: "Ativo" },
-                { key: "descricao", label: "Descrição" },
-              ]);
-            }}
-            className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-muted/50 text-muted-foreground text-sm font-medium hover:bg-muted transition-colors"
-            title="Exportar CSV"
-          >
-            <Download size={16} />
-          </button>
-          <button
-            onClick={async () => {
-              try {
-                const rows = await importCSVFile();
-                let count = 0;
-                for (const row of rows) {
-                  const name = row["Nome"] || row["nome"] || "";
-                  if (!name) continue;
-                  await createService.mutateAsync({
-                    name,
-                    duration_minutes: Number(row["Duração (min)"] || row["duracao_min"] || 30),
-                    price: Number(row["Preço"] || row["preco"] || 0),
-                    category: row["Categoria"] || row["categoria"] || "Geral",
-                    active: (row["Ativo"] || row["ativo"] || "Sim").toLowerCase() !== "não",
-                    description: row["Descrição"] || row["descricao"] || "",
-                  });
-                  count++;
-                }
-                toast.success(`${count} serviço(s) importado(s)!`);
-              } catch (e: any) {
-                toast.error(e.message || "Erro ao importar");
-              }
-            }}
-            className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-muted/50 text-muted-foreground text-sm font-medium hover:bg-muted transition-colors"
-            title="Importar CSV"
-          >
-            <Upload size={16} />
-          </button>
-          <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2.5 rounded-xl gradient-primary text-primary-foreground text-sm font-semibold hover-lift">
-            <Plus size={16} />
-            Novo Serviço
-          </button>
-        </div>
       </div>
 
+      {/* Service list */}
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="animate-spin text-muted-foreground" size={32} />
         </div>
       ) : !filtered?.length ? (
-        <div className="text-center py-20 text-muted-foreground">
-          <p className="text-lg font-medium">Nenhum serviço cadastrado</p>
-          <p className="text-sm mt-1">Crie seu primeiro serviço clicando no botão acima</p>
+        <div className="text-center py-20">
+          <div className="w-16 h-16 rounded-2xl bg-muted/30 flex items-center justify-center mx-auto mb-4">
+            <Scissors size={28} className="text-muted-foreground" />
+          </div>
+          <p className="text-base font-medium text-foreground">Nenhum serviço encontrado</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {search ? "Tente outra busca" : "Crie seu primeiro serviço clicando no botão acima"}
+          </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div className="space-y-3">
           {filtered.map((service, i) => (
             <motion.div
               key={service.id}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: i * 0.05 }}
-              className="glass-card rounded-2xl p-5 hover-lift group"
+              transition={{ duration: 0.3, delay: i * 0.03 }}
+              className="glass-card rounded-xl p-4 hover:border-primary/20 transition-all duration-200 group"
             >
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="font-semibold text-foreground">{service.name}</h3>
-                  <span className="text-xs font-medium text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-md mt-1 inline-block">
-                    {service.category || "Geral"}
-                  </span>
+              <div className="flex items-center gap-3 md:gap-4">
+                {/* Icon */}
+                <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                  service.active ? "bg-primary/10" : "bg-muted/30"
+                }`}>
+                  <Scissors size={18} className={service.active ? "text-primary" : "text-muted-foreground"} />
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-muted/50 transition-all">
-                      <MoreVertical size={16} className="text-muted-foreground" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => openEdit(service)}>
-                      <Pencil size={14} className="mr-2" /> Editar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(service.id)}>
-                      <Trash2 size={14} className="mr-2" /> Excluir
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Clock size={14} />
-                  <span>{service.duration_minutes} min</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                  <DollarSign size={14} className="text-accent" />
-                  <span>R$ {Number(service.price).toFixed(0)}</span>
-                </div>
-              </div>
-              <div className="mt-4 pt-4 border-t border-border/50 flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <span
-                    className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h3 className="font-semibold text-sm md:text-base text-foreground truncate">{service.name}</h3>
+                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${
                       service.active ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {service.active ? "Ativo" : "Inativo"}
-                  </span>
-                </div>
-                {isSalon && serviceEmployeeMap[service.id] && serviceEmployeeMap[service.id].length > 0 && (
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <Users size={12} className="text-muted-foreground flex-shrink-0" />
-                    {serviceEmployeeMap[service.id].map((name) => (
-                      <span key={name} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent/10 text-accent">
-                        {name}
-                      </span>
-                    ))}
+                    }`}>
+                      {service.active ? "Ativo" : "Inativo"}
+                    </span>
                   </div>
-                )}
+
+                  <div className="flex items-center gap-3 md:gap-4 flex-wrap">
+                    <span className="text-[10px] md:text-xs text-muted-foreground bg-secondary/50 px-2 py-0.5 rounded-md">
+                      {service.category || "Geral"}
+                    </span>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Clock size={12} />
+                      <span>{service.duration_minutes} min</span>
+                    </div>
+                    {service.description && (
+                      <span className="text-[10px] text-muted-foreground truncate max-w-[120px] md:max-w-[200px] hidden sm:inline">
+                        {service.description}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Employees (salon only) */}
+                  {isSalon && serviceEmployeeMap[service.id] && serviceEmployeeMap[service.id].length > 0 && (
+                    <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                      <Users size={11} className="text-muted-foreground flex-shrink-0" />
+                      {serviceEmployeeMap[service.id].slice(0, 3).map((name) => (
+                        <span key={name} className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-accent/10 text-accent">
+                          {name}
+                        </span>
+                      ))}
+                      {serviceEmployeeMap[service.id].length > 3 && (
+                        <span className="text-[10px] text-muted-foreground">+{serviceEmployeeMap[service.id].length - 3}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Price + Actions */}
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <span className="text-sm md:text-base font-bold text-primary">
+                    {formatCurrency(Number(service.price))}
+                  </span>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="p-1.5 rounded-lg opacity-60 md:opacity-0 md:group-hover:opacity-100 hover:bg-muted/50 transition-all">
+                        <MoreVertical size={16} className="text-muted-foreground" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => openEdit(service)}>
+                        <Pencil size={14} className="mr-2" /> Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(service.id)}>
+                        <Trash2 size={14} className="mr-2" /> Excluir
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             </motion.div>
           ))}
         </div>
       )}
 
+      {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{editing ? "Editar Serviço" : "Novo Serviço"}</DialogTitle>
+            <DialogDescription>
+              {editing ? "Atualize as informações do serviço" : "Preencha os dados do novo serviço"}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 mt-2">
-            <div><Label>Nome</Label><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
-            <div className="grid grid-cols-2 gap-4">
-              <div><Label>Duração (min)</Label><Input type="number" value={form.duration_minutes} onChange={e => setForm(f => ({ ...f, duration_minutes: +e.target.value }))} /></div>
-              <div><Label>Preço (R$)</Label><Input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: +e.target.value }))} /></div>
+            <div className="space-y-1.5">
+              <Label>Nome</Label>
+              <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Corte feminino" />
             </div>
-            <div><Label>Categoria</Label><Input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} /></div>
-            <div><Label>Descrição</Label><Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} /></div>
-            <div><Label>Intervalo de Manutenção (dias)</Label><Input type="number" min={0} value={form.maintenance_interval_days} onChange={e => setForm(f => ({ ...f, maintenance_interval_days: +e.target.value }))} placeholder="0 = sem manutenção" /><p className="text-xs text-muted-foreground mt-1">Defina para receber lembrete automático de retorno</p></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Duração (min)</Label>
+                <Input type="number" value={form.duration_minutes} onChange={e => setForm(f => ({ ...f, duration_minutes: +e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Preço (R$)</Label>
+                <Input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: +e.target.value }))} />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Categoria</Label>
+              <Input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} placeholder="Ex: Cabelo" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Descrição</Label>
+              <Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Opcional" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Intervalo de Manutenção (dias)</Label>
+              <Input type="number" min={0} value={form.maintenance_interval_days} onChange={e => setForm(f => ({ ...f, maintenance_interval_days: +e.target.value }))} placeholder="0 = sem manutenção" />
+              <p className="text-[10px] text-muted-foreground">Defina para receber lembrete automático de retorno</p>
+            </div>
             <div className="flex items-center gap-3">
               <Switch checked={form.active} onCheckedChange={v => setForm(f => ({ ...f, active: v }))} />
               <Label>Ativo</Label>
             </div>
-            <button
+            <Button
               onClick={handleSave}
               disabled={createService.isPending || updateService.isPending}
-              className="w-full py-2.5 rounded-xl gradient-primary text-primary-foreground font-semibold text-sm disabled:opacity-50"
+              className="w-full gradient-primary text-primary-foreground font-semibold"
             >
               {(createService.isPending || updateService.isPending) ? "Salvando..." : "Salvar"}
-            </button>
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
