@@ -56,6 +56,7 @@ import couponsIcon from "@/assets/icon-coupons.png";
 import reportsIcon from "@/assets/icon-reports.png";
 import reviewsIcon from "@/assets/icon-reviews.png";
 import settingsIcon from "@/assets/icon-settings.png";
+import cashRegisterIcon from "@/assets/icon-cash-register.png";
 
 // Wrapper component for custom icons
 // Sidebar always has dark bg, so icons should always be inverted (white) in sidebar
@@ -112,6 +113,9 @@ const AIIcon = ({ size = 18, className, mobile, active }: { size?: number; class
 
 const FinanceIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
   mobile ? <ThemeAwareIcon src={financeIcon} size={size} className={className} active={active} /> : <SidebarIcon src={financeIcon} size={size} className={className} active={active} />;
+
+const CashRegisterNavIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
+  mobile ? <ThemeAwareIcon src={cashRegisterIcon} size={size} className={className} active={active} /> : <SidebarIcon src={cashRegisterIcon} size={size} className={className} active={active} />;
 
 const PublicPageIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
   mobile ? <ThemeAwareIcon src={publicPageIcon} size={size} className={className} active={active} /> : <SidebarIcon src={publicPageIcon} size={size} className={className} active={active} />;
@@ -196,12 +200,12 @@ const salonOnlyItems: NavItem[] = [
   { icon: PerformanceIcon, label: "Desempenho", path: "/team-performance", featureKey: "team-performance" },
 ];
 
-const cashRegisterItem: NavItem = { icon: FinanceIcon, label: "Caixa", path: "/cash-register", featureKey: "finance" };
+const cashRegisterItem: NavItem = { icon: CashRegisterNavIcon, label: "Caixa", path: "/cash-register", featureKey: "finance" };
 
 const receptionNavItems: NavItem[] = [
   { icon: CalendarIcon, label: "Agendamentos", path: "/bookings", featureKey: "bookings" },
   { icon: ClientsIcon, label: "Clientes", path: "/clients", featureKey: "clients" },
-  { icon: FinanceIcon, label: "Caixa", path: "/cash-register", featureKey: "finance" },
+  { icon: CashRegisterNavIcon, label: "Caixa", path: "/cash-register", featureKey: "finance" },
   { icon: AutomationsIcon, label: "Conversas WhatsApp", path: "/automations", featureKey: "automations" },
 ];
 
@@ -215,7 +219,7 @@ const mobileNavItems = [
 const receptionMobileNavItems = [
   { icon: CalendarIcon, label: "Agenda", path: "/bookings" },
   { icon: ClientsIcon, label: "Clientes", path: "/clients" },
-  { icon: FinanceIcon, label: "Caixa", path: "/cash-register" },
+  { icon: CashRegisterNavIcon, label: "Caixa", path: "/cash-register" },
   { icon: AutomationsIcon, label: "WhatsApp", path: "/automations" },
 ];
 
