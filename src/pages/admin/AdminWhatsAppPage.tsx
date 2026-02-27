@@ -1,9 +1,13 @@
 import AdminLayout from "@/components/layout/AdminLayout";
 import { useAllWhatsAppInstances } from "@/hooks/useAdmin";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { toast } from "sonner";
 
 const statusLabel: Record<string, string> = {
   connected: "Conectado", disconnected: "Desconectado", connecting: "Conectando", error: "Erro",
@@ -16,10 +20,35 @@ const statusColor: Record<string, string> = {
 };
 
 const AdminWhatsAppPage = () => {
-  const { data: instances, isLoading } = useAllWhatsAppInstances();
+  const { data: instances, isLoading, refetch } = useAllWhatsAppInstances();
+  const [syncing, setSyncing] = useState(false);
+
+  const handleSyncStatus = async () => {
+    if (!instances?.length) return;
+    setSyncing(true);
+    try {
+      for (const inst of instances) {
+        await supabase.functions.invoke("whatsapp", {
+          body: { action: "check-status", instanceName: inst.instance_name, professionalId: inst.professional_id },
+        });
+      }
+      await refetch();
+      toast.success("Status sincronizado com sucesso!");
+    } catch {
+      toast.error("Erro ao sincronizar status");
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   return (
     <AdminLayout title="WhatsApp" subtitle="Instâncias de WhatsApp">
+      <div className="flex justify-end mb-4">
+        <Button variant="outline" size="sm" onClick={handleSyncStatus} disabled={syncing || isLoading}>
+          <RefreshCw className={cn("w-4 h-4 mr-2", syncing && "animate-spin")} />
+          Sincronizar Status
+        </Button>
+      </div>
       {isLoading ? (
         <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-accent" /></div>
       ) : (
