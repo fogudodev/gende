@@ -9,9 +9,10 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Search, Users, Loader2, Ban, UserCheck, Globe, MessageCircle,
-  BarChart3, ToggleLeft, ToggleRight, ChevronDown, ChevronUp, Eye,
+  BarChart3, ToggleLeft, ToggleRight, ChevronDown, ChevronUp, Eye, Shield,
 } from "lucide-react";
 import AdminCreateProfessional from "@/components/admin/AdminCreateProfessional";
+import AdminCreateSupport from "@/components/admin/AdminCreateSupport";
 
 const AdminUsers = () => {
   const { data: professionals, isLoading } = useAllProfessionals();
@@ -19,6 +20,7 @@ const AdminUsers = () => {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [blockReason, setBlockReason] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+  const [showCreateSupport, setShowCreateSupport] = useState(false);
   const qc = useQueryClient();
 
   const filtered = (professionals || []).filter((p) =>
@@ -82,11 +84,23 @@ const AdminUsers = () => {
               <Users size={16} />
               Cadastrar Profissional
             </button>
+            <button
+              onClick={() => setShowCreateSupport(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-muted border border-border text-foreground text-sm font-semibold transition-all hover:bg-muted/80"
+            >
+              <Shield size={16} />
+              Cadastrar Suporte
+            </button>
           </div>
 
           <AdminCreateProfessional
             open={showCreate}
             onClose={() => setShowCreate(false)}
+            onCreated={() => qc.invalidateQueries({ queryKey: ["admin-professionals"] })}
+          />
+          <AdminCreateSupport
+            open={showCreateSupport}
+            onClose={() => setShowCreateSupport(false)}
             onCreated={() => qc.invalidateQueries({ queryKey: ["admin-professionals"] })}
           />
 
