@@ -41,8 +41,8 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
   return (
     <>
     <PlanRenewalModal open={renewalOpen} onOpenChange={setRenewalOpen} />
-    <header className="h-14 md:h-[64px] border-b border-border px-4 md:px-6 flex items-center justify-between bg-background/80 backdrop-blur-xl sticky top-0 z-40">
-      <div className="flex items-center gap-3">
+    <header className="h-14 md:h-16 border-b border-border px-3 md:px-4 lg:px-6 flex items-center justify-between bg-background/80 backdrop-blur-xl sticky top-0 z-40">
+      <div className="flex items-center gap-2 md:gap-3 min-w-0">
         <button
           onClick={onMenuClick}
           className="p-2 rounded-lg hover:bg-secondary/50 transition-colors md:hidden"
@@ -50,20 +50,20 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
         >
           <Menu size={20} className="text-foreground" />
         </button>
-        <div>
-          <h1 className="text-base md:text-lg font-bold text-foreground font-display">{title}</h1>
+        <div className="min-w-0">
+          <h1 className="text-sm sm:text-base md:text-lg font-bold text-foreground font-display whitespace-nowrap truncate max-w-[120px] sm:max-w-[200px] md:max-w-[240px] lg:max-w-none">{title}</h1>
           {subtitle && (
-            <p className="text-[10px] md:text-xs text-muted-foreground hidden sm:block">{subtitle}</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground hidden lg:block truncate max-w-[280px]">{subtitle}</p>
           )}
         </div>
       </div>
-      <div className="flex items-center gap-1 sm:gap-1.5 md:gap-3 shrink-0 min-w-0">
-        <div className="relative hidden md:block">
+      <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 lg:gap-3 shrink-0 min-w-0">
+        <div className="relative hidden lg:block">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
             placeholder="Buscar..."
-            className="pl-8 pr-3 py-1.5 rounded-lg bg-secondary/50 border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 w-[160px] lg:w-[200px] transition-all"
+            className="pl-8 pr-3 py-1.5 rounded-lg bg-secondary/50 border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 w-[200px] transition-all"
           />
         </div>
         <button
@@ -72,7 +72,7 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
           title="Gerenciar plano"
         >
           <Crown size={14} />
-          <span className="hidden md:inline">
+          <span className="hidden lg:inline">
             {currentPlan === "none" ? "Assinar" : currentPlan === "essencial" ? "Essencial" : "Enterprise"}
           </span>
         </button>
