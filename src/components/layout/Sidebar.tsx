@@ -123,12 +123,12 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
   const { signOut } = useAuth();
   const { data: isAdmin } = useIsAdmin();
   const { data: professional } = useProfessional();
-  const { isLocked, requiredPlan } = useFeatureAccess();
+  const { isLocked, requiredPlan, currentPlan } = useFeatureAccess();
 
   const isSalon = professional?.account_type === "salon";
   const displayName = professional?.business_name || professional?.name || "Gende";
   const displayLogo = professional?.logo_url || logo;
-
+  const planLabel = currentPlan === "enterprise" ? "Enterprise" : currentPlan === "essencial" ? "Essencial" : "";
   const buildNavEntries = (): NavEntry[] => {
     const entries: NavEntry[] = [...standaloneItems];
     if (isSalon) entries.push(...salonOnlyItems);
@@ -309,9 +309,11 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
           <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm animate-overlay-in" onClick={() => setMobileOpen(false)} />
           <div className="absolute left-0 top-0 h-full w-72 bg-card/95 backdrop-blur-xl border-r border-border p-4 flex flex-col animate-slide-in-left shadow-2xl">
             <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <img src={displayLogo} alt={displayName} className="w-8 h-8 rounded-lg object-cover" />
-                <span className="font-bold text-foreground">{displayName}</span>
+              <div className="flex items-center gap-2 min-w-0">
+                <img src={displayLogo} alt={displayName} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+                <span className="font-bold text-foreground text-sm truncate">
+                  {displayName}{planLabel ? ` | ${planLabel}` : ""}
+                </span>
               </div>
               <button onClick={() => setMobileOpen(false)} className="p-1 text-muted-foreground">
                 <X size={20} />
@@ -356,10 +358,14 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
         onMouseEnter={() => setExpanded(true)}
         onMouseLeave={() => setExpanded(false)}
       >
-        <div className="flex items-center gap-3 px-4 h-[64px] border-b border-sidebar-border">
-          <img src={displayLogo} alt={displayName} className="w-9 h-9 rounded-xl object-cover" />
+        <div className="flex items-center gap-3 px-4 h-[64px] border-b border-sidebar-border overflow-hidden">
+          <img src={displayLogo} alt={displayName} className="w-9 h-9 rounded-xl object-cover flex-shrink-0" />
           {expanded && (
-            <span className="text-lg font-bold text-sidebar-foreground tracking-tight">{displayName}</span>
+            <div className="min-w-0">
+              <span className="text-sm font-bold text-sidebar-foreground tracking-tight block truncate">
+                {displayName}{planLabel ? ` | ${planLabel}` : ""}
+              </span>
+            </div>
           )}
         </div>
 
