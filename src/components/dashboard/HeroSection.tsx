@@ -1,13 +1,15 @@
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 
 const HeroSection = () => {
   const { data: professional } = useProfessional();
   const { data: stats } = useDashboardStats();
+  const { currentPlan } = useFeatureAccess();
 
-  const firstName = professional?.name?.split(" ")[0] || professional?.business_name?.split(" ")[0] || "Profissional";
+  const planLabel = currentPlan === "enterprise" ? "Enterprise" : currentPlan === "essencial" ? "Essencial" : "Sem plano";
+  const displayName = professional?.business_name || professional?.name || "Profissional";
   const todayCount = stats?.todayCount ?? 0;
 
   return (
@@ -24,12 +26,13 @@ const HeroSection = () => {
       {/* Content */}
       <div className="relative h-full flex items-end p-5 md:p-8">
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles size={16} className="text-primary" />
-            <span className="text-xs font-medium text-primary uppercase tracking-wider">Beauty Salon CRM</span>
+          <div className="mb-2">
+            <span className="text-xs font-medium text-primary uppercase tracking-wider">
+              {displayName} | {planLabel}
+            </span>
           </div>
           <h2 className="text-xl md:text-3xl lg:text-4xl font-bold text-foreground font-display mb-1">
-            Bem-vindo de volta, <span className="text-gradient">{firstName}</span>
+            Bem-vindo de volta
           </h2>
           <p className="text-muted-foreground text-xs md:text-sm">
             Você tem <span className="text-primary font-semibold">{todayCount} agendamento{todayCount !== 1 ? "s" : ""}</span> hoje
