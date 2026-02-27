@@ -47,6 +47,7 @@ import AdminMessageUsagePage from "./pages/admin/AdminMessageUsagePage";
 import AdminLogsPage from "./pages/admin/AdminLogsPage";
 import AdminSupportChat from "./pages/admin/AdminSupportChat";
 import AdminPaymentChat from "./pages/admin/AdminPaymentChat";
+import AdminPlatformReviews from "./pages/admin/AdminPlatformReviews";
 
 const queryClient = new QueryClient();
 
@@ -99,6 +100,7 @@ const App = () => (
               <Route path="/admin/logs" element={<AdminRoute><AdminLogsPage /></AdminRoute>} />
               <Route path="/admin/support-chat" element={<AdminRoute><AdminSupportChat /></AdminRoute>} />
               <Route path="/admin/payment-chat" element={<AdminRoute><AdminPaymentChat /></AdminRoute>} />
+              <Route path="/admin/platform-reviews" element={<AdminRoute><AdminPlatformReviews /></AdminRoute>} />
 
               {/* Public routes */}
               <Route path="/p/:slug" element={<PublicBooking />} />

@@ -285,10 +285,9 @@ const PublicBooking = () => {
   const handleSubmitReview = async () => {
     if (!professional || reviewSubmitted) return;
     setSubmittingReview(true);
-    const { error } = await supabase.from("reviews").insert({
+    const { error } = await supabase.from("platform_reviews" as any).insert({
       professional_id: professional.id,
       booking_id: bookingId,
-      employee_id: selectedEmployee?.id || null,
       client_name: clientName.trim(),
       client_phone: clientPhone.replace(/\D/g, ""),
       rating: reviewRating,
@@ -1016,8 +1015,9 @@ function SuccessView({ professional, selectedEmployee, selectedService, selected
         {!reviewSubmitted ? (
           <div className="rounded-2xl p-5 mb-6 text-left" style={{ background: "white", border: `1px solid ${accent}20` }}>
             <h3 className="font-semibold text-sm flex items-center gap-2 mb-3" style={{ color: "#1F1535" }}>
-              <Star size={16} className="text-yellow-500" /> Como foi sua experiência?
+              <Star size={16} className="text-yellow-500" /> Como foi sua experiência com a plataforma?
             </h3>
+            <p className="text-xs mb-3" style={{ color: "#9CA3AF" }}>Avalie o processo de agendamento online</p>
             <div className="flex items-center justify-center gap-2 mb-3">
               {[1, 2, 3, 4, 5].map(s => (
                 <button key={s} onClick={() => setReviewRating(s)} className="transition-transform hover:scale-110">
