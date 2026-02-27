@@ -8,6 +8,8 @@ import {
   Plus, Trash2, CalendarOff, Plane, Calendar as CalendarIcon,
 } from "lucide-react";
 import { GoogleCalendarSection } from "@/components/settings/GoogleCalendarSection";
+import { usePaymentConfig, useSavePaymentConfig } from "@/hooks/usePaymentConfig";
+import { Switch } from "@/components/ui/switch";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useWorkingHours, getDayName, useUpsertWorkingHours } from "@/hooks/useWorkingHours";
 import { useBlockedTimes, useCreateBlockedTime, useDeleteBlockedTime } from "@/hooks/useBlockedTimes";
@@ -27,7 +29,7 @@ import { STRIPE_PLANS } from "@/lib/stripe-plans";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-type Section = "system" | "hours" | "subscription" | "whatsapp" | "security" | "google-calendar";
+type Section = "system" | "hours" | "subscription" | "whatsapp" | "security" | "google-calendar" | "payment";
 
 const TRIGGER_LABELS: Record<string, string> = {
   booking_created: "Agendamento criado",
@@ -49,6 +51,7 @@ const Settings = () => {
   const sections = [
     { id: "system" as Section, icon: Palette, title: "Aparência do Sistema", description: "Logo, nome e cores do painel" },
     { id: "hours" as Section, icon: Clock, title: "Horários de Trabalho", description: "Defina seus dias e horários de atendimento" },
+    { id: "payment" as Section, icon: QrCode, title: "Pagamentos", description: "Configure métodos de pagamento e sinal" },
     { id: "subscription" as Section, icon: CreditCard, title: "Assinatura", description: "Plano atual e gerenciamento" },
     { id: "whatsapp" as Section, icon: MessageSquare, title: "Automação WhatsApp", description: "QR Code, instância e automações" },
     { id: "google-calendar" as Section, icon: CalendarIcon, title: "Google Calendar", description: "Sincronize sua agenda com o Google" },
@@ -102,6 +105,7 @@ const Settings = () => {
 
               {activeSection === "system" && <SystemAppearanceSection />}
               {activeSection === "hours" && <WorkingHoursSection />}
+              {activeSection === "payment" && <PaymentSection />}
               {activeSection === "subscription" && <SubscriptionSection />}
               {activeSection === "whatsapp" && <WhatsAppSection />}
               {activeSection === "google-calendar" && <GoogleCalendarSection />}
@@ -1406,5 +1410,145 @@ const ImageUploadCard = ({
     <span className="text-xs text-muted-foreground">{label}</span>
   </div>
 );
+
+/* ===================== PAYMENT SECTION ===================== */
+const PaymentSection = () => {
+  const { data: config, isLoading } = usePaymentConfig();
+  const saveConfig = useSavePaymentConfig();
+
+  const [form, setForm] = useState({
+    pix_key_type: "cpf" as string,
+    pix_key: "",
+    pix_beneficiary_name: "",
+    signal_enabled: false,
+    signal_type: "percentage" as "percentage" | "fixed",
+    signal_value: 0,
+    accept_pix: true,
+    accept_cash: true,
+    accept_card: true,
+  });
+
+  useEffect(() => {
+    if (config) {
+      setForm({
+        pix_key_type: config.pix_key_type || "cpf",
+        pix_key: config.pix_key || "",
+        pix_beneficiary_name: config.pix_beneficiary_name || "",
+        signal_enabled: config.signal_enabled,
+        signal_type: config.signal_type,
+        signal_value: config.signal_value,
+        accept_pix: config.accept_pix,
+        accept_cash: config.accept_cash,
+        accept_card: config.accept_card,
+      });
+    }
+  }, [config]);
+
+  const pixKeyLabels: Record<string, string> = {
+    cpf: "CPF", cnpj: "CNPJ", email: "Email", phone: "Telefone", random: "Chave aleatória",
+  };
+
+  const handleSubmit = async () => {
+    if (form.accept_pix && !form.pix_key.trim()) {
+      return toast.error("Informe a chave PIX para aceitar pagamentos via PIX");
+    }
+    await saveConfig.mutateAsync(form);
+  };
+
+  if (isLoading) return <LoadingState />;
+
+  return (
+    <div className="space-y-6">
+      <SectionHeader icon={QrCode} title="Pagamentos" />
+
+      {/* Métodos aceitos */}
+      <div className="glass-card rounded-2xl p-6 space-y-4">
+        <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+          <CreditCard size={16} className="text-accent" /> Métodos de Pagamento Aceitos
+        </h3>
+        <div className="space-y-3">
+          {[
+            { icon: QrCode, label: "PIX", key: "accept_pix" as const },
+            { icon: CreditCard, label: "Cartão", key: "accept_card" as const },
+          ].map((m) => (
+            <div key={m.key} className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <m.icon size={18} className="text-muted-foreground" />
+                <span className="text-sm font-medium text-foreground">{m.label}</span>
+              </div>
+              <Switch checked={form[m.key]} onCheckedChange={(v) => setForm({ ...form, [m.key]: v })} />
+            </div>
+          ))}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <CreditCard size={18} className="text-muted-foreground" />
+              <span className="text-sm font-medium text-foreground">Dinheiro</span>
+            </div>
+            <Switch checked={form.accept_cash} onCheckedChange={(v) => setForm({ ...form, accept_cash: v })} />
+          </div>
+        </div>
+      </div>
+
+      {/* Dados PIX */}
+      {form.accept_pix && (
+        <div className="glass-card rounded-2xl p-6 space-y-4">
+          <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+            <QrCode size={16} className="text-accent" /> Dados do PIX
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm">Tipo de chave</Label>
+              <Select value={form.pix_key_type} onValueChange={(v) => setForm({ ...form, pix_key_type: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(pixKeyLabels).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm">Chave PIX</Label>
+              <Input value={form.pix_key} onChange={(e) => setForm({ ...form, pix_key: e.target.value })} placeholder={`Sua chave ${pixKeyLabels[form.pix_key_type]}`} />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-sm">Nome do beneficiário</Label>
+            <Input value={form.pix_beneficiary_name} onChange={(e) => setForm({ ...form, pix_beneficiary_name: e.target.value })} placeholder="Nome que aparece no PIX" />
+          </div>
+        </div>
+      )}
+
+      {/* Sinal/Entrada */}
+      <div className="glass-card rounded-2xl p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-foreground text-sm">Cobrança de Sinal (Entrada)</h3>
+          <Switch checked={form.signal_enabled} onCheckedChange={(v) => setForm({ ...form, signal_enabled: v })} />
+        </div>
+        <p className="text-xs text-muted-foreground">Exija um pagamento antecipado para confirmar o agendamento na página pública.</p>
+        {form.signal_enabled && (
+          <div className="grid grid-cols-2 gap-4 pt-2">
+            <div className="space-y-2">
+              <Label className="text-sm">Tipo</Label>
+              <Select value={form.signal_type} onValueChange={(v) => setForm({ ...form, signal_type: v as "percentage" | "fixed" })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="percentage">Percentual (%)</SelectItem>
+                  <SelectItem value="fixed">Valor fixo (R$)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm">Valor do sinal</Label>
+              <Input type="number" step="0.01" min={0} max={form.signal_type === "percentage" ? 100 : undefined} value={form.signal_value} onChange={(e) => setForm({ ...form, signal_value: Number(e.target.value) })} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <SaveButton saving={saveConfig.isPending} onClick={handleSubmit} />
+    </div>
+  );
+};
 
 export default Settings;
