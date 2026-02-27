@@ -130,6 +130,11 @@ const SIDEBAR_PRESETS = [
   "#1E1E2E", "#2D2D3F", "#111827", "#18181B",
 ];
 
+const SIDEBAR_TEXT_PRESETS = [
+  "#FFFFFF", "#F5F5F5", "#E0E0E0", "#BDBDBD",
+  "#9E9E9E", "#78909C", "#B0BEC5", "#CFD8DC",
+];
+
 function hexToHsl(hex: string): string {
   const r = parseInt(hex.slice(1, 3), 16) / 255;
   const g = parseInt(hex.slice(3, 5), 16) / 255;
@@ -158,6 +163,7 @@ const SystemAppearanceSection = () => {
   const [logoUrl, setLogoUrl] = useState("");
   const [accentColor, setAccentColor] = useState("#FF0066");
   const [sidebarColor, setSidebarColor] = useState("#09090B");
+  const [sidebarTextColor, setSidebarTextColor] = useState("#FFFFFF");
 
   useEffect(() => {
     if (professional) {
@@ -165,6 +171,7 @@ const SystemAppearanceSection = () => {
       setLogoUrl(professional.logo_url || "");
       setAccentColor((professional as any).system_accent_color || professional.primary_color || "#FF0066");
       setSidebarColor((professional as any).system_sidebar_color || "#09090B");
+      setSidebarTextColor((professional as any).system_sidebar_text_color || "#FFFFFF");
     }
   }, [professional]);
 
@@ -214,6 +221,7 @@ const SystemAppearanceSection = () => {
         business_name: businessName.trim(),
         system_accent_color: accentColor,
         system_sidebar_color: sidebarColor,
+        system_sidebar_text_color: sidebarTextColor,
       } as any)
       .eq("id", professional.id);
 
@@ -221,7 +229,7 @@ const SystemAppearanceSection = () => {
       toast.error("Erro ao salvar");
     } else {
       // Apply colors immediately
-      applySystemColors(accentColor, sidebarColor);
+      applySystemColors(accentColor, sidebarColor, sidebarTextColor);
       toast.success("Aparência atualizada!");
       qc.invalidateQueries({ queryKey: ["professional"] });
     }
@@ -322,6 +330,36 @@ const SystemAppearanceSection = () => {
         </div>
       </div>
 
+      {/* Sidebar Text Color */}
+      <div className="glass-card rounded-2xl p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <Palette size={18} className="text-accent" />
+          <h3 className="font-semibold text-foreground">Cor do Texto da Sidebar</h3>
+        </div>
+        <p className="text-xs text-muted-foreground">Cor dos textos e ícones do menu lateral.</p>
+        <div className="flex flex-wrap gap-3">
+          {SIDEBAR_TEXT_PRESETS.map((c) => (
+            <button
+              key={c}
+              onClick={() => setSidebarTextColor(c)}
+              className={cn(
+                "w-9 h-9 rounded-xl transition-all border border-border/30",
+                sidebarTextColor === c ? "ring-2 ring-offset-2 ring-accent scale-110" : "hover:scale-105"
+              )}
+              style={{ backgroundColor: c }}
+            />
+          ))}
+          <label className="w-9 h-9 rounded-xl border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-accent transition-colors overflow-hidden relative">
+            <Palette size={14} className="text-muted-foreground" />
+            <input type="color" value={sidebarTextColor} onChange={(e) => setSidebarTextColor(e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer" />
+          </label>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl border border-border/30" style={{ backgroundColor: sidebarTextColor }} />
+          <span className="text-sm text-muted-foreground font-mono">{sidebarTextColor}</span>
+        </div>
+      </div>
+
       {/* Preview */}
       <div className="glass-card rounded-2xl p-6 space-y-3">
         <h3 className="font-semibold text-foreground text-sm">Preview</h3>
@@ -335,8 +373,8 @@ const SystemAppearanceSection = () => {
               </div>
             )}
             <div className="w-6 h-1 rounded-full" style={{ backgroundColor: accentColor }} />
-            <div className="w-6 h-0.5 rounded-full bg-white/20" />
-            <div className="w-6 h-0.5 rounded-full bg-white/20" />
+            <div className="w-6 h-0.5 rounded-full" style={{ backgroundColor: sidebarTextColor, opacity: 0.4 }} />
+            <div className="w-6 h-0.5 rounded-full" style={{ backgroundColor: sidebarTextColor, opacity: 0.3 }} />
           </div>
           <div className="flex-1 bg-background p-3 flex flex-col justify-center">
             <div className="h-2 w-20 rounded-full bg-foreground/20 mb-2" />
@@ -355,8 +393,8 @@ const SystemAppearanceSection = () => {
 };
 
 /** Apply system colors as CSS variables on :root */
-export function applySystemColors(accent?: string | null, sidebar?: string | null) {
-  if (!accent && !sidebar) return;
+export function applySystemColors(accent?: string | null, sidebar?: string | null, sidebarText?: string | null) {
+  if (!accent && !sidebar && !sidebarText) return;
   const root = document.documentElement;
   if (accent) {
     const hsl = hexToHsl(accent);
@@ -369,6 +407,10 @@ export function applySystemColors(accent?: string | null, sidebar?: string | nul
   if (sidebar) {
     const hsl = hexToHsl(sidebar);
     root.style.setProperty("--sidebar-background", hsl);
+  }
+  if (sidebarText) {
+    const hsl = hexToHsl(sidebarText);
+    root.style.setProperty("--sidebar-foreground", hsl);
   }
 }
 
