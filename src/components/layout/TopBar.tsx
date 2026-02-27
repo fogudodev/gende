@@ -57,13 +57,13 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
           )}
         </div>
       </div>
-      <div className="flex items-center gap-1.5 md:gap-3 shrink-0">
-        <div className="relative hidden sm:block">
+      <div className="flex items-center gap-1 sm:gap-1.5 md:gap-3 shrink-0 min-w-0">
+        <div className="relative hidden md:block">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
             placeholder="Buscar..."
-            className="pl-8 pr-3 py-1.5 rounded-lg bg-secondary/50 border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 w-[160px] md:w-[200px] transition-all"
+            className="pl-8 pr-3 py-1.5 rounded-lg bg-secondary/50 border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 w-[160px] lg:w-[200px] transition-all"
           />
         </div>
         <button
@@ -72,7 +72,7 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
           title="Gerenciar plano"
         >
           <Crown size={14} />
-          <span className="hidden sm:inline">
+          <span className="hidden md:inline">
             {currentPlan === "none" ? "Assinar" : currentPlan === "essencial" ? "Essencial" : "Enterprise"}
           </span>
         </button>
