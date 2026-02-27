@@ -5,6 +5,7 @@ import { useProfessional } from "@/hooks/useProfessional";
 import { useState } from "react";
 import PlanRenewalModal from "./PlanRenewalModal";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 
 interface TopBarProps {
   title: string;
@@ -17,6 +18,7 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
   const { data: professional } = useProfessional();
   const [renewalOpen, setRenewalOpen] = useState(false);
   const { currentPlan } = useFeatureAccess();
+  const { unreadCount } = useUnreadMessages();
   const navigate = useNavigate();
 
   return (
@@ -84,9 +86,19 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
             <Moon size={16} className="text-muted-foreground hover:text-foreground transition-colors" />
           )}
         </button>
-        <button className="relative p-2 rounded-lg hover:bg-secondary/50 transition-colors">
+        <button
+          onClick={() => navigate("/payment-chat")}
+          className="relative p-2 rounded-lg hover:bg-secondary/50 transition-colors"
+          title="Notificações"
+        >
           <Bell size={16} className="text-muted-foreground" />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+          {unreadCount > 0 ? (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold px-1 animate-pulse">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          ) : (
+            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+          )}
         </button>
         {professional?.avatar_url ? (
           <img src={professional.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover shadow-lg" />
