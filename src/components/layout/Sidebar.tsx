@@ -42,6 +42,7 @@ import teamIcon from "@/assets/icon-team.png";
 import commissionIcon from "@/assets/icon-commission.png";
 import performanceIcon from "@/assets/icon-performance.png";
 import whatsappIcon from "@/assets/icon-whatsapp.png";
+import automationsIcon from "@/assets/icon-automations.png";
 
 // Wrapper component for custom icons
 const CalendarIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
@@ -74,6 +75,10 @@ const PerformanceIcon = ({ size = 18, className }: { size?: number; className?: 
 
 const WhatsAppIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
   <img src={whatsappIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
+);
+
+const AutomationsIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
+  <img src={automationsIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
 );
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
@@ -108,7 +113,7 @@ const whatsappGroup: NavGroup = {
   label: "WhatsApp",
   featureKey: "automations",
   children: [
-    { icon: MessageCircle, label: "Automações", path: "/automations", featureKey: "automations" },
+    { icon: AutomationsIcon, label: "Automações", path: "/automations", featureKey: "automations" },
     { icon: Megaphone, label: "Campanhas", path: "/campaigns", featureKey: "campaigns" },
   ],
 };
