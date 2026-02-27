@@ -82,7 +82,7 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
           aria-label="Assistente IA"
           title="Assistente IA"
         >
-          <img src={aiIcon} alt="Assistente IA" width={16} height={16} className="brightness-0 invert opacity-60" />
+          <img src={aiIcon} alt="Assistente IA" width={16} height={16} className="brightness-0 opacity-60 dark:invert" />
         </button>
         <button
           onClick={() => navigate("/support-chat")}
@@ -90,7 +90,7 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
           aria-label="Chat de suporte"
           title="Suporte"
         >
-          <img src={supportChatIcon} alt="Suporte" width={16} height={16} className="brightness-0 invert opacity-60" />
+          <img src={supportChatIcon} alt="Suporte" width={16} height={16} className="brightness-0 opacity-60 dark:invert" />
         </button>
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}

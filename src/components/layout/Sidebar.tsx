@@ -57,89 +57,78 @@ import reviewsIcon from "@/assets/icon-reviews.png";
 import settingsIcon from "@/assets/icon-settings.png";
 
 // Wrapper component for custom icons
-const CalendarIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={calendarIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
+// Sidebar always has dark bg, so icons should always be inverted (white) in sidebar
+// But in mobile drawer & bottom nav, icons follow theme
+const SidebarIcon = ({ src, size = 18, className }: { src: string; size?: number; className?: string }) => (
+  <img src={src} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
 );
 
-const DashboardIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={dashboardIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
+const ThemeAwareIcon = ({ src, size = 18, className }: { src: string; size?: number; className?: string }) => (
+  <img src={src} alt="" width={size} height={size} className={`inline-block brightness-0 opacity-40 dark:invert ${className || ''}`} />
 );
 
-const ScissorsIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={scissorsIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
-);
+const CalendarIcon = ({ size = 18, className, mobile }: { size?: number; className?: string; mobile?: boolean }) => 
+  mobile ? <ThemeAwareIcon src={calendarIcon} size={size} className={className} /> : <SidebarIcon src={calendarIcon} size={size} className={className} />;
 
-const ClientsIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={clientsIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
-);
+const DashboardIcon = ({ size = 18, className, mobile }: { size?: number; className?: string; mobile?: boolean }) => 
+  mobile ? <ThemeAwareIcon src={dashboardIcon} size={size} className={className} /> : <SidebarIcon src={dashboardIcon} size={size} className={className} />;
 
-const TeamIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={teamIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
-);
+const ScissorsIcon = ({ size = 18, className, mobile }: { size?: number; className?: string; mobile?: boolean }) => 
+  mobile ? <ThemeAwareIcon src={scissorsIcon} size={size} className={className} /> : <SidebarIcon src={scissorsIcon} size={size} className={className} />;
 
-const CommissionIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={commissionIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
-);
+const ClientsIcon = ({ size = 18, className, mobile }: { size?: number; className?: string; mobile?: boolean }) => 
+  mobile ? <ThemeAwareIcon src={clientsIcon} size={size} className={className} /> : <SidebarIcon src={clientsIcon} size={size} className={className} />;
 
-const PerformanceIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={performanceIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
-);
+const TeamIcon = ({ size = 18, className, mobile }: { size?: number; className?: string; mobile?: boolean }) => 
+  mobile ? <ThemeAwareIcon src={teamIcon} size={size} className={className} /> : <SidebarIcon src={teamIcon} size={size} className={className} />;
 
-const WhatsAppIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={whatsappIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
-);
+const CommissionIcon = ({ size = 18, className, mobile }: { size?: number; className?: string; mobile?: boolean }) => 
+  mobile ? <ThemeAwareIcon src={commissionIcon} size={size} className={className} /> : <SidebarIcon src={commissionIcon} size={size} className={className} />;
 
-const AutomationsIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={automationsIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
-);
+const PerformanceIcon = ({ size = 18, className, mobile }: { size?: number; className?: string; mobile?: boolean }) => 
+  mobile ? <ThemeAwareIcon src={performanceIcon} size={size} className={className} /> : <SidebarIcon src={performanceIcon} size={size} className={className} />;
 
-const CampaignsIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={campaignsIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
-);
+const WhatsAppIcon = ({ size = 18, className, mobile }: { size?: number; className?: string; mobile?: boolean }) => 
+  mobile ? <ThemeAwareIcon src={whatsappIcon} size={size} className={className} /> : <SidebarIcon src={whatsappIcon} size={size} className={className} />;
 
-const CommunicationIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={communicationIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
-);
+const AutomationsIcon = ({ size = 18, className, mobile }: { size?: number; className?: string; mobile?: boolean }) => 
+  mobile ? <ThemeAwareIcon src={automationsIcon} size={size} className={className} /> : <SidebarIcon src={automationsIcon} size={size} className={className} />;
 
-const PaymentChatIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={paymentChatIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
-);
+const CampaignsIcon = ({ size = 18, className, mobile }: { size?: number; className?: string; mobile?: boolean }) => 
+  mobile ? <ThemeAwareIcon src={campaignsIcon} size={size} className={className} /> : <SidebarIcon src={campaignsIcon} size={size} className={className} />;
 
-const SupportChatIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={supportChatIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
-);
+const CommunicationIcon = ({ size = 18, className, mobile }: { size?: number; className?: string; mobile?: boolean }) => 
+  mobile ? <ThemeAwareIcon src={communicationIcon} size={size} className={className} /> : <SidebarIcon src={communicationIcon} size={size} className={className} />;
 
-const AIIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={aiIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
-);
+const PaymentChatIcon = ({ size = 18, className, mobile }: { size?: number; className?: string; mobile?: boolean }) => 
+  mobile ? <ThemeAwareIcon src={paymentChatIcon} size={size} className={className} /> : <SidebarIcon src={paymentChatIcon} size={size} className={className} />;
 
-const FinanceIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={financeIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
-);
+const SupportChatIcon = ({ size = 18, className, mobile }: { size?: number; className?: string; mobile?: boolean }) => 
+  mobile ? <ThemeAwareIcon src={supportChatIcon} size={size} className={className} /> : <SidebarIcon src={supportChatIcon} size={size} className={className} />;
 
-const PublicPageIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={publicPageIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
-);
+const AIIcon = ({ size = 18, className, mobile }: { size?: number; className?: string; mobile?: boolean }) => 
+  mobile ? <ThemeAwareIcon src={aiIcon} size={size} className={className} /> : <SidebarIcon src={aiIcon} size={size} className={className} />;
 
-const ProductsIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={productsIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
-);
+const FinanceIcon = ({ size = 18, className, mobile }: { size?: number; className?: string; mobile?: boolean }) => 
+  mobile ? <ThemeAwareIcon src={financeIcon} size={size} className={className} /> : <SidebarIcon src={financeIcon} size={size} className={className} />;
 
-const CouponsIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={couponsIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
-);
+const PublicPageIcon = ({ size = 18, className, mobile }: { size?: number; className?: string; mobile?: boolean }) => 
+  mobile ? <ThemeAwareIcon src={publicPageIcon} size={size} className={className} /> : <SidebarIcon src={publicPageIcon} size={size} className={className} />;
 
-const ReportsIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={reportsIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
-);
+const ProductsIcon = ({ size = 18, className, mobile }: { size?: number; className?: string; mobile?: boolean }) => 
+  mobile ? <ThemeAwareIcon src={productsIcon} size={size} className={className} /> : <SidebarIcon src={productsIcon} size={size} className={className} />;
 
-const ReviewsIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={reviewsIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
-);
+const CouponsIcon = ({ size = 18, className, mobile }: { size?: number; className?: string; mobile?: boolean }) => 
+  mobile ? <ThemeAwareIcon src={couponsIcon} size={size} className={className} /> : <SidebarIcon src={couponsIcon} size={size} className={className} />;
 
-const SettingsIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={settingsIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
-);
+const ReportsIcon = ({ size = 18, className, mobile }: { size?: number; className?: string; mobile?: boolean }) => 
+  mobile ? <ThemeAwareIcon src={reportsIcon} size={size} className={className} /> : <SidebarIcon src={reportsIcon} size={size} className={className} />;
+
+const ReviewsIcon = ({ size = 18, className, mobile }: { size?: number; className?: string; mobile?: boolean }) => 
+  mobile ? <ThemeAwareIcon src={reviewsIcon} size={size} className={className} /> : <SidebarIcon src={reviewsIcon} size={size} className={className} />;
+
+const SettingsIcon = ({ size = 18, className, mobile }: { size?: number; className?: string; mobile?: boolean }) => 
+  mobile ? <ThemeAwareIcon src={settingsIcon} size={size} className={className} /> : <SidebarIcon src={settingsIcon} size={size} className={className} />;
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
 
@@ -273,7 +262,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
               : "text-sidebar-foreground/30 hover:bg-sidebar-accent/20"
           } transition-all duration-200 group`}
         >
-          <item.icon size={18} className={opts.mobile ? undefined : "text-sidebar-foreground/25"} />
+          <item.icon size={18} mobile={opts.mobile} className={opts.mobile ? undefined : "text-sidebar-foreground/25"} />
           <span className="text-sm font-medium">{item.label}</span>
           <Lock size={11} className="ml-auto opacity-40" />
         </button>
@@ -292,7 +281,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
               : "text-muted-foreground hover:text-foreground hover:bg-secondary"
           }`}
         >
-          <item.icon size={18} />
+          <item.icon size={18} mobile={true} />
           <span className="text-sm font-medium">{item.label}</span>
         </Link>
       );
@@ -327,7 +316,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
           onClick={() => handleLockedClick(group.label, group.featureKey)}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg w-full text-sidebar-foreground/30 cursor-pointer hover:bg-sidebar-accent/20 transition-all duration-200"
         >
-          <group.icon size={18} className="text-sidebar-foreground/25" />
+          <group.icon size={18} mobile={opts.mobile} className="text-sidebar-foreground/25" />
         </button>
       );
     }
@@ -348,6 +337,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
         >
           <group.icon
             size={18}
+            mobile={opts.mobile}
             className={
               groupActive
                 ? opts.mobile ? "text-accent" : "text-sidebar-primary"
@@ -401,7 +391,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
                 isActive ? "text-accent" : "text-muted-foreground"
               }`}
             >
-              <item.icon size={20} />
+              <item.icon size={20} mobile={true} />
               <span className="text-[10px] font-medium">{item.label}</span>
             </Link>
           );
