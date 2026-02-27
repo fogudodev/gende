@@ -47,6 +47,7 @@ import campaignsIcon from "@/assets/icon-campaigns.png";
 import communicationIcon from "@/assets/icon-communication.png";
 import paymentChatIcon from "@/assets/icon-payment-chat.png";
 import supportChatIcon from "@/assets/icon-support-chat.png";
+import aiIcon from "@/assets/icon-ai.png";
 
 // Wrapper component for custom icons
 const CalendarIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
@@ -100,6 +101,10 @@ const PaymentChatIcon = ({ size = 18, className }: { size?: number; className?: 
 const SupportChatIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
   <img src={supportChatIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
 );
+
+const AIIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
+  <img src={aiIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
+);
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
 
@@ -146,7 +151,7 @@ const communicationGroup: NavGroup = {
   children: [
     { icon: PaymentChatIcon, label: "Chat Pagamento", path: "/payment-chat", featureKey: "settings" },
     { icon: SupportChatIcon, label: "Chat Suporte", path: "/support-chat", featureKey: "settings" },
-    { icon: Bot, label: "Assistente IA", path: "/ai-assistant", featureKey: "settings" },
+    { icon: AIIcon, label: "Assistente IA", path: "/ai-assistant", featureKey: "settings" },
   ],
 };
 
