@@ -7,7 +7,8 @@ import { useProfessional } from "@/hooks/useProfessional";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { Clock, User, Scissors, DollarSign, CreditCard, Banknote, Smartphone, CheckCircle2 } from "lucide-react";
+import { Clock, User, Scissors, DollarSign, CreditCard, Banknote, Smartphone, CheckCircle2, FileText } from "lucide-react";
+import jsPDF from "jspdf";
 import {
   Dialog,
   DialogContent,
@@ -147,6 +148,71 @@ const CustomerJourney = () => {
     return { totalPrice, isPublicBooking, signalAmount, totalPaid, remainingAmount };
   };
 
+  const paymentMethodLabels: Record<string, string> = {
+    credit_card: "Cartão de Crédito",
+    debit_card: "Cartão de Débito",
+    cash: "Dinheiro",
+    pix: "PIX",
+  };
+
+  const generateReceiptPDF = (booking: any, amount: number, method: string) => {
+    const doc = new jsPDF({ unit: "mm", format: "a5" });
+    const profName = professional?.business_name || professional?.name || "Estabelecimento";
+    const clientName = booking.client_name || booking.clients?.name || "Cliente";
+    const serviceName = booking.services?.name || "Serviço";
+    const dateStr = format(new Date(booking.start_time), "dd/MM/yyyy");
+    const timeStr = format(new Date(booking.start_time), "HH:mm");
+    const employeeName = booking.employee_id ? employeeMap.get(booking.employee_id) || "—" : profName;
+
+    let y = 15;
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text(profName, 74, y, { align: "center" });
+    y += 8;
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text("RECIBO DE PAGAMENTO", 74, y, { align: "center" });
+    y += 10;
+    doc.setDrawColor(200);
+    doc.line(10, y, 138, y);
+    y += 8;
+
+    const addLine = (label: string, value: string) => {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.text(label, 12, y);
+      doc.setFont("helvetica", "normal");
+      doc.text(value, 60, y);
+      y += 6;
+    };
+
+    addLine("Cliente:", clientName);
+    addLine("Serviço:", serviceName);
+    addLine("Profissional:", employeeName);
+    addLine("Data:", dateStr);
+    addLine("Horário:", timeStr);
+    addLine("Forma de pagamento:", paymentMethodLabels[method] || method);
+    
+    y += 2;
+    doc.line(10, y, 138, y);
+    y += 8;
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("Valor pago:", 12, y);
+    doc.text(formatCurrency(amount), 138, y, { align: "right" });
+    y += 10;
+    doc.line(10, y, 138, y);
+    y += 12;
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Emitido em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm")}`, 74, y, { align: "center" });
+    y += 5;
+    doc.text("Este recibo comprova o pagamento do serviço acima.", 74, y, { align: "center" });
+
+    doc.save(`recibo-${clientName.replace(/\s+/g, "-").toLowerCase()}-${dateStr.replace(/\//g, "-")}.pdf`);
+  };
+
   const handleConfirmPayment = async () => {
     if (!selectedBooking || !paymentMethod || !professional) return;
     setIsProcessing(true);
@@ -162,10 +228,13 @@ const CustomerJourney = () => {
         payment_method: paymentMethod,
       });
 
+      // Generate PDF receipt
+      generateReceiptPDF(selectedBooking, info.remainingAmount, paymentMethod);
+
       setIsPaymentConfirmed(true);
       queryClient.invalidateQueries({ queryKey: ["booking-payments"] });
       queryClient.invalidateQueries({ queryKey: ["payments"] });
-      toast.success("Pagamento registrado com sucesso!");
+      toast.success("Pagamento registrado! Recibo gerado.");
     } catch {
       toast.error("Erro ao registrar pagamento");
     } finally {
