@@ -27,6 +27,7 @@ import CommissionReport from "./pages/CommissionReport";
 import TeamPerformance from "./pages/TeamPerformance";
 import Campaigns from "./pages/Campaigns";
 import PaymentChat from "./pages/PaymentChat";
+import SupportChat from "./pages/SupportChat";
 import NotFound from "./pages/NotFound";
 
 // Admin pages
@@ -76,6 +77,7 @@ const App = () => (
               <Route path="/team-performance" element={<ProtectedRoute><TeamPerformance /></ProtectedRoute>} />
               <Route path="/campaigns" element={<ProtectedRoute><Campaigns /></ProtectedRoute>} />
               <Route path="/payment-chat" element={<ProtectedRoute><PaymentChat /></ProtectedRoute>} />
+              <Route path="/support-chat" element={<ProtectedRoute><SupportChat /></ProtectedRoute>} />
 
               {/* Admin Master routes */}
               <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
