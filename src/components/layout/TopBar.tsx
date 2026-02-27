@@ -1,4 +1,5 @@
-import { Bell, Search, Sun, Moon, Menu, Crown } from "lucide-react";
+import { Bell, Search, Sun, Moon, Menu, Crown, Headphones } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useState } from "react";
@@ -16,6 +17,7 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
   const { data: professional } = useProfessional();
   const [renewalOpen, setRenewalOpen] = useState(false);
   const { currentPlan } = useFeatureAccess();
+  const navigate = useNavigate();
 
   return (
     <>
@@ -54,6 +56,14 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
           <span className="hidden sm:inline">
             {currentPlan === "none" ? "Assinar" : currentPlan === "essencial" ? "Essencial" : "Enterprise"}
           </span>
+        </button>
+        <button
+          onClick={() => navigate("/support-chat")}
+          className="p-2 rounded-lg hover:bg-secondary/50 transition-colors"
+          aria-label="Chat de suporte"
+          title="Suporte"
+        >
+          <Headphones size={16} className="text-muted-foreground hover:text-foreground transition-colors" />
         </button>
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
