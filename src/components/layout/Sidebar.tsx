@@ -97,7 +97,6 @@ const afterGroupItems: NavItem[] = [
 
 const salonOnlyItems: NavItem[] = [
   { icon: UserPlus, label: "Equipe", path: "/team", featureKey: "team" },
-  { icon: QrCode, label: "Pagamento", path: "/payment-settings", featureKey: "payment-settings" },
   { icon: FileBarChart, label: "Comissões", path: "/commission-report", featureKey: "commission-report" },
   { icon: Activity, label: "Desempenho", path: "/team-performance", featureKey: "team-performance" },
 ];
