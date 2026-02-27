@@ -245,9 +245,13 @@ const CustomerJourney = () => {
   const handleStatusChange = async (newStatus: string) => {
     if (!selectedBooking) return;
 
-    if (newStatus === "completed" && !isPaymentConfirmed) {
-      toast.error("Confirme o pagamento antes de concluir o atendimento.");
-      return;
+    if (newStatus === "completed") {
+      const info = getBookingPaymentInfo(selectedBooking);
+      // Allow completion if: payment was just confirmed in this session, or remaining is already 0, or price is 0
+      if (!isPaymentConfirmed && info.remainingAmount > 0 && info.totalPrice > 0) {
+        toast.error("Confirme o pagamento antes de concluir o atendimento.");
+        return;
+      }
     }
 
     try {
