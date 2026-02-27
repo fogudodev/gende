@@ -103,7 +103,10 @@ const AdminUsers = () => {
           <AdminCreateSupport
             open={showCreateSupport}
             onClose={() => setShowCreateSupport(false)}
-            onCreated={() => qc.invalidateQueries({ queryKey: ["admin-professionals"] })}
+            onCreated={() => {
+              qc.invalidateQueries({ queryKey: ["admin-professionals"] });
+              qc.invalidateQueries({ queryKey: ["admin-support-users"] });
+            }}
           />
 
           <div className="space-y-3">
