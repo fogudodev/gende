@@ -30,31 +30,72 @@ import {
   Wallet,
   Headphones,
   Bot,
+  ChevronDown,
+  MessageSquare,
+  Send,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
 
-const baseNavItems: { icon: any; label: string; path: string; featureKey: FeatureKey }[] = [
+interface NavItem {
+  icon: any;
+  label: string;
+  path: string;
+  featureKey: FeatureKey;
+}
+
+interface NavGroup {
+  type: "group";
+  icon: any;
+  label: string;
+  featureKey: FeatureKey;
+  children: NavItem[];
+}
+
+type NavEntry = NavItem & { type?: "item" } | NavGroup;
+
+const standaloneItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/", featureKey: "dashboard" },
   { icon: CalendarDays, label: "Agendamentos", path: "/bookings", featureKey: "bookings" },
   { icon: Scissors, label: "Serviços", path: "/services", featureKey: "services" },
   { icon: Users, label: "Clientes", path: "/clients", featureKey: "clients" },
-  { icon: MessageCircle, label: "WhatsApp", path: "/automations", featureKey: "automations" },
-  { icon: Megaphone, label: "Campanhas", path: "/campaigns", featureKey: "campaigns" },
+];
+
+const whatsappGroup: NavGroup = {
+  type: "group",
+  icon: MessageCircle,
+  label: "WhatsApp",
+  featureKey: "automations",
+  children: [
+    { icon: MessageCircle, label: "Automações", path: "/automations", featureKey: "automations" },
+    { icon: Megaphone, label: "Campanhas", path: "/campaigns", featureKey: "campaigns" },
+  ],
+};
+
+const communicationGroup: NavGroup = {
+  type: "group",
+  icon: MessageSquare,
+  label: "Comunicação",
+  featureKey: "settings",
+  children: [
+    { icon: Wallet, label: "Chat Pagamento", path: "/payment-chat", featureKey: "settings" },
+    { icon: Headphones, label: "Chat Suporte", path: "/support-chat", featureKey: "settings" },
+    { icon: Bot, label: "Assistente IA", path: "/ai-assistant", featureKey: "settings" },
+  ],
+};
+
+const afterGroupItems: NavItem[] = [
   { icon: CreditCard, label: "Financeiro", path: "/finance", featureKey: "finance" },
   { icon: Globe, label: "Página Pública", path: "/public-page", featureKey: "public-page" },
   { icon: Package, label: "Produtos", path: "/products", featureKey: "products" },
   { icon: Ticket, label: "Cupons", path: "/coupons", featureKey: "coupons" },
   { icon: BarChart3, label: "Relatórios", path: "/reports", featureKey: "reports" },
   { icon: Star, label: "Avaliações", path: "/reviews", featureKey: "reviews" },
-  { icon: Wallet, label: "Chat Pagamento", path: "/payment-chat", featureKey: "settings" },
-  { icon: Headphones, label: "Chat Suporte", path: "/support-chat", featureKey: "settings" },
-  { icon: Bot, label: "Assistente IA", path: "/ai-assistant", featureKey: "settings" },
   { icon: Settings, label: "Configurações", path: "/settings", featureKey: "settings" },
 ];
 
-const salonOnlyItems: { icon: any; label: string; path: string; featureKey: FeatureKey }[] = [
+const salonOnlyItems: NavItem[] = [
   { icon: UserPlus, label: "Equipe", path: "/team", featureKey: "team" },
   { icon: QrCode, label: "Pagamento", path: "/payment-settings", featureKey: "payment-settings" },
   { icon: FileBarChart, label: "Comissões", path: "/commission-report", featureKey: "commission-report" },
@@ -77,6 +118,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
   const [expanded, setExpanded] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState<{ name: string; featureKey: FeatureKey } | null>(null);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
@@ -87,13 +129,151 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
   const isSalon = professional?.account_type === "salon";
   const displayName = professional?.business_name || professional?.name || "Gende";
   const displayLogo = professional?.logo_url || logo;
-  const navItems = isSalon
-    ? [...baseNavItems.slice(0, 4), ...salonOnlyItems, ...baseNavItems.slice(4)]
-    : baseNavItems;
+
+  const buildNavEntries = (): NavEntry[] => {
+    const entries: NavEntry[] = [...standaloneItems];
+    if (isSalon) entries.push(...salonOnlyItems);
+    entries.push(whatsappGroup, communicationGroup, ...afterGroupItems);
+    return entries;
+  };
+
+  const navEntries = buildNavEntries();
+
+  const toggleGroup = (label: string) => {
+    setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
+  };
+
+  const isGroupActive = (group: NavGroup) =>
+    group.children.some((c) => location.pathname === c.path);
 
   const handleLockedClick = (label: string, featureKey: FeatureKey) => {
     setUpgradeFeature({ name: label, featureKey });
     setUpgradeOpen(true);
+  };
+
+  const renderItem = (item: NavItem, opts: { onNav?: () => void; mobile?: boolean }) => {
+    const isActive = location.pathname === item.path;
+    const locked = isLocked(item.featureKey);
+
+    if (locked) {
+      return (
+        <button
+          key={item.path}
+          onClick={() => {
+            opts.onNav?.();
+            handleLockedClick(item.label, item.featureKey);
+          }}
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer ${
+            opts.mobile
+              ? "text-muted-foreground/50"
+              : "text-sidebar-foreground/30 hover:bg-sidebar-accent/20"
+          } transition-all duration-200 group`}
+        >
+          <item.icon size={18} className={opts.mobile ? undefined : "text-sidebar-foreground/25"} />
+          <span className="text-sm font-medium">{item.label}</span>
+          <Lock size={11} className="ml-auto opacity-40" />
+        </button>
+      );
+    }
+
+    if (opts.mobile) {
+      return (
+        <Link
+          key={item.path}
+          to={item.path}
+          onClick={opts.onNav}
+          className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+            isActive
+              ? "bg-accent/10 text-accent"
+              : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+          }`}
+        >
+          <item.icon size={18} />
+          <span className="text-sm font-medium">{item.label}</span>
+        </Link>
+      );
+    }
+
+    return (
+      <Link
+        key={item.path}
+        to={item.path}
+        className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${
+          isActive
+            ? "bg-sidebar-accent text-sidebar-primary"
+            : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+        }`}
+      >
+        <item.icon size={18} className={isActive ? "text-sidebar-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground"} />
+        {expanded && <span className="text-sm font-medium">{item.label}</span>}
+        {isActive && expanded && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-sidebar-primary" />}
+      </Link>
+    );
+  };
+
+  const renderGroup = (group: NavGroup, opts: { onNav?: () => void; mobile?: boolean }) => {
+    const groupActive = isGroupActive(group);
+    const isOpen = openGroups[group.label] ?? groupActive;
+    const locked = isLocked(group.featureKey);
+
+    if (locked && !opts.mobile && !expanded) {
+      return (
+        <button
+          key={group.label}
+          onClick={() => handleLockedClick(group.label, group.featureKey)}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg w-full text-sidebar-foreground/30 cursor-pointer hover:bg-sidebar-accent/20 transition-all duration-200"
+        >
+          <group.icon size={18} className="text-sidebar-foreground/25" />
+        </button>
+      );
+    }
+
+    return (
+      <div key={group.label}>
+        <button
+          onClick={() => toggleGroup(group.label)}
+          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
+            groupActive
+              ? opts.mobile
+                ? "text-accent"
+                : "text-sidebar-primary"
+              : opts.mobile
+                ? "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+          }`}
+        >
+          <group.icon
+            size={18}
+            className={
+              groupActive
+                ? opts.mobile ? "text-accent" : "text-sidebar-primary"
+                : opts.mobile ? "text-muted-foreground" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground"
+            }
+          />
+          {(opts.mobile || expanded) && (
+            <>
+              <span className="text-sm font-medium">{group.label}</span>
+              <ChevronDown
+                size={14}
+                className={`ml-auto transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+              />
+            </>
+          )}
+        </button>
+        {isOpen && (opts.mobile || expanded) && (
+          <div className={`mt-0.5 space-y-0.5 ${opts.mobile ? "ml-4 pl-3 border-l border-border" : "ml-4 pl-3 border-l border-sidebar-border"}`}>
+            {group.children.map((child) => renderItem(child, opts))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderEntry = (entry: NavEntry, opts: { onNav?: () => void; mobile?: boolean }) => {
+    if ("type" in entry && entry.type === "group") {
+      return renderGroup(entry as NavGroup, opts);
+    }
+    return renderItem(entry as NavItem, opts);
   };
 
   return (
@@ -138,44 +318,8 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
                 <X size={20} />
               </button>
             </div>
-            <nav className="flex-1 space-y-1">
-              {navItems.map((item) => {
-                const isActive = location.pathname === item.path;
-                const locked = isLocked(item.featureKey);
-
-                if (locked) {
-                  return (
-                    <button
-                      key={item.path}
-                      onClick={() => {
-                        setMobileOpen(false);
-                        handleLockedClick(item.label, item.featureKey);
-                      }}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground/50 cursor-pointer"
-                    >
-                      <item.icon size={18} />
-                      <span className="text-sm font-medium">{item.label}</span>
-                      <Lock size={12} className="ml-auto text-muted-foreground/40" />
-                    </button>
-                  );
-                }
-
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                      isActive
-                        ? "bg-accent/10 text-accent"
-                        : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                    }`}
-                  >
-                    <item.icon size={18} />
-                    <span className="text-sm font-medium">{item.label}</span>
-                  </Link>
-                );
-              })}
+            <nav className="flex-1 space-y-0.5 overflow-y-auto">
+              {navEntries.map((entry) => renderEntry(entry, { onNav: () => setMobileOpen(false), mobile: true }))}
               {isAdmin && (
                 <>
                   <div className="my-2 border-t border-border" />
@@ -221,44 +365,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
         </div>
 
         <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            const locked = isLocked(item.featureKey);
-
-            if (locked) {
-              return (
-                <button
-                  key={item.path}
-                  onClick={() => handleLockedClick(item.label, item.featureKey)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg w-full text-sidebar-foreground/30 cursor-pointer hover:bg-sidebar-accent/20 transition-all duration-200 group"
-                >
-                  <item.icon size={18} className="text-sidebar-foreground/25" />
-                  {expanded && (
-                    <>
-                      <span className="text-sm font-medium">{item.label}</span>
-                      <Lock size={11} className="ml-auto text-sidebar-foreground/20" />
-                    </>
-                  )}
-                </button>
-              );
-            }
-
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-primary"
-                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                }`}
-              >
-                <item.icon size={18} className={isActive ? "text-sidebar-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground"} />
-                {expanded && <span className="text-sm font-medium">{item.label}</span>}
-                {isActive && expanded && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-sidebar-primary" />}
-              </Link>
-            );
-          })}
+          {navEntries.map((entry) => renderEntry(entry, {}))}
 
           {isAdmin && (
             <>
