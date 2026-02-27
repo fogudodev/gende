@@ -48,6 +48,7 @@ import communicationIcon from "@/assets/icon-communication.png";
 import paymentChatIcon from "@/assets/icon-payment-chat.png";
 import supportChatIcon from "@/assets/icon-support-chat.png";
 import aiIcon from "@/assets/icon-ai.png";
+import financeIcon from "@/assets/icon-finance.png";
 
 // Wrapper component for custom icons
 const CalendarIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
@@ -105,6 +106,10 @@ const SupportChatIcon = ({ size = 18, className }: { size?: number; className?: 
 const AIIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
   <img src={aiIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
 );
+
+const FinanceIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
+  <img src={financeIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
+);
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
 
@@ -156,7 +161,7 @@ const communicationGroup: NavGroup = {
 };
 
 const afterGroupItems: NavItem[] = [
-  { icon: CreditCard, label: "Financeiro", path: "/finance", featureKey: "finance" },
+  { icon: FinanceIcon, label: "Financeiro", path: "/finance", featureKey: "finance" },
   { icon: Globe, label: "Página Pública", path: "/public-page", featureKey: "public-page" },
   { icon: Package, label: "Produtos", path: "/products", featureKey: "products" },
   { icon: Ticket, label: "Cupons", path: "/coupons", featureKey: "coupons" },
@@ -175,7 +180,7 @@ const mobileNavItems = [
   { icon: DashboardIcon, label: "Dashboard", path: "/" },
   { icon: CalendarIcon, label: "Agenda", path: "/bookings" },
   { icon: ClientsIcon, label: "Clientes", path: "/clients" },
-  { icon: CreditCard, label: "Financeiro", path: "/finance" },
+  { icon: FinanceIcon, label: "Financeiro", path: "/finance" },
 ];
 
 interface SidebarProps {
