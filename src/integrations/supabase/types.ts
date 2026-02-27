@@ -914,6 +914,7 @@ export type Database = {
           feature_public_page: boolean
           feature_reports: boolean
           feature_whatsapp: boolean
+          followup_message: string | null
           id: string
           is_blocked: boolean
           logo_url: string | null
@@ -948,6 +949,7 @@ export type Database = {
           feature_public_page?: boolean
           feature_reports?: boolean
           feature_whatsapp?: boolean
+          followup_message?: string | null
           id?: string
           is_blocked?: boolean
           logo_url?: string | null
@@ -982,6 +984,7 @@ export type Database = {
           feature_public_page?: boolean
           feature_reports?: boolean
           feature_whatsapp?: boolean
+          followup_message?: string | null
           id?: string
           is_blocked?: boolean
           logo_url?: string | null
