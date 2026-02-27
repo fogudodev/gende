@@ -44,6 +44,7 @@ import performanceIcon from "@/assets/icon-performance.png";
 import whatsappIcon from "@/assets/icon-whatsapp.png";
 import automationsIcon from "@/assets/icon-automations.png";
 import campaignsIcon from "@/assets/icon-campaigns.png";
+import communicationIcon from "@/assets/icon-communication.png";
 
 // Wrapper component for custom icons
 const CalendarIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
@@ -85,6 +86,10 @@ const AutomationsIcon = ({ size = 18, className }: { size?: number; className?: 
 const CampaignsIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
   <img src={campaignsIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
 );
+
+const CommunicationIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
+  <img src={communicationIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
+);
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
 
@@ -125,7 +130,7 @@ const whatsappGroup: NavGroup = {
 
 const communicationGroup: NavGroup = {
   type: "group",
-  icon: MessageSquare,
+  icon: CommunicationIcon,
   label: "Comunicação",
   featureKey: "settings",
   children: [
