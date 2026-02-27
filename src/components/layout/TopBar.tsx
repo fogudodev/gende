@@ -1,6 +1,9 @@
-import { Bell, Search, Sun, Moon, Menu } from "lucide-react";
+import { Bell, Search, Sun, Moon, Menu, Crown } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useProfessional } from "@/hooks/useProfessional";
+import { useState } from "react";
+import PlanRenewalModal from "./PlanRenewalModal";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 
 interface TopBarProps {
   title: string;
@@ -11,8 +14,12 @@ interface TopBarProps {
 const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
   const { theme, setTheme } = useTheme();
   const { data: professional } = useProfessional();
+  const [renewalOpen, setRenewalOpen] = useState(false);
+  const { currentPlan } = useFeatureAccess();
 
   return (
+    <>
+    <PlanRenewalModal open={renewalOpen} onOpenChange={setRenewalOpen} />
     <header className="h-14 md:h-[64px] border-b border-border px-4 md:px-6 flex items-center justify-between bg-background/80 backdrop-blur-xl sticky top-0 z-40">
       <div className="flex items-center gap-3">
         <button
@@ -39,6 +46,16 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
           />
         </div>
         <button
+          onClick={() => setRenewalOpen(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/10 hover:bg-accent/20 text-accent text-xs font-semibold transition-colors"
+          title="Gerenciar plano"
+        >
+          <Crown size={14} />
+          <span className="hidden sm:inline">
+            {currentPlan === "none" ? "Assinar" : currentPlan === "essencial" ? "Essencial" : "Enterprise"}
+          </span>
+        </button>
+        <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           className="p-2 rounded-lg hover:bg-secondary/50 transition-colors"
           aria-label="Alternar tema"
@@ -62,6 +79,7 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
         )}
       </div>
     </header>
+    </>
   );
 };
 

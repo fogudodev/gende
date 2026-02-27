@@ -245,6 +245,47 @@ export type Database = {
           },
         ]
       }
+      chat_messages: {
+        Row: {
+          attachment_url: string | null
+          chat_type: string
+          created_at: string
+          id: string
+          message: string | null
+          professional_id: string
+          sender_name: string | null
+          sender_role: string
+        }
+        Insert: {
+          attachment_url?: string | null
+          chat_type?: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          professional_id: string
+          sender_name?: string | null
+          sender_role?: string
+        }
+        Update: {
+          attachment_url?: string | null
+          chat_type?: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          professional_id?: string
+          sender_name?: string | null
+          sender_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           created_at: string
