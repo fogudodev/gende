@@ -72,6 +72,23 @@ function formatCurrency(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+/** Convert a UTC ISO string to a Date shifted to São Paulo (UTC-3) for display purposes */
+function toSaoPaulo(utcStr: string): Date {
+  const d = new Date(utcStr);
+  // Shift by -3h from UTC to get São Paulo time, then treat as local for formatting
+  return new Date(d.getTime() + (-3) * 60 * 60 * 1000);
+}
+
+function formatTimeSP(utcStr: string): string {
+  const sp = toSaoPaulo(utcStr);
+  return `${String(sp.getUTCHours()).padStart(2, "0")}:${String(sp.getUTCMinutes()).padStart(2, "0")}`;
+}
+
+function formatDateSP(utcStr: string) {
+  const sp = toSaoPaulo(utcStr);
+  return { day: sp.getUTCDay(), date: sp.getUTCDate(), month: sp.getUTCMonth() };
+}
+
 /* ── Main Component ────────────────────────────── */
 const PublicBooking = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -754,7 +771,7 @@ function Step4DateTime({ service, accent, days, today, selectedDate, setSelected
   service: Service; accent: string; days: Date[]; today: Date; selectedDate: Date | null; setSelectedDate: (d: Date | null) => void; selectedTime: string; setSelectedTime: (t: string) => void; slots: Slot[]; loadingSlots: boolean; selectedSlot: Slot | null; setSelectedSlot: (s: Slot | null) => void; onNext: () => void; onBack: () => void;
 }) {
   const handleDaySelect = (d: Date) => { setSelectedDate(d); setSelectedTime(""); setSelectedSlot(null); };
-  const handleTimeSelect = (slot: Slot) => { setSelectedSlot(slot); setSelectedTime(format(new Date(slot.start_time), "HH:mm")); };
+  const handleTimeSelect = (slot: Slot) => { setSelectedSlot(slot); setSelectedTime(formatTimeSP(slot.start_time)); };
   const canContinue = selectedDate && selectedSlot;
 
   return (
@@ -804,7 +821,7 @@ function Step4DateTime({ service, accent, days, today, selectedDate, setSelected
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {slots.map(slot => {
-                  const time = format(new Date(slot.start_time), "HH:mm");
+                  const time = formatTimeSP(slot.start_time);
                   const isSelected = selectedSlot?.start_time === slot.start_time;
                   return (
                     <button key={slot.start_time} onClick={() => handleTimeSelect(slot)}
@@ -855,7 +872,7 @@ function Step5Confirm({ professional, selectedEmployee, selectedService, selecte
   professional: Professional; selectedEmployee: Employee | null; selectedService: Service; selectedSlot: Slot | null; clientName: string; clientPhone: string; accent: string; isSalon: boolean; paymentConfig: PaymentConfig | null; signalAmount: number | null; totalPrice: number; remainingValue: number; submitting: boolean; onConfirm: () => void; onBack: () => void;
 }) {
   if (!selectedSlot) return null;
-  const startDate = new Date(selectedSlot.start_time);
+  const spDate = formatDateSP(selectedSlot.start_time);
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-60px)] md:min-h-[calc(860px-60px)]">
@@ -890,8 +907,8 @@ function Step5Confirm({ professional, selectedEmployee, selectedService, selecte
             {[
               { icon: "📋", label: "Serviço", value: selectedService.name },
               { icon: "⏱", label: "Duração", value: `${selectedService.duration_minutes} min` },
-              { icon: "📅", label: "Data", value: `${DAYS_FULL[startDate.getDay()]}, ${startDate.getDate()} de ${MONTHS_PT[startDate.getMonth()]}` },
-              { icon: "⏰", label: "Horário", value: format(startDate, "HH:mm") },
+              { icon: "📅", label: "Data", value: `${DAYS_FULL[spDate.day]}, ${spDate.date} de ${MONTHS_PT[spDate.month]}` },
+              { icon: "⏰", label: "Horário", value: formatTimeSP(selectedSlot.start_time) },
               { icon: "👤", label: "Cliente", value: clientName },
               { icon: "📱", label: "WhatsApp", value: clientPhone },
             ].map(item => (
@@ -961,12 +978,12 @@ function SuccessView({ professional, selectedEmployee, selectedService, selected
           {(() => {
             const msg = professional.confirmation_message || "Agendamento Confirmado!";
             if (!selectedService || !selectedSlot) return msg;
-            const slotDate = new Date(selectedSlot.start_time);
+            const sp = formatDateSP(selectedSlot.start_time);
             return msg
               .replace("{nome}", clientName)
               .replace("{servico}", selectedService.name)
-              .replace("{data}", `${slotDate.getDate()} de ${MONTHS_PT[slotDate.getMonth()]}`)
-              .replace("{horario}", format(slotDate, "HH:mm"));
+              .replace("{data}", `${sp.date} de ${MONTHS_PT[sp.month]}`)
+              .replace("{horario}", formatTimeSP(selectedSlot.start_time));
           })()}
         </h2>
         <p className="text-sm mb-6 leading-relaxed" style={{ color: "#6B7280" }}>
@@ -981,8 +998,8 @@ function SuccessView({ professional, selectedEmployee, selectedService, selected
                 { label: "Cliente", value: clientName, icon: "👤" },
                 ...(selectedEmployee ? [{ label: "Profissional", value: selectedEmployee.name, icon: "✂️" }] : []),
                 { label: "Serviço", value: selectedService.name, icon: "📋" },
-                { label: "Data", value: `${DAYS_FULL[new Date(selectedSlot.start_time).getDay()]}, ${new Date(selectedSlot.start_time).getDate()} de ${MONTHS_PT[new Date(selectedSlot.start_time).getMonth()]}`, icon: "📅" },
-                { label: "Horário", value: format(new Date(selectedSlot.start_time), "HH:mm"), icon: "⏰" },
+                { label: "Data", value: (() => { const sp = formatDateSP(selectedSlot.start_time); return `${DAYS_FULL[sp.day]}, ${sp.date} de ${MONTHS_PT[sp.month]}`; })(), icon: "📅" },
+                { label: "Horário", value: formatTimeSP(selectedSlot.start_time), icon: "⏰" },
                 ...(signalAmount ? [{ label: "Sinal pago", value: formatCurrency(signalAmount), icon: "💳" }] : []),
               ].map(item => (
                 <div key={item.label} className="flex items-center gap-2">
