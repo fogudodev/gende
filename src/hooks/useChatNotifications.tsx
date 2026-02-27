@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNotificationSound } from "@/hooks/useNotificationSound";
 
 interface UseChatNotificationsOptions {
   /** The role of the current viewer: "user" means professional, "admin" means admin/support */
@@ -24,6 +25,7 @@ export const useChatNotifications = ({
   enabled = true,
 }: UseChatNotificationsOptions) => {
   const permissionRequested = useRef(false);
+  const { play: playNotificationSound } = useNotificationSound();
 
   // Request browser notification permission once
   useEffect(() => {
@@ -73,6 +75,9 @@ export const useChatNotifications = ({
         const senderName = newMsg.sender_name || (viewerRole === "user" ? "Suporte" : "Usuário");
         const msgPreview = newMsg.message || "📎 Arquivo enviado";
         const chatLabel = chatType === "payment" ? "Pagamento" : "Suporte";
+
+        // Play notification sound
+        playNotificationSound();
 
         // Toast notification (always visible in-app)
         toast.info(`${senderName}: ${msgPreview}`, {
