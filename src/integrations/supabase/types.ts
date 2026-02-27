@@ -679,6 +679,7 @@ export type Database = {
           created_at: string
           currency: string
           id: string
+          payment_method: string | null
           professional_id: string
           status: string
           stripe_payment_intent_id: string | null
@@ -690,6 +691,7 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
+          payment_method?: string | null
           professional_id: string
           status?: string
           stripe_payment_intent_id?: string | null
@@ -701,6 +703,7 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
+          payment_method?: string | null
           professional_id?: string
           status?: string
           stripe_payment_intent_id?: string | null

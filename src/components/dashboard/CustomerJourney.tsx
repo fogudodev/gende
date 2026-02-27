@@ -2,6 +2,10 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useBookings, useUpdateBooking } from "@/hooks/useBookings";
 import { useSalonEmployees } from "@/hooks/useSalonEmployees";
+import { usePaymentConfig } from "@/hooks/usePaymentConfig";
+import { useProfessional } from "@/hooks/useProfessional";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { Clock, User, Scissors, DollarSign, CreditCard, Banknote, Smartphone, CheckCircle2 } from "lucide-react";
 import {
@@ -46,11 +50,41 @@ const CustomerJourney = () => {
   const today = useMemo(() => new Date(), []);
   const { data: bookings } = useBookings(today);
   const { data: employees } = useSalonEmployees();
+  const { data: paymentConfig } = usePaymentConfig();
+  const { data: professional } = useProfessional();
   const updateBooking = useUpdateBooking();
+  const queryClient = useQueryClient();
 
   const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Fetch existing payments for today's bookings
+  const bookingIds = useMemo(() => (bookings || []).map((b: any) => b.id), [bookings]);
+  const { data: existingPayments } = useQuery({
+    queryKey: ["booking-payments", bookingIds],
+    queryFn: async () => {
+      if (bookingIds.length === 0) return [];
+      const { data } = await supabase
+        .from("payments")
+        .select("*")
+        .in("booking_id", bookingIds);
+      return data || [];
+    },
+    enabled: bookingIds.length > 0,
+  });
+
+  // Map payments by booking_id
+  const paymentsMap = useMemo(() => {
+    const map = new Map<string, any[]>();
+    (existingPayments || []).forEach((p: any) => {
+      const list = map.get(p.booking_id) || [];
+      list.push(p);
+      map.set(p.booking_id, list);
+    });
+    return map;
+  }, [existingPayments]);
 
   // Map employees by id
   const employeeMap = useMemo(() => {
@@ -85,10 +119,63 @@ const CustomerJourney = () => {
     setIsPaymentConfirmed(false);
   };
 
+  // Calculate signal amount for a booking
+  const getSignalAmount = (bookingPrice: number) => {
+    if (!paymentConfig?.signal_enabled) return 0;
+    if (paymentConfig.signal_type === "percentage") {
+      return Math.round((bookingPrice * paymentConfig.signal_value / 100) * 100) / 100;
+    }
+    return Math.min(paymentConfig.signal_value, bookingPrice);
+  };
+
+  // Get payment info for a booking
+  const getBookingPaymentInfo = (booking: any) => {
+    const totalPrice = booking.price || 0;
+    const isPublicBooking = !!booking.stripe_payment_intent_id;
+    const payments = paymentsMap.get(booking.id) || [];
+    const totalPaid = payments
+      .filter((p: any) => p.status === "completed" || p.status === "succeeded")
+      .reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+
+    let signalAmount = 0;
+    if (isPublicBooking && paymentConfig?.signal_enabled) {
+      signalAmount = getSignalAmount(totalPrice);
+    }
+
+    const remainingAmount = Math.max(0, totalPrice - totalPaid);
+
+    return { totalPrice, isPublicBooking, signalAmount, totalPaid, remainingAmount };
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!selectedBooking || !paymentMethod || !professional) return;
+    setIsProcessing(true);
+
+    try {
+      const info = getBookingPaymentInfo(selectedBooking);
+      
+      await supabase.from("payments").insert({
+        professional_id: professional.id,
+        booking_id: selectedBooking.id,
+        amount: info.remainingAmount,
+        status: "completed",
+        payment_method: paymentMethod,
+      });
+
+      setIsPaymentConfirmed(true);
+      queryClient.invalidateQueries({ queryKey: ["booking-payments"] });
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
+      toast.success("Pagamento registrado com sucesso!");
+    } catch {
+      toast.error("Erro ao registrar pagamento");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleStatusChange = async (newStatus: string) => {
     if (!selectedBooking) return;
 
-    // Block completing without payment confirmation
     if (newStatus === "completed" && !isPaymentConfirmed) {
       toast.error("Confirme o pagamento antes de concluir o atendimento.");
       return;
@@ -104,21 +191,6 @@ const CustomerJourney = () => {
     } catch {
       toast.error("Erro ao alterar status");
     }
-  };
-
-  // Check if booking was from public page (has stripe_payment_intent_id or was created without auth)
-  const getBookingPaymentInfo = (booking: any) => {
-    const totalPrice = booking.price || 0;
-    // If has stripe payment intent, it was from public page with signal payment
-    const hasPublicPayment = !!booking.stripe_payment_intent_id;
-    // Approximate: signal was already paid, rest is pending
-    // For simplicity, if public booking we assume a signal was paid
-    return {
-      totalPrice,
-      isPublicBooking: hasPublicPayment,
-      // We don't have exact signal amount stored on booking, show full price as remaining
-      remainingAmount: totalPrice,
-    };
   };
 
   const formatCurrency = (v: number) =>
@@ -225,154 +297,193 @@ const CustomerJourney = () => {
             </DialogDescription>
           </DialogHeader>
 
-          {selectedBooking && (
-            <div className="space-y-5">
-              {/* Booking info */}
-              <div className="space-y-2 bg-secondary/30 rounded-xl p-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Horário</span>
-                  <span className="text-foreground font-medium">
-                    {format(new Date(selectedBooking.start_time), "HH:mm")}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Serviço</span>
-                  <span className="text-foreground font-medium">
-                    {selectedBooking.services?.name || "—"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Profissional</span>
-                  <span className="text-foreground font-medium">
-                    {selectedBooking.employee_id
-                      ? employeeMap.get(selectedBooking.employee_id) || "—"
-                      : "Próprio"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Valor total</span>
-                  <span className="text-primary font-bold">
-                    {formatCurrency(selectedBooking.price || 0)}
-                  </span>
-                </div>
-                {selectedBooking.stripe_payment_intent_id && (
+          {selectedBooking && (() => {
+            const info = getBookingPaymentInfo(selectedBooking);
+            return (
+              <div className="space-y-5">
+                {/* Booking info */}
+                <div className="space-y-2 bg-secondary/30 rounded-xl p-4">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Sinal pago (online)</span>
-                    <span className="text-success font-medium text-xs">✓ Via página pública</span>
+                    <span className="text-muted-foreground">Horário</span>
+                    <span className="text-foreground font-medium">
+                      {format(new Date(selectedBooking.start_time), "HH:mm")}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Serviço</span>
+                    <span className="text-foreground font-medium">
+                      {selectedBooking.services?.name || "—"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Profissional</span>
+                    <span className="text-foreground font-medium">
+                      {selectedBooking.employee_id
+                        ? employeeMap.get(selectedBooking.employee_id) || "—"
+                        : "Próprio"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Valor total</span>
+                    <span className="text-primary font-bold">
+                      {formatCurrency(info.totalPrice)}
+                    </span>
+                  </div>
+
+                  {/* Signal info for public bookings */}
+                  {info.isPublicBooking && info.signalAmount > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Sinal pago (online)</span>
+                      <span className="text-success font-semibold">
+                        - {formatCurrency(info.signalAmount)}
+                      </span>
+                    </div>
+                  )}
+
+                  {info.totalPaid > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Total já pago</span>
+                      <span className="text-success font-semibold">
+                        {formatCurrency(info.totalPaid)}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between text-sm border-t border-border/50 pt-2 mt-1">
+                    <span className="text-muted-foreground font-semibold">Valor restante</span>
+                    <span className={`font-bold ${info.remainingAmount > 0 ? "text-warning" : "text-success"}`}>
+                      {formatCurrency(info.remainingAmount)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Status atual</span>
+                    <span className="text-foreground font-medium">
+                      {statusLabels[selectedBooking.status] || selectedBooking.status}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Payment section - only show if not completed/cancelled and has remaining */}
+                {selectedBooking.status !== "completed" && selectedBooking.status !== "cancelled" && info.remainingAmount > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-semibold text-foreground">Receber pagamento</h4>
+                    <p className="text-xs text-muted-foreground">
+                      Valor a receber: <span className="text-primary font-bold">{formatCurrency(info.remainingAmount)}</span>
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      {paymentMethods.map((pm) => (
+                        <button
+                          key={pm.key}
+                          onClick={() => setPaymentMethod(pm.key)}
+                          className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-medium transition-all ${
+                            paymentMethod === pm.key
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border bg-secondary/30 text-muted-foreground hover:bg-secondary/50"
+                          }`}
+                          disabled={isPaymentConfirmed}
+                        >
+                          <pm.icon size={14} />
+                          {pm.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {paymentMethod && !isPaymentConfirmed && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={handleConfirmPayment}
+                        disabled={isProcessing}
+                      >
+                        <CheckCircle2 size={14} className="mr-1.5" />
+                        {isProcessing ? "Registrando..." : `Confirmar pagamento de ${formatCurrency(info.remainingAmount)}`}
+                      </Button>
+                    )}
+
+                    {isPaymentConfirmed && (
+                      <div className="flex items-center gap-2 p-2.5 rounded-xl bg-success/10 border border-success/20 text-success text-xs font-medium">
+                        <CheckCircle2 size={14} />
+                        Pagamento registrado com sucesso
+                      </div>
+                    )}
                   </div>
                 )}
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Status atual</span>
-                  <span className="text-foreground font-medium">
-                    {statusLabels[selectedBooking.status] || selectedBooking.status}
-                  </span>
-                </div>
-              </div>
 
-              {/* Payment section - only show if not completed/cancelled */}
-              {selectedBooking.status !== "completed" && selectedBooking.status !== "cancelled" && (
-                <div className="space-y-3">
-                  <h4 className="text-sm font-semibold text-foreground">Receber pagamento</h4>
-                  <p className="text-xs text-muted-foreground">
-                    Valor a receber: <span className="text-primary font-bold">{formatCurrency(getBookingPaymentInfo(selectedBooking).remainingAmount)}</span>
-                  </p>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    {paymentMethods.map((pm) => (
-                      <button
-                        key={pm.key}
-                        onClick={() => setPaymentMethod(pm.key)}
-                        className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-medium transition-all ${
-                          paymentMethod === pm.key
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border bg-secondary/30 text-muted-foreground hover:bg-secondary/50"
-                        }`}
-                      >
-                        <pm.icon size={14} />
-                        {pm.label}
-                      </button>
-                    ))}
+                {/* Already fully paid indicator */}
+                {selectedBooking.status !== "completed" && selectedBooking.status !== "cancelled" && info.remainingAmount <= 0 && info.totalPaid > 0 && (
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-success/10 border border-success/20 text-success text-xs font-medium">
+                    <CheckCircle2 size={14} />
+                    Pagamento completo — pronto para concluir
                   </div>
+                )}
 
-                  {paymentMethod && (
-                    <Button
-                      variant={isPaymentConfirmed ? "default" : "outline"}
-                      size="sm"
-                      className="w-full"
-                      onClick={() => {
-                        setIsPaymentConfirmed(true);
-                        toast.success("Pagamento confirmado!");
-                      }}
-                      disabled={isPaymentConfirmed}
-                    >
-                      <CheckCircle2 size={14} className="mr-1.5" />
-                      {isPaymentConfirmed ? "Pagamento confirmado ✓" : "Confirmar pagamento"}
-                    </Button>
-                  )}
-                </div>
-              )}
-
-              {/* Status change actions */}
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-foreground">Alterar status</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {selectedBooking.status === "pending" && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs"
-                        onClick={() => handleStatusChange("confirmed")}
-                        disabled={updateBooking.isPending}
-                      >
-                        Confirmar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs text-destructive border-destructive/30"
-                        onClick={() => handleStatusChange("cancelled")}
-                        disabled={updateBooking.isPending}
-                      >
-                        Cancelar
-                      </Button>
-                    </>
-                  )}
-                  {selectedBooking.status === "confirmed" && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs"
-                        onClick={() => handleStatusChange("completed")}
-                        disabled={updateBooking.isPending || !isPaymentConfirmed}
-                      >
-                        {isPaymentConfirmed ? "Concluir ✓" : "Concluir (pague primeiro)"}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs text-destructive border-destructive/30"
-                        onClick={() => handleStatusChange("cancelled")}
-                        disabled={updateBooking.isPending}
-                      >
-                        Cancelar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs text-muted-foreground col-span-2"
-                        onClick={() => handleStatusChange("no_show")}
-                        disabled={updateBooking.isPending}
-                      >
-                        No-show
-                      </Button>
-                    </>
-                  )}
-                </div>
+                {/* Status change actions */}
+                {selectedBooking.status !== "completed" && selectedBooking.status !== "cancelled" && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold text-foreground">Alterar status</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {selectedBooking.status === "pending" && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs"
+                            onClick={() => handleStatusChange("confirmed")}
+                            disabled={updateBooking.isPending}
+                          >
+                            Confirmar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs text-destructive border-destructive/30"
+                            onClick={() => handleStatusChange("cancelled")}
+                            disabled={updateBooking.isPending}
+                          >
+                            Cancelar
+                          </Button>
+                        </>
+                      )}
+                      {selectedBooking.status === "confirmed" && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs"
+                            onClick={() => handleStatusChange("completed")}
+                            disabled={updateBooking.isPending || (!isPaymentConfirmed && info.remainingAmount > 0)}
+                          >
+                            {isPaymentConfirmed || info.remainingAmount <= 0 ? "Concluir ✓" : "Concluir (pague primeiro)"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs text-destructive border-destructive/30"
+                            onClick={() => handleStatusChange("cancelled")}
+                            disabled={updateBooking.isPending}
+                          >
+                            Cancelar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs text-muted-foreground col-span-2"
+                            onClick={() => handleStatusChange("no_show")}
+                            disabled={updateBooking.isPending}
+                          >
+                            No-show
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </motion.div>
