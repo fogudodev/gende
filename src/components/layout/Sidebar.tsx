@@ -60,7 +60,7 @@ import settingsIcon from "@/assets/icon-settings.png";
 // Sidebar always has dark bg, so icons should always be inverted (white) in sidebar
 // But in mobile drawer & bottom nav, icons follow theme
 const SidebarIcon = ({ src, size = 18, className, active }: { src: string; size?: number; className?: string; active?: boolean }) => (
-  <img src={src} alt="" width={size} height={size} className={`inline-block brightness-0 invert ${active ? 'opacity-90' : 'opacity-40'} ${className || ''}`} />
+  <img src={src} alt="" width={size} height={size} className={`inline-block brightness-0 ${active ? 'opacity-75 dark:invert dark:opacity-90' : 'invert opacity-40'} ${className || ''}`} />
 );
 
 const ThemeAwareIcon = ({ src, size = 18, className, active }: { src: string; size?: number; className?: string; active?: boolean }) => (
