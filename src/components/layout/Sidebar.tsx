@@ -35,10 +35,15 @@ import {
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 import calendarIcon from "@/assets/icon-calendar.png";
+import dashboardIcon from "@/assets/icon-dashboard.png";
 
-// Wrapper component for the custom calendar icon
+// Wrapper component for custom icons
 const CalendarIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={calendarIcon} alt="" width={size} height={size} className={`inline-block dark:invert ${className || ''}`} />
+  <img src={calendarIcon} alt="" width={size} height={size} className={`inline-block opacity-60 ${className || ''}`} />
+);
+
+const DashboardIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
+  <img src={dashboardIcon} alt="" width={size} height={size} className={`inline-block opacity-60 ${className || ''}`} />
 );
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
@@ -61,7 +66,7 @@ interface NavGroup {
 type NavEntry = NavItem & { type?: "item" } | NavGroup;
 
 const standaloneItems: NavItem[] = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/", featureKey: "dashboard" },
+  { icon: DashboardIcon, label: "Dashboard", path: "/", featureKey: "dashboard" },
   { icon: CalendarIcon, label: "Agendamentos", path: "/bookings", featureKey: "bookings" },
   { icon: Scissors, label: "Serviços", path: "/services", featureKey: "services" },
   { icon: Users, label: "Clientes", path: "/clients", featureKey: "clients" },
@@ -107,7 +112,7 @@ const salonOnlyItems: NavItem[] = [
 ];
 
 const mobileNavItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+  { icon: DashboardIcon, label: "Dashboard", path: "/" },
   { icon: CalendarIcon, label: "Agenda", path: "/bookings" },
   { icon: Users, label: "Clientes", path: "/clients" },
   { icon: CreditCard, label: "Financeiro", path: "/finance" },
