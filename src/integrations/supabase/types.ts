@@ -1294,7 +1294,7 @@ export type Database = {
     }
     Enums: {
       account_type: "autonomous" | "salon"
-      app_role: "admin" | "professional" | "user"
+      app_role: "admin" | "professional" | "user" | "support"
       automation_trigger:
         | "booking_created"
         | "reminder_24h"
@@ -1444,7 +1444,7 @@ export const Constants = {
   public: {
     Enums: {
       account_type: ["autonomous", "salon"],
-      app_role: ["admin", "professional", "user"],
+      app_role: ["admin", "professional", "user", "support"],
       automation_trigger: [
         "booking_created",
         "reminder_24h",
