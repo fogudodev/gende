@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfessional } from "@/hooks/useProfessional";
+import { useChatNotifications } from "@/hooks/useChatNotifications";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Send, Paperclip, Loader2, ImageIcon, CheckCheck } from "lucide-react";
@@ -15,6 +16,13 @@ const PaymentChat = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const qc = useQueryClient();
+
+  useChatNotifications({
+    viewerRole: "user",
+    professionalId: professional?.id,
+    chatType: "payment",
+    enabled: !!professional?.id,
+  });
 
   const { data: messages, isLoading } = useQuery({
     queryKey: ["payment-chat", professional?.id],
