@@ -37,6 +37,7 @@ import logo from "@/assets/logo-circle.png";
 import calendarIcon from "@/assets/icon-calendar.png";
 import dashboardIcon from "@/assets/icon-dashboard.png";
 import scissorsIcon from "@/assets/icon-scissors.png";
+import clientsIcon from "@/assets/icon-clients.png";
 
 // Wrapper component for custom icons
 const CalendarIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
@@ -49,6 +50,10 @@ const DashboardIcon = ({ size = 18, className }: { size?: number; className?: st
 
 const ScissorsIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
   <img src={scissorsIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
+);
+
+const ClientsIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
+  <img src={clientsIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
 );
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
@@ -74,7 +79,7 @@ const standaloneItems: NavItem[] = [
   { icon: DashboardIcon, label: "Dashboard", path: "/", featureKey: "dashboard" },
   { icon: CalendarIcon, label: "Agendamentos", path: "/bookings", featureKey: "bookings" },
   { icon: ScissorsIcon, label: "Serviços", path: "/services", featureKey: "services" },
-  { icon: Users, label: "Clientes", path: "/clients", featureKey: "clients" },
+  { icon: ClientsIcon, label: "Clientes", path: "/clients", featureKey: "clients" },
 ];
 
 const whatsappGroup: NavGroup = {
@@ -119,7 +124,7 @@ const salonOnlyItems: NavItem[] = [
 const mobileNavItems = [
   { icon: DashboardIcon, label: "Dashboard", path: "/" },
   { icon: CalendarIcon, label: "Agenda", path: "/bookings" },
-  { icon: Users, label: "Clientes", path: "/clients" },
+  { icon: ClientsIcon, label: "Clientes", path: "/clients" },
   { icon: CreditCard, label: "Financeiro", path: "/finance" },
 ];
 
