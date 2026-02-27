@@ -7,6 +7,15 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function monthKey(dateStr: string) {
+  const d = new Date(dateStr);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function dayOfWeekName(dow: number) {
+  return ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][dow] || `Dia ${dow}`;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -21,8 +30,6 @@ serve(async (req) => {
     if (!authHeader) throw new Error("No authorization header");
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-    // Get user from token
     const token = authHeader.replace("Bearer ", "");
     const userClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: `Bearer ${token}` } },
@@ -33,7 +40,6 @@ serve(async (req) => {
 
     const { messages } = await req.json();
 
-    // Fetch professional data
     const { data: professional } = await supabase
       .from("professionals")
       .select("*")
@@ -43,143 +49,315 @@ serve(async (req) => {
     if (!professional) throw new Error("Professional not found");
     const pid = professional.id;
 
-    // Fetch all business data in parallel
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
-    const last30d = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
-
+    // Fetch ALL business data (no date filter on core tables)
     const [
-      { data: bookings },
+      { data: allBookings },
       { data: clients },
       { data: services },
       { data: employees },
-      { data: expenses },
-      { data: commissions },
+      { data: allExpenses },
+      { data: allCommissions },
       { data: reviews },
       { data: products },
       { data: subscription },
+      { data: workingHours },
+      { data: automations },
+      { data: coupons },
     ] = await Promise.all([
-      supabase.from("bookings").select("*").eq("professional_id", pid).gte("start_time", last30d).order("start_time", { ascending: false }),
+      supabase.from("bookings").select("*").eq("professional_id", pid).order("start_time", { ascending: true }).limit(1000),
       supabase.from("clients").select("*").eq("professional_id", pid),
       supabase.from("services").select("*").eq("professional_id", pid),
       supabase.from("salon_employees").select("*").eq("salon_id", pid),
-      supabase.from("expenses").select("*").eq("professional_id", pid).gte("expense_date", startOfMonth.slice(0, 10)),
-      supabase.from("commissions").select("*").eq("professional_id", pid).gte("created_at", last30d),
-      supabase.from("reviews").select("*").eq("professional_id", pid).order("created_at", { ascending: false }).limit(50),
+      supabase.from("expenses").select("*").eq("professional_id", pid).order("expense_date", { ascending: true }).limit(1000),
+      supabase.from("commissions").select("*").eq("professional_id", pid).order("created_at", { ascending: true }).limit(1000),
+      supabase.from("reviews").select("*").eq("professional_id", pid).order("created_at", { ascending: false }),
       supabase.from("products").select("*").eq("professional_id", pid),
       supabase.from("subscriptions").select("*").eq("professional_id", pid).single(),
+      supabase.from("working_hours").select("*").eq("professional_id", pid),
+      supabase.from("whatsapp_automations").select("*").eq("professional_id", pid),
+      supabase.from("coupons").select("*").eq("professional_id", pid),
     ]);
 
-    // Compute key metrics
-    const completedBookings = (bookings || []).filter((b: any) => b.status === "completed");
-    const cancelledBookings = (bookings || []).filter((b: any) => b.status === "cancelled");
-    const noShowBookings = (bookings || []).filter((b: any) => b.status === "no_show");
-    const pendingBookings = (bookings || []).filter((b: any) => b.status === "pending");
-    const totalRevenue = completedBookings.reduce((sum: number, b: any) => sum + Number(b.price), 0);
-    const totalExpenses = (expenses || []).reduce((sum: number, e: any) => sum + Number(e.amount), 0);
-    const avgTicket = completedBookings.length > 0 ? totalRevenue / completedBookings.length : 0;
-    const avgRating = (reviews || []).length > 0
-      ? (reviews || []).reduce((sum: number, r: any) => sum + r.rating, 0) / reviews!.length
-      : 0;
+    const bookings = allBookings || [];
+    const expenses = allExpenses || [];
+    const commissions = allCommissions || [];
 
-    // Service popularity
-    const serviceCount: Record<string, number> = {};
-    completedBookings.forEach((b: any) => {
-      if (b.service_id) serviceCount[b.service_id] = (serviceCount[b.service_id] || 0) + 1;
+    // === MONTHLY REVENUE TRENDS ===
+    const monthlyRevenue: Record<string, { revenue: number; bookings: number; completed: number; cancelled: number; noShow: number }> = {};
+    bookings.forEach((b: any) => {
+      const mk = monthKey(b.start_time);
+      if (!monthlyRevenue[mk]) monthlyRevenue[mk] = { revenue: 0, bookings: 0, completed: 0, cancelled: 0, noShow: 0 };
+      monthlyRevenue[mk].bookings++;
+      if (b.status === "completed") {
+        monthlyRevenue[mk].completed++;
+        monthlyRevenue[mk].revenue += Number(b.price);
+      }
+      if (b.status === "cancelled") monthlyRevenue[mk].cancelled++;
+      if (b.status === "no_show") monthlyRevenue[mk].noShow++;
     });
-    const servicePopularity = Object.entries(serviceCount)
-      .map(([sid, count]) => {
-        const svc = (services || []).find((s: any) => s.id === sid);
-        return { name: svc?.name || sid, count, revenue: count * Number(svc?.price || 0) };
-      })
-      .sort((a, b) => b.count - a.count);
 
-    // Employee performance
-    const employeePerformance = (employees || []).map((emp: any) => {
-      const empBookings = completedBookings.filter((b: any) => b.employee_id === emp.id);
-      const empRevenue = empBookings.reduce((s: number, b: any) => s + Number(b.price), 0);
-      const empCommissions = (commissions || []).filter((c: any) => c.employee_id === emp.id);
-      const totalCommission = empCommissions.reduce((s: number, c: any) => s + Number(c.commission_amount), 0);
+    const sortedMonths = Object.keys(monthlyRevenue).sort();
+    const monthlyTrendStr = sortedMonths.map(m => {
+      const d = monthlyRevenue[m];
+      return `${m}: R$${d.revenue.toFixed(0)} | ${d.bookings} agend. | ${d.completed} concl. | ${d.cancelled} canc. | ${d.noShow} no-show`;
+    }).join("\n");
+
+    // === MONTHLY EXPENSES ===
+    const monthlyExpenses: Record<string, number> = {};
+    expenses.forEach((e: any) => {
+      const mk = e.expense_date.slice(0, 7);
+      monthlyExpenses[mk] = (monthlyExpenses[mk] || 0) + Number(e.amount);
+    });
+    const expenseTrendStr = Object.keys(monthlyExpenses).sort().map(m => `${m}: R$${monthlyExpenses[m].toFixed(0)}`).join("\n");
+
+    // === EXPENSE CATEGORIES ===
+    const expenseByCategory: Record<string, number> = {};
+    expenses.forEach((e: any) => {
+      expenseByCategory[e.category] = (expenseByCategory[e.category] || 0) + Number(e.amount);
+    });
+    const expenseCategoryStr = Object.entries(expenseByCategory).sort((a, b) => b[1] - a[1]).map(([cat, val]) => `- ${cat}: R$${val.toFixed(0)}`).join("\n");
+
+    // === SERVICE ANALYSIS ===
+    const serviceStats: Record<string, { count: number; revenue: number; cancellations: number }> = {};
+    bookings.forEach((b: any) => {
+      if (!b.service_id) return;
+      if (!serviceStats[b.service_id]) serviceStats[b.service_id] = { count: 0, revenue: 0, cancellations: 0 };
+      serviceStats[b.service_id].count++;
+      if (b.status === "completed") serviceStats[b.service_id].revenue += Number(b.price);
+      if (b.status === "cancelled") serviceStats[b.service_id].cancellations++;
+    });
+    const serviceAnalysis = Object.entries(serviceStats)
+      .map(([sid, stats]) => {
+        const svc = (services || []).find((s: any) => s.id === sid);
+        return { name: svc?.name || sid, price: svc?.price || 0, duration: svc?.duration_minutes || 0, ...stats };
+      })
+      .sort((a, b) => b.revenue - a.revenue);
+
+    const serviceStr = serviceAnalysis.map((s, i) =>
+      `${i + 1}. ${s.name} | Preço: R$${Number(s.price).toFixed(0)} | ${s.duration}min | ${s.count} agend. | R$${s.revenue.toFixed(0)} receita | ${s.cancellations} canc.`
+    ).join("\n");
+
+    // === DAY-OF-WEEK DEMAND ===
+    const dowDemand: Record<number, number> = {};
+    bookings.forEach((b: any) => {
+      const dow = new Date(b.start_time).getDay();
+      dowDemand[dow] = (dowDemand[dow] || 0) + 1;
+    });
+    const dowStr = [0, 1, 2, 3, 4, 5, 6].map(d => `${dayOfWeekName(d)}: ${dowDemand[d] || 0} agendamentos`).join("\n");
+
+    // === HOURLY DEMAND ===
+    const hourDemand: Record<number, number> = {};
+    bookings.forEach((b: any) => {
+      const h = new Date(b.start_time).getHours();
+      hourDemand[h] = (hourDemand[h] || 0) + 1;
+    });
+    const hourStr = Object.entries(hourDemand).sort((a, b) => Number(a[0]) - Number(b[0]))
+      .map(([h, c]) => `${h}h: ${c}`).join(" | ");
+
+    // === EMPLOYEE FULL ANALYSIS ===
+    const empAnalysis = (employees || []).map((emp: any) => {
+      const empBookings = bookings.filter((b: any) => b.employee_id === emp.id);
+      const completed = empBookings.filter((b: any) => b.status === "completed");
+      const cancelled = empBookings.filter((b: any) => b.status === "cancelled");
+      const empRevenue = completed.reduce((s: number, b: any) => s + Number(b.price), 0);
+      const empComm = commissions.filter((c: any) => c.employee_id === emp.id);
+      const totalComm = empComm.reduce((s: number, c: any) => s + Number(c.commission_amount), 0);
+      const empReviews = (reviews || []).filter((r: any) => r.employee_id === emp.id);
+      const avgR = empReviews.length > 0 ? empReviews.reduce((s: number, r: any) => s + r.rating, 0) / empReviews.length : 0;
+
+      // Monthly breakdown for this employee
+      const empMonthly: Record<string, number> = {};
+      completed.forEach((b: any) => {
+        const mk = monthKey(b.start_time);
+        empMonthly[mk] = (empMonthly[mk] || 0) + Number(b.price);
+      });
+
       return {
         name: emp.name,
-        bookings: empBookings.length,
+        specialty: emp.specialty || "Não definida",
+        active: emp.is_active,
+        totalBookings: empBookings.length,
+        completed: completed.length,
+        cancelled: cancelled.length,
         revenue: empRevenue,
-        commissionTotal: totalCommission,
         commissionPct: emp.commission_percentage,
+        totalCommission: totalComm,
+        avgRating: avgR,
+        reviewCount: empReviews.length,
+        monthlyRevenue: Object.entries(empMonthly).sort((a, b) => a[0].localeCompare(b[0])).map(([m, v]) => `${m}:R$${v.toFixed(0)}`).join(", "),
       };
     });
 
-    // Client insights
-    const clientBookingCount: Record<string, number> = {};
-    (bookings || []).forEach((b: any) => {
-      if (b.client_id) clientBookingCount[b.client_id] = (clientBookingCount[b.client_id] || 0) + 1;
+    const empStr = empAnalysis.map(e =>
+      `- ${e.name} (${e.specialty}) ${e.active ? "✅" : "❌"}: ${e.totalBookings} agend. (${e.completed} concl., ${e.cancelled} canc.) | R$${e.revenue.toFixed(0)} fatur. | ${e.commissionPct}% comissão (R$${e.totalCommission.toFixed(0)}) | ⭐${e.avgRating.toFixed(1)} (${e.reviewCount} aval.) | Mensal: ${e.monthlyRevenue || "sem dados"}`
+    ).join("\n");
+
+    // === CLIENT ANALYSIS ===
+    const clientStats: Record<string, { visits: number; revenue: number; lastVisit: string; firstVisit: string }> = {};
+    bookings.forEach((b: any) => {
+      if (!b.client_id) return;
+      if (!clientStats[b.client_id]) clientStats[b.client_id] = { visits: 0, revenue: 0, lastVisit: "", firstVisit: b.start_time };
+      if (b.status === "completed") {
+        clientStats[b.client_id].visits++;
+        clientStats[b.client_id].revenue += Number(b.price);
+      }
+      clientStats[b.client_id].lastVisit = b.start_time;
     });
-    const topClients = Object.entries(clientBookingCount)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-      .map(([cid, count]) => {
+
+    const now = new Date();
+    const inactiveThreshold = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000); // 60 days
+    const activeClients = Object.entries(clientStats).filter(([, s]) => new Date(s.lastVisit) > inactiveThreshold).length;
+    const inactiveClients = Object.entries(clientStats).filter(([, s]) => new Date(s.lastVisit) <= inactiveThreshold);
+
+    const topClients = Object.entries(clientStats)
+      .sort((a, b) => b[1].revenue - a[1].revenue)
+      .slice(0, 15)
+      .map(([cid, s]) => {
         const c = (clients || []).find((cl: any) => cl.id === cid);
-        return { name: c?.name || "Desconhecido", visits: count };
+        return `${c?.name || "?"}: ${s.visits} visitas, R$${s.revenue.toFixed(0)}, última: ${s.lastVisit.slice(0, 10)}`;
       });
 
+    const inactiveStr = inactiveClients.slice(0, 10).map(([cid, s]) => {
+      const c = (clients || []).find((cl: any) => cl.id === cid);
+      return `${c?.name || "?"}: ${s.visits} visitas, última: ${s.lastVisit.slice(0, 10)}`;
+    });
+
+    // New clients per month
+    const newClientsPerMonth: Record<string, number> = {};
+    (clients || []).forEach((c: any) => {
+      const mk = monthKey(c.created_at);
+      newClientsPerMonth[mk] = (newClientsPerMonth[mk] || 0) + 1;
+    });
+    const newClientsStr = Object.entries(newClientsPerMonth).sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([m, c]) => `${m}: ${c}`).join(" | ");
+
+    // === REVIEWS ANALYSIS ===
+    const reviewsByMonth: Record<string, { count: number; sum: number }> = {};
+    (reviews || []).forEach((r: any) => {
+      const mk = monthKey(r.created_at);
+      if (!reviewsByMonth[mk]) reviewsByMonth[mk] = { count: 0, sum: 0 };
+      reviewsByMonth[mk].count++;
+      reviewsByMonth[mk].sum += r.rating;
+    });
+    const reviewTrendStr = Object.entries(reviewsByMonth).sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([m, d]) => `${m}: ⭐${(d.sum / d.count).toFixed(1)} (${d.count} aval.)`).join("\n");
+
+    // === WORKING HOURS ===
+    const whStr = (workingHours || [])
+      .filter((w: any) => w.is_active)
+      .sort((a: any, b: any) => a.day_of_week - b.day_of_week)
+      .map((w: any) => `${dayOfWeekName(w.day_of_week)}: ${w.start_time}-${w.end_time}`)
+      .join("\n");
+
+    // === AUTOMATIONS STATUS ===
+    const autoStr = (automations || []).map((a: any) => `- ${a.trigger_type}: ${a.is_active ? "Ativa" : "Inativa"}`).join("\n");
+
+    // === COUPONS ===
+    const couponStr = (coupons || []).map((c: any) =>
+      `- ${c.code}: ${c.discount_type === "percentage" ? `${c.discount_value}%` : `R$${c.discount_value}`} | ${c.used_count}/${c.max_uses || "∞"} usos | ${c.is_active ? "Ativo" : "Inativo"}`
+    ).join("\n");
+
+    // === PRODUCTS ===
+    const productStr = (products || []).map((p: any) =>
+      `- ${p.name}: R$${Number(p.price).toFixed(0)} (custo: R$${Number(p.cost_price).toFixed(0)}) | Estoque: ${p.stock_quantity} | ${p.is_active ? "Ativo" : "Inativo"} | Margem: ${Number(p.price) > 0 ? (((Number(p.price) - Number(p.cost_price)) / Number(p.price)) * 100).toFixed(0) : 0}%`
+    ).join("\n");
+
+    // === OVERALL STATS ===
+    const totalRevenue = bookings.filter((b: any) => b.status === "completed").reduce((s: number, b: any) => s + Number(b.price), 0);
+    const totalExpenseAmount = expenses.reduce((s: number, e: any) => s + Number(e.amount), 0);
+    const totalCommissions = commissions.reduce((s: number, c: any) => s + Number(c.commission_amount), 0);
+    const completedCount = bookings.filter((b: any) => b.status === "completed").length;
+    const avgTicket = completedCount > 0 ? totalRevenue / completedCount : 0;
+    const avgRating = (reviews || []).length > 0 ? (reviews || []).reduce((s: number, r: any) => s + r.rating, 0) / reviews!.length : 0;
+    const firstBooking = bookings.length > 0 ? bookings[0].start_time : null;
+
     const businessContext = `
-## DADOS DO NEGÓCIO - ${professional.business_name || professional.name}
-Tipo: ${professional.account_type === "salon" ? "Salão" : "Autônomo"}
-Plano: ${subscription?.plan_id || "Nenhum"}
+## PERFIL DO NEGÓCIO
+- Nome: ${professional.business_name || professional.name}
+- Tipo: ${professional.account_type === "salon" ? "Salão de Beleza" : "Profissional Autônomo"}
+- Plano: ${subscription?.plan_id || "Nenhum"} (Status: ${subscription?.status || "N/A"})
+- Primeiro agendamento: ${firstBooking ? firstBooking.slice(0, 10) : "Nenhum"}
+- Data atual: ${now.toISOString().slice(0, 10)}
 
-### MÉTRICAS FINANCEIRAS (últimos 30 dias)
+## RESUMO GERAL (TODO O HISTÓRICO)
 - Faturamento total: R$ ${totalRevenue.toFixed(2)}
-- Despesas do mês: R$ ${totalExpenses.toFixed(2)}
-- Lucro estimado: R$ ${(totalRevenue - totalExpenses).toFixed(2)}
+- Despesas totais: R$ ${totalExpenseAmount.toFixed(2)}
+- Comissões pagas: R$ ${totalCommissions.toFixed(2)}
+- Lucro bruto estimado: R$ ${(totalRevenue - totalExpenseAmount).toFixed(2)}
+- Total agendamentos: ${bookings.length}
+- Concluídos: ${completedCount} | Cancelados: ${bookings.filter((b: any) => b.status === "cancelled").length} | No-show: ${bookings.filter((b: any) => b.status === "no_show").length}
 - Ticket médio: R$ ${avgTicket.toFixed(2)}
+- Avaliação média: ⭐${avgRating.toFixed(1)} (${(reviews || []).length} avaliações)
+- Clientes cadastrados: ${(clients || []).length} (${activeClients} ativos nos últimos 60 dias)
 
-### AGENDAMENTOS (últimos 30 dias)
-- Total: ${(bookings || []).length}
-- Concluídos: ${completedBookings.length}
-- Cancelados: ${cancelledBookings.length}
-- No-show: ${noShowBookings.length}
-- Pendentes: ${pendingBookings.length}
-- Taxa de conclusão: ${(bookings || []).length > 0 ? ((completedBookings.length / (bookings || []).length) * 100).toFixed(1) : 0}%
-- Taxa de cancelamento: ${(bookings || []).length > 0 ? ((cancelledBookings.length / (bookings || []).length) * 100).toFixed(1) : 0}%
+## TENDÊNCIA MENSAL DE FATURAMENTO E AGENDAMENTOS
+${monthlyTrendStr || "Sem dados"}
 
-### SERVIÇOS MAIS POPULARES
-${servicePopularity.slice(0, 10).map((s, i) => `${i + 1}. ${s.name}: ${s.count} agendamentos (R$ ${s.revenue.toFixed(2)})`).join("\n")}
+## TENDÊNCIA MENSAL DE DESPESAS
+${expenseTrendStr || "Sem dados"}
 
-### CLIENTES
-- Total cadastrados: ${(clients || []).length}
-- Top clientes por visitas: ${topClients.map(c => `${c.name} (${c.visits}x)`).join(", ") || "Nenhum"}
+## DESPESAS POR CATEGORIA (TOTAL HISTÓRICO)
+${expenseCategoryStr || "Sem dados"}
 
-### EQUIPE (${(employees || []).length} membros)
-${employeePerformance.map(e => `- ${e.name}: ${e.bookings} atendimentos, R$ ${e.revenue.toFixed(2)} faturamento, R$ ${e.commissionTotal.toFixed(2)} comissões (${e.commissionPct}%)`).join("\n") || "Sem equipe cadastrada"}
+## SERVIÇOS (ANÁLISE COMPLETA)
+${serviceStr || "Sem serviços"}
 
-### AVALIAÇÕES
-- Média: ${avgRating.toFixed(1)}/5 (${(reviews || []).length} avaliações)
+## DEMANDA POR DIA DA SEMANA
+${dowStr}
 
-### PRODUTOS
-- Total: ${(products || []).length} produtos cadastrados
-- Ativos: ${(products || []).filter((p: any) => p.is_active).length}
-- Valor total em estoque: R$ ${(products || []).reduce((s: number, p: any) => s + (p.stock_quantity * p.price), 0).toFixed(2)}
+## DEMANDA POR HORÁRIO
+${hourStr || "Sem dados"}
+
+## EQUIPE (${(employees || []).length} membros)
+${empStr || "Sem equipe"}
+
+## TOP 15 CLIENTES POR FATURAMENTO
+${topClients.join("\n") || "Sem dados"}
+
+## CLIENTES INATIVOS (60+ dias sem visita)
+${inactiveStr.join("\n") || "Nenhum"}
+
+## NOVOS CLIENTES POR MÊS
+${newClientsStr || "Sem dados"}
+
+## TENDÊNCIA DE AVALIAÇÕES POR MÊS
+${reviewTrendStr || "Sem dados"}
+
+## HORÁRIO DE FUNCIONAMENTO
+${whStr || "Não configurado"}
+
+## AUTOMAÇÕES WHATSAPP
+${autoStr || "Nenhuma configurada"}
+
+## CUPONS
+${couponStr || "Nenhum"}
+
+## PRODUTOS
+${productStr || "Nenhum"}
 `;
 
-    const systemPrompt = `Você é o Assistente IA do Gende, um consultor de negócios especializado em salões de beleza e profissionais autônomos da área de beleza e estética. 
+    const systemPrompt = `Você é o Assistente IA do Gende — um consultor de negócios sênior especializado em salões de beleza, barbearias e profissionais autônomos da área de beleza e estética.
 
-Seu papel é:
-1. Analisar dados do negócio e fornecer insights acionáveis
-2. Identificar oportunidades de crescimento e pontos de melhoria
-3. Sugerir estratégias de marketing, retenção e upselling
-4. Ajudar com análise financeira (margem, ROI, projeções)
-5. Orientar sobre gestão de equipe e comissões
-6. Dar recomendações baseadas em dados reais do negócio
+Você tem acesso a TODO o histórico do negócio e deve usá-lo para:
+
+1. **Análise profunda**: Identificar padrões, tendências de crescimento/declínio, sazonalidade
+2. **Previsões**: Projetar faturamento, demanda e crescimento com base em tendências históricas
+3. **Diagnósticos**: Detectar problemas (alta taxa de cancelamento, clientes inativos, serviços pouco rentáveis)
+4. **Estratégias**: Recomendar ações concretas de marketing, pricing, retenção, upselling
+5. **Gestão de equipe**: Avaliar produtividade, sugerir ajustes de comissão, identificar gaps
+6. **Benchmarking**: Comparar métricas com boas práticas do setor
+7. **Oportunidades**: Identificar horários ociosos, serviços complementares, potencial de cross-selling
 
 Regras:
 - Sempre responda em português brasileiro
-- Seja direto e prático nas recomendações
-- Use os dados fornecidos para embasar suas análises
-- Quando não tiver dados suficientes, indique o que o dono deveria acompanhar
+- Seja estratégico e consultivo, como um mentor de negócios
+- Embase TODAS as análises nos dados reais fornecidos
+- Quando fizer previsões, explique a metodologia (tendência linear, média móvel, etc.)
+- Identifique riscos e oportunidades proativamente
 - Use emojis moderadamente para tornar a leitura agradável
-- Formate com markdown (negrito, listas, headers) para clareza
-- Nunca invente dados - use apenas o que foi fornecido
+- Formate com markdown (negrito, listas, headers, tabelas) para clareza
+- Nunca invente dados — se faltar informação, diga o que acompanhar
+- Quando relevante, sugira metas mensuráveis (ex: "Aumentar ticket médio em 15% nos próximos 3 meses")
 
 ${businessContext}`;
 
@@ -202,21 +380,18 @@ ${businessContext}`;
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em instantes." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {
         return new Response(JSON.stringify({ error: "Créditos insuficientes. Adicione créditos ao workspace." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const t = await response.text();
       console.error("AI gateway error:", response.status, t);
       return new Response(JSON.stringify({ error: "Erro no serviço de IA" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -226,8 +401,7 @@ ${businessContext}`;
   } catch (e) {
     console.error("salon-ai-assistant error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
