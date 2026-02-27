@@ -17,6 +17,7 @@ import {
   Settings,
   X,
   FileText,
+  UserCog,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 
@@ -30,6 +31,7 @@ const adminNavItems = [
   { icon: CalendarDays, label: "Agendamentos", path: "/admin/bookings" },
   { icon: MessageSquare, label: "WhatsApp", path: "/admin/whatsapp" },
   { icon: Sliders, label: "Limites de Plano", path: "/admin/plan-limits" },
+  { icon: UserCog, label: "Limites Individuais", path: "/admin/professional-limits" },
   { icon: BarChart3, label: "Uso de Mensagens", path: "/admin/message-usage" },
   { icon: FileText, label: "Logs", path: "/admin/logs" },
 ];
