@@ -64,7 +64,7 @@ const SidebarIcon = ({ src, size = 18, className, active }: { src: string; size?
 );
 
 const ThemeAwareIcon = ({ src, size = 18, className, active }: { src: string; size?: number; className?: string; active?: boolean }) => (
-  <img src={src} alt="" width={size} height={size} className={`inline-block brightness-0 ${active ? 'opacity-90' : 'opacity-40'} dark:invert ${className || ''}`} />
+  <img src={src} alt="" width={size} height={size} className={`inline-block brightness-0 ${active ? 'opacity-100 dark:opacity-90' : 'opacity-40'} dark:invert ${className || ''}`} />
 );
 
 const CalendarIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
