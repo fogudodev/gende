@@ -569,13 +569,13 @@ function Step1ClientInfo({ professional, accent, clientName, setClientName, clie
         ) : (
           <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${accent}, ${accent}99)` }} />
         )}
-        <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, ${accent}80 0%, ${accent}33 50%, ${professional.bg_color || "#F8F5FF"} 100%)` }} />
+        <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, transparent 0%, ${accent}33 50%, ${professional.bg_color || "#F8F5FF"} 100%)` }} />
         <div className="absolute bottom-4 left-5 right-5">
           <div className="flex items-center gap-2">
             {professional.logo_url ? (
-              <img src={professional.logo_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+              <img src={professional.logo_url} alt="" className="w-9 h-9 rounded-full object-cover border-2 border-white/30" />
             ) : (
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ background: accent }}>
+              <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ background: accent }}>
                 {(professional.business_name || professional.name)?.[0]?.toUpperCase()}
               </div>
             )}
@@ -595,13 +595,13 @@ function Step1ClientInfo({ professional, accent, clientName, setClientName, clie
 
           {/* Name */}
           <div className="mb-4">
-            <label className="block text-sm font-semibold mb-1.5" style={{ color: "#374151" }}>Seu nome</label>
+            <label className="block text-sm font-semibold mb-1.5" style={{ color: `${accent}cc` }}>Seu nome</label>
             <div className="relative">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg">👤</span>
               <input type="text" placeholder="Ex: Maria Silva" value={clientName}
                 onChange={e => { setClientName(e.target.value); if (errors.name) setErrors({...errors, name: ""}); }}
-                className="w-full pl-10 pr-4 py-3.5 rounded-2xl text-sm font-medium transition-all outline-none"
-                style={{ background: errors.name ? "#FFF1F2" : `${accent}10`, border: `2px solid ${errors.name ? "#F87171" : clientName ? accent : `${accent}30`}`, color: "#1F1535" }}
+                className="w-full pl-10 pr-4 py-3.5 rounded-2xl text-sm font-medium transition-all outline-none focus:ring-2"
+                style={{ background: errors.name ? "#FFF1F2" : `${accent}10`, border: `2px solid ${errors.name ? "#F87171" : clientName ? accent : `${accent}30`}`, color: "white", ["--tw-ring-color" as any]: accent }}
               />
             </div>
             {errors.name && <p className="text-xs mt-1 font-medium" style={{ color: "#EF4444" }}>{errors.name}</p>}
@@ -609,13 +609,13 @@ function Step1ClientInfo({ professional, accent, clientName, setClientName, clie
 
           {/* Phone */}
           <div className="mb-6">
-            <label className="block text-sm font-semibold mb-1.5" style={{ color: "#374151" }}>WhatsApp</label>
+            <label className="block text-sm font-semibold mb-1.5" style={{ color: `${accent}cc` }}>WhatsApp</label>
             <div className="relative">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg">📱</span>
               <input type="tel" placeholder="(11) 99999-9999" value={clientPhone}
                 onChange={e => { setClientPhone(formatPhone(e.target.value)); if (errors.phone) setErrors({...errors, phone: ""}); }}
-                className="w-full pl-10 pr-4 py-3.5 rounded-2xl text-sm font-medium transition-all outline-none"
-                style={{ background: errors.phone ? "#FFF1F2" : `${accent}10`, border: `2px solid ${errors.phone ? "#F87171" : clientPhone ? accent : `${accent}30`}`, color: "#1F1535" }}
+                className="w-full pl-10 pr-4 py-3.5 rounded-2xl text-sm font-medium transition-all outline-none focus:ring-2"
+                style={{ background: errors.phone ? "#FFF1F2" : `${accent}10`, border: `2px solid ${errors.phone ? "#F87171" : clientPhone ? accent : `${accent}30`}`, color: "white", ["--tw-ring-color" as any]: accent }}
               />
             </div>
             {errors.phone && <p className="text-xs mt-1 font-medium" style={{ color: "#EF4444" }}>{errors.phone}</p>}
