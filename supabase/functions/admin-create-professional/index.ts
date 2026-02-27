@@ -34,11 +34,13 @@ serve(async (req) => {
       .maybeSingle();
     if (!isAdmin) throw new Error("Forbidden: admin only");
 
-    const { name, email, phone, password, accountType, businessName } = await req.json();
+    const { name, email, phone, password, accountType, businessName, role } = await req.json();
 
-    if (!name || !email || !password || !accountType) {
-      throw new Error("Campos obrigatórios: name, email, password, accountType");
+    if (!name || !email || !password) {
+      throw new Error("Campos obrigatórios: name, email, password");
     }
+
+    const isSupport = role === "support";
 
     // Create auth user with metadata
     const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
@@ -47,12 +49,19 @@ serve(async (req) => {
       email_confirm: true,
       user_metadata: {
         name,
-        account_type: accountType,
-        business_name: businessName || "",
+        account_type: isSupport ? "autonomous" : (accountType || "autonomous"),
+        business_name: isSupport ? "" : (businessName || ""),
       },
     });
 
     if (createError) throw new Error(`Erro ao criar usuário: ${createError.message}`);
+
+    // If creating a support user, add support role
+    if (isSupport) {
+      await supabase
+        .from("user_roles")
+        .insert({ user_id: newUser.user.id, role: "support" });
+    }
 
     // Update phone on professional record
     if (phone) {
