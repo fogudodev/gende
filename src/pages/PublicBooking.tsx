@@ -656,28 +656,32 @@ function Step1ClientInfo({ professional, accent, clientName, setClientName, clie
   return (
     <div className="flex flex-col min-h-[calc(100vh-60px)] md:min-h-[calc(860px-60px)]">
       {/* Hero */}
-      <div className="relative h-52 overflow-hidden">
-        {professional.cover_url ? (
-          <img src={professional.cover_url} alt="" className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${accent}, ${accent}99)` }} />
-        )}
-        <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, transparent 0%, ${accent}33 50%, ${professional.bg_color || "#F8F5FF"} 100%)` }} />
-        <div className="absolute bottom-4 left-5 right-5">
-          <div className="flex items-center gap-2">
-            {professional.logo_url ? (
-              <img src={professional.logo_url} alt="" className="w-9 h-9 rounded-full object-cover border-2 border-white/30" />
-            ) : (
-              <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ background: accent }}>
-                {(professional.business_name || professional.name)?.[0]?.toUpperCase()}
-              </div>
-            )}
-            <span className="text-white font-bold text-lg drop-shadow">{professional.business_name || professional.name}</span>
+      <div className="relative">
+        <div className="relative h-52 overflow-hidden">
+          {professional.cover_url ? (
+            <img src={professional.cover_url} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${accent}, ${accent}99)` }} />
+          )}
+          <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, transparent 0%, ${accent}33 40%, ${professional.bg_color || "#F8F5FF"} 85%)` }} />
+          <div className="absolute bottom-4 left-5 right-5">
+            <div className="flex items-center gap-2">
+              {professional.logo_url ? (
+                <img src={professional.logo_url} alt="" className="w-9 h-9 rounded-full object-cover border-2 border-white/30" />
+              ) : (
+                <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ background: accent }}>
+                  {(professional.business_name || professional.name)?.[0]?.toUpperCase()}
+                </div>
+              )}
+              <span className="text-white font-bold text-lg drop-shadow">{professional.business_name || professional.name}</span>
+            </div>
           </div>
         </div>
+        {/* Shadow overlay outside overflow-hidden to eliminate hard line */}
+        <div className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none" style={{ background: `linear-gradient(to bottom, transparent, ${professional.bg_color || "#F8F5FF"})`, boxShadow: `0 4px 12px ${professional.bg_color || "#F8F5FF"}` }} />
       </div>
 
-      <div className="flex-1 px-5 pt-6 pb-8 flex flex-col">
+      <div className="flex-1 px-5 pt-4 pb-8 flex flex-col">
         <div className="animate-fade-in-up-bloom">
           <h1 className="text-2xl font-bold mb-1" style={{ color: professional.text_color || "#1F1535" }}>
             {professional.welcome_title || "Bem-vindo! 👋"}
