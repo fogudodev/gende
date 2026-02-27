@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAllProfessionals } from "@/hooks/useAdmin";
+import { useChatNotifications } from "@/hooks/useChatNotifications";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Send, Loader2, ImageIcon, CheckCheck, CreditCard, Paperclip, User } from "lucide-react";
@@ -18,6 +19,13 @@ const AdminPaymentChat = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const qc = useQueryClient();
+
+  // Notify admin when any user sends a payment message
+  useChatNotifications({
+    viewerRole: "admin",
+    chatType: "payment",
+    enabled: true,
+  });
 
   const { data: conversations } = useQuery({
     queryKey: ["admin-payment-conversations"],
