@@ -58,6 +58,7 @@ export type Database = {
           duration_minutes: number
           employee_id: string | null
           end_time: string
+          google_calendar_event_id: string | null
           id: string
           notes: string | null
           price: number
@@ -76,6 +77,7 @@ export type Database = {
           duration_minutes?: number
           employee_id?: string | null
           end_time: string
+          google_calendar_event_id?: string | null
           id?: string
           notes?: string | null
           price?: number
@@ -94,6 +96,7 @@ export type Database = {
           duration_minutes?: number
           employee_id?: string | null
           end_time?: string
+          google_calendar_event_id?: string | null
           id?: string
           notes?: string | null
           price?: number

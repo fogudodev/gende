@@ -185,6 +185,7 @@ export const useCreateBooking = () => {
           body: {
             action: "create_event",
             professional_id: professional.id,
+            booking_id: data.id,
             booking: {
               client_name: data.client_name,
               client_phone: data.client_phone,
@@ -214,10 +215,22 @@ export const useUpdateBooking = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["bookings"] });
       qc.invalidateQueries({ queryKey: ["bookings-week"] });
       qc.invalidateQueries({ queryKey: ["bookings-month"] });
+
+      // If booking was cancelled and has a Google Calendar event, delete it
+      if (data && data.status === "cancelled" && (data as any).google_calendar_event_id) {
+        supabase.functions.invoke("google-calendar-sync", {
+          body: {
+            action: "delete_event",
+            professional_id: data.professional_id,
+            booking_id: data.id,
+            event_id: (data as any).google_calendar_event_id,
+          },
+        }).catch(() => { /* silent fail */ });
+      }
     },
   });
 };
@@ -227,8 +240,23 @@ export const useDeleteBooking = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      // Before deleting, fetch the booking to check for Google Calendar event
+      const { data: booking } = await supabase.from("bookings").select("professional_id, google_calendar_event_id").eq("id", id).single();
+
       const { error } = await supabase.from("bookings").delete().eq("id", id);
       if (error) throw error;
+
+      // Delete from Google Calendar if linked
+      if (booking && (booking as any).google_calendar_event_id) {
+        supabase.functions.invoke("google-calendar-sync", {
+          body: {
+            action: "delete_event",
+            professional_id: booking.professional_id,
+            booking_id: id,
+            event_id: (booking as any).google_calendar_event_id,
+          },
+        }).catch(() => { /* silent fail */ });
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["bookings"] });
