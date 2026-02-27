@@ -2,12 +2,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -16,21 +16,31 @@ Deno.serve(async (req) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
     // Verify caller is admin
-    const authHeader = req.headers.get("Authorization")!;
-    const callerClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user: caller } } = await callerClient.auth.getUser();
-    if (!caller) {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Não autenticado" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    const callerClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await callerClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Não autenticado" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const callerId = claimsData.claims.sub;
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
     const { data: isAdmin } = await adminClient.rpc("has_role", {
-      _user_id: caller.id,
+      _user_id: callerId,
       _role: "admin",
     });
     if (!isAdmin) {
@@ -40,7 +50,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { userId } = await req.json();
+    const { userId, redirectUrl } = await req.json();
     if (!userId) {
       return new Response(JSON.stringify({ error: "userId é obrigatório" }), {
         status: 400,
@@ -57,10 +67,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Generate magic link
+    // Generate magic link with redirect
     const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
       type: "magiclink",
       email: targetUser.user.email!,
+      options: {
+        redirectTo: redirectUrl || supabaseUrl,
+      },
     });
 
     if (linkError || !linkData) {
@@ -70,11 +83,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Return the hashed token properties so frontend can verify OTP
+    // Build the verify URL that auto-logs in
+    // The action_link from generateLink points to supabase, we need to build a frontend-compatible one
+    const tokenHash = linkData.properties?.hashed_token;
+    const verifyUrl = `${supabaseUrl}/auth/v1/verify?token=${tokenHash}&type=magiclink&redirect_to=${encodeURIComponent(redirectUrl || "/")}`;
+
     return new Response(JSON.stringify({
       success: true,
-      token_hash: linkData.properties?.hashed_token,
-      email: targetUser.user.email,
+      url: verifyUrl,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
