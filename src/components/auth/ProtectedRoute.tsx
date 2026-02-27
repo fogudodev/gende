@@ -2,6 +2,7 @@ import { ReactNode, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfessional } from "@/hooks/useProfessional";
+import { useReceptionEmployee } from "@/hooks/useReceptionEmployee";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useIsAdmin } from "@/hooks/useAdmin";
 import { ShieldAlert } from "lucide-react";
@@ -42,15 +43,21 @@ const ROUTE_TO_LABEL: Record<string, string> = {
   "/team-performance": "Desempenho",
 };
 
+// Routes accessible by reception employees
+const RECEPTION_ROUTES = [
+  "/", "/bookings", "/clients", "/cash-register", "/automations",
+];
+
 const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading, signOut } = useAuth();
   const { data: professional, isLoading: profLoading } = useProfessional();
+  const { data: reception, isLoading: receptionLoading } = useReceptionEmployee();
   const { isLocked, requiredPlan, isLoading: planLoading } = useFeatureAccess();
   const { data: isAdmin, isLoading: adminLoading } = useIsAdmin();
   const location = useLocation();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
-  if (loading || profLoading || planLoading || adminLoading) {
+  if (loading || profLoading || receptionLoading || planLoading || adminLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-8 h-8 border-3 border-accent/30 border-t-accent rounded-full animate-spin" />
@@ -60,6 +67,14 @@ const ProtectedRoute = ({ children }: { children: ReactNode }) => {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Reception employee flow
+  if (reception && !professional) {
+    if (!RECEPTION_ROUTES.includes(location.pathname)) {
+      return <Navigate to="/bookings" replace />;
+    }
+    return <>{children}</>;
   }
 
   if (professional?.is_blocked) {

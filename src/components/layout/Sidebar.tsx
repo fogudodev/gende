@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useAdmin";
 import { useProfessional } from "@/hooks/useProfessional";
+import { useReceptionEmployee } from "@/hooks/useReceptionEmployee";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import {
   LayoutDashboard,
@@ -195,11 +196,27 @@ const salonOnlyItems: NavItem[] = [
   { icon: PerformanceIcon, label: "Desempenho", path: "/team-performance", featureKey: "team-performance" },
 ];
 
+const cashRegisterItem: NavItem = { icon: FinanceIcon, label: "Caixa", path: "/cash-register", featureKey: "finance" };
+
+const receptionNavItems: NavItem[] = [
+  { icon: CalendarIcon, label: "Agendamentos", path: "/bookings", featureKey: "bookings" },
+  { icon: ClientsIcon, label: "Clientes", path: "/clients", featureKey: "clients" },
+  { icon: FinanceIcon, label: "Caixa", path: "/cash-register", featureKey: "finance" },
+  { icon: AutomationsIcon, label: "Conversas WhatsApp", path: "/automations", featureKey: "automations" },
+];
+
 const mobileNavItems = [
   { icon: DashboardIcon, label: "Dashboard", path: "/" },
   { icon: CalendarIcon, label: "Agenda", path: "/bookings" },
   { icon: ClientsIcon, label: "Clientes", path: "/clients" },
   { icon: FinanceIcon, label: "Financeiro", path: "/finance" },
+];
+
+const receptionMobileNavItems = [
+  { icon: CalendarIcon, label: "Agenda", path: "/bookings" },
+  { icon: ClientsIcon, label: "Clientes", path: "/clients" },
+  { icon: FinanceIcon, label: "Caixa", path: "/cash-register" },
+  { icon: AutomationsIcon, label: "WhatsApp", path: "/automations" },
 ];
 
 interface SidebarProps {
@@ -217,15 +234,24 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
   const { signOut } = useAuth();
   const { data: isAdmin } = useIsAdmin();
   const { data: professional } = useProfessional();
+  const { data: reception } = useReceptionEmployee();
   const { isLocked, requiredPlan, currentPlan } = useFeatureAccess();
 
+  const isReception = !!reception && !professional;
   const isSalon = professional?.account_type === "salon";
-  const displayName = professional?.business_name || professional?.name || "Gende";
-  const displayLogo = professional?.logo_url || logo;
+  const displayName = isReception ? reception.name : (professional?.business_name || professional?.name || "Gende");
+  const displayLogo = isReception ? logo : (professional?.logo_url || logo);
   const planLabel = currentPlan === "enterprise" ? "Enterprise" : currentPlan === "essencial" ? "Essencial" : "";
+  
   const buildNavEntries = (): NavEntry[] => {
+    if (isReception) {
+      return receptionNavItems;
+    }
     const entries: NavEntry[] = [...standaloneItems];
-    if (isSalon) entries.push(...salonOnlyItems);
+    if (isSalon) {
+      entries.push(...salonOnlyItems);
+      entries.push(cashRegisterItem);
+    }
     entries.push(whatsappGroup, communicationGroup, ...afterGroupItems);
     return entries;
   };
@@ -382,7 +408,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
 
       {/* Mobile bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 flex items-center justify-around h-16 md:hidden safe-area-bottom">
-        {mobileNavItems.map((item) => {
+        {(isReception ? receptionMobileNavItems : mobileNavItems).map((item) => {
           const isActive = location.pathname === item.path;
           return (
             <Link

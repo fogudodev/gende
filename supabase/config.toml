@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.conversation-timeout]
 verify_jwt = false
+
+[functions.create-reception-user]
+verify_jwt = false
