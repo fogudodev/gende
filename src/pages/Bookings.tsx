@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion } from "framer-motion";
 import {
@@ -165,6 +166,24 @@ const Bookings = () => {
   };
 
   const handleStatusChange = async (id: string, status: string) => {
+    // Block completing without payment
+    if (status === "completed") {
+      const { data: payments } = await supabase
+        .from("payments")
+        .select("id, amount, status")
+        .eq("booking_id", id)
+        .in("status", ["completed", "succeeded"]);
+      
+      const totalPaid = (payments || []).reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+      const booking = detailBooking || (dayBookings || []).find((b: any) => b.id === id);
+      const price = booking?.price || 0;
+
+      if (price > 0 && totalPaid < price) {
+        toast.error("Registre o pagamento antes de concluir. Use a Jornada do Cliente no Dashboard.");
+        return;
+      }
+    }
+
     try {
       await updateBooking.mutateAsync({ id, status: status as any });
       toast.success(`Status: ${statusLabels[status]}`);
