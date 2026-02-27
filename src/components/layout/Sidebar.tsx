@@ -54,6 +54,7 @@ import productsIcon from "@/assets/icon-products.png";
 import couponsIcon from "@/assets/icon-coupons.png";
 import reportsIcon from "@/assets/icon-reports.png";
 import reviewsIcon from "@/assets/icon-reviews.png";
+import settingsIcon from "@/assets/icon-settings.png";
 
 // Wrapper component for custom icons
 const CalendarIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
@@ -135,6 +136,10 @@ const ReportsIcon = ({ size = 18, className }: { size?: number; className?: stri
 const ReviewsIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
   <img src={reviewsIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
 );
+
+const SettingsIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
+  <img src={settingsIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
+);
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
 
@@ -192,7 +197,7 @@ const afterGroupItems: NavItem[] = [
   { icon: CouponsIcon, label: "Cupons", path: "/coupons", featureKey: "coupons" },
   { icon: ReportsIcon, label: "Relatórios", path: "/reports", featureKey: "reports" },
   { icon: ReviewsIcon, label: "Avaliações", path: "/reviews", featureKey: "reviews" },
-  { icon: Settings, label: "Configurações", path: "/settings", featureKey: "settings" },
+  { icon: SettingsIcon, label: "Configurações", path: "/settings", featureKey: "settings" },
 ];
 
 const salonOnlyItems: NavItem[] = [
