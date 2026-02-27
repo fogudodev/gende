@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion } from "framer-motion";
-import { Plus, Clock, DollarSign, MoreVertical, Pencil, Trash2, Loader2, Download, Upload, Users, Search, Scissors } from "lucide-react";
+import { Plus, Clock, DollarSign, MoreVertical, Pencil, Trash2, Loader2, Download, Upload, Users, Search, Scissors, ChevronDown, Check } from "lucide-react";
 import { exportToCSV, importCSVFile } from "@/lib/csv-utils";
 import { useServices, useCreateService, useUpdateService, useDeleteService } from "@/hooks/useServices";
 import { useSalonEmployees } from "@/hooks/useSalonEmployees";
@@ -13,12 +13,82 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Service = Tables<"services">;
 
 const defaultForm = { name: "", duration_minutes: 30, price: 0, category: "Geral", active: true, description: "", maintenance_interval_days: 0 };
+
+/** Combobox de categorias: lista existentes + permite criar nova */
+const CategoryCombobox = ({ categories, value, onChange }: { categories: string[]; value: string; onChange: (v: string) => void }) => {
+  const [open, setOpen] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+
+  const filtered = inputValue.trim()
+    ? categories.filter(c => c.toLowerCase().includes(inputValue.toLowerCase()))
+    : categories;
+
+  const showAddButton = inputValue.trim().length >= 2 && !categories.some(c => c.toLowerCase() === inputValue.trim().toLowerCase());
+
+  return (
+    <div className="space-y-1.5">
+      <Label>Categoria</Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="flex items-center justify-between w-full h-10 px-3 rounded-md border border-input bg-background text-sm ring-offset-background hover:bg-accent/5 transition-colors text-left"
+            onClick={() => { setOpen(true); setInputValue(""); }}
+          >
+            <span className={value ? "text-foreground" : "text-muted-foreground"}>
+              {value || "Selecione a categoria"}
+            </span>
+            <ChevronDown size={14} className="text-muted-foreground" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-2" align="start">
+          <Input
+            value={inputValue}
+            onChange={e => setInputValue(e.target.value)}
+            placeholder="Buscar ou criar categoria..."
+            className="mb-2 h-9 text-sm"
+            autoFocus
+          />
+          <div className="max-h-40 overflow-y-auto space-y-0.5">
+            {filtered.map(cat => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => { onChange(cat); setOpen(false); }}
+                className={`flex items-center justify-between w-full px-2.5 py-1.5 rounded-md text-sm transition-colors ${
+                  cat === value ? "bg-primary/10 text-primary font-medium" : "text-foreground hover:bg-secondary/60"
+                }`}
+              >
+                {cat}
+                {cat === value && <Check size={14} className="text-primary" />}
+              </button>
+            ))}
+            {filtered.length === 0 && !showAddButton && (
+              <p className="text-xs text-muted-foreground text-center py-2">Nenhuma categoria encontrada</p>
+            )}
+          </div>
+          {showAddButton && (
+            <button
+              type="button"
+              onClick={() => { onChange(inputValue.trim()); setOpen(false); }}
+              className="flex items-center gap-2 w-full px-2.5 py-2 mt-1 rounded-md text-sm font-medium text-primary bg-primary/5 hover:bg-primary/10 transition-colors border border-dashed border-primary/30"
+            >
+              <Plus size={14} />
+              Criar "{inputValue.trim()}"
+            </button>
+          )}
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+};
 
 const Services = () => {
   const { data: services, isLoading } = useServices();
@@ -49,7 +119,8 @@ const Services = () => {
   const [activeCategory, setActiveCategory] = useState("Todos");
   const [search, setSearch] = useState("");
 
-  const categories = ["Todos", ...new Set((services || []).map(s => s.category || "Geral"))];
+  const existingCategories = useMemo(() => [...new Set((services || []).map(s => s.category || "Geral"))], [services]);
+  const categories = ["Todos", ...existingCategories];
 
   const filtered = useMemo(() => {
     let list = services || [];
@@ -351,10 +422,11 @@ const Services = () => {
                 <Input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: +e.target.value }))} />
               </div>
             </div>
-            <div className="space-y-1.5">
-              <Label>Categoria</Label>
-              <Input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} placeholder="Ex: Cabelo" />
-            </div>
+            <CategoryCombobox
+              categories={existingCategories}
+              value={form.category}
+              onChange={(val) => setForm(f => ({ ...f, category: val }))}
+            />
             <div className="space-y-1.5">
               <Label>Descrição</Label>
               <Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Opcional" />
