@@ -598,10 +598,10 @@ const PublicBooking = () => {
                 const expired = pixTimeLeft <= 0;
                 const progressPct = (pixTimeLeft / 300) * 100;
                 return (
-                  <div className="mb-4">
+                  <div className={`mb-4${!expired && pixTimeLeft <= 60 ? " animate-pulse" : ""}`}>
                     <div className="flex items-center justify-center gap-2 mb-2">
-                      <span className="text-lg" role="img">⏱️</span>
-                      <span className="font-mono font-bold text-lg" style={{ color: expired ? "#EF4444" : pixTimeLeft <= 60 ? "#F59E0B" : "#1F1535" }}>
+                      <span className={`text-lg${!expired && pixTimeLeft <= 60 ? " animate-bounce" : ""}`} role="img">⏱️</span>
+                      <span className={`font-mono font-bold text-lg${!expired && pixTimeLeft <= 60 ? " scale-110" : ""} transition-transform`} style={{ color: expired ? "#EF4444" : pixTimeLeft <= 60 ? "#EF4444" : "#1F1535" }}>
                         {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
                       </span>
                     </div>
