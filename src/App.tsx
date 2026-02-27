@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -22,7 +22,7 @@ import PublicBooking from "./pages/PublicBooking";
 import Team from "./pages/Team";
 import Products from "./pages/Products";
 import Coupons from "./pages/Coupons";
-import PaymentSettings from "./pages/PaymentSettings";
+
 import Reviews from "./pages/Reviews";
 import CommissionReport from "./pages/CommissionReport";
 import TeamPerformance from "./pages/TeamPerformance";
@@ -77,7 +77,7 @@ const App = () => (
               <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
               <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
               <Route path="/coupons" element={<ProtectedRoute><Coupons /></ProtectedRoute>} />
-              <Route path="/payment-settings" element={<ProtectedRoute><PaymentSettings /></ProtectedRoute>} />
+              <Route path="/payment-settings" element={<Navigate to="/settings" replace />} />
               <Route path="/reviews" element={<ProtectedRoute><Reviews /></ProtectedRoute>} />
               <Route path="/commission-report" element={<ProtectedRoute><CommissionReport /></ProtectedRoute>} />
               <Route path="/team-performance" element={<ProtectedRoute><TeamPerformance /></ProtectedRoute>} />
