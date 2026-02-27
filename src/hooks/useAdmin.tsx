@@ -1,6 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { toast } from "sonner";
 
 export const useIsAdmin = () => {
   const { user } = useAuth();
@@ -113,5 +114,51 @@ export const useAllWhatsAppLogs = (limit = 200) => {
       if (error) throw error;
       return data;
     },
+  });
+};
+
+export const useSupportUsers = () => {
+  return useQuery({
+    queryKey: ["admin-support-users"],
+    queryFn: async () => {
+      // Get all user_ids with support role
+      const { data: roles, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "support");
+      if (rolesError) throw rolesError;
+
+      if (!roles || roles.length === 0) return [];
+
+      const userIds = roles.map(r => r.user_id);
+
+      // Get professional profiles for these users
+      const { data: pros, error: prosError } = await supabase
+        .from("professionals")
+        .select("id, name, email, user_id, created_at")
+        .in("user_id", userIds);
+      if (prosError) throw prosError;
+
+      return pros || [];
+    },
+  });
+};
+
+export const useRemoveSupportRole = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const { error } = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId)
+        .eq("role", "support");
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-support-users"] });
+      toast.success("Papel de suporte removido");
+    },
+    onError: () => toast.error("Erro ao remover papel"),
   });
 };

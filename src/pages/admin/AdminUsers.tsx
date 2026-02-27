@@ -1,6 +1,6 @@
 import { useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
-import { useAllProfessionals } from "@/hooks/useAdmin";
+import { useAllProfessionals, useSupportUsers, useRemoveSupportRole } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -9,13 +9,15 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Search, Users, Loader2, Ban, UserCheck, Globe, MessageCircle,
-  BarChart3, ToggleLeft, ToggleRight, ChevronDown, ChevronUp, Eye, Shield,
+  BarChart3, ToggleLeft, ToggleRight, ChevronDown, ChevronUp, Eye, Shield, Trash2,
 } from "lucide-react";
 import AdminCreateProfessional from "@/components/admin/AdminCreateProfessional";
 import AdminCreateSupport from "@/components/admin/AdminCreateSupport";
 
 const AdminUsers = () => {
   const { data: professionals, isLoading } = useAllProfessionals();
+  const { data: supportUsers, isLoading: loadingSupport } = useSupportUsers();
+  const removeSupportRole = useRemoveSupportRole();
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [blockReason, setBlockReason] = useState("");
@@ -215,6 +217,66 @@ const AdminUsers = () => {
             <div className="glass-card rounded-2xl p-8 text-center text-muted-foreground text-sm">Nenhum profissional encontrado</div>
           )}
           <p className="text-xs text-muted-foreground">{filtered.length} profissionais</p>
+
+          {/* Support Users Section */}
+          <div className="pt-6 border-t border-border space-y-3">
+            <div className="flex items-center gap-2">
+              <Shield size={18} className="text-accent" />
+              <h3 className="text-lg font-bold text-foreground">Equipe de Suporte</h3>
+              <span className="text-xs text-muted-foreground">({supportUsers?.length || 0})</span>
+            </div>
+
+            {loadingSupport ? (
+              <div className="flex items-center justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-accent" /></div>
+            ) : supportUsers && supportUsers.length > 0 ? (
+              <div className="glass-card rounded-2xl overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left p-4 text-muted-foreground font-medium">Nome</th>
+                      <th className="text-left p-4 text-muted-foreground font-medium">Email</th>
+                      <th className="text-left p-4 text-muted-foreground font-medium">Criado em</th>
+                      <th className="text-right p-4 text-muted-foreground font-medium">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {supportUsers.map((s: any) => (
+                      <tr key={s.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                        <td className="p-4">
+                          <div className="flex items-center gap-2">
+                            <Shield size={14} className="text-accent" />
+                            <span className="font-medium text-foreground">{s.name || "—"}</span>
+                          </div>
+                        </td>
+                        <td className="p-4 text-muted-foreground">{s.email}</td>
+                        <td className="p-4 text-muted-foreground">
+                          {format(new Date(s.created_at), "dd/MM/yy", { locale: ptBR })}
+                        </td>
+                        <td className="p-4 text-right">
+                          <button
+                            onClick={() => {
+                              if (confirm(`Remover papel de suporte de ${s.name}?`)) {
+                                removeSupportRole.mutate(s.user_id);
+                              }
+                            }}
+                            disabled={removeSupportRole.isPending}
+                            className="p-1.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-50"
+                            title="Remover suporte"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="glass-card rounded-2xl p-8 text-center text-muted-foreground text-sm">
+                Nenhum agente de suporte cadastrado
+              </div>
+            )}
+          </div>
         </div>
       )}
     </AdminLayout>
