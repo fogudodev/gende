@@ -29,7 +29,6 @@ async function getValidToken(supabase: any, tokenRow: any) {
   const now = new Date();
   const expiresAt = new Date(tokenRow.token_expires_at);
 
-  // Refresh if expires in less than 5 minutes
   if (expiresAt.getTime() - now.getTime() < 5 * 60 * 1000) {
     const refreshed = await refreshAccessToken(tokenRow.refresh_token);
     if (!refreshed) throw new Error("Failed to refresh Google token");
@@ -54,9 +53,81 @@ Deno.serve(async (req) => {
   try {
     const supabase = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const body = await req.json();
-    const { action, professional_id, booking } = body;
+    const { action, professional_id, booking, booking_id, event_id } = body;
 
-    // Get token for this professional
+    // For import_all action (cron), iterate all professionals with tokens
+    if (action === "import_all") {
+      const { data: allTokens } = await supabase
+        .from("google_calendar_tokens")
+        .select("*")
+        .eq("sync_enabled", true);
+
+      if (!allTokens || allTokens.length === 0) {
+        return new Response(JSON.stringify({ synced: false, reason: "no_tokens" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      let totalImported = 0;
+
+      for (const tokenRow of allTokens) {
+        try {
+          const accessToken = await getValidToken(supabase, tokenRow);
+          const calendarId = tokenRow.calendar_id || "primary";
+          const profId = tokenRow.professional_id;
+
+          const now = new Date();
+          const timeMin = now.toISOString();
+          const timeMax = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+          const res = await fetch(
+            `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?` +
+            `timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&singleEvents=true&orderBy=startTime&maxResults=250`,
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+          );
+
+          const result = await res.json();
+          if (!res.ok) continue;
+
+          for (const event of (result.items || [])) {
+            if (!event.start?.dateTime || !event.end?.dateTime) continue;
+            if (event.summary?.startsWith("📅")) continue;
+
+            const { data: existing } = await supabase
+              .from("blocked_times")
+              .select("id")
+              .eq("professional_id", profId)
+              .eq("start_time", event.start.dateTime)
+              .eq("end_time", event.end.dateTime)
+              .limit(1);
+
+            if (existing && existing.length > 0) continue;
+
+            await supabase.from("blocked_times").insert({
+              professional_id: profId,
+              start_time: event.start.dateTime,
+              end_time: event.end.dateTime,
+              reason: `Google Calendar: ${event.summary || "Evento"}`,
+            });
+
+            totalImported++;
+          }
+
+          await supabase
+            .from("google_calendar_tokens")
+            .update({ last_synced_at: new Date().toISOString() })
+            .eq("id", tokenRow.id);
+        } catch (err) {
+          console.error(`Error syncing for professional ${tokenRow.professional_id}:`, err);
+        }
+      }
+
+      return new Response(JSON.stringify({ synced: true, imported: totalImported }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Single-professional actions below
     const { data: tokenRow } = await supabase
       .from("google_calendar_tokens")
       .select("*")
@@ -74,34 +145,19 @@ Deno.serve(async (req) => {
     const calendarId = tokenRow.calendar_id || "primary";
 
     if (action === "create_event") {
-      // Create a Google Calendar event from a booking
       const event = {
         summary: `📅 ${booking.service_name || "Agendamento"} - ${booking.client_name || "Cliente"}`,
         description: `Cliente: ${booking.client_name || ""}\nTelefone: ${booking.client_phone || ""}\n${booking.notes || ""}`.trim(),
-        start: {
-          dateTime: booking.start_time,
-          timeZone: "America/Sao_Paulo",
-        },
-        end: {
-          dateTime: booking.end_time,
-          timeZone: "America/Sao_Paulo",
-        },
-        reminders: {
-          useDefault: false,
-          overrides: [
-            { method: "popup", minutes: 30 },
-          ],
-        },
+        start: { dateTime: booking.start_time, timeZone: "America/Sao_Paulo" },
+        end: { dateTime: booking.end_time, timeZone: "America/Sao_Paulo" },
+        reminders: { useDefault: false, overrides: [{ method: "popup", minutes: 30 }] },
       };
 
       const res = await fetch(
         `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,
         {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
+          headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
           body: JSON.stringify(event),
         }
       );
@@ -115,7 +171,14 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Update last_synced_at
+      // Save the Google Calendar event ID on the booking
+      if (booking_id && result.id) {
+        await supabase
+          .from("bookings")
+          .update({ google_calendar_event_id: result.id })
+          .eq("id", booking_id);
+      }
+
       await supabase
         .from("google_calendar_tokens")
         .update({ last_synced_at: new Date().toISOString() })
@@ -126,18 +189,51 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "delete_event") {
+      if (!event_id) {
+        return new Response(JSON.stringify({ synced: false, reason: "no_event_id" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const res = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(event_id)}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      if (!res.ok && res.status !== 404 && res.status !== 410) {
+        const errText = await res.text();
+        console.error("Google Calendar delete error:", errText);
+        return new Response(JSON.stringify({ synced: false, error: errText }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Clear the event ID from booking
+      if (booking_id) {
+        await supabase
+          .from("bookings")
+          .update({ google_calendar_event_id: null })
+          .eq("id", booking_id);
+      }
+
+      return new Response(JSON.stringify({ synced: true, deleted: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (action === "import_events") {
-      // Import Google Calendar events as blocked times
       const now = new Date();
       const timeMin = now.toISOString();
-      const timeMax = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days ahead
+      const timeMax = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
       const res = await fetch(
         `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?` +
         `timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&singleEvents=true&orderBy=startTime&maxResults=250`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
+        { headers: { Authorization: `Bearer ${accessToken}` } }
       );
 
       const result = await res.json();
@@ -153,36 +249,29 @@ Deno.serve(async (req) => {
       let imported = 0;
 
       for (const event of events) {
-        // Skip all-day events or events without dateTime
         if (!event.start?.dateTime || !event.end?.dateTime) continue;
-        // Skip events created by our system (has our prefix)
         if (event.summary?.startsWith("📅")) continue;
 
-        const startTime = event.start.dateTime;
-        const endTime = event.end.dateTime;
-
-        // Check if we already have this blocked time (avoid duplicates)
         const { data: existing } = await supabase
           .from("blocked_times")
           .select("id")
           .eq("professional_id", professional_id)
-          .eq("start_time", startTime)
-          .eq("end_time", endTime)
+          .eq("start_time", event.start.dateTime)
+          .eq("end_time", event.end.dateTime)
           .limit(1);
 
         if (existing && existing.length > 0) continue;
 
         await supabase.from("blocked_times").insert({
           professional_id,
-          start_time: startTime,
-          end_time: endTime,
+          start_time: event.start.dateTime,
+          end_time: event.end.dateTime,
           reason: `Google Calendar: ${event.summary || "Evento"}`,
         });
 
         imported++;
       }
 
-      // Update last_synced_at
       await supabase
         .from("google_calendar_tokens")
         .update({ last_synced_at: new Date().toISOString() })
