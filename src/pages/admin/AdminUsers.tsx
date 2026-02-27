@@ -20,6 +20,7 @@ const AdminUsers = () => {
   const removeSupportRole = useRemoveSupportRole();
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [blockReason, setBlockReason] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [showCreateSupport, setShowCreateSupport] = useState(false);
@@ -57,6 +58,24 @@ const AdminUsers = () => {
     if (!error) {
       qc.invalidateQueries({ queryKey: ["admin-professionals"] });
       toast.success("Funcionalidade atualizada");
+    }
+  };
+
+  const handleDeleteUser = async (profId: string, name: string) => {
+    if (!confirm(`⚠️ ATENÇÃO: Isso excluirá permanentemente "${name}" e TODOS os dados associados (agendamentos, clientes, serviços, etc). Esta ação NÃO pode ser desfeita. Continuar?`)) return;
+    setDeleting(profId);
+    try {
+      const res = await supabase.functions.invoke("admin-delete-user", {
+        body: { professionalId: profId },
+      });
+      if (res.error) throw new Error(res.error.message);
+      if (res.data?.error) throw new Error(res.data.error);
+      toast.success(`Usuário "${name}" excluído permanentemente`);
+      qc.invalidateQueries({ queryKey: ["admin-professionals"] });
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao excluir usuário");
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -199,15 +218,31 @@ const AdminUsers = () => {
                             </button>
                           </div>
                         ) : (
-                          <div className="flex items-center justify-between">
-                            <div className="text-xs text-muted-foreground">
-                              {p.blocked_reason ? <>Motivo: <span className="text-foreground">{p.blocked_reason}</span></> : "Sem motivo informado"}
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div className="text-xs text-muted-foreground">
+                                {p.blocked_reason ? <>Motivo: <span className="text-foreground">{p.blocked_reason}</span></> : "Sem motivo informado"}
+                              </div>
+                              <button
+                                onClick={() => toggleBlock(p.id, true)}
+                                className="px-4 py-2 rounded-xl bg-accent/10 text-accent text-xs font-semibold hover:bg-accent/20 transition-colors flex items-center gap-1.5"
+                              >
+                                <UserCheck size={12} /> Desbloquear
+                              </button>
                             </div>
                             <button
-                              onClick={() => toggleBlock(p.id, true)}
-                              className="px-4 py-2 rounded-xl bg-accent/10 text-accent text-xs font-semibold hover:bg-accent/20 transition-colors flex items-center gap-1.5"
+                              onClick={() => handleDeleteUser(p.id, p.name)}
+                              disabled={deleting === p.id}
+                              className="w-full px-4 py-2.5 rounded-xl bg-destructive text-destructive-foreground text-xs font-semibold hover:bg-destructive/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                             >
-                              <UserCheck size={12} /> Desbloquear
+                              {deleting === p.id ? (
+                                <Loader2 size={14} className="animate-spin" />
+                              ) : (
+                                <>
+                                  <Trash2 size={14} />
+                                  Excluir Permanentemente
+                                </>
+                              )}
                             </button>
                           </div>
                         )}
