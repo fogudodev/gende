@@ -349,67 +349,20 @@ serve(async (req) => {
       }
 
       case "webhook": {
-        const { data: webhookData } = params;
-        if (webhookData?.event === "messages.upsert") {
-          const message = webhookData.data;
-          const text = message?.message?.conversation?.toUpperCase()?.trim();
-          const phone = message?.key?.remoteJid?.replace("@s.whatsapp.net", "");
-
-          if (text && phone) {
-            const { data: bookings } = await supabase
-              .from("bookings")
-              .select("id, status, professional_id")
-              .eq("client_phone", phone)
-              .eq("status", "pending")
-              .order("start_time", { ascending: true })
-              .limit(1);
-
-            if (bookings && bookings.length > 0) {
-              const booking = bookings[0];
-              if (text === "CONFIRMAR" || text === "1") {
-                await supabase.from("bookings").update({ status: "confirmed" }).eq("id", booking.id);
-              } else if (text === "CANCELAR" || text === "2") {
-                await supabase.from("bookings").update({ status: "cancelled" }).eq("id", booking.id);
-              } else if (text === "REMARCAR" || text === "3") {
-                await supabase.from("bookings").update({ status: "cancelled" }).eq("id", booking.id);
-
-                const { data: prof } = await supabase
-                  .from("professionals")
-                  .select("slug, business_name, name")
-                  .eq("id", booking.professional_id)
-                  .single();
-
-                const slug = prof?.slug || "";
-                if (slug) {
-                  const { data: inst } = await supabase
-                    .from("whatsapp_instances")
-                    .select("instance_name, status")
-                    .eq("professional_id", booking.professional_id)
-                    .single();
-
-                  if (inst && inst.status === "connected") {
-                    const rebookMsg = `📅 *Reagendamento*\n\nSeu agendamento anterior foi cancelado. Para remarcar, acesse o link abaixo e escolha um novo horário:\n\n🔗 https://gende.io/${slug}\n\nEstamos à disposição! 😊`;
-
-                    await fetch(`${EVOLUTION_URL()}/message/sendText/${inst.instance_name}`, {
-                      method: "POST",
-                      headers: getEvolutionHeaders(),
-                      body: JSON.stringify({ number: phone, text: rebookMsg }),
-                    });
-
-                    await supabase.from("whatsapp_logs").insert({
-                      professional_id: booking.professional_id,
-                      booking_id: booking.id,
-                      recipient_phone: phone,
-                      message_content: rebookMsg,
-                      status: "sent",
-                      sent_at: new Date().toISOString(),
-                    });
-                  }
-                }
-              }
-            }
-          }
+        // Redireciona para o novo bot conversacional com IA
+        const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+        const webhookPayload = params.data || params;
+        
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/whatsapp-webhook`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(webhookPayload),
+          });
+        } catch (e) {
+          console.error("Error forwarding to webhook bot:", e);
         }
+        
         result = { success: true };
         break;
       }
