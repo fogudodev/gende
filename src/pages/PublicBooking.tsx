@@ -149,6 +149,12 @@ const PublicBooking = () => {
   const accent = professional?.primary_color || "#7C3AED";
   const accentLight = accent + "1a";
   const accentBorder = accent + "33";
+  const textPrimary = professional?.text_color || "#1A1A2E";
+  const textSecondary = "#64748B";
+  const textMuted = "#94A3B8";
+  const cardBg = "rgba(255,255,255,0.95)";
+  const cardBorder = `${accent}15`;
+  const cardShadow = `0 4px 24px -4px ${accent}12, 0 1px 3px rgba(0,0,0,0.06)`;
 
   /* Steps mapping:
      Salon:      1=client, 2=employee, 3=service, 4=date, 5=confirm
@@ -394,36 +400,36 @@ const PublicBooking = () => {
   /* ══ RENDER ═════════════════════════════════════ */
   /* ═══════════════════════════════════════════════ */
   return (
-    <div className="phone-frame" style={{ background: `linear-gradient(135deg, ${accent}15 0%, ${accent}08 50%, ${accent}12 100%)`, fontFamily: "'Poppins', sans-serif" }}>
+     <div className="phone-frame" style={{ background: `linear-gradient(160deg, ${accent}08 0%, #f8fafc 40%, ${accent}06 100%)`, fontFamily: "'Inter', 'Poppins', sans-serif" }}>
       {/* Desktop decorations */}
       <div className="hidden md:block fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full opacity-30" style={{ background: `radial-gradient(circle, ${accent} 0%, transparent 70%)` }} />
-        <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] rounded-full opacity-30" style={{ background: `radial-gradient(circle, ${accent}99 0%, transparent 70%)` }} />
+        <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full opacity-15" style={{ background: `radial-gradient(circle, ${accent} 0%, transparent 60%)` }} />
+        <div className="absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full opacity-15" style={{ background: `radial-gradient(circle, ${accent}80 0%, transparent 60%)` }} />
         {/* Desktop branding */}
         <div className="absolute top-8 left-8">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {professional.logo_url ? (
-              <img src={professional.logo_url} alt="" className="w-10 h-10 rounded-xl object-cover" />
+              <img src={professional.logo_url} alt="" className="w-11 h-11 rounded-2xl object-cover shadow-md" />
             ) : (
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-lg font-bold" style={{ background: `linear-gradient(135deg, ${accent}, ${accent}cc)` }}>
+              <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-white text-lg font-bold shadow-md" style={{ background: `linear-gradient(135deg, ${accent}, ${accent}bb)` }}>
                 {(professional.business_name || professional.name)?.[0]?.toUpperCase()}
               </div>
             )}
             <div>
-              <p className="font-bold text-sm" style={{ color: "#1F1535" }}>{professional.business_name || professional.name}</p>
-              {professional.bio && <p className="text-xs" style={{ color: "#9CA3AF" }}>{professional.bio.slice(0, 40)}</p>}
+              <p className="font-bold text-sm" style={{ color: textPrimary }}>{professional.business_name || professional.name}</p>
+              {professional.bio && <p className="text-xs" style={{ color: textMuted }}>{professional.bio.slice(0, 40)}</p>}
             </div>
           </div>
         </div>
         {/* Steps indicator desktop */}
-        <div className="absolute bottom-8 left-8 space-y-2">
+        <div className="absolute bottom-8 left-8 space-y-2.5">
           {(isSalon
             ? [{ n: 1, label: "Seus dados" }, { n: 2, label: "Profissional" }, { n: 3, label: "Serviço" }, { n: 4, label: "Data & Hora" }, { n: 5, label: "Confirmação" }]
             : [{ n: 1, label: "Seus dados" }, { n: 2, label: "Serviço" }, { n: 3, label: "Data & Hora" }, { n: 4, label: "Confirmação" }]
           ).map(s => (
-            <div key={s.n} className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: `${accent}20`, color: accent, border: `1px solid ${accent}30` }}>{s.n}</div>
-              <span className="text-xs font-medium" style={{ color: "#6B7280" }}>{s.label}</span>
+            <div key={s.n} className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all" style={{ background: s.n <= step ? accent : `${accent}12`, color: s.n <= step ? "white" : accent, border: `1.5px solid ${s.n <= step ? accent : `${accent}25`}` }}>{s.n}</div>
+              <span className="text-xs font-medium" style={{ color: s.n <= step ? textPrimary : textMuted }}>{s.label}</span>
             </div>
           ))}
         </div>
@@ -432,13 +438,13 @@ const PublicBooking = () => {
       <div className="phone-screen" style={{ background: professional.bg_color || "#F8F5FF" }}>
         {/* Progress bar */}
         {!confirmed && (
-          <div className="sticky top-0 z-50 px-5 pt-4 pb-2" style={{ background: `${professional.bg_color || "#F8F5FF"}cc`, backdropFilter: "blur(8px)" }}>
-            <div className="flex gap-1.5 mb-1">
+          <div className="sticky top-0 z-50 px-5 pt-4 pb-3" style={{ background: `${professional.bg_color || "#F8F5FF"}e6`, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+            <div className="flex gap-1.5 mb-1.5">
               {Array.from({ length: totalSteps }).map((_, i) => (
-                <div key={i} className="h-1 flex-1 rounded-full transition-all duration-500" style={{ background: i + 1 <= step ? accent : `${accent}30`, opacity: i + 1 < step ? 0.6 : 1 }} />
+                <div key={i} className="h-1.5 flex-1 rounded-full transition-all duration-500" style={{ background: i + 1 <= step ? `linear-gradient(90deg, ${accent}, ${accent}cc)` : `${accent}18`, opacity: i + 1 < step ? 0.7 : 1 }} />
               ))}
             </div>
-            <p className="text-xs font-medium" style={{ color: "#9CA3AF" }}>Etapa {step} de {totalSteps}</p>
+            <p className="text-[11px] font-semibold tracking-wide" style={{ color: textMuted }}>ETAPA {step} DE {totalSteps}</p>
           </div>
         )}
 
@@ -556,15 +562,15 @@ const PublicBooking = () => {
             <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full" style={{ background: "#E5E7EB" }} /></div>
             <div className="px-5 pb-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold" style={{ color: "#1F1535" }}>Pagamento via PIX</h3>
+                <h3 className="text-lg font-bold" style={{ color: "#1A1A2E", fontFamily: "'Poppins', sans-serif" }}>Pagamento via PIX</h3>
                 <button onClick={() => setShowPaymentModal(false)} className="w-8 h-8 rounded-full flex items-center justify-center text-sm" style={{ background: "#F3F4F6", color: "#6B7280" }}>✕</button>
               </div>
               <div className="rounded-2xl p-4 mb-4" style={{ background: `${accent}10`, border: `1px solid ${accent}30` }}>
                 <div className="space-y-2">
-                  <div className="flex justify-between"><span className="text-xs" style={{ color: "#6B7280" }}>Serviço completo</span><span className="text-sm font-bold" style={{ color: "#1F1535" }}>{formatCurrency(totalPrice)}</span></div>
+                  <div className="flex justify-between"><span className="text-xs" style={{ color: "#64748B" }}>Serviço completo</span><span className="text-sm font-bold" style={{ color: "#1A1A2E" }}>{formatCurrency(totalPrice)}</span></div>
                   <div className="flex justify-between items-center"><span className="text-xs font-semibold" style={{ color: accent }}>Sinal a pagar agora (PIX)</span><span className="text-lg font-bold" style={{ color: accent }}>{formatCurrency(signalAmount)}</span></div>
-                  <div className="h-px" style={{ background: `${accent}30` }} />
-                  <div className="flex justify-between"><span className="text-xs" style={{ color: "#6B7280" }}>Restante no local</span><span className="text-sm font-semibold" style={{ color: "#374151" }}>{formatCurrency(remainingValue)}</span></div>
+                  <div className="h-px" style={{ background: `${accent}20` }} />
+                  <div className="flex justify-between"><span className="text-xs" style={{ color: "#64748B" }}>Restante no local</span><span className="text-sm font-semibold" style={{ color: "#374151" }}>{formatCurrency(remainingValue)}</span></div>
                 </div>
               </div>
               {(() => {
@@ -574,11 +580,11 @@ const PublicBooking = () => {
                     {payload && (
                       <div className="flex justify-center mb-4">
                         <div className="p-3 rounded-2xl" style={{ background: "white", border: `2px solid ${accent}20` }}>
-                          <QRCodeSVG value={payload} size={180} fgColor="#1F1535" />
+                          <QRCodeSVG value={payload} size={180} fgColor="#1A1A2E" />
                         </div>
                       </div>
                     )}
-                    <p className="text-xs font-semibold mb-2 text-center" style={{ color: "#6B7280" }}>PIX Copia e Cola:</p>
+                    <p className="text-xs font-semibold mb-2 text-center" style={{ color: "#64748B" }}>PIX Copia e Cola:</p>
                     <div className="rounded-xl p-3 flex items-center gap-2" style={{ background: "#F9FAFB", border: "1px solid #E5E7EB" }}>
                       <p className="text-[10px] flex-1 font-mono break-all leading-relaxed max-h-16 overflow-y-auto" style={{ color: "#374151" }}>
                         {payload || paymentConfig.pix_key}
@@ -601,7 +607,7 @@ const PublicBooking = () => {
                   <div className={`mb-4${!expired && pixTimeLeft <= 60 ? " animate-pulse" : ""}`}>
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <span className={`text-lg${!expired && pixTimeLeft <= 60 ? " animate-bounce" : ""}`} role="img">⏱️</span>
-                      <span className={`font-mono font-bold text-lg${!expired && pixTimeLeft <= 60 ? " scale-110" : ""} transition-transform`} style={{ color: expired ? "#EF4444" : pixTimeLeft <= 60 ? "#EF4444" : "#1F1535" }}>
+                      <span className={`font-mono font-bold text-lg${!expired && pixTimeLeft <= 60 ? " scale-110" : ""} transition-transform`} style={{ color: expired ? "#EF4444" : pixTimeLeft <= 60 ? "#EF4444" : "#1A1A2E" }}>
                         {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
                       </span>
                     </div>
@@ -616,7 +622,7 @@ const PublicBooking = () => {
                         </button>
                       </div>
                     ) : (
-                      <p className="text-[10px] text-center mt-1" style={{ color: "#9CA3AF" }}>Realize o pagamento dentro do prazo</p>
+                      <p className="text-[10px] text-center mt-1" style={{ color: "#94A3B8" }}>Realize o pagamento dentro do prazo</p>
                     )}
                   </div>
                 );
@@ -626,7 +632,7 @@ const PublicBooking = () => {
                   ✅ Já realizei o pagamento
                 </button>
               )}
-              <p className="text-center text-xs mt-3" style={{ color: "#9CA3AF" }}>Após o pagamento, você receberá confirmação no WhatsApp</p>
+              <p className="text-center text-xs mt-3" style={{ color: "#94A3B8" }}>Após o pagamento, você receberá confirmação no WhatsApp</p>
             </div>
           </div>
         </div>
@@ -657,48 +663,50 @@ function Step1ClientInfo({ professional, accent, clientName, setClientName, clie
     <div className="flex flex-col min-h-[calc(100vh-60px)] md:min-h-[calc(860px-60px)]">
       {/* Hero */}
       <div className="relative">
-        <div className="relative h-52 overflow-hidden">
+        <div className="relative h-56 overflow-hidden">
           {professional.cover_url ? (
             <img src={professional.cover_url} alt="" className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${accent}, ${accent}99)` }} />
+            <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${accent}, ${accent}88)` }} />
           )}
-          <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, transparent 0%, ${accent}33 40%, ${professional.bg_color || "#F8F5FF"} 85%)` }} />
-          <div className="absolute bottom-4 left-5 right-5">
-            <div className="flex items-center gap-2">
+          <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, transparent 0%, ${accent}22 50%, ${professional.bg_color || "#F8F5FF"} 90%)` }} />
+          <div className="absolute bottom-5 left-5 right-5">
+            <div className="flex items-center gap-3">
               {professional.logo_url ? (
-                <img src={professional.logo_url} alt="" className="w-9 h-9 rounded-full object-cover border-2 border-white/30" />
+                <img src={professional.logo_url} alt="" className="w-11 h-11 rounded-2xl object-cover border-2 border-white/40 shadow-lg" />
               ) : (
-                <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ background: accent }}>
+                <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-white text-base font-bold shadow-lg" style={{ background: `${accent}dd`, backdropFilter: "blur(8px)" }}>
                   {(professional.business_name || professional.name)?.[0]?.toUpperCase()}
                 </div>
               )}
-              <span className="text-white font-bold text-lg drop-shadow">{professional.business_name || professional.name}</span>
+              <div>
+                <span className="text-white font-bold text-lg drop-shadow-md block">{professional.business_name || professional.name}</span>
+                {professional.bio && <span className="text-white/70 text-xs drop-shadow">{professional.bio.slice(0, 50)}</span>}
+              </div>
             </div>
           </div>
         </div>
-        {/* Shadow overlay outside overflow-hidden to eliminate hard line */}
-        <div className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none" style={{ background: `linear-gradient(to bottom, transparent, ${professional.bg_color || "#F8F5FF"})`, boxShadow: `0 4px 12px ${professional.bg_color || "#F8F5FF"}` }} />
+        <div className="absolute bottom-0 left-0 right-0 h-10 pointer-events-none" style={{ background: `linear-gradient(to bottom, transparent, ${professional.bg_color || "#F8F5FF"})`, boxShadow: `0 4px 16px ${professional.bg_color || "#F8F5FF"}` }} />
       </div>
 
-      <div className="flex-1 px-5 pt-4 pb-8 flex flex-col">
+      <div className="flex-1 px-5 pt-3 pb-8 flex flex-col">
         <div className="animate-fade-in-up-bloom">
-          <h1 className="text-2xl font-bold mb-1" style={{ color: professional.text_color || "#1F1535" }}>
+          <h1 className="text-2xl font-bold mb-1" style={{ color: professional.text_color || "#1A1A2E", fontFamily: "'Poppins', sans-serif" }}>
             {professional.welcome_title || "Bem-vindo! 👋"}
           </h1>
-          <p className="text-sm mb-6" style={{ color: "#6B7280" }}>
+          <p className="text-sm mb-6 leading-relaxed" style={{ color: "#64748B" }}>
             {professional.welcome_description || "Agende seu horário em poucos passos. Primeiro, nos conte quem é você."}
           </p>
 
           {/* Name */}
           <div className="mb-4">
-            <label className="block text-sm font-semibold mb-1.5" style={{ color: `${accent}cc` }}>Seu nome</label>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: accent }}>Seu nome</label>
             <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg">👤</span>
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-base opacity-60">👤</span>
               <input type="text" placeholder="Ex: Maria Silva" value={clientName}
                 onChange={e => { setClientName(e.target.value); if (errors.name) setErrors({...errors, name: ""}); }}
-                className="w-full pl-10 pr-4 py-3.5 rounded-2xl text-sm font-medium transition-all outline-none focus:ring-2"
-                style={{ background: errors.name ? "#FFF1F2" : `${accent}10`, border: `2px solid ${errors.name ? "#F87171" : clientName ? accent : `${accent}30`}`, color: "white", ["--tw-ring-color" as any]: accent }}
+                className="w-full pl-10 pr-4 py-3.5 rounded-xl text-sm font-medium transition-all outline-none focus:ring-2"
+                style={{ background: errors.name ? "#FFF1F2" : "white", border: `1.5px solid ${errors.name ? "#F87171" : clientName ? accent : "#E2E8F0"}`, color: "#1A1A2E", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", ["--tw-ring-color" as any]: accent }}
               />
             </div>
             {errors.name && <p className="text-xs mt-1 font-medium" style={{ color: "#EF4444" }}>{errors.name}</p>}
@@ -706,36 +714,37 @@ function Step1ClientInfo({ professional, accent, clientName, setClientName, clie
 
           {/* Phone */}
           <div className="mb-6">
-            <label className="block text-sm font-semibold mb-1.5" style={{ color: `${accent}cc` }}>WhatsApp</label>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: accent }}>WhatsApp</label>
             <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg">📱</span>
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-base opacity-60">📱</span>
               <input type="tel" placeholder="(11) 99999-9999" value={clientPhone}
                 onChange={e => { setClientPhone(formatPhone(e.target.value)); if (errors.phone) setErrors({...errors, phone: ""}); }}
-                className="w-full pl-10 pr-4 py-3.5 rounded-2xl text-sm font-medium transition-all outline-none focus:ring-2"
-                style={{ background: errors.phone ? "#FFF1F2" : `${accent}10`, border: `2px solid ${errors.phone ? "#F87171" : clientPhone ? accent : `${accent}30`}`, color: "white", ["--tw-ring-color" as any]: accent }}
+                className="w-full pl-10 pr-4 py-3.5 rounded-xl text-sm font-medium transition-all outline-none focus:ring-2"
+                style={{ background: errors.phone ? "#FFF1F2" : "white", border: `1.5px solid ${errors.phone ? "#F87171" : clientPhone ? accent : "#E2E8F0"}`, color: "#1A1A2E", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", ["--tw-ring-color" as any]: accent }}
               />
             </div>
             {errors.phone && <p className="text-xs mt-1 font-medium" style={{ color: "#EF4444" }}>{errors.phone}</p>}
           </div>
 
           {/* Info card */}
-          <div className="rounded-2xl p-4 mb-6 flex gap-3" style={{ background: `${accent}10`, border: `1px solid ${accent}30` }}>
-            <span className="text-xl">🔒</span>
-            <p className="text-xs leading-relaxed" style={{ color: accent }}>
+          <div className="rounded-xl p-4 mb-6 flex gap-3" style={{ background: `${accent}08`, border: `1px solid ${accent}18` }}>
+            <span className="text-lg">🔒</span>
+            <p className="text-xs leading-relaxed" style={{ color: "#64748B" }}>
               Seus dados são usados apenas para confirmar o agendamento via WhatsApp.
             </p>
           </div>
 
-          <button onClick={handleNext} className="w-full py-4 rounded-2xl text-white font-bold text-base transition-all active:scale-95" style={{ background: `linear-gradient(135deg, ${accent} 0%, ${accent}cc 100%)`, boxShadow: `0 8px 24px ${accent}55` }}>
+          <button onClick={handleNext} className="w-full py-4 rounded-xl text-white font-bold text-base transition-all active:scale-[0.98] hover:shadow-xl"
+            style={{ background: `linear-gradient(135deg, ${accent} 0%, ${accent}dd 100%)`, boxShadow: `0 8px 30px -8px ${accent}70` }}>
             Continuar →
           </button>
         </div>
 
-        <div className="mt-auto pt-6 grid grid-cols-3 gap-3">
+        <div className="mt-auto pt-6 grid grid-cols-3 gap-2.5">
           {[{ icon: "⚡", label: "Rápido" }, { icon: "✅", label: "Fácil" }, { icon: "🎯", label: "Seguro" }].map(f => (
-            <div key={f.label} className="flex flex-col items-center gap-1 py-3 rounded-2xl" style={{ background: "white", border: `1px solid ${accent}20` }}>
-              <span className="text-xl">{f.icon}</span>
-              <span className="text-xs font-semibold" style={{ color: accent }}>{f.label}</span>
+            <div key={f.label} className="flex flex-col items-center gap-1.5 py-3 rounded-xl" style={{ background: "white", border: `1px solid ${accent}12`, boxShadow: "0 1px 4px rgba(0,0,0,0.03)" }}>
+              <span className="text-lg">{f.icon}</span>
+              <span className="text-[11px] font-semibold" style={{ color: accent }}>{f.label}</span>
             </div>
           ))}
         </div>
@@ -753,8 +762,8 @@ function Step2Employees({ employees, selected, clientName, accent, onSelect, onB
       <div className="px-5 pt-4 pb-2 flex items-center gap-3">
         <button onClick={onBack} className="w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-90" style={{ background: `${accent}10`, color: accent }}>←</button>
         <div>
-          <h2 className="text-lg font-bold" style={{ color: "#1F1535" }}>Escolha o Profissional</h2>
-          <p className="text-xs" style={{ color: "#9CA3AF" }}>Olá, {clientName}! Quem vai te atender?</p>
+          <h2 className="text-lg font-bold" style={{ color: "#1A1A2E", fontFamily: "'Poppins', sans-serif" }}>Escolha o Profissional</h2>
+          <p className="text-xs" style={{ color: "#94A3B8" }}>Olá, {clientName}! Quem vai te atender?</p>
         </div>
       </div>
       <div className="flex-1 px-5 pb-4 space-y-3 overflow-y-auto">
@@ -762,7 +771,7 @@ function Step2Employees({ employees, selected, clientName, accent, onSelect, onB
           const isSelected = selected?.id === emp.id;
           return (
             <button key={emp.id} onClick={() => onSelect(emp)} className="w-full text-left transition-all active:scale-[0.98]">
-              <div className="rounded-2xl p-4 transition-all duration-200" style={{ background: isSelected ? `${accent}10` : "white", border: `2px solid ${isSelected ? accent : `${accent}10`}`, boxShadow: isSelected ? `0 4px 20px ${accent}25` : "0 2px 8px rgba(0,0,0,0.04)" }}>
+              <div className="rounded-2xl p-4 transition-all duration-200" style={{ background: isSelected ? `${accent}08` : "white", border: `1.5px solid ${isSelected ? accent : "#F1F5F9"}`, boxShadow: isSelected ? `0 4px 20px ${accent}20` : "0 1px 6px rgba(0,0,0,0.04)" }}>
                 <div className="flex gap-3">
                   <div className="relative flex-shrink-0">
                     {emp.avatar_url ? (
@@ -775,7 +784,7 @@ function Step2Employees({ employees, selected, clientName, accent, onSelect, onB
                     {isSelected && <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: accent }}>✓</div>}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-sm" style={{ color: "#1F1535" }}>{emp.name}</h3>
+                    <h3 className="font-bold text-sm" style={{ color: "#1A1A2E" }}>{emp.name}</h3>
                     {emp.specialty && <p className="text-xs font-medium mt-0.5" style={{ color: accent }}>{emp.specialty}</p>}
                   </div>
                 </div>
@@ -802,8 +811,8 @@ function Step3Services({ services, groupedServices, selected, selectedEmployee, 
       <div className="px-5 pt-4 pb-3 flex items-center gap-3">
         <button onClick={onBack} className="w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-90" style={{ background: `${accent}10`, color: accent }}>←</button>
         <div>
-          <h2 className="text-lg font-bold" style={{ color: "#1F1535" }}>Escolha o Serviço</h2>
-          {isSalon && selectedEmployee && <p className="text-xs" style={{ color: "#9CA3AF" }}>Profissional: {selectedEmployee.name}</p>}
+          <h2 className="text-lg font-bold" style={{ color: "#1A1A2E", fontFamily: "'Poppins', sans-serif" }}>Escolha o Serviço</h2>
+          {isSalon && selectedEmployee && <p className="text-xs" style={{ color: "#94A3B8" }}>Profissional: {selectedEmployee.name}</p>}
         </div>
       </div>
 
@@ -816,7 +825,7 @@ function Step3Services({ services, groupedServices, selected, selectedEmployee, 
               <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold" style={{ background: `${accent}20`, color: accent }}>{selectedEmployee.name[0]}</div>
             )}
             <div>
-              <p className="text-sm font-bold" style={{ color: "#1F1535" }}>{selectedEmployee.name}</p>
+              <p className="text-sm font-bold" style={{ color: "#1A1A2E" }}>{selectedEmployee.name}</p>
               {selectedEmployee.specialty && <p className="text-xs" style={{ color: accent }}>{selectedEmployee.specialty}</p>}
             </div>
           </div>
@@ -824,22 +833,22 @@ function Step3Services({ services, groupedServices, selected, selectedEmployee, 
       )}
 
       <div className="flex-1 px-5 pb-4 space-y-3 overflow-y-auto">
-        <p className="text-xs font-semibold mb-2" style={{ color: "#9CA3AF" }}>{services.length} SERVIÇOS DISPONÍVEIS</p>
+        <p className="text-xs font-semibold mb-2" style={{ color: "#94A3B8" }}>{services.length} SERVIÇOS DISPONÍVEIS</p>
         {Object.entries(groupedServices).map(([category, svcs]) => (
           <div key={category}>
-            {Object.keys(groupedServices).length > 1 && <p className="text-xs font-medium uppercase tracking-wider mb-2" style={{ color: "#9CA3AF" }}>{category}</p>}
+            {Object.keys(groupedServices).length > 1 && <p className="text-xs font-medium uppercase tracking-wider mb-2" style={{ color: "#94A3B8" }}>{category}</p>}
             {svcs.map(svc => {
               const isSelected = selected?.id === svc.id;
               return (
                 <button key={svc.id} onClick={() => onSelect(svc)} className="w-full text-left transition-all active:scale-[0.98] mb-3">
-                  <div className="rounded-2xl p-4 transition-all duration-200" style={{ background: isSelected ? `${accent}10` : "white", border: `2px solid ${isSelected ? accent : `${accent}10`}`, boxShadow: isSelected ? `0 4px 20px ${accent}25` : "0 2px 8px rgba(0,0,0,0.04)" }}>
+                  <div className="rounded-2xl p-4 transition-all duration-200" style={{ background: isSelected ? `${accent}08` : "white", border: `1.5px solid ${isSelected ? accent : "#F1F5F9"}`, boxShadow: isSelected ? `0 4px 20px ${accent}20` : "0 1px 6px rgba(0,0,0,0.04)" }}>
                     <div className="flex items-start gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <h3 className="font-bold text-sm" style={{ color: "#1F1535" }}>{svc.name}</h3>
+                          <h3 className="font-bold text-sm" style={{ color: "#1A1A2E" }}>{svc.name}</h3>
                           {isSelected && <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-xs flex-shrink-0" style={{ background: accent }}>✓</div>}
                         </div>
-                        {svc.description && <p className="text-xs mt-0.5 leading-relaxed" style={{ color: "#6B7280" }}>{svc.description}</p>}
+                        {svc.description && <p className="text-xs mt-0.5 leading-relaxed" style={{ color: "#64748B" }}>{svc.description}</p>}
                         <div className="flex items-center gap-3 mt-2">
                           <span className="text-base font-bold" style={{ color: accent }}>{formatCurrency(Number(svc.price))}</span>
                           <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: `${accent}10`, color: accent }}>⏱ {svc.duration_minutes} min</span>
@@ -875,14 +884,14 @@ function Step4DateTime({ service, accent, days, today, selectedDate, setSelected
       <div className="px-5 pt-4 pb-3 flex items-center gap-3">
         <button onClick={onBack} className="w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-90" style={{ background: `${accent}10`, color: accent }}>←</button>
         <div>
-          <h2 className="text-lg font-bold" style={{ color: "#1F1535" }}>Data e Horário</h2>
-          <p className="text-xs" style={{ color: "#9CA3AF" }}>{service.name} · {service.duration_minutes} min</p>
+          <h2 className="text-lg font-bold" style={{ color: "#1A1A2E", fontFamily: "'Poppins', sans-serif" }}>Data e Horário</h2>
+          <p className="text-xs" style={{ color: "#94A3B8" }}>{service.name} · {service.duration_minutes} min</p>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 pb-4">
         <div className="flex items-center justify-between mb-3">
-          <p className="text-sm font-bold" style={{ color: "#1F1535" }}>Escolha o dia</p>
+          <p className="text-sm font-bold" style={{ color: "#1A1A2E" }}>Escolha o dia</p>
           <p className="text-xs font-medium" style={{ color: accent }}>
             {selectedDate ? `${MONTHS_PT[selectedDate.getMonth()]} ${selectedDate.getFullYear()}` : `${MONTHS_PT[today.getMonth()]} ${today.getFullYear()}`}
           </p>
@@ -895,10 +904,10 @@ function Step4DateTime({ service, accent, days, today, selectedDate, setSelected
             const isToday = d.toDateString() === today.toDateString();
             return (
               <button key={d.toISOString()} onClick={() => handleDaySelect(d)}
-                className="flex-shrink-0 flex flex-col items-center gap-1 py-3 px-3 rounded-2xl transition-all active:scale-90 min-w-[56px]"
-                style={{ background: isSelected ? `linear-gradient(135deg, ${accent}, ${accent}cc)` : isToday ? `${accent}10` : "white", border: `2px solid ${isSelected ? accent : isToday ? `${accent}60` : `${accent}10`}`, boxShadow: isSelected ? `0 4px 12px ${accent}50` : "0 1px 4px rgba(0,0,0,0.04)" }}>
-                <span className="text-xs font-medium" style={{ color: isSelected ? "rgba(255,255,255,0.8)" : "#9CA3AF" }}>{DAYS_PT[d.getDay()]}</span>
-                <span className="text-lg font-bold leading-none" style={{ color: isSelected ? "white" : "#1F1535" }}>{d.getDate()}</span>
+                className="flex-shrink-0 flex flex-col items-center gap-1 py-3 px-3 rounded-xl transition-all active:scale-90 min-w-[56px]"
+                style={{ background: isSelected ? `linear-gradient(135deg, ${accent}, ${accent}cc)` : isToday ? `${accent}08` : "white", border: `1.5px solid ${isSelected ? accent : isToday ? `${accent}40` : "#F1F5F9"}`, boxShadow: isSelected ? `0 4px 12px ${accent}40` : "0 1px 3px rgba(0,0,0,0.04)" }}>
+                <span className="text-[10px] font-semibold uppercase" style={{ color: isSelected ? "rgba(255,255,255,0.8)" : "#94A3B8" }}>{DAYS_PT[d.getDay()]}</span>
+                <span className="text-lg font-bold leading-none" style={{ color: isSelected ? "white" : "#1A1A2E" }}>{d.getDate()}</span>
                 {isToday && !isSelected && <div className="w-1.5 h-1.5 rounded-full" style={{ background: accent }} />}
               </button>
             );
@@ -912,8 +921,8 @@ function Step4DateTime({ service, accent, days, today, selectedDate, setSelected
           ) : slots.length > 0 ? (
             <>
               <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-bold" style={{ color: "#1F1535" }}>Horários disponíveis</p>
-                <p className="text-xs" style={{ color: "#9CA3AF" }}>{DAYS_PT[selectedDate.getDay()]}, {selectedDate.getDate()} de {MONTHS_PT[selectedDate.getMonth()]}</p>
+                <p className="text-sm font-bold" style={{ color: "#1A1A2E" }}>Horários disponíveis</p>
+                <p className="text-xs" style={{ color: "#94A3B8" }}>{DAYS_PT[selectedDate.getDay()]}, {selectedDate.getDate()} de {MONTHS_PT[selectedDate.getMonth()]}</p>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {slots.map(slot => {
@@ -922,7 +931,7 @@ function Step4DateTime({ service, accent, days, today, selectedDate, setSelected
                   return (
                     <button key={slot.start_time} onClick={() => handleTimeSelect(slot)}
                       className="py-3 rounded-xl text-sm font-semibold transition-all active:scale-95"
-                      style={{ background: isSelected ? `linear-gradient(135deg, ${accent}, ${accent}cc)` : "white", color: isSelected ? "white" : "#374151", border: `2px solid ${isSelected ? accent : `${accent}20`}`, boxShadow: isSelected ? `0 4px 12px ${accent}50` : "none" }}>
+                      style={{ background: isSelected ? `linear-gradient(135deg, ${accent}, ${accent}cc)` : "white", color: isSelected ? "white" : "#374151", border: `1.5px solid ${isSelected ? accent : "#F1F5F9"}`, boxShadow: isSelected ? `0 4px 12px ${accent}40` : "0 1px 3px rgba(0,0,0,0.04)" }}>
                       {time}
                     </button>
                   );
@@ -931,14 +940,14 @@ function Step4DateTime({ service, accent, days, today, selectedDate, setSelected
             </>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 rounded-2xl" style={{ background: "#F9FAFB", border: `2px dashed ${accent}20` }}>
-              <span className="text-4xl mb-2">😔</span>
-              <p className="text-sm font-medium" style={{ color: "#9CA3AF" }}>Nenhum horário disponível nesta data</p>
+              <span className="text-3xl mb-2">😔</span>
+              <p className="text-sm font-medium" style={{ color: "#94A3B8" }}>Nenhum horário disponível nesta data</p>
             </div>
           )
         ) : (
           <div className="flex flex-col items-center justify-center py-12 rounded-2xl" style={{ background: "#F9FAFB", border: `2px dashed ${accent}20` }}>
-            <span className="text-4xl mb-2">📅</span>
-            <p className="text-sm font-medium" style={{ color: "#9CA3AF" }}>Selecione um dia para ver os horários</p>
+              <span className="text-3xl mb-2">📅</span>
+              <p className="text-sm font-medium" style={{ color: "#94A3B8" }}>Selecione um dia para ver os horários</p>
           </div>
         )}
       </div>
@@ -949,13 +958,13 @@ function Step4DateTime({ service, accent, days, today, selectedDate, setSelected
             <span className="text-lg">📅</span>
             <div>
               <p className="text-xs font-bold" style={{ color: accent }}>{DAYS_PT[selectedDate!.getDay()]}, {selectedDate!.getDate()} de {MONTHS_PT[selectedDate!.getMonth()]} às {selectedTime}</p>
-              <p className="text-xs" style={{ color: "#9CA3AF" }}>{service.name} · {service.duration_minutes} min</p>
+              <p className="text-xs" style={{ color: "#94A3B8" }}>{service.name} · {service.duration_minutes} min</p>
             </div>
           </div>
         )}
         <button onClick={() => canContinue && onNext()} disabled={!canContinue}
-          className="w-full py-4 rounded-2xl text-white font-bold text-base transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ background: canContinue ? `linear-gradient(135deg, ${accent} 0%, ${accent}cc 100%)` : `${accent}60`, boxShadow: canContinue ? `0 8px 24px ${accent}55` : "none" }}>
+          className="w-full py-4 rounded-xl text-white font-bold text-base transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-xl"
+          style={{ background: canContinue ? `linear-gradient(135deg, ${accent} 0%, ${accent}dd 100%)` : `${accent}60`, boxShadow: canContinue ? `0 8px 30px -8px ${accent}70` : "none" }}>
           {canContinue ? "Confirmar Data e Horário →" : "Selecione data e horário"}
         </button>
       </div>
@@ -975,14 +984,14 @@ function Step5Confirm({ professional, selectedEmployee, selectedService, selecte
       <div className="px-5 pt-4 pb-3 flex items-center gap-3">
         <button onClick={onBack} className="w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-90" style={{ background: `${accent}10`, color: accent }}>←</button>
         <div>
-          <h2 className="text-lg font-bold" style={{ color: "#1F1535" }}>Confirmar Agendamento</h2>
-          <p className="text-xs" style={{ color: "#9CA3AF" }}>Revise os detalhes antes de confirmar</p>
+          <h2 className="text-lg font-bold" style={{ color: "#1A1A2E", fontFamily: "'Poppins', sans-serif" }}>Confirmar Agendamento</h2>
+          <p className="text-xs" style={{ color: "#94A3B8" }}>Revise os detalhes antes de confirmar</p>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 pb-4">
         {/* Professional + service summary card */}
-        <div className="rounded-2xl overflow-hidden mb-4" style={{ border: `1.5px solid ${accent}20` }}>
+        <div className="rounded-2xl overflow-hidden mb-4" style={{ border: `1.5px solid ${accent}15`, boxShadow: `0 2px 12px ${accent}08` }}>
           <div className="flex items-center gap-3 p-4" style={{ background: `linear-gradient(135deg, ${accent}, ${accent}cc)` }}>
             {(isSalon && selectedEmployee?.avatar_url) ? (
               <img src={selectedEmployee.avatar_url} alt={selectedEmployee.name} className="w-14 h-14 rounded-xl object-cover" style={{ border: "2px solid rgba(255,255,255,0.3)" }} />
@@ -1010,8 +1019,8 @@ function Step5Confirm({ professional, selectedEmployee, selectedService, selecte
             ].map(item => (
               <div key={item.label} className="flex items-center gap-3">
                 <span className="text-base w-6 text-center">{item.icon}</span>
-                <span className="text-xs flex-1" style={{ color: "#6B7280" }}>{item.label}</span>
-                <span className="text-xs font-semibold" style={{ color: "#1F1535" }}>{item.value}</span>
+                <span className="text-xs flex-1" style={{ color: "#64748B" }}>{item.label}</span>
+                <span className="text-xs font-semibold" style={{ color: "#1A1A2E" }}>{item.value}</span>
               </div>
             ))}
           </div>
@@ -1020,19 +1029,19 @@ function Step5Confirm({ professional, selectedEmployee, selectedService, selecte
         {/* Payment summary */}
         {signalAmount && (
           <div className="rounded-2xl p-4 mb-4" style={{ background: `${accent}10`, border: `1.5px solid ${accent}30` }}>
-            <p className="text-sm font-bold mb-3" style={{ color: "#1F1535" }}>💰 Resumo de Pagamento</p>
+            <p className="text-sm font-bold mb-3" style={{ color: "#1A1A2E" }}>💰 Resumo de Pagamento</p>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-xs" style={{ color: "#6B7280" }}>Valor total do serviço</span>
-                <span className="text-sm font-bold" style={{ color: "#1F1535" }}>{formatCurrency(totalPrice)}</span>
+                <span className="text-xs" style={{ color: "#64748B" }}>Valor total do serviço</span>
+                <span className="text-sm font-bold" style={{ color: "#1A1A2E" }}>{formatCurrency(totalPrice)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <div><span className="text-xs font-semibold" style={{ color: accent }}>Sinal — via PIX</span><p className="text-xs" style={{ color: "#9CA3AF" }}>Pago agora para reservar a vaga</p></div>
+                <div><span className="text-xs font-semibold" style={{ color: accent }}>Sinal — via PIX</span><p className="text-xs" style={{ color: "#94A3B8" }}>Pago agora para reservar a vaga</p></div>
                 <span className="text-sm font-bold" style={{ color: accent }}>{formatCurrency(signalAmount)}</span>
               </div>
               <div className="h-px my-1" style={{ background: `${accent}30` }} />
               <div className="flex justify-between items-center">
-                <div><span className="text-xs font-semibold" style={{ color: "#374151" }}>Restante no local</span><p className="text-xs" style={{ color: "#9CA3AF" }}>Pago pessoalmente no dia</p></div>
+                <div><span className="text-xs font-semibold" style={{ color: "#374151" }}>Restante no local</span><p className="text-xs" style={{ color: "#94A3B8" }}>Pago pessoalmente no dia</p></div>
                 <span className="text-sm font-bold" style={{ color: "#374151" }}>{formatCurrency(remainingValue)}</span>
               </div>
             </div>
@@ -1051,8 +1060,8 @@ function Step5Confirm({ professional, selectedEmployee, selectedService, selecte
 
       <div className="px-5 pb-6 pt-2">
         <button onClick={onConfirm} disabled={submitting}
-          className="w-full py-4 rounded-2xl text-white font-bold text-base transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
-          style={{ background: `linear-gradient(135deg, ${accent} 0%, ${accent}cc 100%)`, boxShadow: `0 8px 24px ${accent}55` }}>
+          className="w-full py-4 rounded-xl text-white font-bold text-base transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 hover:shadow-xl"
+          style={{ background: `linear-gradient(135deg, ${accent} 0%, ${accent}dd 100%)`, boxShadow: `0 8px 30px -8px ${accent}70` }}>
           {submitting ? <Loader2 size={18} className="animate-spin" /> : (signalAmount ? "Confirmar e Pagar Sinal →" : "Confirmar Agendamento →")}
         </button>
       </div>
@@ -1067,10 +1076,10 @@ function SuccessView({ professional, selectedEmployee, selectedService, selected
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-20px)] md:min-h-[calc(860px-20px)] px-5 text-center py-8">
       <div className="animate-scale-in">
-        <div className="w-24 h-24 rounded-full flex items-center justify-center text-5xl mx-auto mb-6" style={{ background: `linear-gradient(135deg, ${accent}, ${accent}cc)`, boxShadow: `0 16px 40px ${accent}60` }}>
+        <div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl mx-auto mb-6" style={{ background: `linear-gradient(135deg, ${accent}, ${accent}bb)`, boxShadow: `0 12px 36px ${accent}50` }}>
           ✅
         </div>
-        <h2 className="text-2xl font-bold mb-2" style={{ color: "#1F1535" }}>
+        <h2 className="text-xl font-bold mb-2" style={{ color: "#1A1A2E", fontFamily: "'Poppins', sans-serif" }}>
           {(() => {
             const msg = professional.confirmation_message || "Agendamento Confirmado!";
             if (!selectedService || !selectedSlot) return msg;
@@ -1082,7 +1091,7 @@ function SuccessView({ professional, selectedEmployee, selectedService, selected
               .replace("{horario}", formatTimeSP(selectedSlot.start_time));
           })()}
         </h2>
-        <p className="text-sm mb-6 leading-relaxed" style={{ color: "#6B7280" }}>
+        <p className="text-sm mb-6 leading-relaxed" style={{ color: "#64748B" }}>
           Você receberá uma confirmação no WhatsApp <strong style={{ color: accent }}>{clientPhone}</strong>.
         </p>
 
@@ -1100,8 +1109,8 @@ function SuccessView({ professional, selectedEmployee, selectedService, selected
               ].map(item => (
                 <div key={item.label} className="flex items-center gap-2">
                   <span className="text-base">{item.icon}</span>
-                  <span className="text-xs" style={{ color: "#6B7280" }}>{item.label}:</span>
-                  <span className="text-xs font-bold ml-auto" style={{ color: "#1F1535" }}>{item.value}</span>
+                  <span className="text-xs" style={{ color: "#64748B" }}>{item.label}:</span>
+                  <span className="text-xs font-bold ml-auto" style={{ color: "#1A1A2E" }}>{item.value}</span>
                 </div>
               ))}
             </div>
@@ -1111,10 +1120,10 @@ function SuccessView({ professional, selectedEmployee, selectedService, selected
         {/* Review Form */}
         {!reviewSubmitted ? (
           <div className="rounded-2xl p-5 mb-6 text-left" style={{ background: "white", border: `1px solid ${accent}20` }}>
-            <h3 className="font-semibold text-sm flex items-center gap-2 mb-3" style={{ color: "#1F1535" }}>
+            <h3 className="font-semibold text-sm flex items-center gap-2 mb-3" style={{ color: "#1A1A2E" }}>
               <Star size={16} className="text-yellow-500" /> Como foi sua experiência com a plataforma?
             </h3>
-            <p className="text-xs mb-3" style={{ color: "#9CA3AF" }}>Avalie o processo de agendamento online</p>
+            <p className="text-xs mb-3" style={{ color: "#94A3B8" }}>Avalie o processo de agendamento online</p>
             <div className="flex items-center justify-center gap-2 mb-3">
               {[1, 2, 3, 4, 5].map(s => (
                 <button key={s} onClick={() => setReviewRating(s)} className="transition-transform hover:scale-110">
@@ -1123,7 +1132,7 @@ function SuccessView({ professional, selectedEmployee, selectedService, selected
               ))}
             </div>
             <textarea value={reviewComment} onChange={e => setReviewComment(e.target.value)} placeholder="Conte como foi (opcional)" maxLength={500} rows={3}
-              className="w-full px-4 py-3 rounded-xl text-sm resize-none outline-none mb-3" style={{ background: `${accent}08`, border: `1.5px solid ${accent}20`, color: "#1F1535" }} />
+              className="w-full px-4 py-3 rounded-xl text-sm resize-none outline-none mb-3" style={{ background: `${accent}06`, border: `1.5px solid ${accent}15`, color: "#1A1A2E" }} />
             <button onClick={onSubmitReview} disabled={submittingReview}
               className="w-full py-2.5 rounded-xl text-white font-medium text-sm flex items-center justify-center gap-2 disabled:opacity-50"
               style={{ background: accent }}>
@@ -1134,8 +1143,8 @@ function SuccessView({ professional, selectedEmployee, selectedService, selected
           <p className="text-sm font-medium flex items-center justify-center gap-2 mb-6" style={{ color: "#10B981" }}>✅ Obrigado pela avaliação!</p>
         )}
 
-        <button onClick={onReset} className="w-full py-4 rounded-2xl text-white font-bold text-base transition-all active:scale-95"
-          style={{ background: `linear-gradient(135deg, ${accent} 0%, ${accent}cc 100%)`, boxShadow: `0 8px 24px ${accent}55` }}>
+        <button onClick={onReset} className="w-full py-4 rounded-xl text-white font-bold text-base transition-all active:scale-[0.98] hover:shadow-xl"
+          style={{ background: `linear-gradient(135deg, ${accent} 0%, ${accent}dd 100%)`, boxShadow: `0 8px 30px -8px ${accent}70` }}>
           Fazer Novo Agendamento
         </button>
       </div>
