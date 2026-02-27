@@ -142,27 +142,27 @@
     border-right: 1px solid hsla(0, 0%, 100%, 0.06);
   }
   .stat-glow {
-    box-shadow: 0 0 24px -4px hsl(336 100% 50% / 0.4);
+    box-shadow: 0 0 24px -4px hsl(var(--primary) / 0.4);
   }
   .hover-lift {
     @apply transition-all duration-300 hover:-translate-y-1;
     &:hover {
-      box-shadow: 0 12px 40px -8px hsl(336 100% 50% / 0.15);
+      box-shadow: 0 12px 40px -8px hsl(var(--primary) / 0.15);
     }
   }
   .gradient-accent {
-    background: linear-gradient(135deg, hsl(336, 100%, 50%), hsl(336, 80%, 65%));
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.7));
   }
   .gradient-primary {
-    background: linear-gradient(135deg, hsl(336, 100%, 50%), hsl(300, 70%, 45%));
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.6));
   }
   .text-gradient {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(336, 100%, 55%), hsl(280, 80%, 60%));
+    background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.7));
   }
   .glow-border {
-    border: 1px solid hsl(336 100% 50% / 0.2);
-    box-shadow: 0 0 20px -4px hsl(336 100% 50% / 0.15), inset 0 0 20px -4px hsl(336 100% 50% / 0.05);
+    border: 1px solid hsl(var(--primary) / 0.2);
+    box-shadow: 0 0 20px -4px hsl(var(--primary) / 0.15), inset 0 0 20px -4px hsl(var(--primary) / 0.05);
   }
 }
 
