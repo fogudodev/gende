@@ -1,0 +1,1 @@
+ALTER TABLE public.professionals ADD COLUMN IF NOT EXISTS system_sidebar_text_color text;

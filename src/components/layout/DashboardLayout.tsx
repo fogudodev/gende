@@ -18,7 +18,8 @@ const DashboardLayout = ({ children, title, subtitle }: DashboardLayoutProps) =>
     if (professional) {
       applySystemColors(
         (professional as any).system_accent_color,
-        (professional as any).system_sidebar_color
+        (professional as any).system_sidebar_color,
+        (professional as any).system_sidebar_text_color
       );
     }
   }, [professional]);
