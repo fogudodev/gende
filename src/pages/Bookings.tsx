@@ -751,6 +751,40 @@ const getBlockedForDay = (blockedTimes: any[], date: Date) => {
 // ─── Day View ───
 const HOUR_HEIGHT = 64; // px per hour slot
 
+const BookingPaymentBar = ({ bookingId, price }: { bookingId: string; price: number }) => {
+  const [paid, setPaid] = useState(0);
+  useEffect(() => {
+    if (price <= 0) return;
+    supabase
+      .from("payments")
+      .select("amount, status")
+      .eq("booking_id", bookingId)
+      .in("status", ["completed", "succeeded"])
+      .then(({ data }) => {
+        const total = (data || []).reduce((s: number, p: any) => s + (p.amount || 0), 0);
+        setPaid(total);
+      });
+  }, [bookingId, price]);
+
+  if (price <= 0) return null;
+  const pct = Math.min((paid / price) * 100, 100);
+  if (pct === 0) return null;
+
+  return (
+    <div className="mt-1 flex items-center gap-1.5">
+      <div className="flex-1 h-1.5 rounded-full bg-muted/40 overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all ${pct >= 100 ? "bg-green-500" : "bg-primary"}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <span className={`text-[9px] font-medium shrink-0 ${pct >= 100 ? "text-green-400" : "text-muted-foreground"}`}>
+        {pct >= 100 ? "Pago" : `${Math.round(pct)}%`}
+      </span>
+    </div>
+  );
+};
+
 const DayView = ({ bookings, blockedTimes, selectedDate, onSlotClick, onBookingClick, commissionBookingIds }: {
   bookings: any[]; blockedTimes: any[]; selectedDate: Date; onSlotClick: (slot: string) => void; onBookingClick: (b: any) => void; commissionBookingIds: Set<string>;
 }) => {
@@ -828,6 +862,7 @@ const DayView = ({ bookings, blockedTimes, selectedDate, onSlotClick, onBookingC
                   <p className="text-[11px] text-muted-foreground truncate">
                     {startTime}-{endTime} • {booking.services?.name || "—"} • R$ {Number(booking.price).toFixed(2)}
                   </p>
+                  <BookingPaymentBar bookingId={booking.id} price={Number(booking.price)} />
                 </div>
                 <div className="flex flex-col items-end gap-1 shrink-0">
                   <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap ${statusBadgeClass[booking.status] || "bg-gray-500/20 text-gray-400"}`}>
