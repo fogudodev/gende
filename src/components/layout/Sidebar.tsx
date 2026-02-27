@@ -52,6 +52,7 @@ import financeIcon from "@/assets/icon-finance.png";
 import publicPageIcon from "@/assets/icon-public-page.png";
 import productsIcon from "@/assets/icon-products.png";
 import couponsIcon from "@/assets/icon-coupons.png";
+import reportsIcon from "@/assets/icon-reports.png";
 
 // Wrapper component for custom icons
 const CalendarIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
@@ -125,6 +126,10 @@ const ProductsIcon = ({ size = 18, className }: { size?: number; className?: str
 const CouponsIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
   <img src={couponsIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
 );
+
+const ReportsIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
+  <img src={reportsIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
+);
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
 
@@ -180,7 +185,7 @@ const afterGroupItems: NavItem[] = [
   { icon: PublicPageIcon, label: "Página Pública", path: "/public-page", featureKey: "public-page" },
   { icon: ProductsIcon, label: "Produtos", path: "/products", featureKey: "products" },
   { icon: CouponsIcon, label: "Cupons", path: "/coupons", featureKey: "coupons" },
-  { icon: BarChart3, label: "Relatórios", path: "/reports", featureKey: "reports" },
+  { icon: ReportsIcon, label: "Relatórios", path: "/reports", featureKey: "reports" },
   { icon: Star, label: "Avaliações", path: "/reviews", featureKey: "reviews" },
   { icon: Settings, label: "Configurações", path: "/settings", featureKey: "settings" },
 ];
