@@ -729,6 +729,47 @@ export type Database = {
           },
         ]
       }
+      professional_limits: {
+        Row: {
+          campaign_max_contacts: number | null
+          campaign_min_interval_hours: number | null
+          created_at: string
+          daily_campaigns: number | null
+          daily_reminders: number | null
+          id: string
+          professional_id: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_max_contacts?: number | null
+          campaign_min_interval_hours?: number | null
+          created_at?: string
+          daily_campaigns?: number | null
+          daily_reminders?: number | null
+          id?: string
+          professional_id: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_max_contacts?: number | null
+          campaign_min_interval_hours?: number | null
+          created_at?: string
+          daily_campaigns?: number | null
+          daily_reminders?: number | null
+          id?: string
+          professional_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professional_limits_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: true
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       professionals: {
         Row: {
           account_type: Database["public"]["Enums"]["account_type"]
@@ -1291,6 +1332,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_support: { Args: never; Returns: boolean }
     }
     Enums: {
       account_type: "autonomous" | "salon"
