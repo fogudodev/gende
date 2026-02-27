@@ -127,12 +127,22 @@ const PublicBooking = () => {
   const [confirmed, setConfirmed] = useState(false);
   const [pixCopied, setPixCopied] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [pixTimeLeft, setPixTimeLeft] = useState(300); // 5 minutes
 
   // Review
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [submittingReview, setSubmittingReview] = useState(false);
+
+  // PIX timer countdown
+  useEffect(() => {
+    if (!showPaymentModal || pixTimeLeft <= 0) return;
+    const interval = setInterval(() => {
+      setPixTimeLeft((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [showPaymentModal, pixTimeLeft]);
 
   const isSalon = professional?.account_type === "salon";
   const totalSteps = isSalon ? 5 : 4;
@@ -264,6 +274,7 @@ const PublicBooking = () => {
       setBookingId(result.booking_id);
       // If signal payment, show modal; otherwise confirm directly
       if (paymentConfig?.signal_enabled && paymentConfig?.accept_pix && paymentConfig?.pix_key && getSignalAmount()) {
+        setPixTimeLeft(300);
         setShowPaymentModal(true);
       } else {
         setConfirmed(true);
@@ -580,9 +591,41 @@ const PublicBooking = () => {
                   </div>
                 );
               })()}
-              <button onClick={() => { setShowPaymentModal(false); setConfirmed(true); }} className="w-full py-4 rounded-2xl text-white font-bold text-base transition-all active:scale-95" style={{ background: "linear-gradient(135deg, #059669 0%, #10B981 100%)", boxShadow: "0 8px 24px rgba(5,150,105,0.35)" }}>
-                ✅ Já realizei o pagamento
-              </button>
+              {/* Timer */}
+              {(() => {
+                const mins = Math.floor(pixTimeLeft / 60);
+                const secs = pixTimeLeft % 60;
+                const expired = pixTimeLeft <= 0;
+                const progressPct = (pixTimeLeft / 300) * 100;
+                return (
+                  <div className="mb-4">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <span className="text-lg" role="img">⏱️</span>
+                      <span className="font-mono font-bold text-lg" style={{ color: expired ? "#EF4444" : pixTimeLeft <= 60 ? "#F59E0B" : "#1F1535" }}>
+                        {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
+                      </span>
+                    </div>
+                    <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: "#E5E7EB" }}>
+                      <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progressPct}%`, background: expired ? "#EF4444" : pixTimeLeft <= 60 ? "#F59E0B" : accent }} />
+                    </div>
+                    {expired ? (
+                      <div className="text-center mt-2 space-y-2">
+                        <p className="text-xs font-semibold" style={{ color: "#EF4444" }}>Tempo expirado! Gere um novo código.</p>
+                        <button onClick={() => setPixTimeLeft(300)} className="px-4 py-2 rounded-xl text-xs font-bold text-white transition-all active:scale-95" style={{ background: accent }}>
+                          Gerar novo código
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-[10px] text-center mt-1" style={{ color: "#9CA3AF" }}>Realize o pagamento dentro do prazo</p>
+                    )}
+                  </div>
+                );
+              })()}
+              {pixTimeLeft > 0 && (
+                <button onClick={() => { setShowPaymentModal(false); setConfirmed(true); }} className="w-full py-4 rounded-2xl text-white font-bold text-base transition-all active:scale-95" style={{ background: "linear-gradient(135deg, #059669 0%, #10B981 100%)", boxShadow: "0 8px 24px rgba(5,150,105,0.35)" }}>
+                  ✅ Já realizei o pagamento
+                </button>
+              )}
               <p className="text-center text-xs mt-3" style={{ color: "#9CA3AF" }}>Após o pagamento, você receberá confirmação no WhatsApp</p>
             </div>
           </div>
