@@ -44,7 +44,16 @@ serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     if (customers.data.length === 0) {
-      throw new Error("No Stripe customer found");
+      console.log(`[SYNC-EMPLOYEES] No Stripe customer found for ${user.email}, skipping billing sync`);
+      return new Response(JSON.stringify({ 
+        success: true, 
+        skipped: true,
+        reason: "No Stripe customer found",
+        extra_employees: extraEmployees,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
     }
 
     const customerId = customers.data[0].id;
