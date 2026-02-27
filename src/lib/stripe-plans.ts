@@ -48,6 +48,7 @@ export const STRIPE_PLANS = {
       "Cobrar sinal de agendamento",
       "Até 5 profissionais inclusos",
       "Adicional R$ 7/profissional (máx 20)",
+      "Integração Google Calendar (Salão)",
       "Suporte prioritário",
     ],
     limits: {
@@ -94,7 +95,8 @@ export type FeatureKey =
   | "team"
   | "payment-settings"
   | "commission-report"
-  | "team-performance";
+  | "team-performance"
+  | "google-calendar";
 
 export const PLAN_FEATURES: Record<PlanId | "none", FeatureKey[]> = {
   none: [
@@ -137,5 +139,6 @@ export const PLAN_FEATURES: Record<PlanId | "none", FeatureKey[]> = {
     "payment-settings",
     "commission-report",
     "team-performance",
+    "google-calendar",
   ],
 };

@@ -489,6 +489,53 @@ export type Database = {
           },
         ]
       }
+      google_calendar_tokens: {
+        Row: {
+          access_token: string
+          calendar_id: string
+          created_at: string
+          id: string
+          last_synced_at: string | null
+          professional_id: string
+          refresh_token: string
+          sync_enabled: boolean
+          token_expires_at: string
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          calendar_id?: string
+          created_at?: string
+          id?: string
+          last_synced_at?: string | null
+          professional_id: string
+          refresh_token: string
+          sync_enabled?: boolean
+          token_expires_at: string
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          calendar_id?: string
+          created_at?: string
+          id?: string
+          last_synced_at?: string | null
+          professional_id?: string
+          refresh_token?: string
+          sync_enabled?: boolean
+          token_expires_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_calendar_tokens_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: true
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_config: {
         Row: {
           accept_card: boolean

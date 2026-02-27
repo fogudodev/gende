@@ -179,6 +179,22 @@ export const useCreateBooking = () => {
         import("./useWhatsApp").then(({ triggerWhatsAppAutomation }) => {
           triggerWhatsAppAutomation(professional.id, data.id, "booking_created");
         });
+
+        // Sync to Google Calendar (fire and forget)
+        supabase.functions.invoke("google-calendar-sync", {
+          body: {
+            action: "create_event",
+            professional_id: professional.id,
+            booking: {
+              client_name: data.client_name,
+              client_phone: data.client_phone,
+              start_time: data.start_time,
+              end_time: data.end_time,
+              notes: data.notes,
+              service_name: "",
+            },
+          },
+        }).catch(() => { /* silent fail */ });
       }
     },
   });
