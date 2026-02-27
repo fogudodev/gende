@@ -3,8 +3,8 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Globe, ExternalLink, Palette, Image, Type, Save, Loader2,
-  CheckCircle2, X, Camera, Upload, Sparkles, AlertTriangle,
-  Eye, ChevronDown, ChevronUp,
+  CheckCircle2, X, Camera, Upload,
+  AlertTriangle, Eye, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useAuth } from "@/hooks/useAuth";
@@ -62,9 +62,6 @@ const PublicPage = () => {
   // Texts
   const [welcomeTitle, setWelcomeTitle] = useState("Bem-vindo(a)!");
   const [welcomeDescription, setWelcomeDescription] = useState("");
-  const [welcomeMessage, setWelcomeMessage] = useState("");
-  const [reminderMessage, setReminderMessage] = useState("");
-  const [confirmationMessage, setConfirmationMessage] = useState("");
 
   useEffect(() => {
     if (professional) {
@@ -76,9 +73,6 @@ const PublicPage = () => {
       setCoverUrl((professional as any).cover_url || "");
       setWelcomeTitle((professional as any).welcome_title || "Bem-vindo(a)!");
       setWelcomeDescription((professional as any).welcome_description || "");
-      setWelcomeMessage((professional as any).welcome_message || "");
-      setReminderMessage((professional as any).reminder_message || "");
-      setConfirmationMessage((professional as any).confirmation_message || "");
     }
   }, [professional]);
 
@@ -196,9 +190,6 @@ const PublicPage = () => {
         component_color: componentColor,
         welcome_title: welcomeTitle.trim(),
         welcome_description: welcomeDescription.trim(),
-        welcome_message: welcomeMessage.trim(),
-        reminder_message: reminderMessage.trim(),
-        confirmation_message: confirmationMessage.trim(),
       } as any)
       .eq("id", professional.id);
 
@@ -300,12 +291,6 @@ const PublicPage = () => {
                 presets={BG_PRESETS}
               />
               <ColorPicker
-                label="Cor de Textos"
-                value={textColor}
-                onChange={setTextColor}
-                presets={TEXT_PRESETS}
-              />
-              <ColorPicker
                 label="Cor de Componentes (botões, destaques)"
                 value={componentColor}
                 onChange={setComponentColor}
@@ -371,43 +356,11 @@ const PublicPage = () => {
               </div>
 
               <div className="border-t border-border/50 pt-4">
-                <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1.5">
-                  <Sparkles size={12} className="text-accent" />
-                  Mensagens de automação WhatsApp. Use: {"{nome}"}, {"{servico}"}, {"{data}"}, {"{horario}"}
-                </p>
-              </div>
-
-              <div>
-                <Label className="text-sm mb-1.5">Mensagem de Boas-vindas</Label>
-                <textarea
-                  value={welcomeMessage}
-                  onChange={(e) => setWelcomeMessage(e.target.value)}
-                  placeholder="Olá {nome}! Seja bem-vindo(a)..."
-                  maxLength={500}
-                  rows={3}
-                  className="w-full px-3 py-2 rounded-xl bg-muted/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none"
-                />
-              </div>
-              <div>
-                <Label className="text-sm mb-1.5">Mensagem de Lembrete</Label>
-                <textarea
-                  value={reminderMessage}
-                  onChange={(e) => setReminderMessage(e.target.value)}
-                  placeholder="Olá {nome}! Lembrete: você tem um agendamento..."
-                  maxLength={500}
-                  rows={3}
-                  className="w-full px-3 py-2 rounded-xl bg-muted/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none"
-                />
-              </div>
-              <div>
-                <Label className="text-sm mb-1.5">Mensagem de Confirmação</Label>
-                <textarea
-                  value={confirmationMessage}
-                  onChange={(e) => setConfirmationMessage(e.target.value)}
-                  placeholder="Olá {nome}! Seu agendamento para {servico} foi confirmado..."
-                  maxLength={500}
-                  rows={3}
-                  className="w-full px-3 py-2 rounded-xl bg-muted/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none"
+                <ColorPicker
+                  label="Cor da Fonte"
+                  value={textColor}
+                  onChange={setTextColor}
+                  presets={TEXT_PRESETS}
                 />
               </div>
             </div>

@@ -1,8 +1,14 @@
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion } from "framer-motion";
-import { MessageCircle, Zap, Clock, CheckCircle2, Send, ToggleLeft, ToggleRight, Loader2 } from "lucide-react";
+import { MessageCircle, Zap, Clock, CheckCircle2, Send, ToggleLeft, ToggleRight, Loader2, Sparkles, Save } from "lucide-react";
 import { useWhatsAppInstance, useWhatsAppAutomations, useToggleAutomation, useWhatsAppLogs } from "@/hooks/useWhatsApp";
+import { useProfessional } from "@/hooks/useProfessional";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 const triggerLabels: Record<string, string> = {
   booking_created: "Novo booking",
@@ -28,7 +34,22 @@ const Automations = () => {
   const { data: instance, isLoading: loadingInstance } = useWhatsAppInstance();
   const { data: automations, isLoading: loadingAuto } = useWhatsAppAutomations();
   const { data: logs } = useWhatsAppLogs();
+  const { data: professional } = useProfessional();
   const toggleAutomation = useToggleAutomation();
+  const qc = useQueryClient();
+
+  const [welcomeMessage, setWelcomeMessage] = useState("");
+  const [reminderMessage, setReminderMessage] = useState("");
+  const [confirmationMessage, setConfirmationMessage] = useState("");
+  const [savingMessages, setSavingMessages] = useState(false);
+
+  useEffect(() => {
+    if (professional) {
+      setWelcomeMessage((professional as any).welcome_message || "");
+      setReminderMessage((professional as any).reminder_message || "");
+      setConfirmationMessage((professional as any).confirmation_message || "");
+    }
+  }, [professional]);
 
   const isLoading = loadingInstance || loadingAuto;
 
@@ -37,6 +58,27 @@ const Automations = () => {
       await toggleAutomation.mutateAsync({ id, is_active: !currentState });
       toast.success(!currentState ? "Automação ativada" : "Automação desativada");
     } catch { toast.error("Erro ao alterar automação"); }
+  };
+
+  const handleSaveMessages = async () => {
+    if (!professional) return;
+    setSavingMessages(true);
+    const { error } = await supabase
+      .from("professionals")
+      .update({
+        welcome_message: welcomeMessage.trim(),
+        reminder_message: reminderMessage.trim(),
+        confirmation_message: confirmationMessage.trim(),
+      } as any)
+      .eq("id", professional.id);
+
+    if (error) {
+      toast.error("Erro ao salvar mensagens");
+    } else {
+      toast.success("Mensagens de automação salvas!");
+      qc.invalidateQueries({ queryKey: ["professional"] });
+    }
+    setSavingMessages(false);
   };
 
   const totalSent = (logs || []).filter(l => l.status === "sent" || l.status === "delivered").length;
@@ -86,6 +128,66 @@ const Automations = () => {
           </motion.div>
         ))}
       </div>
+
+      {/* Automation Messages */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="glass-card rounded-2xl p-6 mb-8">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+            <Sparkles size={18} className="text-accent" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-foreground">Mensagens Personalizadas</h3>
+            <p className="text-xs text-muted-foreground">
+              Use: {"{nome}"}, {"{servico}"}, {"{data}"}, {"{horario}"}
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <Label className="text-sm mb-1.5">Mensagem de Boas-vindas</Label>
+            <textarea
+              value={welcomeMessage}
+              onChange={(e) => setWelcomeMessage(e.target.value)}
+              placeholder="Olá {nome}! Seja bem-vindo(a)..."
+              maxLength={500}
+              rows={3}
+              className="w-full px-3 py-2 rounded-xl bg-muted/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none"
+            />
+          </div>
+          <div>
+            <Label className="text-sm mb-1.5">Mensagem de Lembrete</Label>
+            <textarea
+              value={reminderMessage}
+              onChange={(e) => setReminderMessage(e.target.value)}
+              placeholder="Olá {nome}! Lembrete: você tem um agendamento..."
+              maxLength={500}
+              rows={3}
+              className="w-full px-3 py-2 rounded-xl bg-muted/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none"
+            />
+          </div>
+          <div>
+            <Label className="text-sm mb-1.5">Mensagem de Confirmação</Label>
+            <textarea
+              value={confirmationMessage}
+              onChange={(e) => setConfirmationMessage(e.target.value)}
+              placeholder="Olá {nome}! Seu agendamento para {servico} foi confirmado..."
+              maxLength={500}
+              rows={3}
+              className="w-full px-3 py-2 rounded-xl bg-muted/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none"
+            />
+          </div>
+
+          <Button
+            onClick={handleSaveMessages}
+            disabled={savingMessages}
+            className="w-full h-10 rounded-xl bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
+          >
+            {savingMessages ? <Loader2 size={16} className="animate-spin mr-2" /> : <Save size={16} className="mr-2" />}
+            Salvar Mensagens
+          </Button>
+        </div>
+      </motion.div>
 
       {/* Automations List */}
       {isLoading ? (
