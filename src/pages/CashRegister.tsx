@@ -10,11 +10,12 @@ import {
   useCloseCashRegisterMutation,
   useAddCashTransaction,
 } from "@/hooks/useCashRegister";
+import CashRegisterReport from "@/components/cash-register/CashRegisterReport";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -29,17 +30,16 @@ import {
   CreditCard,
   QrCode,
   Clock,
-  CheckCircle2,
   Loader2,
+  FileBarChart,
 } from "lucide-react";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 const CashRegister = () => {
   const { data: professional } = useProfessional();
   const { data: reception } = useReceptionEmployee();
   const profId = professional?.id || reception?.salon_id;
-  const employeeId = reception?.id;
+  const employeeId = reception?.id || undefined;
 
   const { data: openRegister, isLoading: loadingOpen } = useOpenCashRegister(profId);
   const { data: registers } = useCashRegisters(profId);
@@ -63,15 +63,9 @@ const CashRegister = () => {
 
   const handleOpenCash = () => {
     if (!profId) return;
-    // For salon owners without reception employee, use a placeholder
-    const openedBy = employeeId;
-    if (!openedBy) {
-      // Salon owner opening cash - need to find their employee record or handle differently
-      return;
-    }
     openMutation.mutate({
       professionalId: profId,
-      openedBy,
+      openedBy: employeeId,
       openingAmount: Number(openingAmount) || 0,
     });
     setOpeningAmount("");
@@ -79,14 +73,7 @@ const CashRegister = () => {
 
   const handleCloseCash = () => {
     if (!openRegister) return;
-    const totalEntries = (transactions || [])
-      .filter((t: any) => t.type === "entry")
-      .reduce((sum: number, t: any) => sum + Number(t.amount), 0);
-    const totalWithdrawals = (transactions || [])
-      .filter((t: any) => t.type === "withdrawal")
-      .reduce((sum: number, t: any) => sum + Number(t.amount), 0);
     const expected = Number(openRegister.opening_amount) + totalEntries - totalWithdrawals;
-
     closeMutation.mutate({
       id: openRegister.id,
       closingAmount: Number(closingAmount) || 0,
@@ -107,7 +94,7 @@ const CashRegister = () => {
       amount: Number(txForm.amount) || 0,
       payment_method: txForm.payment_method,
       description: txForm.description,
-      created_by: employeeId || undefined,
+      created_by: employeeId,
     });
     setTxDialogOpen(false);
     setTxForm({ type: "entry", amount: "", payment_method: "cash", description: "" });
@@ -147,159 +134,149 @@ const CashRegister = () => {
 
   return (
     <DashboardLayout title="Caixa">
-      <div className="space-y-6">
-        {/* Open Cash Register */}
-        {!openRegister ? (
-          <Card className="p-6">
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center">
-                <Lock size={28} className="text-accent" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold">Caixa Fechado</h2>
-                <p className="text-sm text-muted-foreground mt-1">Abra o caixa para começar a registrar movimentações</p>
-              </div>
-              <div className="w-full max-w-xs space-y-3">
-                <div>
-                  <Label className="text-sm">Valor inicial (troco)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={openingAmount}
-                    onChange={(e) => setOpeningAmount(e.target.value)}
-                    placeholder="R$ 0,00"
-                  />
+      <Tabs defaultValue="daily" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="daily" className="gap-2">
+            <DollarSign size={14} />
+            Caixa do Dia
+          </TabsTrigger>
+          <TabsTrigger value="report" className="gap-2">
+            <FileBarChart size={14} />
+            Relatório
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="daily" className="space-y-6">
+          {/* Open Cash Register */}
+          {!openRegister ? (
+            <Card className="p-6">
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center">
+                  <Lock size={28} className="text-accent" />
                 </div>
-                <Button onClick={handleOpenCash} className="w-full gap-2" disabled={openMutation.isPending || !employeeId}>
-                  <Unlock size={16} />
-                  Abrir Caixa
+                <div>
+                  <h2 className="text-xl font-bold">Caixa Fechado</h2>
+                  <p className="text-sm text-muted-foreground mt-1">Abra o caixa para começar a registrar movimentações</p>
+                </div>
+                <div className="w-full max-w-xs space-y-3">
+                  <div>
+                    <Label className="text-sm">Valor inicial (troco)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={openingAmount}
+                      onChange={(e) => setOpeningAmount(e.target.value)}
+                      placeholder="R$ 0,00"
+                    />
+                  </div>
+                  <Button onClick={handleOpenCash} className="w-full gap-2" disabled={openMutation.isPending}>
+                    <Unlock size={16} />
+                    Abrir Caixa
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          ) : (
+            <>
+              {/* Active Cash Register */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Card className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                      <Unlock size={18} className="text-accent" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Abertura</p>
+                      <p className="font-bold text-lg">R$ {Number(openRegister.opening_amount).toFixed(2)}</p>
+                    </div>
+                  </div>
+                </Card>
+                <Card className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center">
+                      <ArrowDownCircle size={18} className="text-success" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Entradas</p>
+                      <p className="font-bold text-lg text-success">R$ {totalEntries.toFixed(2)}</p>
+                    </div>
+                  </div>
+                </Card>
+                <Card className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <DollarSign size={18} className="text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Saldo Atual</p>
+                      <p className="font-bold text-lg">R$ {currentBalance.toFixed(2)}</p>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              {/* Actions */}
+              <div className="flex flex-wrap gap-3">
+                <Button onClick={() => { setTxForm({ ...txForm, type: "entry" }); setTxDialogOpen(true); }} className="gap-2">
+                  <Plus size={16} />
+                  Registrar Entrada
+                </Button>
+                <Button variant="outline" onClick={() => { setTxForm({ ...txForm, type: "withdrawal" }); setTxDialogOpen(true); }} className="gap-2">
+                  <Minus size={16} />
+                  Sangria
+                </Button>
+                <Button variant="destructive" onClick={() => setCloseDialogOpen(true)} className="gap-2 ml-auto">
+                  <Lock size={16} />
+                  Fechar Caixa
                 </Button>
               </div>
 
-              {/* History */}
-              {registers && registers.length > 0 && (
-                <div className="w-full mt-6">
-                  <h3 className="text-sm font-semibold text-left mb-3">Histórico de Caixas</h3>
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {registers.filter((r: any) => r.status === "closed").map((r: any) => (
-                      <div key={r.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border text-sm">
-                        <div>
-                          <p className="font-medium">{format(new Date(r.opened_at), "dd/MM/yyyy")}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {format(new Date(r.opened_at), "HH:mm")} - {r.closed_at ? format(new Date(r.closed_at), "HH:mm") : "—"}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold">R$ {Number(r.closing_amount || 0).toFixed(2)}</p>
-                          {r.expected_amount != null && Number(r.closing_amount) !== Number(r.expected_amount) && (
-                            <p className={`text-xs ${Number(r.closing_amount) > Number(r.expected_amount) ? "text-success" : "text-destructive"}`}>
-                              Dif: R$ {(Number(r.closing_amount) - Number(r.expected_amount)).toFixed(2)}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </Card>
-        ) : (
-          <>
-            {/* Active Cash Register */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Transactions */}
               <Card className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                    <Unlock size={18} className="text-accent" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Abertura</p>
-                    <p className="font-bold text-lg">R$ {Number(openRegister.opening_amount).toFixed(2)}</p>
-                  </div>
-                </div>
-              </Card>
-              <Card className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center">
-                    <ArrowDownCircle size={18} className="text-success" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Entradas</p>
-                    <p className="font-bold text-lg text-success">R$ {totalEntries.toFixed(2)}</p>
-                  </div>
-                </div>
-              </Card>
-              <Card className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <DollarSign size={18} className="text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Saldo Atual</p>
-                    <p className="font-bold text-lg">R$ {currentBalance.toFixed(2)}</p>
-                  </div>
-                </div>
-              </Card>
-            </div>
-
-            {/* Actions */}
-            <div className="flex flex-wrap gap-3">
-              <Button onClick={() => { setTxForm({ ...txForm, type: "entry" }); setTxDialogOpen(true); }} className="gap-2">
-                <Plus size={16} />
-                Registrar Entrada
-              </Button>
-              <Button variant="outline" onClick={() => { setTxForm({ ...txForm, type: "withdrawal" }); setTxDialogOpen(true); }} className="gap-2">
-                <Minus size={16} />
-                Sangria
-              </Button>
-              <Button variant="destructive" onClick={() => setCloseDialogOpen(true)} className="gap-2 ml-auto">
-                <Lock size={16} />
-                Fechar Caixa
-              </Button>
-            </div>
-
-            {/* Transactions */}
-            <Card className="p-4">
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <Clock size={16} className="text-muted-foreground" />
-                Movimentações do Dia
-              </h3>
-              {!transactions?.length ? (
-                <p className="text-sm text-muted-foreground text-center py-6">Nenhuma movimentação registrada</p>
-              ) : (
-                <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                  {transactions.map((tx: any) => {
-                    const Icon = paymentMethodIcon[tx.payment_method] || DollarSign;
-                    const isEntry = tx.type === "entry";
-                    return (
-                      <div key={tx.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/20 border border-border">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isEntry ? "bg-success/10" : "bg-destructive/10"}`}>
-                            {isEntry ? <ArrowDownCircle size={14} className="text-success" /> : <ArrowUpCircle size={14} className="text-destructive" />}
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">{tx.description || (isEntry ? "Entrada" : "Sangria")}</p>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <Icon size={12} />
-                              <span>{paymentMethodLabel[tx.payment_method] || tx.payment_method}</span>
-                              <span>• {format(new Date(tx.created_at), "HH:mm")}</span>
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Clock size={16} className="text-muted-foreground" />
+                  Movimentações do Dia
+                </h3>
+                {!transactions?.length ? (
+                  <p className="text-sm text-muted-foreground text-center py-6">Nenhuma movimentação registrada</p>
+                ) : (
+                  <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                    {transactions.map((tx: any) => {
+                      const Icon = paymentMethodIcon[tx.payment_method] || DollarSign;
+                      const isEntry = tx.type === "entry";
+                      return (
+                        <div key={tx.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/20 border border-border">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isEntry ? "bg-success/10" : "bg-destructive/10"}`}>
+                              {isEntry ? <ArrowDownCircle size={14} className="text-success" /> : <ArrowUpCircle size={14} className="text-destructive" />}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">{tx.description || (isEntry ? "Entrada" : "Sangria")}</p>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <Icon size={12} />
+                                <span>{paymentMethodLabel[tx.payment_method] || tx.payment_method}</span>
+                                <span>• {format(new Date(tx.created_at), "HH:mm")}</span>
+                              </div>
                             </div>
                           </div>
+                          <span className={`font-bold ${isEntry ? "text-success" : "text-destructive"}`}>
+                            {isEntry ? "+" : "-"}R$ {Number(tx.amount).toFixed(2)}
+                          </span>
                         </div>
-                        <span className={`font-bold ${isEntry ? "text-success" : "text-destructive"}`}>
-                          {isEntry ? "+" : "-"}R$ {Number(tx.amount).toFixed(2)}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </Card>
-          </>
-        )}
-      </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </Card>
+            </>
+          )}
+        </TabsContent>
+
+        <TabsContent value="report">
+          <CashRegisterReport professionalId={profId} />
+        </TabsContent>
+      </Tabs>
 
       {/* Add Transaction Dialog */}
       <Dialog open={txDialogOpen} onOpenChange={setTxDialogOpen}>
