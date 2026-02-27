@@ -31,7 +31,10 @@ const Team = () => {
     commission_percentage: 50,
     is_active: true,
     has_login: false,
+    role: "professional" as string,
   });
+  const [receptionPassword, setReceptionPassword] = useState("");
+  const [creatingReception, setCreatingReception] = useState(false);
 
   // Employee limits for Enterprise plan
   const MAX_EMPLOYEES_BASE = 5;
@@ -44,7 +47,9 @@ const Team = () => {
   const nextAdditionalCost = Math.max(0, activeCount + 1 - MAX_EMPLOYEES_BASE) * ADDITIONAL_PRICE;
 
   const resetForm = () => {
-    setForm({ name: "", email: "", phone: "", specialty: "", commission_percentage: 50, is_active: true, has_login: false });
+    setForm({ name: "", email: "", phone: "", specialty: "", commission_percentage: 50, is_active: true, has_login: false, role: "professional" });
+    setReceptionPassword("");
+    setCreatingReception(false);
     setEditing(null);
   };
 
@@ -58,6 +63,7 @@ const Team = () => {
       commission_percentage: emp.commission_percentage,
       is_active: emp.is_active,
       has_login: emp.has_login,
+      role: (emp as any).role || "professional",
     });
     setDialogOpen(true);
   };
@@ -80,7 +86,29 @@ const Team = () => {
     if (editing) {
       await updateEmployee.mutateAsync({ id: editing.id, ...form });
     } else {
-      await createEmployee.mutateAsync(form);
+      const newEmp = await createEmployee.mutateAsync(form);
+      
+      // If reception role with login, create auth user
+      if (form.role === "reception" && form.email && receptionPassword) {
+        setCreatingReception(true);
+        try {
+          const { error } = await supabase.functions.invoke("create-reception-user", {
+            body: {
+              name: form.name,
+              email: form.email,
+              password: receptionPassword,
+              employeeId: newEmp.id,
+              salonId: professional!.id,
+            },
+          });
+          if (error) throw error;
+          toast.success("Login da recepção criado com sucesso!");
+        } catch (err: any) {
+          toast.error("Erro ao criar login: " + (err?.message || "Erro desconhecido"));
+        } finally {
+          setCreatingReception(false);
+        }
+      }
     }
     setDialogOpen(false);
     resetForm();
@@ -182,18 +210,38 @@ const Team = () => {
                     <Input type="number" min={0} max={100} value={form.commission_percentage} onChange={(e) => setForm({ ...form, commission_percentage: Number(e.target.value) })} />
                   </div>
                 </div>
+                <div className="space-y-2">
+                  <Label>Função</Label>
+                  <select
+                    value={form.role}
+                    onChange={(e) => setForm({ ...form, role: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-foreground text-sm"
+                  >
+                    <option value="professional">Profissional</option>
+                    <option value="reception">Recepção</option>
+                  </select>
+                </div>
+                {form.role === "reception" && !editing && (
+                  <div className="space-y-2 p-3 rounded-xl bg-accent/5 border border-accent/20">
+                    <Label className="text-sm font-medium">Criar login para Recepção</Label>
+                    <p className="text-xs text-muted-foreground">A recepcionista poderá acessar o sistema com este email e senha.</p>
+                    <Input
+                      type="password"
+                      value={receptionPassword}
+                      onChange={(e) => setReceptionPassword(e.target.value)}
+                      placeholder="Senha de acesso"
+                      required={form.role === "reception"}
+                    />
+                  </div>
+                )}
                 <div className="flex items-center gap-6">
                   <label className="flex items-center gap-2 text-sm cursor-pointer">
                     <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} className="rounded" />
                     Ativo
                   </label>
-                  <label className="flex items-center gap-2 text-sm cursor-pointer">
-                    <input type="checkbox" checked={form.has_login} onChange={(e) => setForm({ ...form, has_login: e.target.checked })} className="rounded" />
-                    Acesso ao sistema
-                  </label>
                 </div>
-                <Button type="submit" className="w-full" disabled={createEmployee.isPending || updateEmployee.isPending}>
-                  {editing ? "Salvar Alterações" : "Adicionar Funcionário"}
+                <Button type="submit" className="w-full" disabled={createEmployee.isPending || updateEmployee.isPending || creatingReception}>
+                  {creatingReception ? "Criando login..." : editing ? "Salvar Alterações" : "Adicionar Funcionário"}
                 </Button>
               </form>
             </DialogContent>
@@ -243,7 +291,11 @@ const Team = () => {
                   <Badge variant={emp.is_active ? "default" : "secondary"}>
                     {emp.is_active ? "Ativo" : "Inativo"}
                   </Badge>
-                  <Badge variant="outline">{emp.commission_percentage}% comissão</Badge>
+                  {(emp as any).role === "reception" ? (
+                    <Badge variant="outline" className="bg-accent/10 text-accent border-accent/30">Recepção</Badge>
+                  ) : (
+                    <Badge variant="outline">{emp.commission_percentage}% comissão</Badge>
+                  )}
                   {emp.has_login && <Badge variant="outline">Login ativo</Badge>}
                 </div>
                 {(emp.phone || emp.email) && (
