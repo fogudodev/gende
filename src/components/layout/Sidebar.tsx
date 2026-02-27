@@ -39,11 +39,11 @@ import dashboardIcon from "@/assets/icon-dashboard.png";
 
 // Wrapper component for custom icons
 const CalendarIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={calendarIcon} alt="" width={size} height={size} className={`inline-block opacity-60 ${className || ''}`} />
+  <img src={calendarIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
 );
 
 const DashboardIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <img src={dashboardIcon} alt="" width={size} height={size} className={`inline-block opacity-60 ${className || ''}`} />
+  <img src={dashboardIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
 );
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
