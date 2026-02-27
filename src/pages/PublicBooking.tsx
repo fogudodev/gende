@@ -6,6 +6,8 @@ import { ptBR } from "date-fns/locale";
 import { Loader2, Star } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { generatePixPayload } from "@/lib/pix-utils";
+import { QRCodeSVG } from "qrcode.react";
 
 /* ── Types ─────────────────────────────────────── */
 type Professional = {
@@ -279,12 +281,29 @@ const PublicBooking = () => {
   };
 
   const copyPixKey = () => {
-    if (paymentConfig?.pix_key) {
-      navigator.clipboard.writeText(paymentConfig.pix_key);
-      setPixCopied(true);
-      toast.success("Chave PIX copiada!");
-      setTimeout(() => setPixCopied(false), 3000);
-    }
+    if (!paymentConfig?.pix_key) return;
+    const amount = getSignalAmount();
+    const payload = generatePixPayload({
+      pixKey: paymentConfig.pix_key,
+      beneficiaryName: paymentConfig.pix_beneficiary_name || professional?.name || "Beneficiario",
+      amount: amount || undefined,
+      txId: bookingId?.slice(0, 25) || "***",
+    });
+    navigator.clipboard.writeText(payload);
+    setPixCopied(true);
+    toast.success("Código PIX copiado!");
+    setTimeout(() => setPixCopied(false), 3000);
+  };
+
+  const getPixPayload = () => {
+    if (!paymentConfig?.pix_key) return null;
+    const amount = getSignalAmount();
+    return generatePixPayload({
+      pixKey: paymentConfig.pix_key,
+      beneficiaryName: paymentConfig.pix_beneficiary_name || professional?.name || "Beneficiario",
+      amount: amount || undefined,
+      txId: bookingId?.slice(0, 25) || "***",
+    });
   };
 
   const handleSubmitReview = async () => {
@@ -537,14 +556,30 @@ const PublicBooking = () => {
                   <div className="flex justify-between"><span className="text-xs" style={{ color: "#6B7280" }}>Restante no local</span><span className="text-sm font-semibold" style={{ color: "#374151" }}>{formatCurrency(remainingValue)}</span></div>
                 </div>
               </div>
-              <div className="mb-4">
-                <p className="text-xs font-semibold mb-2" style={{ color: "#6B7280" }}>Chave PIX ({paymentConfig.pix_key_type || "Chave"}):</p>
-                <div className="rounded-xl p-3 flex items-center gap-2" style={{ background: "#F9FAFB", border: "1px solid #E5E7EB" }}>
-                  <p className="text-xs flex-1 truncate font-mono" style={{ color: "#374151" }}>{paymentConfig.pix_key}</p>
-                  <button onClick={copyPixKey} className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95 text-white" style={{ background: pixCopied ? "#10B981" : accent }}>{pixCopied ? "✓ Copiado!" : "Copiar"}</button>
-                </div>
-                {paymentConfig.pix_beneficiary_name && <p className="text-xs mt-2 font-medium" style={{ color: accent }}>{paymentConfig.pix_beneficiary_name}</p>}
-              </div>
+              {(() => {
+                const payload = getPixPayload();
+                return (
+                  <div className="mb-4">
+                    {payload && (
+                      <div className="flex justify-center mb-4">
+                        <div className="p-3 rounded-2xl" style={{ background: "white", border: `2px solid ${accent}20` }}>
+                          <QRCodeSVG value={payload} size={180} fgColor="#1F1535" />
+                        </div>
+                      </div>
+                    )}
+                    <p className="text-xs font-semibold mb-2 text-center" style={{ color: "#6B7280" }}>PIX Copia e Cola:</p>
+                    <div className="rounded-xl p-3 flex items-center gap-2" style={{ background: "#F9FAFB", border: "1px solid #E5E7EB" }}>
+                      <p className="text-[10px] flex-1 font-mono break-all leading-relaxed max-h-16 overflow-y-auto" style={{ color: "#374151" }}>
+                        {payload || paymentConfig.pix_key}
+                      </p>
+                      <button onClick={copyPixKey} className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95 text-white" style={{ background: pixCopied ? "#10B981" : accent }}>
+                        {pixCopied ? "✓ Copiado!" : "Copiar"}
+                      </button>
+                    </div>
+                    {paymentConfig.pix_beneficiary_name && <p className="text-xs mt-2 font-medium text-center" style={{ color: accent }}>{paymentConfig.pix_beneficiary_name}</p>}
+                  </div>
+                );
+              })()}
               <button onClick={() => { setShowPaymentModal(false); setConfirmed(true); }} className="w-full py-4 rounded-2xl text-white font-bold text-base transition-all active:scale-95" style={{ background: "linear-gradient(135deg, #059669 0%, #10B981 100%)", boxShadow: "0 8px 24px rgba(5,150,105,0.35)" }}>
                 ✅ Já realizei o pagamento
               </button>
