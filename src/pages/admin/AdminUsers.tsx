@@ -81,31 +81,19 @@ const AdminUsers = () => {
   };
 
   const handleImpersonate = async (userId: string, name: string) => {
-    if (!confirm(`Entrar na conta de "${name}"? Você será deslogado da sua conta atual.`)) return;
+    if (!confirm(`Abrir conta de "${name}" em uma nova aba?`)) return;
     setImpersonating(userId);
     try {
+      const redirectUrl = window.location.origin + "/";
       const res = await supabase.functions.invoke("admin-impersonate", {
-        body: { userId },
+        body: { userId, redirectUrl },
       });
       if (res.error) throw new Error(res.error.message);
       if (res.data?.error) throw new Error(res.data.error);
 
-      const { token_hash, email } = res.data;
-
-      // Sign out current admin session
-      await supabase.auth.signOut();
-
-      // Verify OTP to login as target user
-      const { error: otpError } = await supabase.auth.verifyOtp({
-        type: "magiclink",
-        token_hash,
-        email,
-      } as any);
-
-      if (otpError) throw otpError;
-
-      toast.success(`Logado como "${name}"`);
-      window.location.href = "/";
+      // Open the magic link in a new tab
+      window.open(res.data.url, "_blank");
+      toast.success(`Nova aba aberta como "${name}"`);
     } catch (err: any) {
       toast.error(err.message || "Erro ao entrar na conta");
     } finally {
