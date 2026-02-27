@@ -7,6 +7,7 @@ import {
   Palette, Eye, EyeOff, Crown, AlertTriangle, Camera, ImageIcon, X,
   Plus, Trash2, CalendarOff, Plane, Calendar as CalendarIcon,
 } from "lucide-react";
+import { GoogleCalendarSection } from "@/components/settings/GoogleCalendarSection";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useWorkingHours, getDayName, useUpsertWorkingHours } from "@/hooks/useWorkingHours";
 import { useBlockedTimes, useCreateBlockedTime, useDeleteBlockedTime } from "@/hooks/useBlockedTimes";
@@ -26,7 +27,7 @@ import { STRIPE_PLANS } from "@/lib/stripe-plans";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-type Section = "system" | "hours" | "subscription" | "whatsapp" | "security";
+type Section = "system" | "hours" | "subscription" | "whatsapp" | "security" | "google-calendar";
 
 const TRIGGER_LABELS: Record<string, string> = {
   booking_created: "Agendamento criado",
@@ -50,6 +51,7 @@ const Settings = () => {
     { id: "hours" as Section, icon: Clock, title: "Horários de Trabalho", description: "Defina seus dias e horários de atendimento" },
     { id: "subscription" as Section, icon: CreditCard, title: "Assinatura", description: "Plano atual e gerenciamento" },
     { id: "whatsapp" as Section, icon: MessageSquare, title: "Automação WhatsApp", description: "QR Code, instância e automações" },
+    { id: "google-calendar" as Section, icon: CalendarIcon, title: "Google Calendar", description: "Sincronize sua agenda com o Google" },
     { id: "security" as Section, icon: Shield, title: "Segurança", description: "Alteração de senha" },
   ];
 
@@ -102,6 +104,7 @@ const Settings = () => {
               {activeSection === "hours" && <WorkingHoursSection />}
               {activeSection === "subscription" && <SubscriptionSection />}
               {activeSection === "whatsapp" && <WhatsAppSection />}
+              {activeSection === "google-calendar" && <GoogleCalendarSection />}
               {activeSection === "security" && <SecuritySection />}
             </motion.div>
           )}
