@@ -13,6 +13,8 @@ import {
 import { useServices } from "@/hooks/useServices";
 import { useBlockedTimes } from "@/hooks/useBlockedTimes";
 import { useCommissions } from "@/hooks/useCommissions";
+import { useSalonEmployees } from "@/hooks/useSalonEmployees";
+import { useProfessional } from "@/hooks/useProfessional";
 import {
   format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths,
   setHours, setMinutes, startOfWeek, eachDayOfInterval, endOfWeek,
@@ -71,9 +73,14 @@ const Bookings = () => {
   const { data: services } = useServices();
   const { data: blockedTimes } = useBlockedTimes();
   const { data: commissions } = useCommissions();
+  const { data: salonEmployees } = useSalonEmployees();
+  const { data: professional } = useProfessional();
   const createBooking = useCreateBooking();
   const updateBooking = useUpdateBooking();
   const deleteBooking = useDeleteBooking();
+
+  const isSalon = professional?.account_type === "salon";
+  const activeEmployees = (salonEmployees || []).filter((e: any) => e.is_active);
 
   // Set of booking IDs that have auto-generated commissions
   const bookingIdsWithCommission = useMemo(() => {
@@ -90,6 +97,7 @@ const Bookings = () => {
   const [formNotes, setFormNotes] = useState("");
   const [formStatus, setFormStatus] = useState("confirmed");
   const [formDate, setFormDate] = useState(selectedDate);
+  const [formEmployee, setFormEmployee] = useState("");
 
   const activeServices = services?.filter(s => s.active) || [];
   const selectedService = activeServices.find(s => s.id === formService);
@@ -110,6 +118,7 @@ const Bookings = () => {
     setFormNotes("");
     setFormStatus("confirmed");
     setFormDate(selectedDate);
+    setFormEmployee("");
   };
 
   const openCreate = (slot?: string, date?: Date) => {
@@ -142,6 +151,7 @@ const Bookings = () => {
         status: formStatus as any,
         price: selectedService.price,
         duration_minutes: selectedService.duration_minutes,
+        employee_id: formEmployee || null,
       });
       toast.success("Agendamento criado!");
       setShowCreate(false);
@@ -419,6 +429,22 @@ const Bookings = () => {
                 </p>
               )}
             </div>
+            {/* Employee selector for salons */}
+            {isSalon && activeEmployees.length > 0 && (
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5">Profissional</Label>
+                <Select value={formEmployee} onValueChange={setFormEmployee}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o profissional" /></SelectTrigger>
+                  <SelectContent>
+                    {activeEmployees.map((emp: any) => (
+                      <SelectItem key={emp.id} value={emp.id}>
+                        {emp.name}{emp.specialty ? ` — ${emp.specialty}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5">Nome do cliente *</Label>
               <Input placeholder="Nome completo" value={formClientName} onChange={e => setFormClientName(e.target.value)} />
