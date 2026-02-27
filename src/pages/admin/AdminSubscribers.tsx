@@ -1,15 +1,35 @@
 import AdminLayout from "@/components/layout/AdminLayout";
 import { useAllProfessionals } from "@/hooks/useAdmin";
 import { useState } from "react";
-import { Search, Crown, Loader2 } from "lucide-react";
+import { Search, Crown, Loader2, Edit, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, addMonths, addYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+
+const PLANS = [
+  { id: "none", label: "Sem plano" },
+  { id: "essencial", label: "Essencial" },
+  { id: "enterprise", label: "Enterprise" },
+];
+
+const DURATIONS = [
+  { label: "1 mês", months: 1 },
+  { label: "3 meses", months: 3 },
+  { label: "6 meses", months: 6 },
+  { label: "1 ano", months: 12 },
+];
 
 const AdminSubscribers = () => {
   const { data: professionals, isLoading } = useAllProfessionals();
   const [filter, setFilter] = useState<"all" | "essencial" | "enterprise" | "none">("all");
   const [search, setSearch] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState("");
+  const [selectedDuration, setSelectedDuration] = useState(1);
+  const qc = useQueryClient();
 
   const allWithSub = (professionals || []).map(p => {
     const sub = Array.isArray(p.subscriptions) ? p.subscriptions[0] : p.subscriptions;
@@ -33,8 +53,62 @@ const AdminSubscribers = () => {
     none: allWithSub.filter(p => !p.sub?.plan_id || p.sub.plan_id === "none" || p.sub.plan_id === "free").length,
   };
 
+  const updatePlan = useMutation({
+    mutationFn: async ({ professionalId, planId, months }: { professionalId: string; planId: string; months: number }) => {
+      const now = new Date();
+      const periodEnd = addMonths(now, months);
+      
+      const updateData: any = {
+        plan_id: planId,
+        status: planId === "none" ? "cancelled" : "active",
+        current_period_start: now.toISOString(),
+        current_period_end: periodEnd.toISOString(),
+        cancel_at_period_end: false,
+      };
+
+      // Set limits based on plan
+      if (planId === "essencial") {
+        updateData.max_clients = 100;
+        updateData.max_services = 15;
+        updateData.max_bookings_per_month = 200;
+      } else if (planId === "enterprise") {
+        updateData.max_clients = null;
+        updateData.max_services = null;
+        updateData.max_bookings_per_month = null;
+      } else {
+        updateData.max_clients = 30;
+        updateData.max_services = 5;
+        updateData.max_bookings_per_month = 50;
+        updateData.current_period_start = null;
+        updateData.current_period_end = null;
+      }
+
+      const { error } = await supabase
+        .from("subscriptions")
+        .update(updateData)
+        .eq("professional_id", professionalId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-professionals"] });
+      toast.success("Plano atualizado com sucesso!");
+      setEditingId(null);
+    },
+    onError: () => toast.error("Erro ao atualizar plano"),
+  });
+
+  const handleEdit = (p: any) => {
+    setEditingId(p.id);
+    setSelectedPlan(p.sub?.plan_id || "none");
+    setSelectedDuration(1);
+  };
+
+  const handleSave = (professionalId: string) => {
+    updatePlan.mutate({ professionalId, planId: selectedPlan, months: selectedDuration });
+  };
+
   return (
-    <AdminLayout title="Assinantes" subtitle="Visão geral de assinaturas">
+    <AdminLayout title="Assinantes" subtitle="Visão geral e gestão manual de assinaturas">
       {isLoading ? (
         <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-accent" /></div>
       ) : (
@@ -81,6 +155,7 @@ const AdminSubscribers = () => {
                     <th className="text-left p-4 text-muted-foreground font-medium">Plano</th>
                     <th className="text-left p-4 text-muted-foreground font-medium">Status</th>
                     <th className="text-left p-4 text-muted-foreground font-medium">Válido até</th>
+                    <th className="text-left p-4 text-muted-foreground font-medium">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -89,14 +164,26 @@ const AdminSubscribers = () => {
                       <td className="p-4 font-medium text-foreground">{p.name || p.business_name || "—"}</td>
                       <td className="p-4 text-muted-foreground">{p.email}</td>
                       <td className="p-4">
-                        <span className={cn(
-                          "px-2 py-0.5 rounded-full text-xs font-semibold",
-                          p.sub?.plan_id === "enterprise" ? "bg-accent/10 text-accent" :
-                          p.sub?.plan_id === "essencial" ? "bg-blue-500/10 text-blue-500" :
-                          "bg-muted text-muted-foreground"
-                        )}>
-                          {(p.sub?.plan_id || "none").toUpperCase()}
-                        </span>
+                        {editingId === p.id ? (
+                          <select
+                            value={selectedPlan}
+                            onChange={(e) => setSelectedPlan(e.target.value)}
+                            className="px-2 py-1 rounded-lg bg-muted border border-border text-xs text-foreground"
+                          >
+                            {PLANS.map(plan => (
+                              <option key={plan.id} value={plan.id}>{plan.label}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span className={cn(
+                            "px-2 py-0.5 rounded-full text-xs font-semibold",
+                            p.sub?.plan_id === "enterprise" ? "bg-accent/10 text-accent" :
+                            p.sub?.plan_id === "essencial" ? "bg-blue-500/10 text-blue-500" :
+                            "bg-muted text-muted-foreground"
+                          )}>
+                            {(p.sub?.plan_id || "none").toUpperCase()}
+                          </span>
+                        )}
                       </td>
                       <td className="p-4">
                         <span className={cn(
@@ -107,10 +194,50 @@ const AdminSubscribers = () => {
                         </span>
                       </td>
                       <td className="p-4 text-muted-foreground">
-                        {p.sub?.current_period_end
-                          ? format(new Date(p.sub.current_period_end), "dd/MM/yy", { locale: ptBR })
-                          : "—"
-                        }
+                        {editingId === p.id && selectedPlan !== "none" ? (
+                          <select
+                            value={selectedDuration}
+                            onChange={(e) => setSelectedDuration(Number(e.target.value))}
+                            className="px-2 py-1 rounded-lg bg-muted border border-border text-xs text-foreground"
+                          >
+                            {DURATIONS.map(d => (
+                              <option key={d.months} value={d.months}>{d.label}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          p.sub?.current_period_end
+                            ? format(new Date(p.sub.current_period_end), "dd/MM/yy", { locale: ptBR })
+                            : "—"
+                        )}
+                      </td>
+                      <td className="p-4">
+                        {editingId === p.id ? (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => handleSave(p.id)}
+                              disabled={updatePlan.isPending}
+                              className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+                              title="Salvar"
+                            >
+                              {updatePlan.isPending ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                            </button>
+                            <button
+                              onClick={() => setEditingId(null)}
+                              className="p-1.5 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
+                              title="Cancelar"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => handleEdit(p)}
+                            className="p-1.5 rounded-lg bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
+                            title="Gerenciar plano"
+                          >
+                            <Edit size={14} />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
