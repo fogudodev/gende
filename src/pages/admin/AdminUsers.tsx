@@ -81,9 +81,14 @@ const AdminUsers = () => {
   };
 
   const handleImpersonate = async (userId: string, name: string) => {
-    if (!confirm(`Abrir conta de "${name}" em uma nova aba?`)) return;
+    const adminPassword = prompt(`Digite sua senha de admin para entrar como "${name}":`);
+    if (!adminPassword) return;
     setImpersonating(userId);
     try {
+      // Get current admin email
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser?.email) throw new Error("Não foi possível obter email do admin");
+
       const redirectUrl = window.location.origin + "/";
       const res = await supabase.functions.invoke("admin-impersonate", {
         body: { userId, redirectUrl },
@@ -91,9 +96,28 @@ const AdminUsers = () => {
       if (res.error) throw new Error(res.error.message);
       if (res.data?.error) throw new Error(res.data.error);
 
-      // Open the magic link in a new tab
-      window.open(res.data.url, "_blank");
-      toast.success(`Nova aba aberta como "${name}"`);
+      // Save admin credentials to return later
+      localStorage.setItem("admin_impersonation", JSON.stringify({
+        adminEmail: currentUser.email,
+        adminPassword,
+        targetName: name,
+      }));
+
+      // Sign out admin, then verify OTP to log in as target user
+      await supabase.auth.signOut();
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        token_hash: res.data.token_hash,
+        type: "magiclink",
+      });
+      if (verifyError) {
+        // If verify fails, try to restore admin session
+        localStorage.removeItem("admin_impersonation");
+        await supabase.auth.signInWithPassword({ email: currentUser.email, password: adminPassword });
+        throw verifyError;
+      }
+
+      toast.success(`Logado como "${name}"`);
+      window.location.href = "/";
     } catch (err: any) {
       toast.error(err.message || "Erro ao entrar na conta");
     } finally {

@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AdminRoute from "@/components/auth/AdminRoute";
+import ImpersonationBanner from "@/components/layout/ImpersonationBanner";
 import Auth from "./pages/Auth";
 import Index from "./pages/Index";
 import Bookings from "./pages/Bookings";
@@ -58,6 +59,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <ImpersonationBanner />
           <BrowserRouter>
             <Routes>
               <Route path="/auth" element={<Auth />} />

@@ -1,7 +1,15 @@
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
+import { useProfessional } from "@/hooks/useProfessional";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
 
 const HeroSection = () => {
+  const { data: professional } = useProfessional();
+  const { data: stats } = useDashboardStats();
+
+  const firstName = professional?.name?.split(" ")[0] || professional?.business_name?.split(" ")[0] || "Profissional";
+  const todayCount = stats?.todayCount ?? 0;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -21,10 +29,10 @@ const HeroSection = () => {
             <span className="text-xs font-medium text-primary uppercase tracking-wider">Beauty Salon CRM</span>
           </div>
           <h2 className="text-xl md:text-3xl lg:text-4xl font-bold text-foreground font-display mb-1">
-            Bem-vindo de volta, <span className="text-gradient">Ana</span>
+            Bem-vindo de volta, <span className="text-gradient">{firstName}</span>
           </h2>
           <p className="text-muted-foreground text-xs md:text-sm">
-            Você tem <span className="text-primary font-semibold">8 agendamentos</span> hoje
+            Você tem <span className="text-primary font-semibold">{todayCount} agendamento{todayCount !== 1 ? "s" : ""}</span> hoje
           </p>
         </div>
       </div>
