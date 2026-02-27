@@ -60,6 +60,7 @@ const CustomerJourney = () => {
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [viewAllStatus, setViewAllStatus] = useState<string | null>(null);
 
   // Fetch existing payments for today's bookings
   const bookingIds = useMemo(() => (bookings || []).map((b: any) => b.id), [bookings]);
@@ -331,58 +332,131 @@ const CustomerJourney = () => {
                     <p className="text-[10px] text-muted-foreground">Nenhum</p>
                   </div>
                 ) : (
-                  items.map((booking) => {
-                    const name = booking.client_name || booking.clients?.name || "—";
-                    const serviceName = booking.services?.name || "—";
-                    const employeeName = booking.employee_id ? employeeMap.get(booking.employee_id) || "—" : "Próprio";
-                    const time = format(new Date(booking.start_time), "HH:mm");
-                    const price = booking.price || 0;
+                  <>
+                    {items.slice(0, 2).map((booking) => {
+                      const name = booking.client_name || booking.clients?.name || "—";
+                      const serviceName = booking.services?.name || "—";
+                      const employeeName = booking.employee_id ? employeeMap.get(booking.employee_id) || "—" : "Próprio";
+                      const time = format(new Date(booking.start_time), "HH:mm");
+                      const price = booking.price || 0;
 
-                    return (
-                      <div
-                        key={booking.id}
-                        onClick={() => openModal(booking)}
-                        className="bg-secondary/40 rounded-xl p-3 hover:bg-secondary/70 transition-all duration-200 border border-border/50 hover:border-primary/20 cursor-pointer group"
+                      return (
+                        <div
+                          key={booking.id}
+                          onClick={() => openModal(booking)}
+                          className="bg-secondary/40 rounded-xl p-3 hover:bg-secondary/70 transition-all duration-200 border border-border/50 hover:border-primary/20 cursor-pointer group"
+                        >
+                          <div className="flex items-center gap-2.5 mb-2">
+                            <div
+                              className={`w-7 h-7 md:w-8 md:h-8 rounded-full ${stage.color}/20 flex items-center justify-center text-[10px] md:text-xs font-bold flex-shrink-0`}
+                            >
+                              {getInitials(name)}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs md:text-sm font-medium text-foreground truncate">
+                                {name}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="space-y-1 pl-9 md:pl-10">
+                            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                              <Clock size={10} />
+                              <span>{time}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                              <Scissors size={10} />
+                              <span className="truncate">{serviceName}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                              <User size={10} />
+                              <span className="truncate">{employeeName}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[10px] text-primary font-semibold">
+                              <DollarSign size={10} />
+                              <span>{formatCurrency(price)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {items.length > 2 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-[10px] md:text-xs text-primary hover:text-primary/80 h-7"
+                        onClick={() => setViewAllStatus(stage.key)}
                       >
-                        <div className="flex items-center gap-2.5 mb-2">
-                          <div
-                            className={`w-7 h-7 md:w-8 md:h-8 rounded-full ${stage.color}/20 flex items-center justify-center text-[10px] md:text-xs font-bold flex-shrink-0`}
-                          >
-                            {getInitials(name)}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs md:text-sm font-medium text-foreground truncate">
-                              {name}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="space-y-1 pl-9 md:pl-10">
-                          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                            <Clock size={10} />
-                            <span>{time}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                            <Scissors size={10} />
-                            <span className="truncate">{serviceName}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                            <User size={10} />
-                            <span className="truncate">{employeeName}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-[10px] text-primary font-semibold">
-                            <DollarSign size={10} />
-                            <span>{formatCurrency(price)}</span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
+                        Ver todos ({items.length})
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
           );
         })}
       </div>
+
+      {/* View all modal */}
+      <Dialog open={!!viewAllStatus} onOpenChange={(open) => !open && setViewAllStatus(null)}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">
+              {stages.find(s => s.key === viewAllStatus)?.title || ""} — {format(today, "dd/MM/yyyy")}
+            </DialogTitle>
+            <DialogDescription>
+              {(grouped[viewAllStatus || ""] || []).length} agendamento(s)
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 overflow-y-auto flex-1 pr-1">
+            {(grouped[viewAllStatus || ""] || []).map((booking) => {
+              const name = booking.client_name || booking.clients?.name || "—";
+              const serviceName = booking.services?.name || "—";
+              const employeeName = booking.employee_id ? employeeMap.get(booking.employee_id) || "—" : "Próprio";
+              const time = format(new Date(booking.start_time), "HH:mm");
+              const price = booking.price || 0;
+              const stageInfo = stages.find(s => s.key === viewAllStatus);
+
+              return (
+                <div
+                  key={booking.id}
+                  onClick={() => { setViewAllStatus(null); openModal(booking); }}
+                  className="bg-secondary/40 rounded-xl p-3 hover:bg-secondary/70 transition-all duration-200 border border-border/50 hover:border-primary/20 cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div
+                      className={`w-8 h-8 rounded-full ${stageInfo?.color || "bg-muted"}/20 flex items-center justify-center text-xs font-bold flex-shrink-0`}
+                    >
+                      {getInitials(name)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground truncate">{name}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-1 pl-10">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Clock size={12} />
+                      <span>{time}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Scissors size={12} />
+                      <span className="truncate">{serviceName}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <User size={12} />
+                      <span className="truncate">{employeeName}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-primary font-semibold">
+                      <DollarSign size={12} />
+                      <span>{formatCurrency(price)}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Booking detail modal */}
       <Dialog open={!!selectedBooking} onOpenChange={(open) => !open && closeModal()}>
