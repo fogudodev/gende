@@ -9,7 +9,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Search, Users, Loader2, Ban, UserCheck, Globe, MessageCircle,
-  BarChart3, ToggleLeft, ToggleRight, ChevronDown, ChevronUp, Eye, Shield, Trash2,
+  BarChart3, ToggleLeft, ToggleRight, ChevronDown, ChevronUp, Eye, Shield, Trash2, LogIn,
 } from "lucide-react";
 import AdminCreateProfessional from "@/components/admin/AdminCreateProfessional";
 import AdminCreateSupport from "@/components/admin/AdminCreateSupport";
@@ -21,6 +21,7 @@ const AdminUsers = () => {
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [impersonating, setImpersonating] = useState<string | null>(null);
   const [blockReason, setBlockReason] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [showCreateSupport, setShowCreateSupport] = useState(false);
@@ -76,6 +77,39 @@ const AdminUsers = () => {
       toast.error(err.message || "Erro ao excluir usuário");
     } finally {
       setDeleting(null);
+    }
+  };
+
+  const handleImpersonate = async (userId: string, name: string) => {
+    if (!confirm(`Entrar na conta de "${name}"? Você será deslogado da sua conta atual.`)) return;
+    setImpersonating(userId);
+    try {
+      const res = await supabase.functions.invoke("admin-impersonate", {
+        body: { userId },
+      });
+      if (res.error) throw new Error(res.error.message);
+      if (res.data?.error) throw new Error(res.data.error);
+
+      const { token_hash, email } = res.data;
+
+      // Sign out current admin session
+      await supabase.auth.signOut();
+
+      // Verify OTP to login as target user
+      const { error: otpError } = await supabase.auth.verifyOtp({
+        type: "magiclink",
+        token_hash,
+        email,
+      } as any);
+
+      if (otpError) throw otpError;
+
+      toast.success(`Logado como "${name}"`);
+      window.location.href = "/";
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao entrar na conta");
+    } finally {
+      setImpersonating(null);
     }
   };
 
@@ -195,6 +229,21 @@ const AdminUsers = () => {
                             );
                           })}
                         </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-2 border-t border-border">
+                        <button
+                          onClick={() => handleImpersonate(p.user_id, p.name)}
+                          disabled={impersonating === p.user_id}
+                          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-accent/10 text-accent text-xs font-semibold hover:bg-accent/20 transition-colors disabled:opacity-50"
+                        >
+                          {impersonating === p.user_id ? (
+                            <Loader2 size={12} className="animate-spin" />
+                          ) : (
+                            <LogIn size={12} />
+                          )}
+                          Entrar como {p.name?.split(" ")[0] || "usuário"}
+                        </button>
                       </div>
 
                       <div className="space-y-2 pt-2 border-t border-border">
