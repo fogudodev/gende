@@ -37,6 +37,12 @@ type Employee = {
   avatar_url: string | null;
 };
 
+type EmployeeStats = {
+  completedBookings: number;
+  avgRating: number | null;
+  reviewCount: number;
+};
+
 type Service = {
   id: string;
   name: string;
@@ -103,6 +109,7 @@ const PublicBooking = () => {
   const [paymentConfig, setPaymentConfig] = useState<PaymentConfig | null>(null);
   const [employeeServiceMap, setEmployeeServiceMap] = useState<{employee_id: string; service_id: string}[]>([]);
   const [reviewStats, setReviewStats] = useState<{avg: number; count: number} | null>(null);
+  const [employeeStatsMap, setEmployeeStatsMap] = useState<Record<string, EmployeeStats>>({});
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -210,6 +217,22 @@ const PublicBooking = () => {
       if (reviewRes.data && reviewRes.data.length > 0) {
         const avg = reviewRes.data.reduce((sum, r) => sum + r.rating, 0) / reviewRes.data.length;
         setReviewStats({ avg: Math.round(avg * 10) / 10, count: reviewRes.data.length });
+      }
+      // Fetch employee stats (completed bookings + individual reviews)
+      if (prof.account_type === "salon" && empRes.data && empRes.data.length > 0) {
+        const empIds = empRes.data.map((e: any) => e.id);
+        const [bookingsRes, empReviewsRes] = await Promise.all([
+          supabase.from("bookings").select("employee_id").eq("professional_id", prof.id).eq("status", "completed").in("employee_id", empIds),
+          supabase.from("reviews").select("employee_id, rating").eq("professional_id", prof.id).eq("is_public", true).in("employee_id", empIds),
+        ]);
+        const statsMap: Record<string, EmployeeStats> = {};
+        empIds.forEach((id: string) => {
+          const bookings = (bookingsRes.data || []).filter((b: any) => b.employee_id === id);
+          const reviews = (empReviewsRes.data || []).filter((r: any) => r.employee_id === id);
+          const avg = reviews.length > 0 ? reviews.reduce((s: number, r: any) => s + r.rating, 0) / reviews.length : null;
+          statsMap[id] = { completedBookings: bookings.length, avgRating: avg ? Math.round(avg * 10) / 10 : null, reviewCount: reviews.length };
+        });
+        setEmployeeStatsMap(statsMap);
       }
       setLoading(false);
     };
@@ -484,6 +507,7 @@ const PublicBooking = () => {
               selected={selectedEmployee}
               clientName={clientName}
               accent={accent}
+              employeeStatsMap={employeeStatsMap}
               onSelect={(emp) => { setSelectedEmployee(emp); goNext(); }}
               onBack={goBack}
             />
@@ -765,8 +789,8 @@ function Step1ClientInfo({ professional, accent, clientName, setClientName, clie
 }
 
 /* ── Step 2: Employees (Salon) ── */
-function Step2Employees({ employees, selected, clientName, accent, onSelect, onBack }: {
-  employees: Employee[]; selected: Employee | null; clientName: string; accent: string; onSelect: (e: Employee) => void; onBack: () => void;
+function Step2Employees({ employees, selected, clientName, accent, employeeStatsMap, onSelect, onBack }: {
+  employees: Employee[]; selected: Employee | null; clientName: string; accent: string; employeeStatsMap: Record<string, EmployeeStats>; onSelect: (e: Employee) => void; onBack: () => void;
 }) {
   return (
     <div className="flex flex-col min-h-[calc(100vh-60px)] md:min-h-[calc(860px-60px)]">
@@ -780,6 +804,7 @@ function Step2Employees({ employees, selected, clientName, accent, onSelect, onB
       <div className="flex-1 px-5 pb-4 space-y-3 overflow-y-auto">
         {employees.map(emp => {
           const isSelected = selected?.id === emp.id;
+          const stats = employeeStatsMap[emp.id];
           return (
             <button key={emp.id} onClick={() => onSelect(emp)} className="w-full text-left transition-all active:scale-[0.98]">
               <div className="rounded-2xl p-4 transition-all duration-200" style={{ background: isSelected ? `${accent}08` : "white", border: `1.5px solid ${isSelected ? accent : "#F1F5F9"}`, boxShadow: isSelected ? `0 4px 20px ${accent}20` : "0 1px 6px rgba(0,0,0,0.04)" }}>
@@ -797,6 +822,20 @@ function Step2Employees({ employees, selected, clientName, accent, onSelect, onB
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-sm" style={{ color: "#1A1A2E" }}>{emp.name}</h3>
                     {emp.specialty && <p className="text-xs font-medium mt-0.5" style={{ color: accent }}>{emp.specialty}</p>}
+                    <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                      {stats?.avgRating != null && (
+                        <div className="flex items-center gap-1">
+                          <Star size={12} className="fill-amber-400 text-amber-400" />
+                          <span className="text-xs font-semibold" style={{ color: "#1A1A2E" }}>{stats.avgRating}</span>
+                          <span className="text-[10px]" style={{ color: "#94A3B8" }}>({stats.reviewCount})</span>
+                        </div>
+                      )}
+                      {stats?.completedBookings > 0 && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: `${accent}10`, color: accent }}>
+                          ✅ {stats.completedBookings} atendimento{stats.completedBookings !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
