@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useProfessional } from "@/hooks/useProfessional";
+import { useAuth } from "@/hooks/useAuth";
 import { Send, Loader2, Bot, User, Sparkles, TrendingUp, Users, DollarSign, Calendar } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
@@ -17,6 +18,7 @@ const suggestedQuestions = [
 
 const AIAssistant = () => {
   const { data: professional } = useProfessional();
+  const { session } = useAuth();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -31,7 +33,7 @@ const AIAssistant = () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        Authorization: `Bearer ${session?.access_token}`,
       },
       body: JSON.stringify({ messages: allMessages }),
     });
