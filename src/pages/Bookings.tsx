@@ -1,10 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion } from "framer-motion";
 import {
   Plus, ChevronLeft, ChevronRight, Loader2, Clock, User, Scissors,
   Trash2, Phone, CalendarDays, CalendarRange, List, Ban, Coins, Download, Upload,
+  CreditCard, DollarSign, QrCode, Banknote, CheckCircle2,
 } from "lucide-react";
 import {
   useBookings, useBookingsWeek, useBookingsMonth,
@@ -66,6 +67,9 @@ const Bookings = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("day");
   const [showCreate, setShowCreate] = useState(false);
   const [detailBooking, setDetailBooking] = useState<any>(null);
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [bookingPayments, setBookingPayments] = useState<any[]>([]);
 
   // Data fetching
   const { data: dayBookings, isLoading: dayLoading } = useBookings(selectedDate);
@@ -89,6 +93,57 @@ const Bookings = () => {
     commissions?.forEach((c) => { if (c.booking_id) set.add(c.booking_id); });
     return set;
   }, [commissions]);
+
+  // Fetch payments when detail modal opens
+  useEffect(() => {
+    if (detailBooking?.id) {
+      setPaymentMethod("");
+      supabase
+        .from("payments")
+        .select("id, amount, status, payment_method, created_at")
+        .eq("booking_id", detailBooking.id)
+        .then(({ data }) => setBookingPayments(data || []));
+    } else {
+      setBookingPayments([]);
+    }
+  }, [detailBooking?.id]);
+
+  const totalPaid = useMemo(() => {
+    return bookingPayments
+      .filter(p => p.status === "completed" || p.status === "succeeded")
+      .reduce((sum, p) => sum + (p.amount || 0), 0);
+  }, [bookingPayments]);
+
+  const handleRegisterPayment = async () => {
+    if (!detailBooking || !paymentMethod || !professional) return;
+    const remaining = (detailBooking.price || 0) - totalPaid;
+    if (remaining <= 0) {
+      toast.info("Este agendamento já está totalmente pago.");
+      return;
+    }
+    setPaymentLoading(true);
+    try {
+      const { error } = await supabase.from("payments").insert({
+        professional_id: professional.id,
+        booking_id: detailBooking.id,
+        amount: remaining,
+        payment_method: paymentMethod,
+        status: "completed",
+      });
+      if (error) throw error;
+      toast.success("Pagamento registrado!");
+      const { data } = await supabase
+        .from("payments")
+        .select("id, amount, status, payment_method, created_at")
+        .eq("booking_id", detailBooking.id);
+      setBookingPayments(data || []);
+      setPaymentMethod("");
+    } catch {
+      toast.error("Erro ao registrar pagamento");
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
 
   // Form state
   const [formService, setFormService] = useState("");
@@ -179,7 +234,7 @@ const Bookings = () => {
       const price = booking?.price || 0;
 
       if (price > 0 && totalPaid < price) {
-        toast.error("Registre o pagamento antes de concluir. Use a Jornada do Cliente no Dashboard.");
+        toast.error("Registre o pagamento antes de concluir. Use a seção de Pagamento acima.");
         return;
       }
     }
@@ -503,7 +558,7 @@ const Bookings = () => {
 
       {/* Detail Dialog */}
       <Dialog open={!!detailBooking} onOpenChange={() => setDetailBooking(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           {detailBooking && (
             <>
               <DialogHeader>
@@ -557,6 +612,64 @@ const Bookings = () => {
                     </div>
                   </div>
                 )}
+                {/* Payment Section */}
+                <div className="glass-card rounded-xl p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Pagamento</p>
+                    {totalPaid >= (detailBooking.price || 0) && detailBooking.price > 0 ? (
+                      <span className="flex items-center gap-1 text-xs font-medium text-green-400">
+                        <CheckCircle2 size={12} /> Pago
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">
+                        R$ {totalPaid.toFixed(2)} / R$ {Number(detailBooking.price).toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+                  {bookingPayments.filter(p => p.status === "completed" || p.status === "succeeded").length > 0 && (
+                    <div className="space-y-1">
+                      {bookingPayments.filter(p => p.status === "completed" || p.status === "succeeded").map(p => (
+                        <div key={p.id} className="flex items-center justify-between text-xs text-muted-foreground bg-muted/30 rounded-lg px-2.5 py-1.5">
+                          <span className="capitalize">{p.payment_method === "pix" ? "PIX" : p.payment_method === "card" ? "Cartão" : p.payment_method === "cash" ? "Dinheiro" : p.payment_method || "—"}</span>
+                          <span className="font-medium text-foreground">R$ {Number(p.amount).toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {totalPaid < (detailBooking.price || 0) && detailBooking.price > 0 && (
+                    <div className="space-y-2 pt-1">
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {[
+                          { value: "pix", label: "PIX", icon: QrCode },
+                          { value: "card", label: "Cartão", icon: CreditCard },
+                          { value: "cash", label: "Dinheiro", icon: Banknote },
+                        ].map(m => (
+                          <button
+                            key={m.value}
+                            onClick={() => setPaymentMethod(m.value)}
+                            className={`flex flex-col items-center gap-1 py-2 px-1 rounded-lg border text-xs font-medium transition-all ${
+                              paymentMethod === m.value
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-muted/30 text-muted-foreground border-border/30 hover:border-primary/50"
+                            }`}
+                          >
+                            <m.icon size={16} />
+                            {m.label}
+                          </button>
+                        ))}
+                      </div>
+                      <Button
+                        onClick={handleRegisterPayment}
+                        disabled={!paymentMethod || paymentLoading}
+                        size="sm"
+                        className="w-full"
+                      >
+                        {paymentLoading ? <Loader2 className="animate-spin mr-2" size={14} /> : <DollarSign size={14} className="mr-1" />}
+                        Registrar R$ {((detailBooking.price || 0) - totalPaid).toFixed(2)}
+                      </Button>
+                    </div>
+                  )}
+                </div>
                 <div>
                   <Label className="text-xs text-muted-foreground mb-1.5">Alterar Status</Label>
                   <Select value={detailBooking.status} onValueChange={v => handleStatusChange(detailBooking.id, v)}>
