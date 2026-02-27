@@ -16,6 +16,7 @@ import {
   ScrollText,
   Settings,
   X,
+  FileText,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 
@@ -28,9 +29,9 @@ const adminNavItems = [
   { icon: Settings, label: "Funcionalidades", path: "/admin/features" },
   { icon: CalendarDays, label: "Agendamentos", path: "/admin/bookings" },
   { icon: MessageSquare, label: "WhatsApp", path: "/admin/whatsapp" },
-  { icon: ScrollText, label: "Log WhatsApp", path: "/admin/whatsapp-logs" },
   { icon: Sliders, label: "Limites de Plano", path: "/admin/plan-limits" },
   { icon: BarChart3, label: "Uso de Mensagens", path: "/admin/message-usage" },
+  { icon: FileText, label: "Logs", path: "/admin/logs" },
 ];
 
 const mobileAdminNavItems = [

@@ -40,6 +40,7 @@ import AdminWhatsAppPage from "./pages/admin/AdminWhatsAppPage";
 import AdminWhatsAppLogsPage from "./pages/admin/AdminWhatsAppLogsPage";
 import AdminPlanLimits from "./pages/admin/AdminPlanLimits";
 import AdminMessageUsagePage from "./pages/admin/AdminMessageUsagePage";
+import AdminLogsPage from "./pages/admin/AdminLogsPage";
 
 const queryClient = new QueryClient();
 
@@ -85,6 +86,7 @@ const App = () => (
               <Route path="/admin/whatsapp-logs" element={<AdminRoute><AdminWhatsAppLogsPage /></AdminRoute>} />
               <Route path="/admin/plan-limits" element={<AdminRoute><AdminPlanLimits /></AdminRoute>} />
               <Route path="/admin/message-usage" element={<AdminRoute><AdminMessageUsagePage /></AdminRoute>} />
+              <Route path="/admin/logs" element={<AdminRoute><AdminLogsPage /></AdminRoute>} />
 
               {/* Public routes */}
               <Route path="/p/:slug" element={<PublicBooking />} />
