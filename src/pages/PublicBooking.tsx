@@ -958,7 +958,16 @@ function SuccessView({ professional, selectedEmployee, selectedService, selected
           ✅
         </div>
         <h2 className="text-2xl font-bold mb-2" style={{ color: "#1F1535" }}>
-          {professional.confirmation_message || "Agendamento Confirmado!"}
+          {(() => {
+            const msg = professional.confirmation_message || "Agendamento Confirmado!";
+            if (!selectedService || !selectedSlot) return msg;
+            const slotDate = new Date(selectedSlot.start_time);
+            return msg
+              .replace("{nome}", clientName)
+              .replace("{servico}", selectedService.name)
+              .replace("{data}", `${slotDate.getDate()} de ${MONTHS_PT[slotDate.getMonth()]}`)
+              .replace("{horario}", format(slotDate, "HH:mm"));
+          })()}
         </h2>
         <p className="text-sm mb-6 leading-relaxed" style={{ color: "#6B7280" }}>
           Você receberá uma confirmação no WhatsApp <strong style={{ color: accent }}>{clientPhone}</strong>.
