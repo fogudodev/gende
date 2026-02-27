@@ -738,15 +738,6 @@ function Step1ClientInfo({ professional, accent, clientName, setClientName, clie
             Continuar →
           </button>
         </div>
-
-        <div className="mt-auto pt-6 grid grid-cols-3 gap-2.5">
-          {[{ icon: "⚡", label: "Rápido" }, { icon: "✅", label: "Fácil" }, { icon: "🎯", label: "Seguro" }].map(f => (
-            <div key={f.label} className="flex flex-col items-center gap-1.5 py-3 rounded-xl" style={{ background: "white", border: `1px solid ${accent}12`, boxShadow: "0 1px 4px rgba(0,0,0,0.03)" }}>
-              <span className="text-lg">{f.icon}</span>
-              <span className="text-[11px] font-semibold" style={{ color: accent }}>{f.label}</span>
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );
