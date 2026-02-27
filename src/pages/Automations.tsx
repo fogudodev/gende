@@ -9,6 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import ConversationsList from "@/components/automations/ConversationsList";
 
 const triggerLabels: Record<string, string> = {
   booking_created: "Novo booking",
@@ -188,6 +189,11 @@ const Automations = () => {
           </Button>
         </div>
       </motion.div>
+
+      {/* Conversations */}
+      <div className="mb-8">
+        <ConversationsList />
+      </div>
 
       {/* Automations List */}
       {isLoading ? (

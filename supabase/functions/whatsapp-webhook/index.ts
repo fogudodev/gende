@@ -127,6 +127,75 @@ async function getAIResponse(
   return data.choices?.[0]?.message?.content?.trim() || "Desculpe, não entendi. Pode repetir?";
 }
 
+async function handleFollowUp(supabase: any, body: any) {
+  const { conversationId, professionalId } = body;
+
+  const { data: conv } = await supabase
+    .from("whatsapp_conversations")
+    .select("*")
+    .eq("id", conversationId)
+    .single();
+
+  if (!conv) {
+    return new Response(JSON.stringify({ error: "Conversa não encontrada" }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 404,
+    });
+  }
+
+  const { data: inst } = await supabase
+    .from("whatsapp_instances")
+    .select("instance_name, status")
+    .eq("professional_id", professionalId)
+    .eq("status", "connected")
+    .maybeSingle();
+
+  if (!inst) {
+    return new Response(JSON.stringify({ error: "WhatsApp não conectado" }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 400,
+    });
+  }
+
+  const { data: prof } = await supabase
+    .from("professionals")
+    .select("business_name, name, slug")
+    .eq("id", professionalId)
+    .single();
+
+  const profName = prof?.business_name || prof?.name || "";
+  const bookingLink = prof?.slug ? `https://gende.io/${prof.slug}` : "";
+  const clientName = (conv.context as any)?.client_name || "";
+
+  const followUpMsg = `Olá${clientName ? ` ${clientName}` : ""}! 👋 Notamos que você não finalizou seu agendamento no *${profName}*.
+
+Ainda gostaria de agendar? Estamos à disposição! É só responder esta mensagem que continuamos de onde paramos. 😊${bookingLink ? `\n\n📱 Ou agende online: ${bookingLink}` : ""}`;
+
+  const sendRes = await sendWhatsAppMessage(inst.instance_name, conv.client_phone, followUpMsg);
+
+  if (sendRes.ok) {
+    // Reactivate conversation
+    const msgs = Array.isArray(conv.messages) ? conv.messages : [];
+    await supabase.from("whatsapp_conversations").update({
+      status: "active",
+      messages: [...msgs, { role: "assistant", content: followUpMsg }],
+    }).eq("id", conversationId);
+
+    await supabase.from("whatsapp_logs").insert({
+      professional_id: professionalId,
+      recipient_phone: conv.client_phone,
+      message_content: followUpMsg,
+      status: "sent",
+      sent_at: new Date().toISOString(),
+    });
+  }
+
+  return new Response(JSON.stringify({ success: sendRes.ok }), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+
 function buildSystemPrompt(
   professional: any,
   services: any[],
@@ -191,9 +260,13 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
+
+    // Handle follow-up action from frontend
+    if (body.action === "send-follow-up") {
+      return await handleFollowUp(supabase, body);
+    }
     
     // Evolution API sends webhook data directly
-    // Support both formats: direct webhook and wrapped { action: "webhook", data }
     const webhookData = body.data || body;
     const event = webhookData.event || body.event;
 
