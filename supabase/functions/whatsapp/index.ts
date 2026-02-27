@@ -107,7 +107,7 @@ serve(async (req) => {
         const data = await res.json();
 
         if (params.professionalId) {
-          const status = data.instance?.state === "open" ? "connected" : "disconnected";
+          const status = res.status === 404 ? "disconnected" : (data.instance?.state === "open" ? "connected" : "disconnected");
           await supabase.from("whatsapp_instances")
             .update({ status })
             .eq("professional_id", params.professionalId);
@@ -129,6 +129,12 @@ serve(async (req) => {
           }),
         });
         result = await res.json();
+
+        if (res.status === 404) {
+          await supabase.from("whatsapp_instances")
+            .update({ status: "disconnected" })
+            .eq("instance_name", instanceName);
+        }
         break;
       }
 
@@ -219,6 +225,12 @@ serve(async (req) => {
         });
         const sendData = await sendRes.json();
 
+        if (sendRes.status === 404) {
+          await supabase.from("whatsapp_instances")
+            .update({ status: "disconnected" })
+            .eq("instance_name", inst.instance_name);
+        }
+
         await supabase.from("whatsapp_logs").insert({
           professional_id: professionalId,
           automation_id: automation.id,
@@ -262,6 +274,12 @@ serve(async (req) => {
           body: JSON.stringify({ number: normalizedEmpPhone, text: msg }),
         });
         const sendData = await sendRes.json();
+
+        if (sendRes.status === 404) {
+          await supabase.from("whatsapp_instances")
+            .update({ status: "disconnected" })
+            .eq("instance_name", inst.instance_name);
+        }
 
         await supabase.from("whatsapp_logs").insert({
           professional_id: professionalId,
@@ -307,6 +325,12 @@ serve(async (req) => {
             body: JSON.stringify({ number: normalizedPaidPhone, text: msg }),
           });
           const sendData = await sendRes.json();
+
+          if (sendRes.status === 404) {
+            await supabase.from("whatsapp_instances")
+              .update({ status: "disconnected" })
+              .eq("instance_name", inst.instance_name);
+          }
 
           await supabase.from("whatsapp_logs").insert({
             professional_id: professionalId,
