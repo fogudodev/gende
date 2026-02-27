@@ -1,13 +1,33 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { useBookings } from "@/hooks/useBookings";
+import { useBookings, useUpdateBooking } from "@/hooks/useBookings";
+import { useSalonEmployees } from "@/hooks/useSalonEmployees";
+import { format } from "date-fns";
+import { Clock, User, Scissors, DollarSign, CreditCard, Banknote, Smartphone, CheckCircle2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const stages = [
-  { key: "pending", title: "Pendentes", description: "Aguardando confirmação", color: "bg-warning" },
-  { key: "confirmed", title: "Confirmados", description: "Prontos para atendimento", color: "bg-info" },
-  { key: "completed", title: "Concluídos", description: "Serviço finalizado", color: "bg-success" },
-  { key: "cancelled", title: "Cancelados", description: "Foram cancelados", color: "bg-destructive" },
+  { key: "pending", title: "Pendentes", color: "bg-warning" },
+  { key: "confirmed", title: "Confirmados", color: "bg-info" },
+  { key: "completed", title: "Concluídos", color: "bg-success" },
+  { key: "cancelled", title: "Cancelados", color: "bg-destructive" },
 ];
+
+const statusLabels: Record<string, string> = {
+  pending: "Pendente",
+  confirmed: "Confirmado",
+  completed: "Concluído",
+  cancelled: "Cancelado",
+  no_show: "No-show",
+};
 
 const getInitials = (name: string) => {
   const parts = name.trim().split(" ");
@@ -15,45 +35,94 @@ const getInitials = (name: string) => {
   return name.slice(0, 2).toUpperCase();
 };
 
-const CustomerJourney = () => {
-  const { data: bookings } = useBookings();
-  const [selectedClient, setSelectedClient] = useState<string | null>(null);
+const paymentMethods = [
+  { key: "credit_card", label: "Cartão de Crédito", icon: CreditCard },
+  { key: "debit_card", label: "Cartão de Débito", icon: CreditCard },
+  { key: "cash", label: "Dinheiro", icon: Banknote },
+  { key: "pix", label: "PIX", icon: Smartphone },
+];
 
-  // Group bookings by status
+const CustomerJourney = () => {
+  const today = useMemo(() => new Date(), []);
+  const { data: bookings } = useBookings(today);
+  const { data: employees } = useSalonEmployees();
+  const updateBooking = useUpdateBooking();
+
+  const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
+  const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
+
+  // Map employees by id
+  const employeeMap = useMemo(() => {
+    const map = new Map<string, string>();
+    (employees || []).forEach((e: any) => map.set(e.id, e.name));
+    return map;
+  }, [employees]);
+
+  // Group today's bookings by status
   const grouped = useMemo(() => {
     const map: Record<string, any[]> = { pending: [], confirmed: [], completed: [], cancelled: [] };
-    (bookings || []).forEach(b => {
+    (bookings || []).forEach((b: any) => {
       const status = b.status as string;
-      if (map[status]) map[status].push(b);
-      // no_show goes to cancelled
-      if (status === "no_show" && map.cancelled) map.cancelled.push(b);
+      if (status === "no_show") {
+        map.cancelled.push(b);
+      } else if (map[status]) {
+        map[status].push(b);
+      }
     });
     return map;
   }, [bookings]);
 
-  // Unique clients from bookings
-  const uniqueClients = useMemo(() => {
-    const seen = new Map<string, { name: string; id: string }>();
-    (bookings || []).forEach(b => {
-      const name = b.client_name || b.clients?.name || "";
-      if (name && !seen.has(name)) {
-        seen.set(name, { name, id: b.id });
-      }
-    });
-    return Array.from(seen.values());
-  }, [bookings]);
+  const openModal = (booking: any) => {
+    setSelectedBooking(booking);
+    setPaymentMethod(null);
+    setIsPaymentConfirmed(false);
+  };
 
-  // Filter by selected client
-  const filteredGrouped = useMemo(() => {
-    if (!selectedClient) return grouped;
-    const filtered: Record<string, any[]> = {};
-    for (const key in grouped) {
-      filtered[key] = grouped[key].filter(b =>
-        (b.client_name || b.clients?.name || "") === selectedClient
-      );
+  const closeModal = () => {
+    setSelectedBooking(null);
+    setPaymentMethod(null);
+    setIsPaymentConfirmed(false);
+  };
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!selectedBooking) return;
+
+    // Block completing without payment confirmation
+    if (newStatus === "completed" && !isPaymentConfirmed) {
+      toast.error("Confirme o pagamento antes de concluir o atendimento.");
+      return;
     }
-    return filtered;
-  }, [grouped, selectedClient]);
+
+    try {
+      await updateBooking.mutateAsync({
+        id: selectedBooking.id,
+        status: newStatus as any,
+      });
+      toast.success(`Status alterado para ${statusLabels[newStatus] || newStatus}`);
+      closeModal();
+    } catch {
+      toast.error("Erro ao alterar status");
+    }
+  };
+
+  // Check if booking was from public page (has stripe_payment_intent_id or was created without auth)
+  const getBookingPaymentInfo = (booking: any) => {
+    const totalPrice = booking.price || 0;
+    // If has stripe payment intent, it was from public page with signal payment
+    const hasPublicPayment = !!booking.stripe_payment_intent_id;
+    // Approximate: signal was already paid, rest is pending
+    // For simplicity, if public booking we assume a signal was paid
+    return {
+      totalPrice,
+      isPublicBooking: hasPublicPayment,
+      // We don't have exact signal amount stored on booking, show full price as remaining
+      remainingAmount: totalPrice,
+    };
+  };
+
+  const formatCurrency = (v: number) =>
+    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   return (
     <motion.div
@@ -67,38 +136,14 @@ const CustomerJourney = () => {
           Jornada do Cliente
         </h2>
         <p className="text-muted-foreground text-xs md:text-sm">
-          {selectedClient ? `Filtrando: ${selectedClient}` : "Acompanhe o progresso dos agendamentos"}
+          Agendamentos de hoje — {format(today, "dd/MM/yyyy")}
         </p>
-      </div>
-
-      {/* Client avatars row */}
-      <div className="mb-5 flex items-center gap-2 overflow-x-auto pb-3 pt-1 px-1 scrollbar-thin">
-        {uniqueClients.map((client) => {
-          const isSelected = selectedClient === client.name;
-          return (
-            <button
-              key={client.id}
-              onClick={() => setSelectedClient(isSelected ? null : client.name)}
-              className={`flex-shrink-0 w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center text-[10px] md:text-xs font-semibold border-2 shadow-md hover:scale-110 transition-all cursor-pointer ${
-                isSelected
-                  ? "gradient-primary text-white border-primary ring-2 ring-primary/30 scale-110"
-                  : "gradient-primary text-white border-background"
-              }`}
-              title={client.name}
-            >
-              {getInitials(client.name)}
-            </button>
-          );
-        })}
-        {uniqueClients.length === 0 && (
-          <p className="text-xs text-muted-foreground">Nenhum agendamento encontrado</p>
-        )}
       </div>
 
       {/* Kanban stages */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {stages.map((stage) => {
-          const items = filteredGrouped[stage.key] || [];
+          const items = grouped[stage.key] || [];
           return (
             <div key={stage.key} className="flex flex-col">
               <div className="mb-2.5 flex items-center gap-2">
@@ -117,24 +162,45 @@ const CustomerJourney = () => {
                 ) : (
                   items.map((booking) => {
                     const name = booking.client_name || booking.clients?.name || "—";
+                    const serviceName = booking.services?.name || "—";
+                    const employeeName = booking.employee_id ? employeeMap.get(booking.employee_id) || "—" : "Próprio";
+                    const time = format(new Date(booking.start_time), "HH:mm");
+                    const price = booking.price || 0;
+
                     return (
                       <div
                         key={booking.id}
+                        onClick={() => openModal(booking)}
                         className="bg-secondary/40 rounded-xl p-3 hover:bg-secondary/70 transition-all duration-200 border border-border/50 hover:border-primary/20 cursor-pointer group"
                       >
-                        <div className="flex items-center gap-2.5">
+                        <div className="flex items-center gap-2.5 mb-2">
                           <div
                             className={`w-7 h-7 md:w-8 md:h-8 rounded-full ${stage.color}/20 flex items-center justify-center text-[10px] md:text-xs font-bold flex-shrink-0`}
                           >
                             {getInitials(name)}
                           </div>
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <p className="text-xs md:text-sm font-medium text-foreground truncate">
                               {name}
                             </p>
-                            <p className="text-[10px] text-muted-foreground truncate">
-                              {booking.services?.name || "—"}
-                            </p>
+                          </div>
+                        </div>
+                        <div className="space-y-1 pl-9 md:pl-10">
+                          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                            <Clock size={10} />
+                            <span>{time}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                            <Scissors size={10} />
+                            <span className="truncate">{serviceName}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                            <User size={10} />
+                            <span className="truncate">{employeeName}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[10px] text-primary font-semibold">
+                            <DollarSign size={10} />
+                            <span>{formatCurrency(price)}</span>
                           </div>
                         </div>
                       </div>
@@ -146,6 +212,169 @@ const CustomerJourney = () => {
           );
         })}
       </div>
+
+      {/* Booking detail modal */}
+      <Dialog open={!!selectedBooking} onOpenChange={(open) => !open && closeModal()}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">
+              {selectedBooking?.client_name || selectedBooking?.clients?.name || "Cliente"}
+            </DialogTitle>
+            <DialogDescription>
+              Gerencie o atendimento e pagamento
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedBooking && (
+            <div className="space-y-5">
+              {/* Booking info */}
+              <div className="space-y-2 bg-secondary/30 rounded-xl p-4">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Horário</span>
+                  <span className="text-foreground font-medium">
+                    {format(new Date(selectedBooking.start_time), "HH:mm")}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Serviço</span>
+                  <span className="text-foreground font-medium">
+                    {selectedBooking.services?.name || "—"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Profissional</span>
+                  <span className="text-foreground font-medium">
+                    {selectedBooking.employee_id
+                      ? employeeMap.get(selectedBooking.employee_id) || "—"
+                      : "Próprio"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Valor total</span>
+                  <span className="text-primary font-bold">
+                    {formatCurrency(selectedBooking.price || 0)}
+                  </span>
+                </div>
+                {selectedBooking.stripe_payment_intent_id && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Sinal pago (online)</span>
+                    <span className="text-success font-medium text-xs">✓ Via página pública</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Status atual</span>
+                  <span className="text-foreground font-medium">
+                    {statusLabels[selectedBooking.status] || selectedBooking.status}
+                  </span>
+                </div>
+              </div>
+
+              {/* Payment section - only show if not completed/cancelled */}
+              {selectedBooking.status !== "completed" && selectedBooking.status !== "cancelled" && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-foreground">Receber pagamento</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Valor a receber: <span className="text-primary font-bold">{formatCurrency(getBookingPaymentInfo(selectedBooking).remainingAmount)}</span>
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    {paymentMethods.map((pm) => (
+                      <button
+                        key={pm.key}
+                        onClick={() => setPaymentMethod(pm.key)}
+                        className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-medium transition-all ${
+                          paymentMethod === pm.key
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border bg-secondary/30 text-muted-foreground hover:bg-secondary/50"
+                        }`}
+                      >
+                        <pm.icon size={14} />
+                        {pm.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {paymentMethod && (
+                    <Button
+                      variant={isPaymentConfirmed ? "default" : "outline"}
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        setIsPaymentConfirmed(true);
+                        toast.success("Pagamento confirmado!");
+                      }}
+                      disabled={isPaymentConfirmed}
+                    >
+                      <CheckCircle2 size={14} className="mr-1.5" />
+                      {isPaymentConfirmed ? "Pagamento confirmado ✓" : "Confirmar pagamento"}
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {/* Status change actions */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-foreground">Alterar status</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {selectedBooking.status === "pending" && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs"
+                        onClick={() => handleStatusChange("confirmed")}
+                        disabled={updateBooking.isPending}
+                      >
+                        Confirmar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs text-destructive border-destructive/30"
+                        onClick={() => handleStatusChange("cancelled")}
+                        disabled={updateBooking.isPending}
+                      >
+                        Cancelar
+                      </Button>
+                    </>
+                  )}
+                  {selectedBooking.status === "confirmed" && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs"
+                        onClick={() => handleStatusChange("completed")}
+                        disabled={updateBooking.isPending || !isPaymentConfirmed}
+                      >
+                        {isPaymentConfirmed ? "Concluir ✓" : "Concluir (pague primeiro)"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs text-destructive border-destructive/30"
+                        onClick={() => handleStatusChange("cancelled")}
+                        disabled={updateBooking.isPending}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs text-muted-foreground col-span-2"
+                        onClick={() => handleStatusChange("no_show")}
+                        disabled={updateBooking.isPending}
+                      >
+                        No-show
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 };
