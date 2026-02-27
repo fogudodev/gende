@@ -21,6 +21,22 @@ function replaceVars(template: string, vars: Record<string, string>): string {
   return result;
 }
 
+/** Normaliza telefone adicionando DDI 55 se necessário */
+function normalizePhone(phone: string): string {
+  // Remove tudo que não é dígito
+  const digits = phone.replace(/\D/g, "");
+  // Se já começa com 55 e tem 12-13 dígitos (55 + DDD + número), retorna
+  if (digits.startsWith("55") && digits.length >= 12 && digits.length <= 13) {
+    return digits;
+  }
+  // Se tem 10-11 dígitos (DDD + número), adiciona 55
+  if (digits.length >= 10 && digits.length <= 11) {
+    return "55" + digits;
+  }
+  // Retorna como está se não se encaixa nos padrões
+  return digits;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -103,11 +119,12 @@ serve(async (req) => {
 
       case "send-message": {
         const { instanceName, phone, message } = params;
+        const normalizedPhone = normalizePhone(phone);
         const res = await fetch(`${EVOLUTION_URL()}/message/sendText/${instanceName}`, {
           method: "POST",
           headers: getEvolutionHeaders(),
           body: JSON.stringify({
-            number: phone,
+            number: normalizedPhone,
             text: message,
           }),
         });
@@ -152,7 +169,7 @@ serve(async (req) => {
 
         if (!booking) { result = { success: false, error: "Agendamento não encontrado" }; break; }
 
-        const phone = booking.client_phone;
+        const phone = normalizePhone(booking.client_phone || "");
         if (!phone) { result = { success: false, error: "Cliente sem telefone" }; break; }
 
         const slug = prof.slug || "";
@@ -228,6 +245,7 @@ serve(async (req) => {
 
         if (!employee?.phone) { result = { success: false, error: "Funcionário sem telefone cadastrado" }; break; }
 
+        const normalizedEmpPhone = normalizePhone(employee.phone);
         const { data: inst } = await supabase
           .from("whatsapp_instances")
           .select("instance_name, status")
@@ -241,13 +259,13 @@ serve(async (req) => {
         const sendRes = await fetch(`${EVOLUTION_URL()}/message/sendText/${inst.instance_name}`, {
           method: "POST",
           headers: getEvolutionHeaders(),
-          body: JSON.stringify({ number: employee.phone, text: msg }),
+          body: JSON.stringify({ number: normalizedEmpPhone, text: msg }),
         });
         const sendData = await sendRes.json();
 
         await supabase.from("whatsapp_logs").insert({
           professional_id: professionalId,
-          recipient_phone: employee.phone,
+          recipient_phone: normalizedEmpPhone,
           message_content: msg,
           status: sendRes.ok ? "sent" : "failed",
           sent_at: sendRes.ok ? new Date().toISOString() : null,
@@ -280,18 +298,19 @@ serve(async (req) => {
 
           if (!employee?.phone) { results.push({ employeeId: empId, success: false }); continue; }
 
+          const normalizedPaidPhone = normalizePhone(employee.phone);
           const msg = `✅ *Comissão paga!*\n\nOlá ${employee.name}! Suas comissões foram pagas.\n\n💵 Valor total: *R$ ${Number(totalAmount).toFixed(2)}*\n\nObrigado pelo excelente trabalho! 🎉`;
 
           const sendRes = await fetch(`${EVOLUTION_URL()}/message/sendText/${inst.instance_name}`, {
             method: "POST",
             headers: getEvolutionHeaders(),
-            body: JSON.stringify({ number: employee.phone, text: msg }),
+            body: JSON.stringify({ number: normalizedPaidPhone, text: msg }),
           });
           const sendData = await sendRes.json();
 
           await supabase.from("whatsapp_logs").insert({
             professional_id: professionalId,
-            recipient_phone: employee.phone,
+            recipient_phone: normalizedPaidPhone,
             message_content: msg,
             status: sendRes.ok ? "sent" : "failed",
             sent_at: sendRes.ok ? new Date().toISOString() : null,
