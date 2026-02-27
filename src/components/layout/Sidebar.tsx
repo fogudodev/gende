@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   Scissors,
   Users,
-  CalendarDays,
   MessageCircle,
   Settings,
   CreditCard,
@@ -35,6 +34,12 @@ import {
   Send,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
+import calendarIcon from "@/assets/icon-calendar.png";
+
+// Wrapper component for the custom calendar icon
+const CalendarIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
+  <img src={calendarIcon} alt="" width={size} height={size} className={`inline-block dark:invert ${className || ''}`} />
+);
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
 
@@ -57,7 +62,7 @@ type NavEntry = NavItem & { type?: "item" } | NavGroup;
 
 const standaloneItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/", featureKey: "dashboard" },
-  { icon: CalendarDays, label: "Agendamentos", path: "/bookings", featureKey: "bookings" },
+  { icon: CalendarIcon, label: "Agendamentos", path: "/bookings", featureKey: "bookings" },
   { icon: Scissors, label: "Serviços", path: "/services", featureKey: "services" },
   { icon: Users, label: "Clientes", path: "/clients", featureKey: "clients" },
 ];
@@ -103,7 +108,7 @@ const salonOnlyItems: NavItem[] = [
 
 const mobileNavItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-  { icon: CalendarDays, label: "Agenda", path: "/bookings" },
+  { icon: CalendarIcon, label: "Agenda", path: "/bookings" },
   { icon: Users, label: "Clientes", path: "/clients" },
   { icon: CreditCard, label: "Financeiro", path: "/finance" },
 ];
