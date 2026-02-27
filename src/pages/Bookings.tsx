@@ -225,39 +225,48 @@ const Bookings = () => {
   return (
     <DashboardLayout title="Agendamentos" subtitle="Gerencie sua agenda">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-        <div className="flex items-center gap-2">
-          <button onClick={() => navigate(-1)} className="p-2 rounded-xl hover:bg-muted/50 transition-colors">
-            <ChevronLeft size={18} className="text-muted-foreground" />
-          </button>
-          <div className="text-center min-w-[160px]">
-            <h2 className="text-base sm:text-lg font-semibold text-foreground capitalize">{headerLabel()}</h2>
-            {viewMode === "day" && (
-              <p className="text-xs text-muted-foreground capitalize">{format(selectedDate, "EEEE", { locale: ptBR })}</p>
-            )}
+      <div className="flex flex-col gap-3 mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <button onClick={() => navigate(-1)} className="p-2 rounded-xl hover:bg-muted/50 transition-colors">
+              <ChevronLeft size={18} className="text-muted-foreground" />
+            </button>
+            <div className="text-center min-w-[120px]">
+              <h2 className="text-base sm:text-lg font-semibold text-foreground capitalize">{headerLabel()}</h2>
+              {viewMode === "day" && (
+                <p className="text-xs text-muted-foreground capitalize">{format(selectedDate, "EEEE", { locale: ptBR })}</p>
+              )}
+            </div>
+            <button onClick={() => navigate(1)} className="p-2 rounded-xl hover:bg-muted/50 transition-colors">
+              <ChevronRight size={18} className="text-muted-foreground" />
+            </button>
           </div>
-          <button onClick={() => navigate(1)} className="p-2 rounded-xl hover:bg-muted/50 transition-colors">
-            <ChevronRight size={18} className="text-muted-foreground" />
+          <button
+            onClick={() => openCreate()}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors shrink-0"
+          >
+            <Plus size={14} />
+            <span className="hidden sm:inline">Novo</span>
           </button>
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Tabs value={viewMode} onValueChange={v => setViewMode(v as ViewMode)} className="flex-1 sm:flex-none">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+          <Tabs value={viewMode} onValueChange={v => setViewMode(v as ViewMode)} className="shrink-0">
             <TabsList className="h-9 bg-muted/50">
-              <TabsTrigger value="day" className="text-xs px-3 gap-1">
+              <TabsTrigger value="day" className="text-xs px-2.5 gap-1">
                 <List size={13} /> Dia
               </TabsTrigger>
-              <TabsTrigger value="week" className="text-xs px-3 gap-1">
+              <TabsTrigger value="week" className="text-xs px-2.5 gap-1">
                 <CalendarRange size={13} /> Semana
               </TabsTrigger>
-              <TabsTrigger value="month" className="text-xs px-3 gap-1">
+              <TabsTrigger value="month" className="text-xs px-2.5 gap-1">
                 <CalendarDays size={13} /> Mês
               </TabsTrigger>
             </TabsList>
           </Tabs>
           <button
             onClick={() => setSelectedDate(new Date())}
-            className="px-3 py-2 rounded-xl bg-muted/50 text-muted-foreground text-xs font-medium hover:bg-muted transition-colors"
+            className="px-3 py-2 rounded-xl bg-muted/50 text-muted-foreground text-xs font-medium hover:bg-muted transition-colors shrink-0"
           >
             Hoje
           </button>
@@ -284,7 +293,7 @@ const Bookings = () => {
                 { key: "notas", label: "Notas" },
               ]);
             }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-muted/50 text-muted-foreground text-xs font-medium hover:bg-muted transition-colors"
+            className="flex items-center gap-1.5 p-2 rounded-xl bg-muted/50 text-muted-foreground text-xs font-medium hover:bg-muted transition-colors shrink-0"
             title="Exportar CSV"
           >
             <Download size={14} />
@@ -320,17 +329,10 @@ const Bookings = () => {
                 toast.error(e.message || "Erro ao importar");
               }
             }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-muted/50 text-muted-foreground text-xs font-medium hover:bg-muted transition-colors"
+            className="flex items-center gap-1.5 p-2 rounded-xl bg-muted/50 text-muted-foreground text-xs font-medium hover:bg-muted transition-colors shrink-0"
             title="Importar CSV"
           >
             <Upload size={14} />
-          </button>
-          <button
-            onClick={() => openCreate()}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
-          >
-            <Plus size={14} />
-            <span className="hidden sm:inline">Novo</span>
           </button>
         </div>
       </div>
