@@ -63,17 +63,18 @@ export const useOpenCashRegisterMutation = () => {
       openingAmount,
     }: {
       professionalId: string;
-      openedBy: string;
+      openedBy?: string;
       openingAmount: number;
     }) => {
+      const insertData: any = {
+        professional_id: professionalId,
+        opening_amount: openingAmount,
+        status: "open",
+      };
+      if (openedBy) insertData.opened_by = openedBy;
       const { data, error } = await supabase
         .from("cash_registers")
-        .insert({
-          professional_id: professionalId,
-          opened_by: openedBy,
-          opening_amount: openingAmount,
-          status: "open",
-        })
+        .insert(insertData)
         .select()
         .single();
       if (error) throw error;
