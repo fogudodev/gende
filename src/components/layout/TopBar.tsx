@@ -1,11 +1,13 @@
-import { Bell, Search, Sun, Moon, Menu, Crown, Headphones, Sparkles, Wallet } from "lucide-react";
+import { Bell, Search, Sun, Moon, Menu, Crown, Headphones, Sparkles, Wallet, CreditCard, MessageSquare, CheckCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useProfessional } from "@/hooks/useProfessional";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import PlanRenewalModal from "./PlanRenewalModal";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface TopBarProps {
   title: string;
@@ -18,8 +20,21 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
   const { data: professional } = useProfessional();
   const [renewalOpen, setRenewalOpen] = useState(false);
   const { currentPlan } = useFeatureAccess();
-  const { unreadPayment, unreadSupport } = useUnreadMessages();
+  const { unreadCount, unreadPayment, unreadSupport, recentMessages, markAllAsSeen } = useUnreadMessages();
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    };
+    if (notifOpen) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [notifOpen]);
 
   return (
     <>
@@ -69,16 +84,11 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
         </button>
         <button
           onClick={() => navigate("/support-chat")}
-          className="relative p-2 rounded-lg hover:bg-secondary/50 transition-colors"
+          className="p-2 rounded-lg hover:bg-secondary/50 transition-colors"
           aria-label="Chat de suporte"
           title="Suporte"
         >
           <Headphones size={16} className="text-muted-foreground hover:text-foreground transition-colors" />
-          {unreadSupport > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[9px] font-bold px-0.5 animate-pulse">
-              {unreadSupport > 99 ? "99+" : unreadSupport}
-            </span>
-          )}
         </button>
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -91,18 +101,118 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
             <Moon size={16} className="text-muted-foreground hover:text-foreground transition-colors" />
           )}
         </button>
-        <button
-          onClick={() => navigate("/payment-chat")}
-          className="relative p-2 rounded-lg hover:bg-secondary/50 transition-colors"
-          title="Chat de Pagamento"
-        >
-          <Wallet size={16} className="text-muted-foreground hover:text-foreground transition-colors" />
-          {unreadPayment > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[9px] font-bold px-0.5 animate-pulse">
-              {unreadPayment > 99 ? "99+" : unreadPayment}
-            </span>
+
+        {/* Notification bell with dropdown */}
+        <div ref={notifRef} className="relative">
+          <button
+            onClick={() => setNotifOpen(!notifOpen)}
+            className="relative p-2 rounded-lg hover:bg-secondary/50 transition-colors"
+            title="Notificações"
+          >
+            <Bell size={16} className="text-muted-foreground hover:text-foreground transition-colors" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[9px] font-bold px-0.5 animate-pulse">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </button>
+
+          {notifOpen && (
+            <div className="absolute right-0 top-full mt-2 w-80 max-h-[400px] rounded-xl border border-border bg-background shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                <h3 className="text-sm font-semibold text-foreground">Notificações</h3>
+                {unreadCount > 0 && (
+                  <button
+                    onClick={() => { markAllAsSeen(); setNotifOpen(false); }}
+                    className="flex items-center gap-1 text-[10px] text-primary hover:text-primary/80 transition-colors"
+                  >
+                    <CheckCheck size={12} />
+                    Marcar todas como lidas
+                  </button>
+                )}
+              </div>
+
+              {/* Summary badges */}
+              {unreadCount > 0 && (
+                <div className="flex gap-2 px-4 py-2 border-b border-border/50">
+                  {unreadPayment > 0 && (
+                    <button
+                      onClick={() => { navigate("/payment-chat"); setNotifOpen(false); }}
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors"
+                    >
+                      <CreditCard size={12} className="text-primary" />
+                      <span className="text-[11px] font-medium text-primary">{unreadPayment} pagamento</span>
+                    </button>
+                  )}
+                  {unreadSupport > 0 && (
+                    <button
+                      onClick={() => { navigate("/support-chat"); setNotifOpen(false); }}
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-accent/10 hover:bg-accent/20 transition-colors"
+                    >
+                      <MessageSquare size={12} className="text-accent" />
+                      <span className="text-[11px] font-medium text-accent">{unreadSupport} suporte</span>
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Messages list */}
+              <div className="overflow-y-auto max-h-[280px]">
+                {recentMessages.length > 0 ? (
+                  recentMessages.map((msg) => (
+                    <button
+                      key={msg.id}
+                      onClick={() => {
+                        navigate(msg.chat_type === "payment" ? "/payment-chat" : "/support-chat");
+                        setNotifOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors border-b border-border/30 last:border-0"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                          msg.chat_type === "payment" ? "bg-primary/10" : "bg-accent/10"
+                        }`}>
+                          {msg.chat_type === "payment" ? (
+                            <CreditCard size={14} className="text-primary" />
+                          ) : (
+                            <MessageSquare size={14} className="text-accent" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs font-semibold text-foreground truncate">
+                              {msg.sender_name || "Suporte"}
+                            </p>
+                            <span className="text-[9px] text-muted-foreground whitespace-nowrap">
+                              {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true, locale: ptBR })}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                            {msg.message || "📎 Arquivo enviado"}
+                          </p>
+                          <span className={`inline-block mt-1 text-[9px] font-medium px-1.5 py-0.5 rounded ${
+                            msg.chat_type === "payment"
+                              ? "bg-primary/10 text-primary"
+                              : "bg-accent/10 text-accent"
+                          }`}>
+                            {msg.chat_type === "payment" ? "Pagamento" : "Suporte"}
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <Bell size={24} className="text-muted-foreground/40 mb-2" />
+                    <p className="text-xs text-muted-foreground">Nenhuma notificação</p>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
-        </button>
+        </div>
+
         {professional?.avatar_url ? (
           <img src={professional.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover shadow-lg" />
         ) : (
