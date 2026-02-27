@@ -33,6 +33,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { exportToCSV, importCSVFile } from "@/lib/csv-utils";
 import { format as fnsFormat } from "date-fns";
+import { useOpenCashRegister } from "@/hooks/useCashRegister";
 
 type ViewMode = "day" | "week" | "month";
 
@@ -87,6 +88,8 @@ const Bookings = () => {
 
   const isSalon = professional?.account_type === "salon";
   const activeEmployees = (salonEmployees || []).filter((e: any) => e.is_active);
+  const { data: openCashRegister } = useOpenCashRegister(professional?.id);
+  const isCashRegisterOpen = !!openCashRegister;
 
   // Set of booking IDs that have auto-generated commissions
   const bookingIdsWithCommission = useMemo(() => {
@@ -194,6 +197,10 @@ const Bookings = () => {
   };
 
   const openCreate = (slot?: string, date?: Date) => {
+    if (!isCashRegisterOpen) {
+      toast.error("Abra o caixa antes de criar agendamentos. Acesse a página Caixa.");
+      return;
+    }
     resetForm();
     if (date) setFormDate(date);
     else setFormDate(selectedDate);
@@ -329,10 +336,16 @@ const Bookings = () => {
           </div>
           <button
             onClick={() => openCreate()}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors shrink-0"
+            disabled={!isCashRegisterOpen}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-colors shrink-0 ${
+              isCashRegisterOpen
+                ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                : "bg-muted text-muted-foreground cursor-not-allowed"
+            }`}
+            title={!isCashRegisterOpen ? "Abra o caixa para criar agendamentos" : "Novo agendamento"}
           >
-            <Plus size={14} />
-            <span className="hidden sm:inline">Novo</span>
+            {isCashRegisterOpen ? <Plus size={14} /> : <Ban size={14} />}
+            <span className="hidden sm:inline">{isCashRegisterOpen ? "Novo" : "Caixa fechado"}</span>
           </button>
         </div>
 
