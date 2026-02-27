@@ -41,6 +41,7 @@ import clientsIcon from "@/assets/icon-clients.png";
 import teamIcon from "@/assets/icon-team.png";
 import commissionIcon from "@/assets/icon-commission.png";
 import performanceIcon from "@/assets/icon-performance.png";
+import whatsappIcon from "@/assets/icon-whatsapp.png";
 
 // Wrapper component for custom icons
 const CalendarIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
@@ -69,6 +70,10 @@ const CommissionIcon = ({ size = 18, className }: { size?: number; className?: s
 
 const PerformanceIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
   <img src={performanceIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
+);
+
+const WhatsAppIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
+  <img src={whatsappIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
 );
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
@@ -99,7 +104,7 @@ const standaloneItems: NavItem[] = [
 
 const whatsappGroup: NavGroup = {
   type: "group",
-  icon: MessageCircle,
+  icon: WhatsAppIcon,
   label: "WhatsApp",
   featureKey: "automations",
   children: [
