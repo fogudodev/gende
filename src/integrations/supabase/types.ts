@@ -1288,6 +1288,47 @@ export type Database = {
           },
         ]
       }
+      whatsapp_conversations: {
+        Row: {
+          client_phone: string
+          context: Json
+          created_at: string
+          id: string
+          messages: Json
+          professional_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_phone: string
+          context?: Json
+          created_at?: string
+          id?: string
+          messages?: Json
+          professional_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_phone?: string
+          context?: Json
+          created_at?: string
+          id?: string
+          messages?: Json
+          professional_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_conversations_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_instances: {
         Row: {
           created_at: string
