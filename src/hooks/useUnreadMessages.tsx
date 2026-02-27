@@ -1,18 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 /**
- * Hook that tracks the number of unread chat messages for the current user.
- * It counts messages from the "other side" (support/admin) that arrived
- * after the user's last visit to each chat.
+ * Hook that tracks the number of unread chat messages for the current user,
+ * separated by chat type (payment / support).
  */
 export const useUnreadMessages = () => {
   const { data: professional } = useProfessional();
   const qc = useQueryClient();
 
-  // Track last seen timestamps per chat type in localStorage
   const getLastSeen = (chatType: string) => {
     try {
       return localStorage.getItem(`chat_last_seen_${chatType}_${professional?.id}`) || "1970-01-01T00:00:00Z";
@@ -21,46 +19,50 @@ export const useUnreadMessages = () => {
     }
   };
 
-  const { data: unreadCount = 0 } = useQuery({
+  const { data = { payment: 0, support: 0 } } = useQuery({
     queryKey: ["unread-messages", professional?.id],
     queryFn: async () => {
-      if (!professional?.id) return 0;
+      if (!professional?.id) return { payment: 0, support: 0 };
 
       const paymentLastSeen = getLastSeen("payment");
       const supportLastSeen = getLastSeen("support");
 
-      // Count unread payment messages (from support/admin)
-      const { count: paymentCount } = await supabase
-        .from("chat_messages" as any)
-        .select("*", { count: "exact", head: true })
-        .eq("professional_id", professional.id)
-        .eq("chat_type", "payment")
-        .neq("sender_role", "user")
-        .gt("created_at", paymentLastSeen);
+      const [{ count: paymentCount }, { count: supportCount }] = await Promise.all([
+        supabase
+          .from("chat_messages" as any)
+          .select("*", { count: "exact", head: true })
+          .eq("professional_id", professional.id)
+          .eq("chat_type", "payment")
+          .neq("sender_role", "user")
+          .gt("created_at", paymentLastSeen),
+        supabase
+          .from("chat_messages" as any)
+          .select("*", { count: "exact", head: true })
+          .eq("professional_id", professional.id)
+          .eq("chat_type", "support")
+          .neq("sender_role", "user")
+          .gt("created_at", supportLastSeen),
+      ]);
 
-      // Count unread support messages (from support/admin)
-      const { count: supportCount } = await supabase
-        .from("chat_messages" as any)
-        .select("*", { count: "exact", head: true })
-        .eq("professional_id", professional.id)
-        .eq("chat_type", "support")
-        .neq("sender_role", "user")
-        .gt("created_at", supportLastSeen);
-
-      return (paymentCount || 0) + (supportCount || 0);
+      return {
+        payment: paymentCount || 0,
+        support: supportCount || 0,
+      };
     },
     enabled: !!professional?.id,
     refetchInterval: 10000,
   });
 
-  // Mark a chat type as seen
+  const unreadPayment = data.payment;
+  const unreadSupport = data.support;
+  const unreadCount = unreadPayment + unreadSupport;
+
   const markAsSeen = (chatType: "payment" | "support") => {
     if (!professional?.id) return;
     localStorage.setItem(`chat_last_seen_${chatType}_${professional.id}`, new Date().toISOString());
     qc.invalidateQueries({ queryKey: ["unread-messages", professional.id] });
   };
 
-  // Listen for realtime inserts to refresh count
   useEffect(() => {
     if (!professional?.id) return;
     const channel = supabase
@@ -83,5 +85,5 @@ export const useUnreadMessages = () => {
     return () => { supabase.removeChannel(channel); };
   }, [professional?.id, qc]);
 
-  return { unreadCount, markAsSeen };
+  return { unreadCount, unreadPayment, unreadSupport, markAsSeen };
 };

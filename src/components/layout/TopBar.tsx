@@ -1,4 +1,4 @@
-import { Bell, Search, Sun, Moon, Menu, Crown, Headphones, Sparkles } from "lucide-react";
+import { Bell, Search, Sun, Moon, Menu, Crown, Headphones, Sparkles, Wallet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useProfessional } from "@/hooks/useProfessional";
@@ -18,7 +18,7 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
   const { data: professional } = useProfessional();
   const [renewalOpen, setRenewalOpen] = useState(false);
   const { currentPlan } = useFeatureAccess();
-  const { unreadCount } = useUnreadMessages();
+  const { unreadPayment, unreadSupport } = useUnreadMessages();
   const navigate = useNavigate();
 
   return (
@@ -69,11 +69,16 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
         </button>
         <button
           onClick={() => navigate("/support-chat")}
-          className="p-2 rounded-lg hover:bg-secondary/50 transition-colors"
+          className="relative p-2 rounded-lg hover:bg-secondary/50 transition-colors"
           aria-label="Chat de suporte"
           title="Suporte"
         >
           <Headphones size={16} className="text-muted-foreground hover:text-foreground transition-colors" />
+          {unreadSupport > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[9px] font-bold px-0.5 animate-pulse">
+              {unreadSupport > 99 ? "99+" : unreadSupport}
+            </span>
+          )}
         </button>
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -89,15 +94,13 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
         <button
           onClick={() => navigate("/payment-chat")}
           className="relative p-2 rounded-lg hover:bg-secondary/50 transition-colors"
-          title="Notificações"
+          title="Chat de Pagamento"
         >
-          <Bell size={16} className="text-muted-foreground" />
-          {unreadCount > 0 ? (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold px-1 animate-pulse">
-              {unreadCount > 99 ? "99+" : unreadCount}
+          <Wallet size={16} className="text-muted-foreground hover:text-foreground transition-colors" />
+          {unreadPayment > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[9px] font-bold px-0.5 animate-pulse">
+              {unreadPayment > 99 ? "99+" : unreadPayment}
             </span>
-          ) : (
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
           )}
         </button>
         {professional?.avatar_url ? (
