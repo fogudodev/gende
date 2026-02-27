@@ -155,7 +155,7 @@ const CustomerJourney = () => {
     pix: "PIX",
   };
 
-  const generateReceiptPDF = (booking: any, amount: number, method: string) => {
+  const generateReceiptPDF = async (booking: any, amount: number, method: string) => {
     const doc = new jsPDF({ unit: "mm", format: "a5" });
     const profName = professional?.business_name || professional?.name || "Estabelecimento";
     const clientName = booking.client_name || booking.clients?.name || "Cliente";
@@ -165,6 +165,32 @@ const CustomerJourney = () => {
     const employeeName = booking.employee_id ? employeeMap.get(booking.employee_id) || "—" : profName;
 
     let y = 15;
+
+    // Try to add logo
+    const logoUrl = professional?.logo_url || professional?.avatar_url;
+    if (logoUrl) {
+      try {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () => reject();
+          img.src = logoUrl;
+        });
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0);
+        const dataUrl = canvas.toDataURL("image/png");
+        const logoSize = 18;
+        doc.addImage(dataUrl, "PNG", 74 - logoSize / 2, y, logoSize, logoSize);
+        y += logoSize + 4;
+      } catch {
+        // Skip logo on error
+      }
+    }
+
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
     doc.text(profName, 74, y, { align: "center" });

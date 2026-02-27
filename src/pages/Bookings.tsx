@@ -105,10 +105,14 @@ const Bookings = () => {
   // Available time slots considering existing bookings + 10min buffer
   const availableSlots = useMemo(() => {
     if (!selectedService || !dayBookings) return [];
-    const bookingsForDate = (viewMode === "day" ? dayBookings : (weekBookings || monthBookings || []))
+    let bookingsForDate = (viewMode === "day" ? dayBookings : (weekBookings || monthBookings || []))
       ?.filter(b => isSameDay(new Date(b.start_time), formDate)) || [];
+    // If an employee is selected, only consider that employee's bookings for conflict checking
+    if (formEmployee) {
+      bookingsForDate = bookingsForDate.filter(b => b.employee_id === formEmployee);
+    }
     return getAvailableSlots(bookingsForDate, selectedService.duration_minutes, 7, 21, 10, blockedTimes || [], formDate);
-  }, [selectedService, dayBookings, weekBookings, monthBookings, formDate, viewMode, blockedTimes]);
+  }, [selectedService, dayBookings, weekBookings, monthBookings, formDate, viewMode, blockedTimes, formEmployee]);
 
   const resetForm = () => {
     setFormService("");
@@ -390,6 +394,22 @@ const Bookings = () => {
                 <p className="text-xs text-destructive mt-1">Cadastre serviços primeiro</p>
               )}
             </div>
+            {/* Employee selector for salons - before time slots */}
+            {isSalon && activeEmployees.length > 0 && (
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5">Profissional</Label>
+                <Select value={formEmployee} onValueChange={v => { setFormEmployee(v); setFormTime(""); }}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o profissional" /></SelectTrigger>
+                  <SelectContent>
+                    {activeEmployees.map((emp: any) => (
+                      <SelectItem key={emp.id} value={emp.id}>
+                        {emp.name}{emp.specialty ? ` — ${emp.specialty}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5">
                 Horário disponível * {selectedService && <span className="text-primary">({selectedService.duration_minutes}min + 10min buffer)</span>}
@@ -429,22 +449,6 @@ const Bookings = () => {
                 </p>
               )}
             </div>
-            {/* Employee selector for salons */}
-            {isSalon && activeEmployees.length > 0 && (
-              <div>
-                <Label className="text-xs text-muted-foreground mb-1.5">Profissional</Label>
-                <Select value={formEmployee} onValueChange={setFormEmployee}>
-                  <SelectTrigger><SelectValue placeholder="Selecione o profissional" /></SelectTrigger>
-                  <SelectContent>
-                    {activeEmployees.map((emp: any) => (
-                      <SelectItem key={emp.id} value={emp.id}>
-                        {emp.name}{emp.specialty ? ` — ${emp.specialty}` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5">Nome do cliente *</Label>
               <Input placeholder="Nome completo" value={formClientName} onChange={e => setFormClientName(e.target.value)} />
