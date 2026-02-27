@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Plus, Pencil, Trash2, UserPlus, Users } from "lucide-react";
+import EmployeeServiceAssignment from "@/components/team/EmployeeServiceAssignment";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -251,6 +252,7 @@ const Team = () => {
                     {emp.email && <p>{emp.email}</p>}
                   </div>
                 )}
+                <EmployeeServiceAssignment employeeId={emp.id} employeeName={emp.name} />
               </Card>
             ))}
           </div>
