@@ -38,6 +38,7 @@ import calendarIcon from "@/assets/icon-calendar.png";
 import dashboardIcon from "@/assets/icon-dashboard.png";
 import scissorsIcon from "@/assets/icon-scissors.png";
 import clientsIcon from "@/assets/icon-clients.png";
+import teamIcon from "@/assets/icon-team.png";
 
 // Wrapper component for custom icons
 const CalendarIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
@@ -54,6 +55,10 @@ const ScissorsIcon = ({ size = 18, className }: { size?: number; className?: str
 
 const ClientsIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
   <img src={clientsIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
+);
+
+const TeamIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
+  <img src={teamIcon} alt="" width={size} height={size} className={`inline-block brightness-0 invert opacity-40 ${className || ''}`} />
 );
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
@@ -116,7 +121,7 @@ const afterGroupItems: NavItem[] = [
 ];
 
 const salonOnlyItems: NavItem[] = [
-  { icon: UserPlus, label: "Equipe", path: "/team", featureKey: "team" },
+  { icon: TeamIcon, label: "Equipe", path: "/team", featureKey: "team" },
   { icon: FileBarChart, label: "Comissões", path: "/commission-report", featureKey: "commission-report" },
   { icon: Activity, label: "Desempenho", path: "/team-performance", featureKey: "team-performance" },
 ];
