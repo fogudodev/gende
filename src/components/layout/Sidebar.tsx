@@ -27,6 +27,9 @@ import {
   Megaphone,
   Lock,
   Shield,
+  Wallet,
+  Headphones,
+  Bot,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 import UpgradeModal from "./UpgradeModal";
@@ -45,6 +48,9 @@ const baseNavItems: { icon: any; label: string; path: string; featureKey: Featur
   { icon: Ticket, label: "Cupons", path: "/coupons", featureKey: "coupons" },
   { icon: BarChart3, label: "Relatórios", path: "/reports", featureKey: "reports" },
   { icon: Star, label: "Avaliações", path: "/reviews", featureKey: "reviews" },
+  { icon: Wallet, label: "Chat Pagamento", path: "/payment-chat", featureKey: "settings" },
+  { icon: Headphones, label: "Chat Suporte", path: "/support-chat", featureKey: "settings" },
+  { icon: Bot, label: "Assistente IA", path: "/ai-assistant", featureKey: "settings" },
   { icon: Settings, label: "Configurações", path: "/settings", featureKey: "settings" },
 ];
 
