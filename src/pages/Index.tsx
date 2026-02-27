@@ -7,9 +7,24 @@ import CustomerJourney from "@/components/dashboard/CustomerJourney";
 import ServicesOverview from "@/components/dashboard/ServicesOverview";
 import TicketsChart from "@/components/dashboard/TicketsChart";
 import MessageUsage from "@/components/dashboard/MessageUsage";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { DollarSign, CalendarDays, Users, TrendingUp } from "lucide-react";
 
+const formatCurrency = (value: number) =>
+  value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
 const Index = () => {
+  const { data: stats } = useDashboardStats();
+
+  const todayRevenue = stats?.todayRevenue ?? 0;
+  const monthRevenue = stats?.monthRevenue ?? 0;
+  const todayCount = stats?.todayCount ?? 0;
+  const todayPending = stats?.todayPending ?? 0;
+  const totalClients = stats?.totalClients ?? 0;
+  const weekClients = stats?.weekClients ?? 0;
+  const revenueTodayChange = stats?.revenueTodayChange ?? 0;
+  const revenueMonthChange = stats?.revenueMonthChange ?? 0;
+
   return (
     <DashboardLayout title="Dashboard" subtitle="Visão geral do seu negócio">
       <div className="space-y-4 md:space-y-6">
@@ -18,10 +33,10 @@ const Index = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          <StatsCard title="Receita Hoje" value="R$ 1.580" change="+23% vs ontem" changeType="positive" icon={DollarSign} delay={0} />
-          <StatsCard title="Receita Mês" value="R$ 18.450" change="+12% vs anterior" changeType="positive" icon={TrendingUp} delay={0.1} />
-          <StatsCard title="Agend. Hoje" value="8" change="3 pendentes" changeType="neutral" icon={CalendarDays} delay={0.15} />
-          <StatsCard title="Clientes" value="147" change="+9 semana" changeType="positive" icon={Users} delay={0.2} />
+          <StatsCard title="Receita Hoje" value={formatCurrency(todayRevenue)} change={`${revenueTodayChange >= 0 ? "+" : ""}${revenueTodayChange}% vs ontem`} changeType={revenueTodayChange >= 0 ? "positive" : "negative"} icon={DollarSign} delay={0} />
+          <StatsCard title="Receita Mês" value={formatCurrency(monthRevenue)} change={`${revenueMonthChange >= 0 ? "+" : ""}${revenueMonthChange}% vs anterior`} changeType={revenueMonthChange >= 0 ? "positive" : "negative"} icon={TrendingUp} delay={0.1} />
+          <StatsCard title="Agend. Hoje" value={String(todayCount)} change={`${todayPending} pendente${todayPending !== 1 ? "s" : ""}`} changeType="neutral" icon={CalendarDays} delay={0.15} />
+          <StatsCard title="Clientes" value={String(totalClients)} change={`+${weekClients} semana`} changeType={weekClients > 0 ? "positive" : "neutral"} icon={Users} delay={0.2} />
         </div>
 
         {/* Customer Journey */}

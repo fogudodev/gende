@@ -83,14 +83,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Build the verify URL that auto-logs in
-    // The action_link from generateLink points to supabase, we need to build a frontend-compatible one
+    // Return the token hash for client-side OTP verification
     const tokenHash = linkData.properties?.hashed_token;
-    const verifyUrl = `${supabaseUrl}/auth/v1/verify?token=${tokenHash}&type=magiclink&redirect_to=${encodeURIComponent(redirectUrl || "/")}`;
 
     return new Response(JSON.stringify({
       success: true,
-      url: verifyUrl,
+      token_hash: tokenHash,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
