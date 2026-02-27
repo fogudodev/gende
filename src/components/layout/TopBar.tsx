@@ -1,4 +1,4 @@
-import { Bell, Search, Sun, Moon, Menu, Crown, Headphones } from "lucide-react";
+import { Bell, Search, Sun, Moon, Menu, Crown, Headphones, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useProfessional } from "@/hooks/useProfessional";
@@ -56,6 +56,14 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
           <span className="hidden sm:inline">
             {currentPlan === "none" ? "Assinar" : currentPlan === "essencial" ? "Essencial" : "Enterprise"}
           </span>
+        </button>
+        <button
+          onClick={() => navigate("/ai-assistant")}
+          className="p-2 rounded-lg hover:bg-accent/10 transition-colors"
+          aria-label="Assistente IA"
+          title="Assistente IA"
+        >
+          <Sparkles size={16} className="text-accent" />
         </button>
         <button
           onClick={() => navigate("/support-chat")}
