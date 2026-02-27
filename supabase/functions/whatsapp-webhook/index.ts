@@ -159,7 +159,7 @@ async function handleFollowUp(supabase: any, body: any) {
 
   const { data: prof } = await supabase
     .from("professionals")
-    .select("business_name, name, slug")
+    .select("business_name, name, slug, followup_message")
     .eq("id", professionalId)
     .single();
 
@@ -167,9 +167,17 @@ async function handleFollowUp(supabase: any, body: any) {
   const bookingLink = prof?.slug ? `https://gende.io/${prof.slug}` : "";
   const clientName = (conv.context as any)?.client_name || "";
 
-  const followUpMsg = `Olá${clientName ? ` ${clientName}` : ""}! 👋 Notamos que você não finalizou seu agendamento no *${profName}*.
-
-Ainda gostaria de agendar? Estamos à disposição! É só responder esta mensagem que continuamos de onde paramos. 😊${bookingLink ? `\n\n📱 Ou agende online: ${bookingLink}` : ""}`;
+  // Use custom follow-up message or default
+  let followUpMsg = (prof as any)?.followup_message || `Olá {nome}! 👋 Notamos que você não finalizou seu agendamento no *${profName}*.\n\nAinda gostaria de agendar? Estamos à disposição! É só responder esta mensagem que continuamos de onde paramos. 😊`;
+  
+  // Replace variables
+  followUpMsg = followUpMsg
+    .replace(/\{nome\}/g, clientName || "")
+    .replace(/\{link\}/g, bookingLink);
+  
+  if (bookingLink && !followUpMsg.includes(bookingLink)) {
+    followUpMsg += `\n\n📱 Ou agende online: ${bookingLink}`;
+  }
 
   const sendRes = await sendWhatsAppMessage(inst.instance_name, conv.client_phone, followUpMsg);
 

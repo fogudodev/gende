@@ -42,6 +42,7 @@ const Automations = () => {
   const [welcomeMessage, setWelcomeMessage] = useState("");
   const [reminderMessage, setReminderMessage] = useState("");
   const [confirmationMessage, setConfirmationMessage] = useState("");
+  const [followupMessage, setFollowupMessage] = useState("");
   const [savingMessages, setSavingMessages] = useState(false);
 
   useEffect(() => {
@@ -49,6 +50,7 @@ const Automations = () => {
       setWelcomeMessage((professional as any).welcome_message || "");
       setReminderMessage((professional as any).reminder_message || "");
       setConfirmationMessage((professional as any).confirmation_message || "");
+      setFollowupMessage((professional as any).followup_message || "");
     }
   }, [professional]);
 
@@ -70,6 +72,7 @@ const Automations = () => {
         welcome_message: welcomeMessage.trim(),
         reminder_message: reminderMessage.trim(),
         confirmation_message: confirmationMessage.trim(),
+        followup_message: followupMessage.trim(),
       } as any)
       .eq("id", professional.id);
 
@@ -173,6 +176,17 @@ const Automations = () => {
               value={confirmationMessage}
               onChange={(e) => setConfirmationMessage(e.target.value)}
               placeholder="Olá {nome}! Seu agendamento para {servico} foi confirmado..."
+              maxLength={500}
+              rows={3}
+              className="w-full px-3 py-2 rounded-xl bg-muted/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none"
+            />
+          </div>
+          <div>
+            <Label className="text-sm mb-1.5">Mensagem de Follow-up (clientes que não finalizaram)</Label>
+            <textarea
+              value={followupMessage}
+              onChange={(e) => setFollowupMessage(e.target.value)}
+              placeholder="Olá {nome}! Notamos que você não finalizou seu agendamento..."
               maxLength={500}
               rows={3}
               className="w-full px-3 py-2 rounded-xl bg-muted/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none"
