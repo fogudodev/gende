@@ -41,11 +41,15 @@ export const STRIPE_PLANS = {
       "Serviços ilimitados",
       "Clientes ilimitados",
       "Produtos ilimitados",
-      "Automação WhatsApp completa",
-      "Campanhas ilimitadas",
+      "20 lembretes/dia (extra R$ 0,70/lembrete)",
+      "3 campanhas/dia (extra R$ 1,20/campanha)",
+      "Contatos extra em campanhas R$ 0,50/contato",
       "Relatórios avançados",
       "Página pública personalizada",
       "Cobrar sinal de agendamento",
+      "Cupons e promoções",
+      "Avaliações",
+      "Assistente IA",
       "Até 5 profissionais inclusos",
       "Adicional R$ 7/profissional (máx 20)",
       "Integração Google Calendar (Salão)",
@@ -56,8 +60,9 @@ export const STRIPE_PLANS = {
       maxServices: -1,
       maxClients: -1,
       maxProducts: -1,
-      dailyReminders: -1,
-      dailyCampaigns: -1,
+      dailyReminders: 20,
+      dailyCampaigns: 3,
+      campaignMinIntervalHours: 5,
       maxEmployees: 5,
       maxEmployeesHardLimit: 20,
       additionalEmployeePrice: 7,
@@ -76,6 +81,28 @@ export const PRODUCT_TO_PLAN: Record<string, PlanId> = {
   "prod_U3DrWGOLjl8pSx": "enterprise",
   "prod_U3KZFQMZF4cxPs": "enterprise",
 };
+
+// Add-on products for Enterprise overages
+export const ADDON_PRODUCTS = {
+  extraReminder: {
+    name: "Lembrete Extra",
+    price: 0.70, // R$0,70 per extra reminder
+    priceId: "", // Will be set after Stripe creation
+    productId: "", // Will be set after Stripe creation
+  },
+  extraCampaign: {
+    name: "Campanha Extra",
+    price: 1.20, // R$1,20 per extra campaign
+    priceId: "",
+    productId: "",
+  },
+  extraCampaignContact: {
+    name: "Contato Extra em Campanha",
+    price: 0.50, // R$0,50 per extra contact
+    priceId: "",
+    productId: "",
+  },
+} as const;
 
 // Feature access rules per plan
 export type FeatureKey =
@@ -96,7 +123,11 @@ export type FeatureKey =
   | "payment-settings"
   | "commission-report"
   | "team-performance"
-  | "google-calendar";
+  | "google-calendar"
+  | "support-chat"
+  | "payment-chat"
+  | "ai-assistant"
+  | "cash-register";
 
 export const PLAN_FEATURES: Record<PlanId | "none", FeatureKey[]> = {
   none: [
@@ -104,7 +135,6 @@ export const PLAN_FEATURES: Record<PlanId | "none", FeatureKey[]> = {
     "bookings",
     "services",
     "clients",
-    "reviews",
     "settings",
   ],
   essencial: [
@@ -113,13 +143,14 @@ export const PLAN_FEATURES: Record<PlanId | "none", FeatureKey[]> = {
     "services",
     "clients",
     "automations", // only reminders, no campaigns
+    "support-chat",
+    "payment-chat",
     "finance",
     "public-page",
     "products",
-    "coupons",
     "reports",
-    "reviews",
     "settings",
+    "cash-register",
   ],
   enterprise: [
     "dashboard",
@@ -140,5 +171,16 @@ export const PLAN_FEATURES: Record<PlanId | "none", FeatureKey[]> = {
     "commission-report",
     "team-performance",
     "google-calendar",
+    "support-chat",
+    "payment-chat",
+    "ai-assistant",
+    "cash-register",
   ],
+};
+
+// Settings sections accessible per plan
+export const SETTINGS_SECTIONS: Record<PlanId | "none", string[]> = {
+  none: ["hours", "subscription", "security"],
+  essencial: ["hours", "subscription", "whatsapp", "security"],
+  enterprise: ["system", "hours", "payment", "subscription", "whatsapp", "google-calendar", "security"],
 };

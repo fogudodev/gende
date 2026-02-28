@@ -27,6 +27,10 @@ const ROUTE_TO_FEATURE: Record<string, FeatureKey> = {
   "/payment-settings": "payment-settings",
   "/commission-report": "commission-report",
   "/team-performance": "team-performance",
+  "/support-chat": "support-chat",
+  "/payment-chat": "payment-chat",
+  "/ai-assistant": "ai-assistant",
+  "/cash-register": "cash-register",
 };
 
 const ROUTE_TO_LABEL: Record<string, string> = {
@@ -41,6 +45,10 @@ const ROUTE_TO_LABEL: Record<string, string> = {
   "/payment-settings": "Pagamento",
   "/commission-report": "Comissões",
   "/team-performance": "Desempenho",
+  "/support-chat": "Chat Suporte",
+  "/payment-chat": "Chat Pagamento",
+  "/ai-assistant": "Assistente IA",
+  "/cash-register": "Caixa",
 };
 
 // Routes accessible by reception employees

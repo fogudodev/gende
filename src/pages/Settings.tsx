@@ -25,7 +25,8 @@ import { useWhatsAppInstance, useWhatsAppAutomations, useToggleAutomation } from
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { STRIPE_PLANS } from "@/lib/stripe-plans";
+import { STRIPE_PLANS, SETTINGS_SECTIONS } from "@/lib/stripe-plans";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -47,8 +48,9 @@ const COLOR_PRESETS = [
 
 const Settings = () => {
   const [activeSection, setActiveSection] = useState<Section | null>(null);
+  const { currentPlan } = useFeatureAccess();
 
-  const sections = [
+  const allSections = [
     { id: "system" as Section, icon: Palette, title: "Aparência do Sistema", description: "Logo, nome e cores do painel" },
     { id: "hours" as Section, icon: Clock, title: "Horários de Trabalho", description: "Defina seus dias e horários de atendimento" },
     { id: "payment" as Section, icon: QrCode, title: "Pagamentos", description: "Configure métodos de pagamento e sinal" },
@@ -57,6 +59,9 @@ const Settings = () => {
     { id: "google-calendar" as Section, icon: CalendarIcon, title: "Google Calendar", description: "Sincronize sua agenda com o Google" },
     { id: "security" as Section, icon: Shield, title: "Segurança", description: "Alteração de senha" },
   ];
+
+  const allowedSections = SETTINGS_SECTIONS[currentPlan] || SETTINGS_SECTIONS.none;
+  const sections = allSections.filter((s) => allowedSections.includes(s.id));
 
   return (
     <DashboardLayout title="Configurações" subtitle="Gerencie sua conta">

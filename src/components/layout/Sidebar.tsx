@@ -176,11 +176,11 @@ const communicationGroup: NavGroup = {
   type: "group",
   icon: CommunicationIcon,
   label: "Comunicação",
-  featureKey: "settings",
+  featureKey: "dashboard", // Group always visible, children individually checked
   children: [
-    { icon: PaymentChatIcon, label: "Chat Pagamento", path: "/payment-chat", featureKey: "settings" },
-    { icon: SupportChatIcon, label: "Chat Suporte", path: "/support-chat", featureKey: "settings" },
-    { icon: AIIcon, label: "Assistente IA", path: "/ai-assistant", featureKey: "settings" },
+    { icon: PaymentChatIcon, label: "Chat Pagamento", path: "/payment-chat", featureKey: "payment-chat" },
+    { icon: SupportChatIcon, label: "Chat Suporte", path: "/support-chat", featureKey: "support-chat" },
+    { icon: AIIcon, label: "Assistente IA", path: "/ai-assistant", featureKey: "ai-assistant" },
   ],
 };
 
