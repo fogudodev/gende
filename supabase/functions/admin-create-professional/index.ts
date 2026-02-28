@@ -144,12 +144,12 @@ serve(async (req) => {
         "post_service", "post_sale_review", "maintenance_reminder", "reactivation_30d"
       ];
       for (const trigger of defaultTriggers) {
-        await supabase.from("whatsapp_automations").insert({
+        await supabase.from("whatsapp_automations").upsert({
           professional_id: professionalId,
           trigger_type: trigger,
           message_template: "",
           is_active: trigger === "booking_created" || trigger === "reminder_24h",
-        }).onConflict("professional_id,trigger_type" as any);
+        }, { onConflict: "professional_id,trigger_type" });
       }
     }
 
