@@ -6,6 +6,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+/** Normaliza telefone adicionando DDI 55 se necessário */
+function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("55") && digits.length >= 12 && digits.length <= 13) return digits;
+  if (digits.length >= 10 && digits.length <= 11) return "55" + digits;
+  return digits;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -172,13 +180,14 @@ serve(async (req) => {
           const displayName = businessName || name;
           const msg = `🎉 *Bem-vindo(a) ao Gende!*\n\nOlá ${name}! Sua conta foi criada com sucesso.\n\n📧 *Email:* ${email}\n🔑 *Senha:* ${password}\n\n🔗 Acesse: https://gende.io\n\nAltere sua senha após o primeiro acesso.\n\nQualquer dúvida, estamos à disposição! 😊`;
 
+          const normalizedPhone = normalizePhone(phone);
           const sendRes = await fetch(`${evolutionUrl}/message/sendText/${inst.instance_name}`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               apikey: evolutionKey,
             },
-            body: JSON.stringify({ number: phone, text: msg }),
+            body: JSON.stringify({ number: normalizedPhone, text: msg }),
           });
 
           whatsappSent = sendRes.ok;
@@ -186,7 +195,7 @@ serve(async (req) => {
           // Log the message
           await supabase.from("whatsapp_logs").insert({
             professional_id: inst.professional_id,
-            recipient_phone: phone,
+            recipient_phone: normalizedPhone,
             message_content: msg,
             status: sendRes.ok ? "sent" : "failed",
             sent_at: sendRes.ok ? new Date().toISOString() : null,
