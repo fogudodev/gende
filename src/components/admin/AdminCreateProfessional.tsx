@@ -47,9 +47,17 @@ const AdminCreateProfessional = ({ open, onClose, onCreated }: Props) => {
         body: { name, email, phone, password, accountType, businessName },
       });
 
-      if (res.error) throw new Error(res.error.message);
+      if (res.error) {
+        // Extract actual error message from edge function response
+        let errorMsg = res.error.message;
+        try {
+          const errorBody = await res.error.context?.json?.();
+          if (errorBody?.error) errorMsg = errorBody.error;
+        } catch {}
+        throw new Error(errorMsg);
+      }
       const result = res.data;
-      if (result.error) throw new Error(result.error);
+      if (result?.error) throw new Error(result.error);
 
       const whatsappMsg = result.whatsappSent
         ? " Credenciais enviadas via WhatsApp! 📱"
