@@ -248,6 +248,7 @@ const PlanRenewalModal = ({ open, onOpenChange }: PlanRenewalModalProps) => {
           {(Object.entries(STRIPE_PLANS) as [PlanId, (typeof STRIPE_PLANS)[PlanId]][]).map(
             ([id, plan]) => {
               const isCurrent = id === currentPlan;
+              const isRecommended = id === "enterprise";
               const price = billing === "annual" ? plan.priceAnnual : plan.priceMonthly;
               const period = billing === "annual" ? "/ano" : "/mês";
 
@@ -255,18 +256,25 @@ const PlanRenewalModal = ({ open, onOpenChange }: PlanRenewalModalProps) => {
                 <div
                   key={id}
                   className={`rounded-2xl border p-4 space-y-3 transition-all ${
-                    isCurrent
+                    isRecommended
                       ? "border-accent ring-1 ring-accent/30 bg-accent/5"
                       : "border-border"
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <h3 className="font-bold text-foreground text-sm">{plan.name}</h3>
-                    {isCurrent && (
-                      <span className="text-[9px] font-bold uppercase bg-accent/10 text-accent px-1.5 py-0.5 rounded-full">
-                        Atual
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1.5">
+                      {isRecommended && (
+                        <span className="text-[9px] font-bold uppercase bg-accent/10 text-accent px-1.5 py-0.5 rounded-full">
+                          Recomendado
+                        </span>
+                      )}
+                      {isCurrent && (
+                        <span className="text-[9px] font-bold uppercase bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">
+                          Atual
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <p className="text-xl font-bold text-foreground">
                     {price}
