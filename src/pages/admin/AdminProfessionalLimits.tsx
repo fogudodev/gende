@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useProfessionalLimits, useUpsertProfessionalLimits, useDeleteProfessionalLimits } from "@/hooks/useProfessionalLimits";
 import { toast } from "sonner";
-import { Loader2, Save, Search, Trash2, Plus, UserCog } from "lucide-react";
+import { Loader2, Save, Search, Trash2, Plus, UserCog, Minus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 const AdminProfessionalLimits = () => {
@@ -15,6 +15,9 @@ const AdminProfessionalLimits = () => {
     daily_campaigns: null as number | null,
     campaign_max_contacts: null as number | null,
     campaign_min_interval_hours: null as number | null,
+    extra_reminders_purchased: 0,
+    extra_campaigns_purchased: 0,
+    extra_contacts_purchased: 0,
   });
 
   const { data: professionals, isLoading: loadingPros } = useQuery({
@@ -58,6 +61,9 @@ const AdminProfessionalLimits = () => {
       daily_campaigns: existing?.daily_campaigns ?? null,
       campaign_max_contacts: existing?.campaign_max_contacts ?? null,
       campaign_min_interval_hours: existing?.campaign_min_interval_hours ?? null,
+      extra_reminders_purchased: existing?.extra_reminders_purchased ?? 0,
+      extra_campaigns_purchased: existing?.extra_campaigns_purchased ?? 0,
+      extra_contacts_purchased: existing?.extra_contacts_purchased ?? 0,
     });
   };
 
@@ -165,49 +171,111 @@ const AdminProfessionalLimits = () => {
                 </div>
 
                 {isEditing && (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
-                    {[
-                      { key: "daily_reminders", label: "Lembretes/dia" },
-                      { key: "daily_campaigns", label: "Campanhas/dia" },
-                      { key: "campaign_max_contacts", label: "Contatos/campanha" },
-                      { key: "campaign_min_interval_hours", label: "Intervalo (horas)" },
-                    ].map(({ key, label }) => (
-                      <div key={key}>
-                        <label className="text-xs text-muted-foreground block mb-1">{label}</label>
-                        <input
-                          type="number"
-                          value={(form as any)[key] ?? ""}
-                          onChange={(e) => {
-                            const val = e.target.value === "" ? null : parseInt(e.target.value);
-                            setForm((prev) => ({ ...prev, [key]: val }));
-                          }}
-                          placeholder="Padrão do plano"
-                          className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 placeholder:text-muted-foreground/50"
-                        />
+                  <div className="space-y-4 pt-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      {[
+                        { key: "daily_reminders", label: "Lembretes/dia" },
+                        { key: "daily_campaigns", label: "Campanhas/dia" },
+                        { key: "campaign_max_contacts", label: "Contatos/campanha" },
+                        { key: "campaign_min_interval_hours", label: "Intervalo (horas)" },
+                      ].map(({ key, label }) => (
+                        <div key={key}>
+                          <label className="text-xs text-muted-foreground block mb-1">{label}</label>
+                          <input
+                            type="number"
+                            value={(form as any)[key] ?? ""}
+                            onChange={(e) => {
+                              const val = e.target.value === "" ? null : parseInt(e.target.value);
+                              setForm((prev) => ({ ...prev, [key]: val }));
+                            }}
+                            placeholder="Padrão do plano"
+                            className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 placeholder:text-muted-foreground/50"
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Add-on purchases */}
+                    <div className="border-t border-border pt-3">
+                      <p className="text-xs font-semibold text-accent mb-3">Add-ons Comprados</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {[
+                          { key: "extra_reminders_purchased", label: "Lembretes extras", price: "R$ 0,70/un" },
+                          { key: "extra_campaigns_purchased", label: "Campanhas extras", price: "R$ 1,20/un" },
+                          { key: "extra_contacts_purchased", label: "Contatos extras", price: "R$ 0,50/un" },
+                        ].map(({ key, label, price }) => (
+                          <div key={key}>
+                            <label className="text-xs text-muted-foreground block mb-1">{label} <span className="text-accent">({price})</span></label>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setForm((prev) => ({ ...prev, [key]: Math.max(0, ((prev as any)[key] || 0) - 1) }))}
+                                className="w-8 h-8 rounded-lg bg-muted/50 border border-border flex items-center justify-center hover:bg-destructive/10 transition-colors"
+                              >
+                                <Minus size={12} />
+                              </button>
+                              <span className="text-foreground font-bold text-sm w-8 text-center">{(form as any)[key] || 0}</span>
+                              <button
+                                type="button"
+                                onClick={() => setForm((prev) => ({ ...prev, [key]: ((prev as any)[key] || 0) + 1 }))}
+                                className="w-8 h-8 rounded-lg bg-muted/50 border border-border flex items-center justify-center hover:bg-accent/10 transition-colors"
+                              >
+                                <Plus size={12} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
                   </div>
                 )}
 
                 {!isEditing && hasOverride && (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-1">
-                    {[
-                      { key: "daily_reminders", label: "Lembretes/dia" },
-                      { key: "daily_campaigns", label: "Campanhas/dia" },
-                      { key: "campaign_max_contacts", label: "Contatos/campanha" },
-                      { key: "campaign_min_interval_hours", label: "Intervalo (horas)" },
-                    ].map(({ key, label }) => (
-                      <div key={key}>
-                        <label className="text-xs text-muted-foreground block mb-1">{label}</label>
-                        <p className="text-foreground font-semibold text-sm">
-                          {override[key] === null
-                            ? "—"
-                            : override[key] === -1
-                            ? "∞"
-                            : override[key]}
-                        </p>
+                  <div className="space-y-3 pt-1">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      {[
+                        { key: "daily_reminders", label: "Lembretes/dia" },
+                        { key: "daily_campaigns", label: "Campanhas/dia" },
+                        { key: "campaign_max_contacts", label: "Contatos/campanha" },
+                        { key: "campaign_min_interval_hours", label: "Intervalo (horas)" },
+                      ].map(({ key, label }) => (
+                        <div key={key}>
+                          <label className="text-xs text-muted-foreground block mb-1">{label}</label>
+                          <p className="text-foreground font-semibold text-sm">
+                            {override[key] === null
+                              ? "—"
+                              : override[key] === -1
+                              ? "∞"
+                              : override[key]}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                    {(override.extra_reminders_purchased > 0 || override.extra_campaigns_purchased > 0 || override.extra_contacts_purchased > 0) && (
+                      <div className="border-t border-border pt-2">
+                        <p className="text-xs font-semibold text-accent mb-2">Add-ons</p>
+                        <div className="grid grid-cols-3 gap-4">
+                          {override.extra_reminders_purchased > 0 && (
+                            <div>
+                              <label className="text-xs text-muted-foreground block mb-0.5">Lembretes extras</label>
+                              <p className="text-foreground font-semibold text-sm">+{override.extra_reminders_purchased}</p>
+                            </div>
+                          )}
+                          {override.extra_campaigns_purchased > 0 && (
+                            <div>
+                              <label className="text-xs text-muted-foreground block mb-0.5">Campanhas extras</label>
+                              <p className="text-foreground font-semibold text-sm">+{override.extra_campaigns_purchased}</p>
+                            </div>
+                          )}
+                          {override.extra_contacts_purchased > 0 && (
+                            <div>
+                              <label className="text-xs text-muted-foreground block mb-0.5">Contatos extras</label>
+                              <p className="text-foreground font-semibold text-sm">+{override.extra_contacts_purchased}</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
               </div>

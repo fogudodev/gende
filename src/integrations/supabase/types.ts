@@ -992,6 +992,9 @@ export type Database = {
           created_at: string
           daily_campaigns: number | null
           daily_reminders: number | null
+          extra_campaigns_purchased: number
+          extra_contacts_purchased: number
+          extra_reminders_purchased: number
           id: string
           professional_id: string
           updated_at: string
@@ -1002,6 +1005,9 @@ export type Database = {
           created_at?: string
           daily_campaigns?: number | null
           daily_reminders?: number | null
+          extra_campaigns_purchased?: number
+          extra_contacts_purchased?: number
+          extra_reminders_purchased?: number
           id?: string
           professional_id: string
           updated_at?: string
@@ -1012,6 +1018,9 @@ export type Database = {
           created_at?: string
           daily_campaigns?: number | null
           daily_reminders?: number | null
+          extra_campaigns_purchased?: number
+          extra_contacts_purchased?: number
+          extra_reminders_purchased?: number
           id?: string
           professional_id?: string
           updated_at?: string
