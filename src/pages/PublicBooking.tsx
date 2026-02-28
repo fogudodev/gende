@@ -199,7 +199,7 @@ const PublicBooking = () => {
       if (error || !prof) { setNotFound(true); setLoading(false); return; }
       setProfessional(prof);
 
-      const [svcRes, empRes, payRes, empSvcRes, reviewRes] = await Promise.all([
+      const [svcRes, empRes, payRes, empSvcRes, reviewRes, subRes] = await Promise.all([
         supabase.from("services").select("*").eq("professional_id", prof.id).eq("active", true).order("sort_order", { ascending: true }),
         prof.account_type === "salon"
           ? supabase.from("salon_employees").select("id, name, specialty, avatar_url").eq("salon_id", prof.id).eq("is_active", true).order("name")
@@ -209,10 +209,17 @@ const PublicBooking = () => {
           ? supabase.from("employee_services").select("employee_id, service_id")
           : Promise.resolve({ data: [] }),
         supabase.from("reviews").select("rating").eq("professional_id", prof.id).eq("is_public", true),
+        supabase.from("subscriptions").select("plan_id").eq("professional_id", prof.id).eq("status", "active").maybeSingle(),
       ]);
       setServices(svcRes.data || []);
       setEmployees(empRes.data || []);
-      setPaymentConfig(payRes.data || null);
+      // Signal payment is Enterprise-only: disable for other plans
+      const isEnterprise = subRes.data?.plan_id === "enterprise" || subRes.data?.plan_id === "pro";
+      const payConfig = payRes.data || null;
+      if (payConfig && !isEnterprise) {
+        payConfig.signal_enabled = false;
+      }
+      setPaymentConfig(payConfig);
       setEmployeeServiceMap(empSvcRes.data || []);
       if (reviewRes.data && reviewRes.data.length > 0) {
         const avg = reviewRes.data.reduce((sum, r) => sum + r.rating, 0) / reviewRes.data.length;
