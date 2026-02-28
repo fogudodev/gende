@@ -87,20 +87,20 @@ export const ADDON_PRODUCTS = {
   extraReminder: {
     name: "Lembrete Extra",
     price: 0.70, // R$0,70 per extra reminder
-    priceId: "", // Will be set after Stripe creation
-    productId: "", // Will be set after Stripe creation
+    priceId: "price_1T5d1lFjVGP9lWs0d7ARdW6B",
+    productId: "prod_U3kWglGRN2xSfd",
   },
   extraCampaign: {
     name: "Campanha Extra",
     price: 1.20, // R$1,20 per extra campaign
-    priceId: "",
-    productId: "",
+    priceId: "price_1T5d4XFjVGP9lWs0FAtwPDL7",
+    productId: "prod_U3kZfa16Fp7wB0",
   },
   extraCampaignContact: {
     name: "Contato Extra em Campanha",
     price: 0.50, // R$0,50 per extra contact
-    priceId: "",
-    productId: "",
+    priceId: "price_1T5d53FjVGP9lWs0ssuTLWHj",
+    productId: "prod_U3ka9BK26LKyO1",
   },
 } as const;
 
