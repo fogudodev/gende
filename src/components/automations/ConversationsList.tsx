@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { MessageCircle, Clock, CheckCircle2, XCircle, Send, Loader2, ChevronDown, ChevronUp, User } from "lucide-react";
+import { MessageCircle, Clock, CheckCircle2, XCircle, Send, Loader2, ChevronDown, ChevronUp, User, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -54,6 +54,7 @@ const ConversationsList = () => {
   const [filter, setFilter] = useState("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [sendingFollowUp, setSendingFollowUp] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const { data: conversations, isLoading } = useConversations(filter);
   const { data: professional } = useProfessional();
   const qc = useQueryClient();
@@ -90,6 +91,24 @@ const ConversationsList = () => {
       toast.error("Erro ao enviar follow-up");
     } finally {
       setSendingFollowUp(null);
+    }
+  };
+
+  const handleDelete = async (convId: string) => {
+    setDeletingId(convId);
+    try {
+      const { error } = await supabase
+        .from("whatsapp_conversations")
+        .delete()
+        .eq("id", convId);
+      if (error) throw error;
+      toast.success("Conversa excluída!");
+      qc.invalidateQueries({ queryKey: ["whatsapp-conversations"] });
+      if (expandedId === convId) setExpandedId(null);
+    } catch {
+      toast.error("Erro ao excluir conversa");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -203,15 +222,15 @@ const ConversationsList = () => {
                       ))}
                     </div>
 
-                    {/* Follow-up button for abandoned conversations */}
+                    {/* Actions for abandoned/expired conversations */}
                     {isAbandoned(conv) && (
-                      <div className="p-3 border-t border-border">
+                      <div className="p-3 border-t border-border flex gap-2">
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => handleSendFollowUp(conv)}
                           disabled={sendingFollowUp === conv.id}
-                          className="w-full h-8 text-xs"
+                          className="flex-1 h-8 text-xs"
                         >
                           {sendingFollowUp === conv.id ? (
                             <Loader2 size={12} className="animate-spin mr-1.5" />
@@ -220,6 +239,21 @@ const ConversationsList = () => {
                           )}
                           Enviar follow-up automático
                         </Button>
+                        {conv.status === "expired" && (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDelete(conv.id)}
+                            disabled={deletingId === conv.id}
+                            className="h-8 text-xs"
+                          >
+                            {deletingId === conv.id ? (
+                              <Loader2 size={12} className="animate-spin" />
+                            ) : (
+                              <Trash2 size={12} />
+                            )}
+                          </Button>
+                        )}
                       </div>
                     )}
                   </div>
