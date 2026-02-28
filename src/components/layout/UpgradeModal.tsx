@@ -73,7 +73,7 @@ const UpgradeModal = ({ open, onOpenChange, requiredPlan, featureName }: Upgrade
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
           {(Object.entries(STRIPE_PLANS) as [PlanId, typeof STRIPE_PLANS[PlanId]][]).map(([id, plan]) => {
-            const isRecommended = id === requiredPlan;
+            const isRecommended = id === "enterprise";
             const price = billing === "annual" ? plan.priceAnnual : plan.priceMonthly;
             const period = billing === "annual" ? "/ano" : "/mês";
 
