@@ -178,7 +178,7 @@ serve(async (req) => {
           const evolutionKey = Deno.env.get("EVOLUTION_API_KEY") || "";
 
           const displayName = businessName || name;
-          const msg = `🎉 *Bem-vindo(a) ao Gende!*\n\nOlá ${name}! Sua conta foi criada com sucesso.\n\n📧 *Email:* ${email}\n🔑 *Senha:* ${password}\n\n🔗 Acesse: https://gende.io\n\nAltere sua senha após o primeiro acesso.\n\nQualquer dúvida, estamos à disposição! 😊`;
+          const msg = `🎉 *Bem-vindo(a) ao Gende!*\n\nOlá ${name}! Sua conta foi criada com sucesso.\n\n📧 *Email:* ${email}\n🔑 *Senha:* ${password}\n\n🔗 Acesse: https://app.gende.io/login\n\nAltere sua senha após o primeiro acesso.\n\nQualquer dúvida, estamos à disposição! 😊`;
 
           const normalizedPhone = normalizePhone(phone);
           const sendRes = await fetch(`${evolutionUrl}/message/sendText/${inst.instance_name}`, {
