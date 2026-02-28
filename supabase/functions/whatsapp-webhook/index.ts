@@ -454,7 +454,27 @@ Por favor, entre em contato diretamente conosco. 😊`;
       context = { client_phone: clientPhone };
       conversationMessages = [{ role: "user", content: clientMessage }];
 
-      // Insert new conversation
+      // Build welcome message using professional's custom welcome_message or default
+      const profName = professional.business_name || professional.name;
+      let welcomeText = professional.welcome_message || `Olá! 👋 Bem-vindo(a) ao *${profName}*! Ficamos felizes em atendê-lo(a)! 😊`;
+      // Replace variables in welcome message
+      welcomeText = welcomeText
+        .replace(/\{nome\}/g, "")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+
+      // Consolidate welcome + link into ONE message
+      if (bookingLink) {
+        welcomeText += `\n\n📱 Agende também pela nossa página: ${bookingLink}`;
+      }
+      welcomeText += `\n\nSe quiser continuar por aqui, é só me dizer o que gostaria. 😊`;
+
+      await sendWhatsAppMessage(instanceName, clientPhone, welcomeText);
+
+      // Save welcome as assistant message in conversation history
+      conversationMessages.push({ role: "assistant", content: welcomeText });
+
+      // Insert new conversation WITH the assistant welcome message
       const { data: newConv } = await supabase
         .from("whatsapp_conversations")
         .insert({
@@ -468,33 +488,6 @@ Por favor, entre em contato diretamente conosco. 😊`;
         .single();
 
       conversation = newConv;
-
-      // Send welcome message first
-      const profName = professional.business_name || professional.name;
-      const welcomeMsg = `Olá! 👋 Bem-vindo(a) ao *${profName}*!
-
-Ficamos felizes em atendê-lo(a)! 😊`;
-      await sendWhatsAppMessage(instanceName, clientPhone, welcomeMsg);
-
-      // Small delay between messages
-      await new Promise(r => setTimeout(r, 1000));
-
-      // Send link message
-      if (bookingLink) {
-        const linkMsg = `📱 Você também pode agendar pela nossa página:
-${bookingLink}`;
-        await sendWhatsAppMessage(instanceName, clientPhone, linkMsg);
-        await new Promise(r => setTimeout(r, 1000));
-      }
-
-      // Send booking offer
-      const offerMsg = `✨ Ou se preferir, posso fazer seu agendamento por aqui mesmo! É só me dizer qual serviço deseja e eu cuido de tudo para você.
-
-Nossos serviços:
-${services.map((s, i) => `${i + 1}. *${s.name}* - R$ ${Number(s.price).toFixed(2)} (${s.duration_minutes} min)`).join("\n")}
-
-Qual serviço te interessa? 😊`;
-      await sendWhatsAppMessage(instanceName, clientPhone, offerMsg);
 
     } else {
       // Existing conversation - add message and continue AI flow
