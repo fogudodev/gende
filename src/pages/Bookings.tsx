@@ -14,6 +14,7 @@ import {
 } from "@/hooks/useBookings";
 import { useServices } from "@/hooks/useServices";
 import { useBlockedTimes } from "@/hooks/useBlockedTimes";
+import { useWorkingHours } from "@/hooks/useWorkingHours";
 import { useCommissions } from "@/hooks/useCommissions";
 import { useSalonEmployees } from "@/hooks/useSalonEmployees";
 import { useProfessional } from "@/hooks/useProfessional";
@@ -79,6 +80,7 @@ const Bookings = () => {
   const { data: monthBookings, isLoading: monthLoading } = useBookingsMonth(selectedDate);
   const { data: services } = useServices();
   const { data: blockedTimes } = useBlockedTimes();
+  const { data: workingHours } = useWorkingHours();
   const { data: commissions } = useCommissions();
   const { data: salonEmployees } = useSalonEmployees();
   const { data: professional } = useProfessional();
@@ -182,8 +184,14 @@ const Bookings = () => {
     if (formEmployee) {
       bookingsForDate = bookingsForDate.filter(b => b.employee_id === formEmployee);
     }
-    return getAvailableSlots(bookingsForDate, selectedService.duration_minutes, 7, 21, 10, blockedTimes || [], formDate);
-  }, [selectedService, dayBookings, weekBookings, monthBookings, formDate, viewMode, blockedTimes, formEmployee]);
+    // Get working hours for the selected day
+    const dayOfWeek = formDate.getDay(); // 0=Sunday, 1=Monday, etc.
+    const wh = workingHours?.find(h => h.day_of_week === dayOfWeek && h.is_active);
+    if (!wh) return []; // Professional doesn't work this day
+    const startHour = parseInt(wh.start_time.split(":")[0], 10);
+    const endHour = parseInt(wh.end_time.split(":")[0], 10);
+    return getAvailableSlots(bookingsForDate, selectedService.duration_minutes, startHour, endHour, 10, blockedTimes || [], formDate);
+  }, [selectedService, dayBookings, weekBookings, monthBookings, formDate, viewMode, blockedTimes, formEmployee, workingHours]);
 
   const resetForm = () => {
     setFormService("");
@@ -449,6 +457,7 @@ const Bookings = () => {
           onSlotClick={slot => openCreate(slot)}
           onBookingClick={setDetailBooking}
           commissionBookingIds={bookingIdsWithCommission}
+          workingHours={workingHours || []}
         />
       ) : viewMode === "week" ? (
         <WeekView
@@ -798,16 +807,21 @@ const BookingPaymentBar = ({ bookingId, price }: { bookingId: string; price: num
   );
 };
 
-const DayView = ({ bookings, blockedTimes, selectedDate, onSlotClick, onBookingClick, commissionBookingIds }: {
-  bookings: any[]; blockedTimes: any[]; selectedDate: Date; onSlotClick: (slot: string) => void; onBookingClick: (b: any) => void; commissionBookingIds: Set<string>;
+const DayView = ({ bookings, blockedTimes, selectedDate, onSlotClick, onBookingClick, commissionBookingIds, workingHours }: {
+  bookings: any[]; blockedTimes: any[]; selectedDate: Date; onSlotClick: (slot: string) => void; onBookingClick: (b: any) => void; commissionBookingIds: Set<string>; workingHours: any[];
 }) => {
-  const startHour = DAY_HOURS[0]; // 7
+  const dayOfWeek = selectedDate.getDay();
+  const wh = workingHours.find(h => h.day_of_week === dayOfWeek && h.is_active);
+  const whStartHour = wh ? parseInt(wh.start_time.split(":")[0], 10) : 7;
+  const whEndHour = wh ? parseInt(wh.end_time.split(":")[0], 10) : 21;
+  const dayHours = Array.from({ length: whEndHour - whStartHour + 1 }, (_, i) => i + whStartHour);
+  const startHour = dayHours[0];
 
   return (
     <div className="glass-card rounded-2xl p-4 sm:p-6 overflow-hidden">
       <div className="relative" style={{ marginLeft: "56px" }}>
         {/* Hour labels + grid lines */}
-        {DAY_HOURS.map(hour => {
+        {dayHours.map(hour => {
           const hourStr = String(hour).padStart(2, "0");
           const top = (hour - startHour) * HOUR_HEIGHT;
           const hourBlocked = getBlockedForHour(blockedTimes, selectedDate, hour);
@@ -893,7 +907,7 @@ const DayView = ({ bookings, blockedTimes, selectedDate, onSlotClick, onBookingC
         })}
 
         {/* Spacer to define total height */}
-        <div style={{ height: `${DAY_HOURS.length * HOUR_HEIGHT}px` }} />
+        <div style={{ height: `${dayHours.length * HOUR_HEIGHT}px` }} />
       </div>
       {!bookings.length && !blockedTimes.length && (
         <p className="text-center text-muted-foreground text-sm mt-4 pb-2">Nenhum agendamento para este dia</p>
