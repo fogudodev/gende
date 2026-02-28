@@ -213,6 +213,22 @@ function buildSystemPrompt(
 ): string {
   const profName = professional.business_name || professional.name || "Profissional";
   
+  // Get current date in São Paulo timezone
+  const nowSP = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    weekday: "long",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+
+  const todayISO = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+
   let servicesText = services.map((s: any, i: number) => 
     `${i + 1}. ${s.name} - R$ ${Number(s.price).toFixed(2)} (${s.duration_minutes} min)${s.description ? ` - ${s.description}` : ""}`
   ).join("\n");
@@ -227,6 +243,10 @@ function buildSystemPrompt(
   }
 
   return `Você é um assistente de agendamento virtual do "${profName}". Seja simpático, objetivo e profissional. Fale em português brasileiro.
+
+DATA E HORA ATUAL: ${nowSP} (${todayISO})
+- "Hoje" = ${todayISO}
+- NUNCA invente ou adivinhe datas. Use APENAS a data atual acima como referência.
 
 REGRAS IMPORTANTES:
 - Você APENAS agenda serviços. Não invente serviços, preços ou horários.
@@ -641,16 +661,28 @@ Por favor, tente outro horário ou data. 😊`;
           updatedContext.selected_date = `${year}-${month}-${day}`;
         }
 
-        // Check for "hoje" or "amanhã"
+        // Check for "hoje" or "amanhã" - use proper São Paulo timezone formatting
         const msgLower = clientMessage.toLowerCase();
         const now = new Date();
-        const spNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+        // Format date parts directly in São Paulo timezone to avoid UTC conversion issues
+        const spDateParts = new Intl.DateTimeFormat("en-CA", {
+          timeZone: "America/Sao_Paulo",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }).format(now); // Returns YYYY-MM-DD format
+        
         if (msgLower.includes("hoje")) {
-          updatedContext.selected_date = spNow.toISOString().split("T")[0];
+          updatedContext.selected_date = spDateParts;
         } else if (msgLower.includes("amanhã") || msgLower.includes("amanha")) {
-          const tomorrow = new Date(spNow);
-          tomorrow.setDate(tomorrow.getDate() + 1);
-          updatedContext.selected_date = tomorrow.toISOString().split("T")[0];
+          const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+          const tomorrowParts = new Intl.DateTimeFormat("en-CA", {
+            timeZone: "America/Sao_Paulo",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          }).format(tomorrow);
+          updatedContext.selected_date = tomorrowParts;
         }
 
         // If we now have service and date but didn't have slots, get them for next AI call
