@@ -255,3 +255,12 @@
 .animate-slide-in-right { animation: slideInRight 0.35s cubic-bezier(0.4,0,0.2,1) forwards; }
 .animate-slide-in-left { animation: slideInLeft 0.35s cubic-bezier(0.4,0,0.2,1) forwards; }
 .animate-fade-in-up-bloom { animation: fadeInUp 0.4s cubic-bezier(0.4,0,0.2,1) forwards; }
+
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

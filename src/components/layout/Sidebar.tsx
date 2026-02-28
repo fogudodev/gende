@@ -495,7 +495,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
           )}
         </div>
 
-        <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 py-2 px-2 space-y-0.5 overflow-y-auto scrollbar-none">
           {navEntries.map((entry) => renderEntry(entry, {}))}
 
           {isAdmin && (
