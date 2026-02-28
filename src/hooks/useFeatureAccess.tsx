@@ -9,7 +9,7 @@ export const useFeatureAccess = () => {
     if (!subscription) return "none";
     const planId = subscription.plan_id;
     // Map old plan IDs
-    if (planId === "free") return "none";
+    if (!planId || planId === "free" || planId === "none") return "none";
     if (planId === "starter" || planId === "essencial") return "essencial";
     if (planId === "pro" || planId === "enterprise") return "enterprise";
     // Check by product mapping if stored differently
