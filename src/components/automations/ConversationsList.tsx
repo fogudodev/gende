@@ -7,6 +7,16 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const statusLabels: Record<string, string> = {
   active: "Ativa",
@@ -55,6 +65,7 @@ const ConversationsList = () => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [sendingFollowUp, setSendingFollowUp] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const { data: conversations, isLoading } = useConversations(filter);
   const { data: professional } = useProfessional();
   const qc = useQueryClient();
@@ -95,6 +106,7 @@ const ConversationsList = () => {
   };
 
   const handleDelete = async (convId: string) => {
+    setConfirmDeleteId(null);
     setDeletingId(convId);
     try {
       const { error } = await supabase
@@ -243,7 +255,7 @@ const ConversationsList = () => {
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() => handleDelete(conv.id)}
+                            onClick={() => setConfirmDeleteId(conv.id)}
                             disabled={deletingId === conv.id}
                             className="h-8 text-xs"
                           >
@@ -263,6 +275,23 @@ const ConversationsList = () => {
           })}
         </div>
       )}
+
+      <AlertDialog open={!!confirmDeleteId} onOpenChange={(open) => !open && setConfirmDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir conversa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Essa ação não pode ser desfeita. A conversa será removida permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => confirmDeleteId && handleDelete(confirmDeleteId)}>
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 };
