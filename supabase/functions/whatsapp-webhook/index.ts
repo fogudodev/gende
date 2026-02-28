@@ -231,7 +231,7 @@ function buildSystemPrompt(
   }).format(new Date());
 
   let servicesText = services.map((s: any, i: number) => 
-    `${i + 1}. ${s.name} - R$ ${Number(s.price).toFixed(2)} (${s.duration_minutes} min)${s.description ? ` - ${s.description}` : ""}`
+    `${i + 1}. ${s.name} (ID: ${s.id}) - R$ ${Number(s.price).toFixed(2)} (${s.duration_minutes} min)${s.description ? ` - ${s.description}` : ""}`
   ).join("\n");
 
   let slotsText = "";
@@ -270,7 +270,8 @@ REGRAS IMPORTANTES:
 - Guie o cliente pelo fluxo: escolher serviço → escolher data → escolher horário → confirmar com nome e telefone.
 - Se o cliente já forneceu o nome e telefone na conversa, não peça novamente.
 - Quando o cliente confirmar tudo, responda EXATAMENTE com o formato JSON abaixo na ÚLTIMA linha da sua mensagem (após a mensagem amigável):
-  |||BOOKING|||{"service_id":"<id>","date":"<YYYY-MM-DD>","time":"<HH:MM>","client_name":"<nome>","client_phone":"<telefone>"}|||END|||
+  |||BOOKING|||{"service_id":"<UUID do serviço conforme listado acima>","date":"<YYYY-MM-DD>","time":"<HH:MM>","client_name":"<nome>","client_phone":"<telefone>"}|||END|||
+- IMPORTANTE: O service_id DEVE ser o UUID completo mostrado entre parênteses (ID: ...) na lista de serviços. NUNCA use números como "1", "2", etc.
 - NUNCA invente horários. Use APENAS os horários listados abaixo.
 - Se não houver horários disponíveis para uma data, informe e sugira outra data.
 - Se o cliente quiser cancelar ou desistir, responda normalmente e não faça agendamento.
@@ -578,13 +579,16 @@ Por favor, entre em contato diretamente conosco. 😊`;
           const startTime = new Date(`${bookingData.date}T${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}:00-03:00`);
 
           // Create booking via RPC
-          const { data: bookingResult } = await supabase.rpc("create_public_booking", {
+          console.log("Attempting booking:", JSON.stringify({ professionalId, service_id: bookingData.service_id, start_time: startTime.toISOString(), client_name: bookingData.client_name }));
+          const { data: bookingResult, error: bookingError } = await supabase.rpc("create_public_booking", {
             p_professional_id: professionalId,
             p_service_id: bookingData.service_id,
             p_start_time: startTime.toISOString(),
             p_client_name: bookingData.client_name,
             p_client_phone: normalizePhone(bookingData.client_phone || clientPhone),
           });
+          if (bookingError) console.error("Booking RPC error:", bookingError);
+          console.log("Booking result:", JSON.stringify(bookingResult));
 
           if (bookingResult?.success) {
             // Send success message (the friendly part of AI response, without the JSON)
@@ -687,7 +691,7 @@ Por favor, tente outro horário ou data. 😊`;
           updatedContext.selected_date = `${year}-${month}-${day}`;
         }
 
-        // Check for "hoje" or "amanhã" - use proper São Paulo timezone formatting
+        // Check for date keywords - use proper São Paulo timezone formatting
         const msgLower = clientMessage.toLowerCase();
         const now = new Date();
         // Format date parts directly in São Paulo timezone to avoid UTC conversion issues
@@ -709,6 +713,28 @@ Por favor, tente outro horário ou data. 😊`;
             day: "2-digit",
           }).format(tomorrow);
           updatedContext.selected_date = tomorrowParts;
+        } else {
+          // Check for day-of-week names (segunda, terça, etc.)
+          const dayNameMap: Record<string, number> = {
+            "domingo": 0, "segunda": 1, "terça": 2, "terca": 2,
+            "quarta": 3, "quinta": 4, "sexta": 5, "sábado": 6, "sabado": 6,
+          };
+          for (const [dayName, targetDow] of Object.entries(dayNameMap)) {
+            if (msgLower.includes(dayName)) {
+              // Calculate the next occurrence of this day of week
+              const currentDow = new Date(spDateParts + "T12:00:00-03:00").getDay();
+              let daysAhead = targetDow - currentDow;
+              if (daysAhead <= 0) daysAhead += 7; // Always go to the NEXT occurrence
+              const targetDate = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
+              updatedContext.selected_date = new Intl.DateTimeFormat("en-CA", {
+                timeZone: "America/Sao_Paulo",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+              }).format(targetDate);
+              break;
+            }
+          }
         }
 
         // If we now have service and date but didn't have slots, get them for next AI call
@@ -738,13 +764,16 @@ Por favor, tente outro horário ou data. 😊`;
             const [h, m] = bookingData.time.split(":");
             const startTime = new Date(`${bookingData.date}T${h.padStart(2, "0")}:${m.padStart(2, "0")}:00-03:00`);
 
-            const { data: bookingResult } = await supabase.rpc("create_public_booking", {
+            console.log("Attempting booking (2nd path):", JSON.stringify({ date: bookingData.date, time: bookingData.time, service_id: bookingData.service_id }));
+            const { data: bookingResult, error: bookingError2 } = await supabase.rpc("create_public_booking", {
               p_professional_id: professionalId,
               p_service_id: bookingData.service_id,
               p_start_time: startTime.toISOString(),
               p_client_name: bookingData.client_name,
               p_client_phone: normalizePhone(bookingData.client_phone || clientPhone),
             });
+            if (bookingError2) console.error("Booking RPC error (2nd):", bookingError2);
+            console.log("Booking result (2nd):", JSON.stringify(bookingResult));
 
             const friendlyMsg = aiResponseWithSlots.replace(/\|\|\|BOOKING\|\|\|.+?\|\|\|END\|\|\|/, "").trim();
             if (bookingResult?.success) {
