@@ -84,7 +84,55 @@ serve(async (req) => {
           qr_code: data.qrcode?.base64 || "",
         }, { onConflict: "professional_id" });
 
+        // Auto-configure webhook for the new instance
+        const webhookUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/whatsapp-webhook`;
+        try {
+          await fetch(`${EVOLUTION_URL()}/webhook/set/${instanceName}`, {
+            method: "POST",
+            headers: getEvolutionHeaders(),
+            body: JSON.stringify({
+              webhook: {
+                enabled: true,
+                url: webhookUrl,
+                webhookByEvents: false,
+                webhookBase64: false,
+                events: [
+                  "MESSAGES_UPSERT",
+                  "CONNECTION_UPDATE",
+                ],
+              },
+            }),
+          });
+          console.log(`Webhook configured for instance ${instanceName}: ${webhookUrl}`);
+        } catch (whErr) {
+          console.error(`Failed to configure webhook for ${instanceName}:`, whErr);
+        }
+
         result = data;
+        break;
+      }
+
+      case "set-webhook": {
+        const { instanceName } = params;
+        const webhookUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/whatsapp-webhook`;
+        const res = await fetch(`${EVOLUTION_URL()}/webhook/set/${instanceName}`, {
+          method: "POST",
+          headers: getEvolutionHeaders(),
+          body: JSON.stringify({
+            webhook: {
+              enabled: true,
+              url: webhookUrl,
+              webhookByEvents: false,
+              webhookBase64: false,
+              events: [
+                "MESSAGES_UPSERT",
+                "CONNECTION_UPDATE",
+              ],
+            },
+          }),
+        });
+        result = await res.json();
+        console.log(`Webhook set for ${instanceName}:`, JSON.stringify(result));
         break;
       }
 
