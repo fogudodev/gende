@@ -209,7 +209,8 @@ function buildSystemPrompt(
   services: any[],
   availableSlots: any[] | null,
   context: any,
-  bookingLink: string
+  bookingLink: string,
+  workingHours?: any[] | null
 ): string {
   const profName = professional.business_name || professional.name || "Profissional";
   
@@ -242,6 +243,22 @@ function buildSystemPrompt(
       }).join(", ");
   }
 
+  const dayNames = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+  let workingHoursText = "HORÁRIOS DE FUNCIONAMENTO:\n";
+  if (workingHours && workingHours.length > 0) {
+    for (let d = 0; d < 7; d++) {
+      const wh = workingHours.find((h: any) => h.day_of_week === d);
+      if (wh && wh.is_active) {
+        workingHoursText += `- ${dayNames[d]}: ${wh.start_time.slice(0, 5)} às ${wh.end_time.slice(0, 5)}\n`;
+      } else {
+        workingHoursText += `- ${dayNames[d]}: NÃO TRABALHA (fechado)\n`;
+      }
+    }
+    workingHoursText += "\n- NUNCA ofereça horários em dias que o profissional NÃO TRABALHA.";
+  } else {
+    workingHoursText += "- Não configurado (usar padrão).";
+  }
+
   return `Você é um assistente de agendamento virtual do "${profName}". Seja simpático, objetivo e profissional. Fale em português brasileiro.
 
 DATA E HORA ATUAL: ${nowSP} (${todayISO})
@@ -262,6 +279,8 @@ REGRAS IMPORTANTES:
 
 SERVIÇOS DISPONÍVEIS:
 ${servicesText}
+
+${workingHoursText}
 
 ${slotsText}
 
@@ -452,6 +471,13 @@ serve(async (req) => {
       .eq("active", true)
       .order("sort_order", { ascending: true });
 
+    // Get working hours
+    const { data: workingHours } = await supabase
+      .from("working_hours")
+      .select("day_of_week, start_time, end_time, is_active")
+      .eq("professional_id", professionalId)
+      .order("day_of_week", { ascending: true });
+
     if (!services || services.length === 0) {
       // No services, just send welcome and link
       const welcomeMsg = `Olá! 👋 Bem-vindo(a) ao ${professional.business_name || professional.name}!
@@ -533,7 +559,7 @@ Por favor, entre em contato diretamente conosco. 😊`;
       }
 
       // Get AI response
-      const systemPrompt = buildSystemPrompt(professional, services, availableSlots, context, bookingLink);
+      const systemPrompt = buildSystemPrompt(professional, services, availableSlots, context, bookingLink, workingHours);
       
       const aiResponse = await getAIResponse(
         conversationMessages.map(m => ({ role: m.role, content: m.content })),
@@ -698,7 +724,7 @@ Por favor, tente outro horário ou data. 😊`;
           }
 
           // Re-generate AI response with slots
-          const systemPromptWithSlots = buildSystemPrompt(professional, services, availableSlots, updatedContext, bookingLink);
+          const systemPromptWithSlots = buildSystemPrompt(professional, services, availableSlots, updatedContext, bookingLink, workingHours);
           const aiResponseWithSlots = await getAIResponse(
             conversationMessages.map(m => ({ role: m.role, content: m.content })),
             systemPromptWithSlots
