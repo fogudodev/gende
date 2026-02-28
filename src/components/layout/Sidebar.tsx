@@ -286,15 +286,15 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
             opts.onNav?.();
             handleLockedClick(item.label, item.featureKey);
           }}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer ${
+          className={`w-full flex items-center gap-3 px-3 py-1.5 rounded-lg cursor-pointer ${
             opts.mobile
               ? "text-muted-foreground/50"
               : "text-sidebar-foreground/30 hover:bg-sidebar-accent/20"
-          } transition-all duration-200 group`}
+          } transition-all duration-200 group overflow-hidden`}
         >
-          <item.icon size={18} mobile={opts.mobile} className={opts.mobile ? undefined : "text-sidebar-foreground/25"} />
-          <span className="text-sm font-medium">{item.label}</span>
-          <Lock size={11} className="ml-auto opacity-40" />
+          <item.icon size={18} mobile={opts.mobile} className={`flex-shrink-0 ${opts.mobile ? "" : "text-sidebar-foreground/25"}`} />
+          {(opts.mobile || expanded) && <span className="text-sm font-medium truncate">{item.label}</span>}
+          {(opts.mobile || expanded) && <Lock size={11} className="ml-auto opacity-40 flex-shrink-0" />}
         </button>
       );
     }
@@ -321,15 +321,15 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
       <Link
         key={item.path}
         to={item.path}
-        className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${
+        className={`flex items-center gap-3 px-3 py-1.5 rounded-lg transition-all duration-200 group overflow-hidden ${
           isActive
             ? "bg-sidebar-accent text-sidebar-primary"
             : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
         }`}
       >
-        <item.icon size={18} mobile={opts.mobile} active={isActive} className={isActive ? "text-sidebar-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground"} />
-        {expanded && <span className="text-sm font-medium">{item.label}</span>}
-        {isActive && expanded && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-sidebar-primary" />}
+        <item.icon size={18} mobile={opts.mobile} active={isActive} className={`flex-shrink-0 ${isActive ? "text-sidebar-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground"}`} />
+        {expanded && <span className="text-sm font-medium truncate">{item.label}</span>}
+        {isActive && expanded && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-sidebar-primary flex-shrink-0" />}
       </Link>
     );
   };
@@ -344,7 +344,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
         <button
           key={group.label}
           onClick={() => handleLockedClick(group.label, group.featureKey)}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg w-full text-sidebar-foreground/30 cursor-pointer hover:bg-sidebar-accent/20 transition-all duration-200"
+          className="flex items-center gap-3 px-3 py-1.5 rounded-lg w-full text-sidebar-foreground/30 cursor-pointer hover:bg-sidebar-accent/20 transition-all duration-200 overflow-hidden"
         >
           <group.icon size={18} mobile={opts.mobile} className="text-sidebar-foreground/25" />
         </button>
@@ -355,7 +355,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
       <div key={group.label}>
         <button
           onClick={() => toggleGroup(group.label)}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
+          className={`w-full flex items-center gap-3 px-3 py-1.5 rounded-lg transition-all duration-200 group overflow-hidden ${
             groupActive
               ? opts.mobile
                 ? "text-accent"
