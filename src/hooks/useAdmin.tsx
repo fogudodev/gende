@@ -135,25 +135,9 @@ export const useSupportUsers = () => {
   return useQuery({
     queryKey: ["admin-support-users"],
     queryFn: async () => {
-      // Get all user_ids with support role
-      const { data: roles, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "support");
-      if (rolesError) throw rolesError;
-
-      if (!roles || roles.length === 0) return [];
-
-      const userIds = roles.map(r => r.user_id);
-
-      // Get professional profiles for these users
-      const { data: pros, error: prosError } = await supabase
-        .from("professionals")
-        .select("id, name, email, user_id, created_at")
-        .in("user_id", userIds);
-      if (prosError) throw prosError;
-
-      return pros || [];
+      const { data, error } = await supabase.rpc("get_support_users");
+      if (error) throw error;
+      return (data || []) as { user_id: string; name: string; email: string; created_at: string }[];
     },
   });
 };
