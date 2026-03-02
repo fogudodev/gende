@@ -1,13 +1,14 @@
 import AdminLayout from "@/components/layout/AdminLayout";
-import { useAllProfessionals } from "@/hooks/useAdmin";
+import { useAllProfessionals, useIsAdmin } from "@/hooks/useAdmin";
 import { useState } from "react";
-import { Search, Crown, Loader2, Edit, X, Check } from "lucide-react";
+import { Search, Crown, Loader2, Edit, X, Check, Lock, Key } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, addMonths, addYears } from "date-fns";
+import { format, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 const PLANS = [
   { id: "none", label: "Sem plano" },
@@ -24,11 +25,21 @@ const DURATIONS = [
 
 const AdminSubscribers = () => {
   const { data: professionals, isLoading } = useAllProfessionals();
+  const { data: isAdmin } = useIsAdmin();
+  const { user } = useAuth();
   const [filter, setFilter] = useState<"all" | "essencial" | "enterprise" | "none">("all");
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState("");
   const [selectedDuration, setSelectedDuration] = useState(1);
+  
+  // Auth code modal state (for support users)
+  const [showCodeModal, setShowCodeModal] = useState(false);
+  const [authCode, setAuthCode] = useState("");
+  const [codeVerified, setCodeVerified] = useState(false);
+  const [verifyingCode, setVerifyingCode] = useState(false);
+  const [pendingSaveProfId, setPendingSaveProfId] = useState<string | null>(null);
+
   const qc = useQueryClient();
 
   const allWithSub = (professionals || []).map(p => {
@@ -66,7 +77,6 @@ const AdminSubscribers = () => {
         cancel_at_period_end: false,
       };
 
-      // Set limits based on plan
       if (planId === "essencial") {
         updateData.max_clients = 100;
         updateData.max_services = 15;
@@ -93,6 +103,8 @@ const AdminSubscribers = () => {
       qc.invalidateQueries({ queryKey: ["admin-professionals"] });
       toast.success("Plano atualizado com sucesso!");
       setEditingId(null);
+      setCodeVerified(false);
+      setAuthCode("");
     },
     onError: () => toast.error("Erro ao atualizar plano"),
   });
@@ -101,10 +113,61 @@ const AdminSubscribers = () => {
     setEditingId(p.id);
     setSelectedPlan(p.sub?.plan_id || "none");
     setSelectedDuration(1);
+    setCodeVerified(false);
+    setAuthCode("");
   };
 
   const handleSave = (professionalId: string) => {
+    // Support users need code verification
+    if (!isAdmin && !codeVerified) {
+      setPendingSaveProfId(professionalId);
+      setShowCodeModal(true);
+      return;
+    }
     updatePlan.mutate({ professionalId, planId: selectedPlan, months: selectedDuration });
+  };
+
+  const verifyCode = async () => {
+    if (!authCode.trim()) {
+      toast.error("Digite o código de autorização");
+      return;
+    }
+    setVerifyingCode(true);
+    try {
+      // Check if code exists and is not used
+      const { data, error } = await supabase
+        .from("admin_auth_codes")
+        .select("*")
+        .eq("code", authCode.trim().toUpperCase())
+        .eq("is_used", false)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) {
+        toast.error("Código inválido ou já utilizado");
+        return;
+      }
+
+      // Mark code as used
+      await supabase
+        .from("admin_auth_codes")
+        .update({ is_used: true, used_at: new Date().toISOString(), used_by: user?.id })
+        .eq("id", data.id);
+
+      setCodeVerified(true);
+      setShowCodeModal(false);
+      toast.success("Código verificado com sucesso!");
+
+      // Auto-save after verification
+      if (pendingSaveProfId) {
+        updatePlan.mutate({ professionalId: pendingSaveProfId, planId: selectedPlan, months: selectedDuration });
+        setPendingSaveProfId(null);
+      }
+    } catch (err: any) {
+      toast.error("Erro ao verificar código");
+    } finally {
+      setVerifyingCode(false);
+    }
   };
 
   return (
@@ -217,12 +280,12 @@ const AdminSubscribers = () => {
                               onClick={() => handleSave(p.id)}
                               disabled={updatePlan.isPending}
                               className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
-                              title="Salvar"
+                              title={!isAdmin ? "Requer código de autorização" : "Salvar"}
                             >
-                              {updatePlan.isPending ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                              {updatePlan.isPending ? <Loader2 size={14} className="animate-spin" /> : !isAdmin ? <Lock size={14} /> : <Check size={14} />}
                             </button>
                             <button
-                              onClick={() => setEditingId(null)}
+                              onClick={() => { setEditingId(null); setCodeVerified(false); }}
                               className="p-1.5 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
                               title="Cancelar"
                             >
@@ -243,6 +306,51 @@ const AdminSubscribers = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Auth Code Modal */}
+      {showCodeModal && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center">
+          <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm" onClick={() => { setShowCodeModal(false); setPendingSaveProfId(null); }} />
+          <div className="relative glass-card rounded-2xl p-6 max-w-sm w-full mx-4 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                <Key size={20} className="text-accent" />
+              </div>
+              <div>
+                <h3 className="font-bold text-foreground">Código de Autorização</h3>
+                <p className="text-xs text-muted-foreground">Solicite ao administrador</p>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Para alterar plano ou validade, insira o código de autorização fornecido pelo administrador.
+            </p>
+            <input
+              value={authCode}
+              onChange={(e) => setAuthCode(e.target.value.toUpperCase())}
+              placeholder="XXXXXXXX"
+              maxLength={8}
+              className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border text-center text-lg font-mono font-bold text-foreground tracking-[0.3em] placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30"
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setShowCodeModal(false); setPendingSaveProfId(null); }}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={verifyCode}
+                disabled={verifyingCode || authCode.length < 4}
+                className="flex-1 px-4 py-2.5 rounded-xl gradient-accent text-accent-foreground text-sm font-semibold hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {verifyingCode ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                Verificar
+              </button>
             </div>
           </div>
         </div>

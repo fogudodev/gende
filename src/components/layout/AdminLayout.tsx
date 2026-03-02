@@ -1,6 +1,7 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsAdmin } from "@/hooks/useAdmin";
 import {
   LayoutDashboard,
   Users,
@@ -24,29 +25,22 @@ import {
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 
-const adminNavItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
-  { icon: Users, label: "Usuários", path: "/admin/users" },
-  { icon: Crown, label: "Planos", path: "/admin/plans" },
-  { icon: CreditCard, label: "Assinantes", path: "/admin/subscribers" },
-  { icon: Zap, label: "Integrações", path: "/admin/integrations" },
-  { icon: Settings, label: "Funcionalidades", path: "/admin/features" },
-  { icon: CalendarDays, label: "Agendamentos", path: "/admin/bookings" },
-  { icon: MessageSquare, label: "WhatsApp", path: "/admin/whatsapp" },
-  { icon: Sliders, label: "Limites de Plano", path: "/admin/plan-limits" },
-  { icon: UserCog, label: "Limites Individuais", path: "/admin/professional-limits" },
-  { icon: BarChart3, label: "Uso de Mensagens", path: "/admin/message-usage" },
-  { icon: Headphones, label: "Chat Suporte", path: "/admin/support-chat" },
-  { icon: Wallet, label: "Chat Pagamento", path: "/admin/payment-chat" },
-  { icon: FileText, label: "Logs", path: "/admin/logs" },
-  { icon: Star, label: "Avaliações Plataforma", path: "/admin/platform-reviews" },
-];
-
-const mobileAdminNavItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
-  { icon: Users, label: "Usuários", path: "/admin/users" },
-  { icon: CalendarDays, label: "Agenda", path: "/admin/bookings" },
-  { icon: CreditCard, label: "Assinantes", path: "/admin/subscribers" },
+const allAdminNavItems = [
+  { icon: LayoutDashboard, label: "Dashboard", path: "/admin", supportAccess: true },
+  { icon: Users, label: "Usuários", path: "/admin/users", supportAccess: true },
+  { icon: Crown, label: "Planos", path: "/admin/plans", supportAccess: true },
+  { icon: CreditCard, label: "Assinantes", path: "/admin/subscribers", supportAccess: true },
+  { icon: Zap, label: "Integrações", path: "/admin/integrations", supportAccess: true },
+  { icon: Settings, label: "Funcionalidades", path: "/admin/features", supportAccess: true },
+  { icon: CalendarDays, label: "Agendamentos", path: "/admin/bookings", supportAccess: true },
+  { icon: MessageSquare, label: "WhatsApp", path: "/admin/whatsapp", supportAccess: true },
+  { icon: Sliders, label: "Limites de Plano", path: "/admin/plan-limits", supportAccess: false },
+  { icon: UserCog, label: "Limites Individuais", path: "/admin/professional-limits", supportAccess: true },
+  { icon: BarChart3, label: "Uso de Mensagens", path: "/admin/message-usage", supportAccess: true },
+  { icon: Headphones, label: "Chat Suporte", path: "/admin/support-chat", supportAccess: true },
+  { icon: Wallet, label: "Chat Pagamento", path: "/admin/payment-chat", supportAccess: true },
+  { icon: FileText, label: "Logs", path: "/admin/logs", supportAccess: true },
+  { icon: Star, label: "Avaliações Plataforma", path: "/admin/platform-reviews", supportAccess: true },
 ];
 
 interface AdminLayoutProps {
@@ -61,6 +55,15 @@ const AdminLayout = ({ children, title, subtitle }: AdminLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { data: isAdmin } = useIsAdmin();
+
+  const adminNavItems = isAdmin
+    ? allAdminNavItems
+    : allAdminNavItems.filter(item => item.supportAccess);
+
+  const mobileAdminNavItems = adminNavItems.slice(0, 4);
+
+  const roleLabel = isAdmin ? "ADMIN" : "SUPORTE";
 
   return (
     <div className="min-h-screen bg-background">
@@ -91,7 +94,7 @@ const AdminLayout = ({ children, title, subtitle }: AdminLayoutProps) => {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <Shield size={20} className="text-accent" />
-                <span className="font-bold text-foreground">Admin Master</span>
+                <span className="font-bold text-foreground">{isAdmin ? "Admin Master" : "Suporte"}</span>
               </div>
               <button onClick={() => setMobileOpen(false)} className="p-1 text-muted-foreground">
                 <X size={20} />
@@ -139,7 +142,9 @@ const AdminLayout = ({ children, title, subtitle }: AdminLayoutProps) => {
         <div className="flex items-center gap-3 px-4 h-[64px] border-b border-sidebar-border">
           <Shield size={24} className="text-accent shrink-0" />
           {expanded && (
-            <span className="text-lg font-bold text-sidebar-foreground tracking-tight">Admin Master</span>
+            <span className="text-lg font-bold text-sidebar-foreground tracking-tight">
+              {isAdmin ? "Admin Master" : "Suporte"}
+            </span>
           )}
         </div>
 
@@ -194,7 +199,7 @@ const AdminLayout = ({ children, title, subtitle }: AdminLayoutProps) => {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-bold uppercase bg-accent/10 text-accent px-2 py-1 rounded-full">
-                ADMIN
+                {roleLabel}
               </span>
             </div>
           </div>

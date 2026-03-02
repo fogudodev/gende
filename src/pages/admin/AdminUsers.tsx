@@ -1,6 +1,6 @@
 import { useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
-import { useAllProfessionals, useSupportUsers, useRemoveSupportRole } from "@/hooks/useAdmin";
+import { useAllProfessionals, useSupportUsers, useRemoveSupportRole, useIsAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ import AdminCreateSupport from "@/components/admin/AdminCreateSupport";
 const AdminUsers = () => {
   const { data: professionals, isLoading } = useAllProfessionals();
   const { data: supportUsers, isLoading: loadingSupport } = useSupportUsers();
+  const { data: isAdmin } = useIsAdmin();
   const removeSupportRole = useRemoveSupportRole();
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -85,7 +86,6 @@ const AdminUsers = () => {
     if (!adminPassword) return;
     setImpersonating(userId);
     try {
-      // Get current admin email
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       if (!currentUser?.email) throw new Error("Não foi possível obter email do admin");
 
@@ -96,21 +96,18 @@ const AdminUsers = () => {
       if (res.error) throw new Error(res.error.message);
       if (res.data?.error) throw new Error(res.data.error);
 
-      // Save admin credentials to return later
       localStorage.setItem("admin_impersonation", JSON.stringify({
         adminEmail: currentUser.email,
         adminPassword,
         targetName: name,
       }));
 
-      // Sign out admin, then verify OTP to log in as target user
       await supabase.auth.signOut();
       const { error: verifyError } = await supabase.auth.verifyOtp({
         token_hash: res.data.token_hash,
         type: "magiclink",
       });
       if (verifyError) {
-        // If verify fails, try to restore admin session
         localStorage.removeItem("admin_impersonation");
         await supabase.auth.signInWithPassword({ email: currentUser.email, password: adminPassword });
         throw verifyError;
@@ -154,13 +151,15 @@ const AdminUsers = () => {
               <Users size={16} />
               Cadastrar Profissional
             </button>
-            <button
-              onClick={() => setShowCreateSupport(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-muted border border-border text-foreground text-sm font-semibold transition-all hover:bg-muted/80"
-            >
-              <Shield size={16} />
-              Cadastrar Suporte
-            </button>
+            {isAdmin && (
+              <button
+                onClick={() => setShowCreateSupport(true)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-muted border border-border text-foreground text-sm font-semibold transition-all hover:bg-muted/80"
+              >
+                <Shield size={16} />
+                Cadastrar Suporte
+              </button>
+            )}
           </div>
 
           <AdminCreateProfessional
@@ -243,71 +242,77 @@ const AdminUsers = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 pt-2 border-t border-border">
-                        <button
-                          onClick={() => handleImpersonate(p.user_id, p.name)}
-                          disabled={impersonating === p.user_id}
-                          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-accent/10 text-accent text-xs font-semibold hover:bg-accent/20 transition-colors disabled:opacity-50"
-                        >
-                          {impersonating === p.user_id ? (
-                            <Loader2 size={12} className="animate-spin" />
-                          ) : (
-                            <LogIn size={12} />
-                          )}
-                          Entrar como {p.name?.split(" ")[0] || "usuário"}
-                        </button>
-                      </div>
+                      {/* Impersonate - admin only */}
+                      {isAdmin && (
+                        <div className="flex items-center gap-2 pt-2 border-t border-border">
+                          <button
+                            onClick={() => handleImpersonate(p.user_id, p.name)}
+                            disabled={impersonating === p.user_id}
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-accent/10 text-accent text-xs font-semibold hover:bg-accent/20 transition-colors disabled:opacity-50"
+                          >
+                            {impersonating === p.user_id ? (
+                              <Loader2 size={12} className="animate-spin" />
+                            ) : (
+                              <LogIn size={12} />
+                            )}
+                            Entrar como {p.name?.split(" ")[0] || "usuário"}
+                          </button>
+                        </div>
+                      )}
 
-                      <div className="space-y-2 pt-2 border-t border-border">
-                        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Bloqueio</h4>
-                        {!isBlocked ? (
-                          <div className="flex items-end gap-2">
-                            <div className="flex-1">
-                              <label className="text-xs text-muted-foreground mb-1 block">Motivo (opcional)</label>
-                              <input
-                                value={blockReason}
-                                onChange={(e) => setBlockReason(e.target.value)}
-                                placeholder="Ex: Violação dos termos..."
-                                className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-destructive/30"
-                              />
-                            </div>
-                            <button
-                              onClick={() => toggleBlock(p.id, false)}
-                              className="px-4 py-2 rounded-xl bg-destructive/10 text-destructive text-xs font-semibold hover:bg-destructive/20 transition-colors flex items-center gap-1.5 shrink-0"
-                            >
-                              <Ban size={12} /> Bloquear
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <div className="text-xs text-muted-foreground">
-                                {p.blocked_reason ? <>Motivo: <span className="text-foreground">{p.blocked_reason}</span></> : "Sem motivo informado"}
+                      {/* Block/Delete - admin only */}
+                      {isAdmin && (
+                        <div className="space-y-2 pt-2 border-t border-border">
+                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Bloqueio</h4>
+                          {!isBlocked ? (
+                            <div className="flex items-end gap-2">
+                              <div className="flex-1">
+                                <label className="text-xs text-muted-foreground mb-1 block">Motivo (opcional)</label>
+                                <input
+                                  value={blockReason}
+                                  onChange={(e) => setBlockReason(e.target.value)}
+                                  placeholder="Ex: Violação dos termos..."
+                                  className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-destructive/30"
+                                />
                               </div>
                               <button
-                                onClick={() => toggleBlock(p.id, true)}
-                                className="px-4 py-2 rounded-xl bg-accent/10 text-accent text-xs font-semibold hover:bg-accent/20 transition-colors flex items-center gap-1.5"
+                                onClick={() => toggleBlock(p.id, false)}
+                                className="px-4 py-2 rounded-xl bg-destructive/10 text-destructive text-xs font-semibold hover:bg-destructive/20 transition-colors flex items-center gap-1.5 shrink-0"
                               >
-                                <UserCheck size={12} /> Desbloquear
+                                <Ban size={12} /> Bloquear
                               </button>
                             </div>
-                            <button
-                              onClick={() => handleDeleteUser(p.id, p.name)}
-                              disabled={deleting === p.id}
-                              className="w-full px-4 py-2.5 rounded-xl bg-destructive text-destructive-foreground text-xs font-semibold hover:bg-destructive/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                            >
-                              {deleting === p.id ? (
-                                <Loader2 size={14} className="animate-spin" />
-                              ) : (
-                                <>
-                                  <Trash2 size={14} />
-                                  Excluir Permanentemente
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        )}
-                      </div>
+                          ) : (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div className="text-xs text-muted-foreground">
+                                  {p.blocked_reason ? <>Motivo: <span className="text-foreground">{p.blocked_reason}</span></> : "Sem motivo informado"}
+                                </div>
+                                <button
+                                  onClick={() => toggleBlock(p.id, true)}
+                                  className="px-4 py-2 rounded-xl bg-accent/10 text-accent text-xs font-semibold hover:bg-accent/20 transition-colors flex items-center gap-1.5"
+                                >
+                                  <UserCheck size={12} /> Desbloquear
+                                </button>
+                              </div>
+                              <button
+                                onClick={() => handleDeleteUser(p.id, p.name)}
+                                disabled={deleting === p.id}
+                                className="w-full px-4 py-2.5 rounded-xl bg-destructive text-destructive-foreground text-xs font-semibold hover:bg-destructive/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                              >
+                                {deleting === p.id ? (
+                                  <Loader2 size={14} className="animate-spin" />
+                                ) : (
+                                  <>
+                                    <Trash2 size={14} />
+                                    Excluir Permanentemente
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -320,65 +325,67 @@ const AdminUsers = () => {
           )}
           <p className="text-xs text-muted-foreground">{filtered.length} profissionais</p>
 
-          {/* Support Users Section */}
-          <div className="pt-6 border-t border-border space-y-3">
-            <div className="flex items-center gap-2">
-              <Shield size={18} className="text-accent" />
-              <h3 className="text-lg font-bold text-foreground">Equipe de Suporte</h3>
-              <span className="text-xs text-muted-foreground">({supportUsers?.length || 0})</span>
-            </div>
+          {/* Support Users Section - admin only */}
+          {isAdmin && (
+            <div className="pt-6 border-t border-border space-y-3">
+              <div className="flex items-center gap-2">
+                <Shield size={18} className="text-accent" />
+                <h3 className="text-lg font-bold text-foreground">Equipe de Suporte</h3>
+                <span className="text-xs text-muted-foreground">({supportUsers?.length || 0})</span>
+              </div>
 
-            {loadingSupport ? (
-              <div className="flex items-center justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-accent" /></div>
-            ) : supportUsers && supportUsers.length > 0 ? (
-              <div className="glass-card rounded-2xl overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left p-4 text-muted-foreground font-medium">Nome</th>
-                      <th className="text-left p-4 text-muted-foreground font-medium">Email</th>
-                      <th className="text-left p-4 text-muted-foreground font-medium">Criado em</th>
-                      <th className="text-right p-4 text-muted-foreground font-medium">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {supportUsers.map((s: any) => (
-                      <tr key={s.user_id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-                        <td className="p-4">
-                          <div className="flex items-center gap-2">
-                            <Shield size={14} className="text-accent" />
-                            <span className="font-medium text-foreground">{s.name || "—"}</span>
-                          </div>
-                        </td>
-                        <td className="p-4 text-muted-foreground">{s.email}</td>
-                        <td className="p-4 text-muted-foreground">
-                          {format(new Date(s.created_at), "dd/MM/yy", { locale: ptBR })}
-                        </td>
-                        <td className="p-4 text-right">
-                          <button
-                            onClick={() => {
-                              if (confirm(`Remover papel de suporte de ${s.name}?`)) {
-                                removeSupportRole.mutate(s.user_id);
-                              }
-                            }}
-                            disabled={removeSupportRole.isPending}
-                            className="p-1.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-50"
-                            title="Remover suporte"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </td>
+              {loadingSupport ? (
+                <div className="flex items-center justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-accent" /></div>
+              ) : supportUsers && supportUsers.length > 0 ? (
+                <div className="glass-card rounded-2xl overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left p-4 text-muted-foreground font-medium">Nome</th>
+                        <th className="text-left p-4 text-muted-foreground font-medium">Email</th>
+                        <th className="text-left p-4 text-muted-foreground font-medium">Criado em</th>
+                        <th className="text-right p-4 text-muted-foreground font-medium">Ações</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="glass-card rounded-2xl p-8 text-center text-muted-foreground text-sm">
-                Nenhum agente de suporte cadastrado
-              </div>
-            )}
-          </div>
+                    </thead>
+                    <tbody>
+                      {supportUsers.map((s: any) => (
+                        <tr key={s.user_id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                          <td className="p-4">
+                            <div className="flex items-center gap-2">
+                              <Shield size={14} className="text-accent" />
+                              <span className="font-medium text-foreground">{s.name || "—"}</span>
+                            </div>
+                          </td>
+                          <td className="p-4 text-muted-foreground">{s.email}</td>
+                          <td className="p-4 text-muted-foreground">
+                            {format(new Date(s.created_at), "dd/MM/yy", { locale: ptBR })}
+                          </td>
+                          <td className="p-4 text-right">
+                            <button
+                              onClick={() => {
+                                if (confirm(`Remover papel de suporte de ${s.name}?`)) {
+                                  removeSupportRole.mutate(s.user_id);
+                                }
+                              }}
+                              disabled={removeSupportRole.isPending}
+                              className="p-1.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-50"
+                              title="Remover suporte"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="glass-card rounded-2xl p-8 text-center text-muted-foreground text-sm">
+                  Nenhum agente de suporte cadastrado
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </AdminLayout>
