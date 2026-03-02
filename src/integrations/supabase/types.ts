@@ -1640,6 +1640,15 @@ export type Database = {
       }
       get_my_professional_id: { Args: never; Returns: string }
       get_reception_salon_id: { Args: never; Returns: string }
+      get_support_users: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          name: string
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

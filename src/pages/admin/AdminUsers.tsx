@@ -343,7 +343,7 @@ const AdminUsers = () => {
                   </thead>
                   <tbody>
                     {supportUsers.map((s: any) => (
-                      <tr key={s.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                      <tr key={s.user_id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
                         <td className="p-4">
                           <div className="flex items-center gap-2">
                             <Shield size={14} className="text-accent" />
