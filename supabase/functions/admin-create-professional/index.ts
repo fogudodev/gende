@@ -59,6 +59,7 @@ serve(async (req) => {
         name,
         account_type: isSupport ? "autonomous" : (accountType || "autonomous"),
         business_name: isSupport ? "" : (businessName || ""),
+        ...(isSupport ? { is_support: true } : {}),
       },
     });
 

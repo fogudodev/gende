@@ -17,6 +17,20 @@ export const useIsAdmin = () => {
   });
 };
 
+export const useIsSupport = () => {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["is-support", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("is_support");
+      if (error) throw error;
+      return data as boolean;
+    },
+    enabled: !!user?.id,
+  });
+};
+
 export const useAllProfessionals = () => {
   return useQuery({
     queryKey: ["admin-professionals"],
