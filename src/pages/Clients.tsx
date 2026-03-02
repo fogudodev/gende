@@ -39,14 +39,22 @@ const Clients = () => {
     setDialogOpen(true);
   };
 
+  const formatPhone = (phone: string) => {
+    const digits = phone.replace(/\D/g, "");
+    if (!digits) return "";
+    if (digits.startsWith("55")) return digits;
+    return `55${digits}`;
+  };
+
   const handleSave = async () => {
     if (!form.name.trim()) { toast.error("Nome é obrigatório"); return; }
+    const payload = { ...form, phone: formatPhone(form.phone) };
     try {
       if (editing) {
-        await updateClient.mutateAsync({ id: editing.id, ...form });
+        await updateClient.mutateAsync({ id: editing.id, ...payload });
         toast.success("Cliente atualizado!");
       } else {
-        await createClient.mutateAsync(form);
+        await createClient.mutateAsync(payload);
         toast.success("Cliente criado!");
       }
       setDialogOpen(false);
@@ -106,7 +114,7 @@ const Clients = () => {
                   if (!name) continue;
                   await createClient.mutateAsync({
                     name,
-                    phone: row["Telefone"] || row["telefone"] || "",
+                    phone: formatPhone(row["Telefone"] || row["telefone"] || ""),
                     email: row["Email"] || row["email"] || "",
                     notes: row["Notas"] || row["notas"] || "",
                   });
