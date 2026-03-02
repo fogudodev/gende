@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useReceptionEmployee } from "@/hooks/useReceptionEmployee";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
-import { useIsAdmin } from "@/hooks/useAdmin";
+import { useIsAdmin, useIsSupport } from "@/hooks/useAdmin";
 import { ShieldAlert } from "lucide-react";
 import UpgradeModal from "@/components/layout/UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
@@ -62,10 +62,11 @@ const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { data: reception, isLoading: receptionLoading } = useReceptionEmployee();
   const { isLocked, requiredPlan, isLoading: planLoading } = useFeatureAccess();
   const { data: isAdmin, isLoading: adminLoading } = useIsAdmin();
+  const { data: isSupport, isLoading: supportLoading } = useIsSupport();
   const location = useLocation();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
-  if (loading || profLoading || receptionLoading || planLoading || adminLoading) {
+  if (loading || profLoading || receptionLoading || planLoading || adminLoading || supportLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-8 h-8 border-3 border-accent/30 border-t-accent rounded-full animate-spin" />
@@ -75,6 +76,11 @@ const ProtectedRoute = ({ children }: { children: ReactNode }) => {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Support user without professional profile → redirect to admin support chat
+  if (isSupport && !professional && !reception) {
+    return <Navigate to="/admin/support-chat" replace />;
   }
 
   // Reception employee flow
