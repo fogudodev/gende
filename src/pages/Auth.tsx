@@ -80,7 +80,7 @@ const Auth = () => {
               className="w-full max-w-md"
             >
               <div className="flex items-center mb-12">
-                <img src={logo} alt="Glow" className="w-12 h-12 rounded-2xl shadow-lg" />
+                <img src={logo} alt="Gende" className="w-12 h-12 rounded-2xl shadow-lg" />
               </div>
 
               <h1 className="text-4xl md:text-5xl font-bold mb-10 tracking-tight">Entrar</h1>
@@ -158,7 +158,7 @@ const Auth = () => {
               className="w-full max-w-lg"
             >
               <div className="flex items-center mb-12">
-                <img src={logo} alt="Glow" className="w-12 h-12 rounded-2xl shadow-lg" />
+                <img src={logo} alt="Gende" className="w-12 h-12 rounded-2xl shadow-lg" />
               </div>
 
               <h1 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight">Como você trabalha?</h1>
@@ -214,7 +214,7 @@ const Auth = () => {
               className="w-full max-w-md"
             >
               <div className="flex items-center mb-8">
-                <img src={logo} alt="Glow" className="w-12 h-12 rounded-2xl shadow-lg" />
+                <img src={logo} alt="Gende" className="w-12 h-12 rounded-2xl shadow-lg" />
               </div>
 
               <button

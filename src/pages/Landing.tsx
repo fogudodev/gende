@@ -153,7 +153,7 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto flex items-center justify-between px-4 h-14 sm:h-16">
           <div className="flex items-center gap-2">
             <img src={logo} alt="Logo" className="w-8 h-8 rounded-xl" />
-            <span className="font-display font-bold text-base hidden sm:block">Glow</span>
+            <span className="font-display font-bold text-base hidden sm:block">Gende</span>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={() => navigate("/auth")} className="text-xs sm:text-sm px-3">
@@ -624,9 +624,9 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-2">
             <img src={logo} alt="Logo" className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg" />
-            <span className="font-display font-bold text-sm">Glow</span>
+            <span className="font-display font-bold text-sm">Gende</span>
           </div>
-          <p className="text-[10px] sm:text-xs text-muted-foreground">© {new Date().getFullYear()} Glow. Todos os direitos reservados.</p>
+          <p className="text-[10px] sm:text-xs text-muted-foreground">© {new Date().getFullYear()} Gende. Todos os direitos reservados.</p>
         </div>
       </footer>
 

@@ -1151,7 +1151,7 @@ const WhatsAppSection = () => {
     if (!professional) return;
     setConnecting(true);
     try {
-      const instanceName = `glow_${professional.id.slice(0, 8)}`;
+      const instanceName = `gende_${professional.id.slice(0, 8)}`;
       const { data, error } = await supabase.functions.invoke("whatsapp", {
         body: { action: "create-instance", instanceName, professionalId: professional.id },
       });
