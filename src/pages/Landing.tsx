@@ -455,11 +455,11 @@ const Landing = () => {
         <div className="max-w-5xl mx-auto">
           <FadeInSection>
             <h2 className="font-display text-2xl sm:text-5xl font-extrabold text-center mb-3 sm:mb-4">
-              Quanto custa continuar{" "}
-              <span className="text-gradient">desorganizado?</span>
+              Você trabalha horas por{" "}
+              <span className="text-gradient">R$120.</span>
             </h2>
             <p className="text-center text-muted-foreground text-sm sm:text-lg mb-6 sm:mb-10">
-              Menos do que o valor de um único horário perdido.
+              Perder esse valor por desorganização deveria doer mais do que investir em solução.
             </p>
           </FadeInSection>
 
