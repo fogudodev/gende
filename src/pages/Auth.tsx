@@ -1,28 +1,67 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeOff, ArrowRight, ArrowLeft, Scissors, Building2, User } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, ArrowLeft, Phone } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-type AccountType = "autonomous" | "salon";
-type AuthMode = "login" | "signup" | "choose-type";
+type AuthMode = "login" | "signup";
 
 const Auth = () => {
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [businessName, setBusinessName] = useState("");
+  const [phone, setPhone] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<AuthMode>("login");
-  const [accountType, setAccountType] = useState<AccountType | null>(null);
+  const [mode, setMode] = useState<AuthMode>(() => {
+    return searchParams.get("mode") === "signup" ? "signup" : "login";
+  });
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const m = searchParams.get("mode");
+    if (m === "signup") setMode("signup");
+  }, [searchParams]);
+
+  const formatPhone = (value: string) => {
+    // Remove tudo que não é número
+    const digits = value.replace(/\D/g, "");
+    // Limita a 13 dígitos (55 + 2 DDD + 9 número)
+    return digits.slice(0, 13);
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, "");
+    // Se o usuário apagar tudo, mantém vazio
+    if (raw === "") {
+      setPhone("");
+      return;
+    }
+    // Garante que começa com 55
+    let formatted = raw;
+    if (!formatted.startsWith("55")) {
+      formatted = "55" + formatted;
+    }
+    setPhone(formatPhone(formatted));
+  };
+
+  const displayPhone = (value: string) => {
+    if (!value) return "";
+    // Formata: 55 (XX) XXXXX-XXXX
+    const d = value;
+    if (d.length <= 2) return d;
+    if (d.length <= 4) return `${d.slice(0, 2)} (${d.slice(2)}`;
+    if (d.length <= 9) return `${d.slice(0, 2)} (${d.slice(2, 4)}) ${d.slice(4)}`;
+    return `${d.slice(0, 2)} (${d.slice(2, 4)}) ${d.slice(4, 9)}-${d.slice(9)}`;
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,9 +77,12 @@ const Auth = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!accountType) return;
+    if (phone.length < 12) {
+      toast.error("Informe um número de WhatsApp válido com DDD");
+      return;
+    }
     setLoading(true);
-    const { error } = await signUp(email, password, name, accountType, businessName || undefined);
+    const { error } = await signUp(email, password, name, "salon", businessName || undefined, phone || undefined);
     if (error) {
       toast.error(error.message);
     } else {
@@ -50,10 +92,7 @@ const Auth = () => {
     setLoading(false);
   };
 
-  const handleChooseType = (type: AccountType) => {
-    setAccountType(type);
-    setMode("signup");
-  };
+  const inputClass = "bg-card border-border text-foreground placeholder:text-muted-foreground rounded-full py-3 px-6 text-base h-auto focus:border-accent focus:ring-accent transition-all duration-300 hover:bg-secondary";
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col relative overflow-hidden">
@@ -94,7 +133,7 @@ const Auth = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="seu@email.com"
                     required
-                    className="bg-card border-border text-foreground placeholder:text-muted-foreground rounded-full py-3 md:py-4 px-6 md:px-8 text-base md:text-lg h-auto focus:border-accent focus:ring-accent transition-all duration-300 hover:bg-secondary"
+                    className={`${inputClass} md:py-4 md:px-8 md:text-lg`}
                   />
                 </div>
 
@@ -108,7 +147,7 @@ const Auth = () => {
                       placeholder="••••••••"
                       required
                       minLength={6}
-                      className="bg-card border-border text-foreground placeholder:text-muted-foreground rounded-full py-3 md:py-4 px-6 md:px-8 text-base md:text-lg h-auto focus:border-accent focus:ring-accent transition-all duration-300 hover:bg-secondary pr-14"
+                      className={`${inputClass} md:py-4 md:px-8 md:text-lg pr-14`}
                     />
                     <button
                       type="button"
@@ -139,66 +178,10 @@ const Auth = () => {
               <p className="text-center text-muted-foreground mt-8 text-sm">
                 Ainda não tem conta?{" "}
                 <button
-                  onClick={() => setMode("choose-type")}
+                  onClick={() => setMode("signup")}
                   className="text-accent hover:underline font-medium"
                 >
                   Criar conta
-                </button>
-              </p>
-            </motion.div>
-          )}
-
-          {mode === "choose-type" && (
-            <motion.div
-              key="choose-type"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="w-full max-w-lg"
-            >
-              <div className="flex items-center mb-12">
-                <img src={logo} alt="Gende" className="w-12 h-12 rounded-2xl shadow-lg" />
-              </div>
-
-              <h1 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight">Como você trabalha?</h1>
-              <p className="text-muted-foreground mb-10">Escolha o tipo de conta que melhor se encaixa no seu negócio.</p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <button
-                  onClick={() => handleChooseType("autonomous")}
-                  className="group relative bg-card border-2 border-border hover:border-accent rounded-2xl p-6 text-left transition-all duration-300 hover:shadow-lg hover:shadow-accent/10"
-                >
-                  <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
-                    <User className="text-accent" size={24} />
-                  </div>
-                  <h3 className="text-lg font-bold mb-2">Profissional Autônomo</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Trabalho sozinho(a) e gerencio minha própria agenda, clientes e finanças.
-                  </p>
-                </button>
-
-                <button
-                  onClick={() => handleChooseType("salon")}
-                  className="group relative bg-card border-2 border-border hover:border-accent rounded-2xl p-6 text-left transition-all duration-300 hover:shadow-lg hover:shadow-accent/10"
-                >
-                  <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
-                    <Building2 className="text-accent" size={24} />
-                  </div>
-                  <h3 className="text-lg font-bold mb-2">Salão / Barbearia</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Tenho uma equipe de profissionais e preciso gerenciar funcionários, comissões e repasses.
-                  </p>
-                </button>
-              </div>
-
-              <p className="text-center text-muted-foreground mt-8 text-sm">
-                Já tem conta?{" "}
-                <button
-                  onClick={() => setMode("login")}
-                  className="text-accent hover:underline font-medium"
-                >
-                  Fazer login
                 </button>
               </p>
             </motion.div>
@@ -213,56 +196,39 @@ const Auth = () => {
               transition={{ duration: 0.3 }}
               className="w-full max-w-md"
             >
-              <div className="flex items-center mb-8">
+              <div className="flex items-center mb-6">
                 <img src={logo} alt="Gende" className="w-12 h-12 rounded-2xl shadow-lg" />
               </div>
 
-              <button
-                onClick={() => setMode("choose-type")}
-                className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4 transition-colors text-sm"
-              >
-                <ArrowLeft size={16} />
-                Voltar
-              </button>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-1">Criar sua conta</h1>
+              <p className="text-sm text-muted-foreground mb-6">
+                Preencha seus dados e comece a organizar seu negócio.
+              </p>
 
-              <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                  {accountType === "salon" ? <Building2 className="text-accent" size={20} /> : <User className="text-accent" size={20} />}
-                </div>
-                <div>
-                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Criar conta</h1>
-                  <p className="text-sm text-muted-foreground">
-                    {accountType === "salon" ? "Salão / Barbearia" : "Profissional Autônomo"}
-                  </p>
-                </div>
-              </div>
-
-              <form onSubmit={handleSignup} className="space-y-5">
+              <form onSubmit={handleSignup} className="space-y-4">
                 <div className="space-y-2">
-                  <Label className="text-muted-foreground text-sm pl-2">Seu nome</Label>
+                  <Label className="text-muted-foreground text-sm pl-2">Nome completo</Label>
                   <Input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Seu nome completo"
                     required
-                    className="bg-card border-border text-foreground placeholder:text-muted-foreground rounded-full py-3 px-6 text-base h-auto focus:border-accent focus:ring-accent transition-all duration-300 hover:bg-secondary"
+                    className={inputClass}
                   />
                 </div>
 
-                {accountType === "salon" && (
-                  <div className="space-y-2">
-                    <Label className="text-muted-foreground text-sm pl-2">Nome do estabelecimento</Label>
-                    <Input
-                      type="text"
-                      value={businessName}
-                      onChange={(e) => setBusinessName(e.target.value)}
-                      placeholder="Ex: Barbearia do João"
-                      required
-                      className="bg-card border-border text-foreground placeholder:text-muted-foreground rounded-full py-3 px-6 text-base h-auto focus:border-accent focus:ring-accent transition-all duration-300 hover:bg-secondary"
-                    />
-                  </div>
-                )}
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground text-sm pl-2">Nome do Studio ou Salão</Label>
+                  <Input
+                    type="text"
+                    value={businessName}
+                    onChange={(e) => setBusinessName(e.target.value)}
+                    placeholder="Ex: Studio da Maria"
+                    required
+                    className={inputClass}
+                  />
+                </div>
 
                 <div className="space-y-2">
                   <Label className="text-muted-foreground text-sm pl-2">Email</Label>
@@ -272,8 +238,28 @@ const Auth = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="seu@email.com"
                     required
-                    className="bg-card border-border text-foreground placeholder:text-muted-foreground rounded-full py-3 px-6 text-base h-auto focus:border-accent focus:ring-accent transition-all duration-300 hover:bg-secondary"
+                    className={inputClass}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground text-sm pl-2">WhatsApp</Label>
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
+                      <Phone size={16} />
+                    </div>
+                    <Input
+                      type="tel"
+                      value={displayPhone(phone)}
+                      onChange={handlePhoneChange}
+                      placeholder="55 (11) 99999-9999"
+                      required
+                      className={`${inputClass} pl-10`}
+                    />
+                  </div>
+                  <p className="text-[11px] text-muted-foreground pl-2">
+                    O DDI 55 é adicionado automaticamente. Enviaremos uma mensagem de boas-vindas!
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -286,7 +272,7 @@ const Auth = () => {
                       placeholder="Mínimo 6 caracteres"
                       required
                       minLength={6}
-                      className="bg-card border-border text-foreground placeholder:text-muted-foreground rounded-full py-3 px-6 text-base h-auto focus:border-accent focus:ring-accent transition-all duration-300 hover:bg-secondary pr-14"
+                      className={`${inputClass} pr-14`}
                     />
                     <button
                       type="button"
@@ -301,7 +287,7 @@ const Auth = () => {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full rounded-full py-3 h-auto text-base font-semibold bg-accent text-accent-foreground hover:bg-accent/90 transition-all duration-300 mt-4 border border-foreground/20"
+                  className="w-full rounded-full py-3 h-auto text-base font-semibold bg-accent text-accent-foreground hover:bg-accent/90 transition-all duration-300 mt-2 border border-foreground/20"
                 >
                   {loading ? (
                     <div className="w-5 h-5 border-2 border-accent-foreground/30 border-t-accent-foreground rounded-full animate-spin" />
@@ -314,7 +300,7 @@ const Auth = () => {
                 </Button>
               </form>
 
-              <p className="text-center text-muted-foreground mt-8 text-sm">
+              <p className="text-center text-muted-foreground mt-6 text-sm">
                 Já tem conta?{" "}
                 <button
                   onClick={() => setMode("login")}
