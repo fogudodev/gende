@@ -112,7 +112,7 @@ const Landing = () => {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 0.15], [1, 0.95]);
 
-  const goToSignup = () => navigate("/auth");
+  const goToSignup = () => navigate("/auth?mode=signup");
 
   const features = [
     { icon: Calendar, title: "Agenda online 24h", desc: "Seus clientes agendam a qualquer momento, sem precisar ligar." },
