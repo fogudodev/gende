@@ -474,36 +474,57 @@ const Landing = () => {
                 onClick={() => setBillingCycle("annual")}
                 className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all ${billingCycle === "annual" ? "bg-primary text-primary-foreground shadow-lg" : "text-muted-foreground hover:text-foreground"}`}
               >
-                Anual <span className="text-xs opacity-80">(-20%)</span>
+                Anual <span className="text-xs opacity-80">(economize)</span>
               </button>
             </div>
           </FadeInSection>
 
-          <div className="grid sm:grid-cols-3 gap-5">
+          <div className="grid sm:grid-cols-2 gap-5 max-w-3xl mx-auto">
             {[
               {
-                name: "Starter",
-                desc: "Para quem está começando",
-                price: billingCycle === "monthly" ? 49 : 39,
-                originalPrice: billingCycle === "monthly" ? 97 : 77,
-                features: ["Agenda online", "Até 50 clientes", "Lembretes básicos", "1 profissional"],
+                name: "Essencial",
+                desc: "Para quem está começando a se organizar",
+                price: billingCycle === "monthly" ? "49,90" : "41,66",
+                priceLabel: billingCycle === "monthly" ? "/mês" : "/mês (cobrado anualmente)",
+                annualTotal: billingCycle === "annual" ? "R$ 499,90/ano" : null,
+                features: [
+                  "100 agendamentos/mês",
+                  "10 serviços",
+                  "100 clientes",
+                  "15 produtos em estoque",
+                  "5 lembretes/dia via WhatsApp",
+                  "Página pública padrão",
+                  "Relatórios básicos",
+                  "Controle financeiro",
+                  "Caixa registradora",
+                  "Chat de suporte",
+                ],
                 popular: false,
               },
               {
-                name: "Profissional",
-                desc: "O mais escolhido",
-                price: billingCycle === "monthly" ? 89 : 69,
-                originalPrice: billingCycle === "monthly" ? 197 : 157,
-                features: ["Tudo do Starter", "Clientes ilimitados", "Relatórios completos", "Campanhas WhatsApp", "Controle financeiro", "Até 3 profissionais"],
+                name: "Enterprise",
+                desc: "Tudo ilimitado para crescer de verdade",
+                price: billingCycle === "monthly" ? "99,90" : "83,25",
+                priceLabel: billingCycle === "monthly" ? "/mês" : "/mês (cobrado anualmente)",
+                annualTotal: billingCycle === "annual" ? "R$ 999,00/ano" : null,
+                features: [
+                  "Agendamentos ilimitados",
+                  "Serviços ilimitados",
+                  "Clientes ilimitados",
+                  "Produtos ilimitados",
+                  "20 lembretes/dia via WhatsApp",
+                  "3 campanhas/dia via WhatsApp",
+                  "Página pública personalizada",
+                  "Relatórios avançados",
+                  "Cobrar sinal de agendamento",
+                  "Cupons e promoções",
+                  "Avaliações de clientes",
+                  "Assistente IA",
+                  "Até 5 profissionais inclusos",
+                  "Integração Google Calendar",
+                  "Suporte prioritário",
+                ],
                 popular: true,
-              },
-              {
-                name: "Salão",
-                desc: "Para equipes completas",
-                price: billingCycle === "monthly" ? 149 : 119,
-                originalPrice: billingCycle === "monthly" ? 297 : 237,
-                features: ["Tudo do Profissional", "Profissionais ilimitados", "Comissões automáticas", "Multi-agenda", "Suporte prioritário"],
-                popular: false,
               },
             ].map((plan, i) => (
               <FadeInSection key={i} delay={0.1 + i * 0.1}>
@@ -511,18 +532,20 @@ const Landing = () => {
                   {plan.popular && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                       <span className="px-4 py-1 rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-lg">
-                        MAIS POPULAR
+                        RECOMENDADO
                       </span>
                     </div>
                   )}
                   <h3 className="font-display text-xl font-bold">{plan.name}</h3>
                   <p className="text-sm text-muted-foreground mb-4">{plan.desc}</p>
                   <div className="mb-6">
-                    <span className="text-sm text-muted-foreground line-through">R$ {plan.originalPrice}/mês</span>
                     <div className="flex items-baseline gap-1">
                       <span className="text-4xl font-extrabold">R$ {plan.price}</span>
-                      <span className="text-muted-foreground">/mês</span>
+                      <span className="text-muted-foreground text-sm">{plan.priceLabel}</span>
                     </div>
+                    {plan.annualTotal && (
+                      <p className="text-xs text-primary mt-1">{plan.annualTotal}</p>
+                    )}
                   </div>
                   <ul className="space-y-3 flex-1 mb-6">
                     {plan.features.map((f, fi) => (
