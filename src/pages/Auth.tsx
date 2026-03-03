@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeOff, ArrowRight, ArrowLeft, Phone } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, Phone, CheckCircle2, X } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
 
 type AuthMode = "login" | "signup";
 
@@ -20,6 +21,7 @@ const Auth = () => {
   const [phone, setPhone] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [mode, setMode] = useState<AuthMode>(() => {
     return searchParams.get("mode") === "signup" ? "signup" : "login";
   });
@@ -32,20 +34,16 @@ const Auth = () => {
   }, [searchParams]);
 
   const formatPhone = (value: string) => {
-    // Remove tudo que não é número
     const digits = value.replace(/\D/g, "");
-    // Limita a 13 dígitos (55 + 2 DDD + 9 número)
     return digits.slice(0, 13);
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/\D/g, "");
-    // Se o usuário apagar tudo, mantém vazio
     if (raw === "") {
       setPhone("");
       return;
     }
-    // Garante que começa com 55
     let formatted = raw;
     if (!formatted.startsWith("55")) {
       formatted = "55" + formatted;
@@ -55,7 +53,6 @@ const Auth = () => {
 
   const displayPhone = (value: string) => {
     if (!value) return "";
-    // Formata: 55 (XX) XXXXX-XXXX
     const d = value;
     if (d.length <= 2) return d;
     if (d.length <= 4) return `${d.slice(0, 2)} (${d.slice(2)}`;
@@ -85,11 +82,18 @@ const Auth = () => {
     const { error } = await signUp(email, password, name, "salon", businessName || undefined, phone || undefined);
     if (error) {
       toast.error(error.message);
-    } else {
-      toast.success("Conta criada! Verifique seu email para confirmar.");
-      setMode("login");
+      setLoading(false);
+      return;
     }
+
+    // Show success modal
+    setShowSuccessModal(true);
     setLoading(false);
+
+    // Send notification to admin WhatsApp (fire and forget)
+    supabase.functions.invoke("notify-signup", {
+      body: { name, businessName, email, phone },
+    }).catch((err) => console.error("Notify signup error:", err));
   };
 
   const inputClass = "bg-card border-border text-foreground placeholder:text-muted-foreground rounded-full py-3 px-6 text-base h-auto focus:border-accent focus:ring-accent transition-all duration-300 hover:bg-secondary";
@@ -106,6 +110,71 @@ const Auth = () => {
           />
         </svg>
       </div>
+
+      {/* Success Modal */}
+      <AnimatePresence>
+        {showSuccessModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm"
+            onClick={() => {
+              setShowSuccessModal(false);
+              setMode("login");
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", duration: 0.5 }}
+              className="bg-card border border-border rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  setMode("login");
+                }}
+                className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X size={20} />
+              </button>
+
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-5">
+                  <CheckCircle2 className="text-green-500" size={36} />
+                </div>
+
+                <h2 className="text-xl sm:text-2xl font-bold mb-3">
+                  Conta criada com sucesso! 🎉
+                </h2>
+
+                <p className="text-muted-foreground text-sm sm:text-base leading-relaxed mb-2">
+                  Verifique seu email para confirmar sua conta.
+                </p>
+
+                <div className="bg-accent/10 border border-accent/20 rounded-2xl p-4 mt-3 w-full">
+                  <p className="text-sm font-medium text-foreground">
+                    📱 Em instantes, um analista entrará em contato pelo seu WhatsApp para ajudar na configuração do seu espaço.
+                  </p>
+                </div>
+
+                <Button
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    setMode("login");
+                  }}
+                  className="w-full rounded-full py-3 h-auto text-base font-semibold bg-accent text-accent-foreground hover:bg-accent/90 mt-6 border border-foreground/20"
+                >
+                  Entendido!
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
         <AnimatePresence mode="wait">
