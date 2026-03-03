@@ -32,6 +32,7 @@ import SupportChat from "./pages/SupportChat";
 import AIAssistant from "./pages/AIAssistant";
 import CashRegister from "./pages/CashRegister";
 import NotFound from "./pages/NotFound";
+import Landing from "./pages/Landing";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -64,6 +65,7 @@ const App = () => (
             <ImpersonationBanner />
             <Routes>
               <Route path="/auth" element={<Auth />} />
+              <Route path="/landing" element={<Landing />} />
               
               {/* Professional routes */}
               <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
