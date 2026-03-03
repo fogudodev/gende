@@ -4,7 +4,7 @@ import { motion, useInView, useScroll, useTransform } from "framer-motion";
 import {
   Calendar, Bell, CreditCard, BarChart3, Users, DollarSign,
   X, ChevronRight, Star, Check, Gift, Shield, ArrowRight,
-  Sparkles, Clock, TrendingUp, MessageCircle, Zap
+  Sparkles, Clock, TrendingUp, MessageCircle, Zap, ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo-circle.png";
@@ -24,6 +24,33 @@ const FadeInSection = ({ children, className = "", delay = 0 }: { children: Reac
     >
       {children}
     </motion.div>
+  );
+};
+
+// ─── FAQ Accordion Item ───
+const FaqItem = ({ question, answer }: { question: string; answer: string }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <button
+      onClick={() => setOpen(!open)}
+      className="w-full text-left bg-card border border-border rounded-2xl px-5 py-4 transition-all duration-300 hover:border-accent/40 group"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <span className="font-semibold text-sm sm:text-base">{question}</span>
+        <ChevronDown
+          size={18}
+          className={`shrink-0 text-muted-foreground transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+        />
+      </div>
+      <motion.div
+        initial={false}
+        animate={{ height: open ? "auto" : 0, opacity: open ? 1 : 0 }}
+        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+        className="overflow-hidden"
+      >
+        <p className="text-sm text-muted-foreground pt-3 leading-relaxed">{answer}</p>
+      </motion.div>
+    </button>
   );
 };
 
@@ -586,6 +613,57 @@ const Landing = () => {
             </p>
           </div>
         </FadeInSection>
+      </section>
+
+      {/* ══════════ FAQ ══════════ */}
+      <section className="py-12 sm:py-24 px-4">
+        <div className="max-w-3xl mx-auto">
+          <FadeInSection>
+            <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-center mb-3 sm:mb-4">
+              Perguntas frequentes
+            </h2>
+            <p className="text-center text-muted-foreground text-sm sm:text-base mb-8 sm:mb-12">
+              Tire suas dúvidas antes de começar.
+            </p>
+          </FadeInSection>
+
+          <FadeInSection delay={0.1}>
+            <div className="space-y-3">
+              {[
+                {
+                  q: "Preciso pagar algo para testar?",
+                  a: "Não! Você pode criar sua conta e testar gratuitamente. Só paga quando decidir que faz sentido para o seu negócio."
+                },
+                {
+                  q: "Funciona para profissional autônomo?",
+                  a: "Sim! O Gende funciona tanto para quem trabalha sozinho quanto para salões e barbearias com equipe. Você escolhe o que faz sentido para você."
+                },
+                {
+                  q: "Meus clientes precisam baixar algum app?",
+                  a: "Não. Seus clientes agendam pela sua página pública personalizada, direto pelo celular, sem instalar nada. Simples assim."
+                },
+                {
+                  q: "Consigo gerenciar comissões da equipe?",
+                  a: "Sim! O sistema calcula automaticamente as comissões de cada profissional ao concluir um atendimento e ainda notifica pelo WhatsApp."
+                },
+                {
+                  q: "Como funciona a integração com WhatsApp?",
+                  a: "Você conecta seu WhatsApp em poucos segundos via QR Code. A partir daí, confirmações, lembretes e campanhas são enviados automaticamente para seus clientes."
+                },
+                {
+                  q: "Posso cancelar a qualquer momento?",
+                  a: "Sim, sem multa e sem burocracia. Você cancela quando quiser, sem letras miúdas."
+                },
+                {
+                  q: "Vocês oferecem suporte?",
+                  a: "Sim! Ao criar sua conta, um analista entra em contato pelo WhatsApp para te ajudar na configuração. E nosso suporte está sempre disponível no chat do sistema."
+                },
+              ].map((faq, i) => (
+                <FaqItem key={i} question={faq.q} answer={faq.a} />
+              ))}
+            </div>
+          </FadeInSection>
+        </div>
       </section>
 
       {/* ══════════ 10. CTA FINAL ══════════ */}
