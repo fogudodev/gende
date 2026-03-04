@@ -1001,7 +1001,7 @@ function Step4DateTime({ service, accent, colors, days, today, selectedDate, set
                   return (
                     <button key={slot.start_time} onClick={() => handleTimeSelect(slot)}
                       className="py-3 rounded-xl text-sm font-semibold transition-all active:scale-95"
-                      style={{ background: isSelected ? `linear-gradient(135deg, ${accent}, ${accent}cc)` : "white", color: isSelected ? "white" : "#374151", border: `1.5px solid ${isSelected ? accent : "#F1F5F9"}`, boxShadow: isSelected ? `0 4px 12px ${accent}40` : "0 1px 3px rgba(0,0,0,0.04)" }}>
+                      style={{ background: isSelected ? `linear-gradient(135deg, ${accent}, ${accent}cc)` : "white", color: isSelected ? "white" : textPrimary, border: `1.5px solid ${isSelected ? accent : "#F1F5F9"}`, boxShadow: isSelected ? `0 4px 12px ${accent}40` : "0 1px 3px rgba(0,0,0,0.04)" }}>
                       {time}
                     </button>
                   );
