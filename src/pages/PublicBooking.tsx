@@ -80,21 +80,39 @@ function formatCurrency(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-/** Convert a UTC ISO string to a Date shifted to São Paulo (UTC-3) for display purposes */
-function toSaoPaulo(utcStr: string): Date {
-  const d = new Date(utcStr);
-  // Shift by -3h from UTC to get São Paulo time, then treat as local for formatting
-  return new Date(d.getTime() + (-3) * 60 * 60 * 1000);
-}
+/** Format a UTC ISO string as São Paulo time using Intl (handles DST correctly) */
+const spFormatter = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "America/Sao_Paulo",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+const spDateFormatter = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "America/Sao_Paulo",
+  weekday: "short",
+  day: "numeric",
+  month: "numeric",
+  year: "numeric",
+});
 
 function formatTimeSP(utcStr: string): string {
-  const sp = toSaoPaulo(utcStr);
-  return `${String(sp.getUTCHours()).padStart(2, "0")}:${String(sp.getUTCMinutes()).padStart(2, "0")}`;
+  return spFormatter.format(new Date(utcStr));
 }
 
 function formatDateSP(utcStr: string) {
-  const sp = toSaoPaulo(utcStr);
-  return { day: sp.getUTCDay(), date: sp.getUTCDate(), month: sp.getUTCMonth() };
+  const d = new Date(utcStr);
+  const parts = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    weekday: "short",
+    day: "numeric",
+    month: "numeric",
+  }).formatToParts(d);
+  const dayNum = Number(parts.find(p => p.type === "day")?.value || 0);
+  const monthNum = Number(parts.find(p => p.type === "month")?.value || 1) - 1;
+  // Map weekday abbreviation to DOW index
+  const wdMap: Record<string, number> = { dom: 0, seg: 1, ter: 2, qua: 3, qui: 4, sex: 5, "sáb": 6, sab: 6 };
+  const wd = (parts.find(p => p.type === "weekday")?.value || "").toLowerCase().replace(".", "");
+  return { day: wdMap[wd] ?? 0, date: dayNum, month: monthNum };
 }
 
 /* ── Main Component ────────────────────────────── */
