@@ -674,7 +674,7 @@ const PublicBooking = () => {
                         </button>
                       </div>
                     ) : (
-                      <p className="text-[10px] text-center mt-1" style={{ color: textMuted }}>Realize o pagamento dentro do prazo</p>
+                      <p className="text-[10px] text-center mt-1" style={{ color: "#94A3B8" }}>Realize o pagamento dentro do prazo</p>
                     )}
                   </div>
                 );
