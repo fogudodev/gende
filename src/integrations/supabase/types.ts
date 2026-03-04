@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      addon_purchases: {
+        Row: {
+          addon_type: string
+          amount_cents: number
+          created_at: string
+          id: string
+          professional_id: string
+          quantity: number
+          stripe_session_id: string | null
+        }
+        Insert: {
+          addon_type: string
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          professional_id: string
+          quantity: number
+          stripe_session_id?: string | null
+        }
+        Update: {
+          addon_type?: string
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          professional_id?: string
+          quantity?: number
+          stripe_session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "addon_purchases_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_auth_codes: {
         Row: {
           code: string
