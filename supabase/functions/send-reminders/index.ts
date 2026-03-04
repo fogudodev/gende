@@ -147,7 +147,17 @@ serve(async (req) => {
         .eq("plan_id", planId)
         .single();
 
-      const dailyLimit = limits?.daily_reminders ?? 5;
+      const baseDailyLimit = limits?.daily_reminders ?? 5;
+
+      // Get professional extras
+      const { data: profLimits } = await supabase
+        .from("professional_limits")
+        .select("extra_reminders_purchased")
+        .eq("professional_id", profId)
+        .maybeSingle();
+
+      const extraReminders = profLimits?.extra_reminders_purchased || 0;
+      const dailyLimit = baseDailyLimit === -1 ? -1 : baseDailyLimit + extraReminders;
 
       const today = now.toISOString().split("T")[0];
       const { data: usage } = await supabase
