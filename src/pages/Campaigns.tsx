@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useClients } from "@/hooks/useClients";
-import { useCampaigns, useCampaignLimits, useSendCampaign, useCampaignContacts } from "@/hooks/useCampaigns";
+import { useCampaigns, useCampaignLimits, useSendCampaign, useCampaignContacts, useAddonPurchases } from "@/hooks/useCampaigns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
