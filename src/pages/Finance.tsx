@@ -1,19 +1,30 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion } from "framer-motion";
 import {
   CreditCard, TrendingUp, ArrowUpRight, ArrowDownRight, Loader2,
-  Plus, Trash2, DollarSign, Users, CheckCircle2, Clock, Filter,
+  Plus, Trash2, DollarSign, Users, CheckCircle2, Clock, CalendarIcon,
 } from "lucide-react";
 import { useBookings } from "@/hooks/useBookings";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
-import { useExpenses, useCreateExpense, useDeleteExpense } from "@/hooks/useExpenses";
+import { useExpenses, useCreateExpense, useDeleteExpense, Expense } from "@/hooks/useExpenses";
 import { useCommissions, usePayCommission } from "@/hooks/useCommissions";
 import { useSalonEmployees } from "@/hooks/useSalonEmployees";
 import { useProfessional } from "@/hooks/useProfessional";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subMonths, startOfQuarter, endOfQuarter, eachMonthOfInterval, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
+
+type PeriodFilter = "week" | "month" | "quarter" | "custom";
 
 const Finance = () => {
   const { data: professional } = useProfessional();
@@ -32,19 +43,89 @@ const Finance = () => {
   const [expenseDesc, setExpenseDesc] = useState("");
   const [expenseAmount, setExpenseAmount] = useState("");
   const [expenseCategory, setExpenseCategory] = useState("Geral");
+  const [deleteTarget, setDeleteTarget] = useState<Expense | null>(null);
 
-  const completed = (recentBookings || []).filter(b => b.status === "confirmed" || b.status === "completed");
-  const cancelled = (recentBookings || []).filter(b => b.status === "cancelled");
-  const cancelledTotal = cancelled.reduce((s, b) => s + Number(b.price), 0);
-  const avgTicket = completed.length > 0 ? Math.round(completed.reduce((s, b) => s + Number(b.price), 0) / completed.length) : 0;
-  const totalExpenses = (expenses || []).reduce((s, e) => s + Number(e.amount), 0);
+  // Period filter state
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("month");
+  const [customStart, setCustomStart] = useState<Date | undefined>(undefined);
+  const [customEnd, setCustomEnd] = useState<Date | undefined>(undefined);
+
+  const now = new Date();
+  const periodRange = useMemo(() => {
+    switch (periodFilter) {
+      case "week":
+        return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
+      case "month":
+        return { start: startOfMonth(now), end: endOfMonth(now) };
+      case "quarter":
+        return { start: startOfQuarter(now), end: endOfQuarter(now) };
+      case "custom":
+        return { start: customStart || startOfMonth(now), end: customEnd || endOfMonth(now) };
+    }
+  }, [periodFilter, customStart, customEnd]);
+
+  const periodLabel = useMemo(() => {
+    const labels: Record<PeriodFilter, string> = {
+      week: "Esta Semana",
+      month: "Este Mês",
+      quarter: "Este Trimestre",
+      custom: customStart && customEnd
+        ? `${format(customStart, "dd/MM")} - ${format(customEnd, "dd/MM")}`
+        : "Personalizado",
+    };
+    return labels[periodFilter];
+  }, [periodFilter, customStart, customEnd]);
+
+  // Filter bookings by period
+  const filteredBookings = useMemo(() => {
+    return (recentBookings || []).filter(b => {
+      const d = new Date(b.start_time);
+      return d >= periodRange.start && d <= periodRange.end;
+    });
+  }, [recentBookings, periodRange]);
+
+  const filteredExpenses = useMemo(() => {
+    return (expenses || []).filter(e => {
+      const d = new Date(e.expense_date);
+      return d >= periodRange.start && d <= periodRange.end;
+    });
+  }, [expenses, periodRange]);
+
+  const completed = filteredBookings.filter(b => b.status === "confirmed" || b.status === "completed");
+  const cancelled = filteredBookings.filter(b => b.status === "cancelled");
+  const totalRevenue = completed.reduce((s, b) => s + Number(b.price), 0);
+  const avgTicket = completed.length > 0 ? Math.round(totalRevenue / completed.length) : 0;
+  const totalExpenses = filteredExpenses.reduce((s, e) => s + Number(e.amount), 0);
 
   const financeStats = [
-    { label: "Receita do Mês", value: stats ? `R$ ${stats.monthRevenue.toLocaleString("pt-BR")}` : "—", change: stats ? `${stats.revenueMonthChange >= 0 ? "+" : ""}${stats.revenueMonthChange}%` : "", icon: TrendingUp, positive: true },
+    { label: `Receita (${periodLabel})`, value: `R$ ${totalRevenue.toLocaleString("pt-BR")}`, change: stats ? `${stats.revenueMonthChange >= 0 ? "+" : ""}${stats.revenueMonthChange}%` : "", icon: TrendingUp, positive: true },
     { label: "Despesas", value: `R$ ${totalExpenses.toLocaleString("pt-BR")}`, change: "", icon: ArrowDownRight, positive: false },
-    { label: "Lucro Líquido", value: stats ? `R$ ${(stats.monthRevenue - totalExpenses).toLocaleString("pt-BR")}` : "—", change: "", icon: DollarSign, positive: (stats?.monthRevenue || 0) > totalExpenses },
+    { label: "Lucro Líquido", value: `R$ ${(totalRevenue - totalExpenses).toLocaleString("pt-BR")}`, change: "", icon: DollarSign, positive: totalRevenue > totalExpenses },
     { label: "Ticket Médio", value: `R$ ${avgTicket}`, change: `${completed.length} atendimentos`, icon: ArrowUpRight, positive: true },
   ];
+
+  // Chart data - last 6 months
+  const chartData = useMemo(() => {
+    const months = eachMonthOfInterval({ start: subMonths(now, 5), end: now });
+    return months.map(month => {
+      const monthRevenue = (recentBookings || [])
+        .filter(b => (b.status === "confirmed" || b.status === "completed") && isSameMonth(new Date(b.start_time), month))
+        .reduce((s, b) => s + Number(b.price), 0);
+      const monthExpenses = (expenses || [])
+        .filter(e => isSameMonth(new Date(e.expense_date), month))
+        .reduce((s, e) => s + Number(e.amount), 0);
+      return {
+        month: format(month, "MMM", { locale: ptBR }),
+        receita: monthRevenue,
+        despesas: monthExpenses,
+      };
+    });
+  }, [recentBookings, expenses]);
+
+  const chartConfig = {
+    receita: { label: "Receita", color: "hsl(var(--accent))" },
+    despesas: { label: "Despesas", color: "hsl(var(--destructive))" },
+  };
 
   // Employee revenue breakdown
   const employeeRevenue = isSalon && employees
@@ -71,7 +152,13 @@ const Finance = () => {
     setShowExpenseForm(false);
   };
 
-  const transactions = (recentBookings || [])
+  const handleDeleteExpense = () => {
+    if (!deleteTarget) return;
+    deleteExpense.mutate(deleteTarget.id);
+    setDeleteTarget(null);
+  };
+
+  const transactions = filteredBookings
     .filter(b => b.status !== "pending")
     .slice(0, 15)
     .map(b => ({
@@ -83,17 +170,24 @@ const Finance = () => {
       status: b.status,
     }));
 
-  const tabs = [
+  const tabsList = [
     { id: "overview" as const, label: "Visão Geral" },
     { id: "expenses" as const, label: "Despesas" },
     ...(isSalon ? [{ id: "commissions" as const, label: "Comissões" }] : []),
   ];
 
+  const periodOptions: { id: PeriodFilter; label: string }[] = [
+    { id: "week", label: "Semana" },
+    { id: "month", label: "Mês" },
+    { id: "quarter", label: "Trimestre" },
+    { id: "custom", label: "Personalizado" },
+  ];
+
   return (
     <DashboardLayout title="Financeiro" subtitle="Receitas, despesas e comissões">
       {/* Tabs */}
-      <div className="flex gap-2 mb-6">
-        {tabs.map(t => (
+      <div className="flex flex-wrap gap-2 mb-4">
+        {tabsList.map(t => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
@@ -105,6 +199,51 @@ const Finance = () => {
             {t.label}
           </button>
         ))}
+      </div>
+
+      {/* Period Filter */}
+      <div className="flex flex-wrap items-center gap-2 mb-6">
+        {periodOptions.map(p => (
+          <button
+            key={p.id}
+            onClick={() => setPeriodFilter(p.id)}
+            className={cn(
+              "px-3 py-1.5 rounded-lg text-xs font-medium transition-all border",
+              periodFilter === p.id
+                ? "bg-accent/15 border-accent/40 text-accent"
+                : "bg-muted/30 border-border/50 text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {p.label}
+          </button>
+        ))}
+        {periodFilter === "custom" && (
+          <div className="flex items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="text-xs h-7 gap-1">
+                  <CalendarIcon size={12} />
+                  {customStart ? format(customStart, "dd/MM/yy") : "Início"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={customStart} onSelect={setCustomStart} className="p-3 pointer-events-auto" />
+              </PopoverContent>
+            </Popover>
+            <span className="text-xs text-muted-foreground">até</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="text-xs h-7 gap-1">
+                  <CalendarIcon size={12} />
+                  {customEnd ? format(customEnd, "dd/MM/yy") : "Fim"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={customEnd} onSelect={setCustomEnd} className="p-3 pointer-events-auto" />
+              </PopoverContent>
+            </Popover>
+          </div>
+        )}
       </div>
 
       {tab === "overview" && (
@@ -121,6 +260,21 @@ const Finance = () => {
               </motion.div>
             ))}
           </div>
+
+          {/* Revenue vs Expense Chart */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card rounded-2xl p-5 mb-6">
+            <h3 className="font-semibold text-foreground text-sm mb-4">Receita vs Despesas (últimos 6 meses)</h3>
+            <ChartContainer config={chartConfig} className="h-[250px] w-full">
+              <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" />
+                <XAxis dataKey="month" className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                <YAxis className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} tickFormatter={v => `R$${v}`} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="receita" fill="var(--color-receita)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="despesas" fill="var(--color-despesas)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ChartContainer>
+          </motion.div>
 
           {/* Employee Revenue Breakdown (salon only) */}
           {isSalon && employeeRevenue.length > 0 && (
@@ -232,10 +386,10 @@ const Finance = () => {
           )}
 
           <div className="glass-card rounded-2xl overflow-hidden">
-            {!(expenses || []).length ? (
-              <p className="text-center text-muted-foreground text-sm py-12">Nenhuma despesa registrada</p>
+            {!filteredExpenses.length ? (
+              <p className="text-center text-muted-foreground text-sm py-12">Nenhuma despesa registrada neste período</p>
             ) : (
-              (expenses || []).map(exp => (
+              filteredExpenses.map(exp => (
                 <div key={exp.id} className="flex items-center justify-between px-6 py-4 border-b border-border/30 last:border-0">
                   <div>
                     <p className="text-sm font-medium text-foreground">{exp.description}</p>
@@ -243,7 +397,7 @@ const Finance = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <p className="text-sm font-semibold text-destructive">- R$ {Number(exp.amount).toLocaleString("pt-BR")}</p>
-                    <button onClick={() => deleteExpense.mutate(exp.id)} className="text-muted-foreground hover:text-destructive transition-colors">
+                    <button onClick={() => setDeleteTarget(exp)} className="text-muted-foreground hover:text-destructive transition-colors">
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -313,6 +467,24 @@ const Finance = () => {
           )}
         </>
       )}
+
+      {/* Delete Expense Confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={open => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir despesa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a despesa "{deleteTarget?.description}"? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteExpense} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
