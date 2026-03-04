@@ -109,9 +109,10 @@ const Campaigns = () => {
             <p className="text-xl font-bold text-foreground">
               {usage?.campaigns_sent || 0}
               <span className="text-sm font-normal text-muted-foreground">
-                /{limits.daily_campaigns === -1 ? "∞" : limits.daily_campaigns}
+                /{effectiveCampaigns === -1 ? "∞" : effectiveCampaigns}
               </span>
             </p>
+            {extras.extra_campaigns > 0 && <p className="text-[10px] text-accent mt-1">+{extras.extra_campaigns} extras</p>}
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="glass-card rounded-2xl p-4">
             <div className="flex items-center justify-between mb-1">
@@ -121,9 +122,10 @@ const Campaigns = () => {
             <p className="text-xl font-bold text-foreground">
               {usage?.reminders_sent || 0}
               <span className="text-sm font-normal text-muted-foreground">
-                /{limits.daily_reminders === -1 ? "∞" : limits.daily_reminders}
+                /{effectiveReminders === -1 ? "∞" : effectiveReminders}
               </span>
             </p>
+            {extras.extra_reminders > 0 && <p className="text-[10px] text-accent mt-1">+{extras.extra_reminders} extras</p>}
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card rounded-2xl p-4">
             <div className="flex items-center justify-between mb-1">
@@ -131,11 +133,22 @@ const Campaigns = () => {
               <Users size={14} className="text-accent" />
             </div>
             <p className="text-xl font-bold text-foreground">
-              {limits.campaign_max_contacts === -1 ? "∞" : limits.campaign_max_contacts}
+              {effectiveContacts === -1 ? "∞" : effectiveContacts}
             </p>
+            {extras.extra_contacts > 0 && <p className="text-[10px] text-accent mt-1">+{extras.extra_contacts} extras</p>}
           </motion.div>
         </div>
       )}
+
+      {/* Addon Store Button */}
+      <motion.button
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        onClick={() => setShowAddons(true)}
+        className="w-full glass-card rounded-2xl p-4 flex items-center justify-center gap-2 text-foreground font-medium hover:bg-accent/5 transition-colors mb-4 border border-dashed border-accent/30"
+      >
+        <ShoppingCart size={16} className="text-accent" /> Comprar Extras (Lembretes, Campanhas, Contatos)
+      </motion.button>
 
       {/* New Campaign Button */}
       <motion.button
