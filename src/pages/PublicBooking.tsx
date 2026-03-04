@@ -767,7 +767,7 @@ function Step1ClientInfo({ professional, accent, colors, clientName, setClientNa
               <input type="text" placeholder="Ex: Maria Silva" value={clientName}
                 onChange={e => { setClientName(e.target.value); if (errors.name) setErrors({...errors, name: ""}); }}
                 className="w-full pl-10 pr-4 py-3.5 rounded-xl text-sm font-medium transition-all outline-none focus:ring-2"
-                style={{ background: errors.name ? "#FFF1F2" : "white", border: `1.5px solid ${errors.name ? "#F87171" : clientName ? accent : "#E2E8F0"}`, color: textPrimary, boxShadow: "0 1px 3px rgba(0,0,0,0.04)", ["--tw-ring-color" as any]: accent }}
+                style={{ background: errors.name ? "#FFF1F2" : "white", border: `1.5px solid ${errors.name ? "#F87171" : clientName ? accent : "#E2E8F0"}`, color: "hsl(0 0% 0%)", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", ["--tw-ring-color" as any]: accent }}
               />
             </div>
             {errors.name && <p className="text-xs mt-1 font-medium" style={{ color: "#EF4444" }}>{errors.name}</p>}
@@ -781,7 +781,7 @@ function Step1ClientInfo({ professional, accent, colors, clientName, setClientNa
               <input type="tel" placeholder="(11) 99999-9999" value={clientPhone}
                 onChange={e => { setClientPhone(formatPhone(e.target.value)); if (errors.phone) setErrors({...errors, phone: ""}); }}
                 className="w-full pl-10 pr-4 py-3.5 rounded-xl text-sm font-medium transition-all outline-none focus:ring-2"
-                style={{ background: errors.phone ? "#FFF1F2" : "white", border: `1.5px solid ${errors.phone ? "#F87171" : clientPhone ? accent : "#E2E8F0"}`, color: textPrimary, boxShadow: "0 1px 3px rgba(0,0,0,0.04)", ["--tw-ring-color" as any]: accent }}
+                style={{ background: errors.phone ? "#FFF1F2" : "white", border: `1.5px solid ${errors.phone ? "#F87171" : clientPhone ? accent : "#E2E8F0"}`, color: "hsl(0 0% 0%)", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", ["--tw-ring-color" as any]: accent }}
               />
             </div>
             {errors.phone && <p className="text-xs mt-1 font-medium" style={{ color: "#EF4444" }}>{errors.phone}</p>}
@@ -1204,7 +1204,7 @@ function SuccessView({ professional, selectedEmployee, selectedService, selected
               ))}
             </div>
             <textarea value={reviewComment} onChange={e => setReviewComment(e.target.value)} placeholder="Conte como foi (opcional)" maxLength={500} rows={3}
-              className="w-full px-4 py-3 rounded-xl text-sm resize-none outline-none mb-3" style={{ background: `${accent}06`, border: `1.5px solid ${accent}15`, color: textPrimary }} />
+              className="w-full px-4 py-3 rounded-xl text-sm resize-none outline-none mb-3" style={{ background: `${accent}06`, border: `1.5px solid ${accent}15`, color: "hsl(0 0% 0%)" }} />
             <button onClick={onSubmitReview} disabled={submittingReview}
               className="w-full py-2.5 rounded-xl text-white font-medium text-sm flex items-center justify-center gap-2 disabled:opacity-50"
               style={{ background: accent }}>
