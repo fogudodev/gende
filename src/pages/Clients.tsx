@@ -62,11 +62,13 @@ const Clients = () => {
     } catch { toast.error("Erro ao salvar cliente"); }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await deleteClient.mutateAsync(id);
+      await deleteClient.mutateAsync(deleteTarget.id);
       toast.success("Cliente excluído!");
     } catch { toast.error("Erro ao excluir cliente"); }
+    setDeleteTarget(null);
   };
 
   return (
