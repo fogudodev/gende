@@ -894,7 +894,7 @@ function Step3Services({ services, groupedServices, selected, selectedEmployee, 
               <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold" style={{ background: `${accent}20`, color: accent }}>{selectedEmployee.name[0]}</div>
             )}
             <div>
-              <p className="text-sm font-bold" style={{ color: "#1A1A2E" }}>{selectedEmployee.name}</p>
+              <p className="text-sm font-bold" style={{ color: textPrimary }}>{selectedEmployee.name}</p>
               {selectedEmployee.specialty && <p className="text-xs" style={{ color: accent }}>{selectedEmployee.specialty}</p>}
             </div>
           </div>
