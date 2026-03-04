@@ -31,7 +31,7 @@ const AdminPaymentChat = () => {
     queryKey: ["admin-payment-conversations"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("chat_messages" as any)
+        .from("chat_messages")
         .select("professional_id, created_at")
         .eq("chat_type", "payment")
         .order("created_at", { ascending: false });
