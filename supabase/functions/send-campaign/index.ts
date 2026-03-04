@@ -139,6 +139,7 @@ serve(async (req) => {
         }
 
         // Enforce contact limit (plan + extras)
+        const maxContacts = limits.campaign_max_contacts;
         const effectiveMaxContacts = maxContacts === -1 ? -1 : maxContacts + extraContacts;
         if (effectiveMaxContacts !== -1 && clients.length > effectiveMaxContacts) {
           clients = clients.slice(0, effectiveMaxContacts);
