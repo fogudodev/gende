@@ -60,6 +60,16 @@ serve(async (req) => {
 
         if (!limits) throw new Error("Limites do plano não encontrados");
 
+        // Get professional extras
+        const { data: profLimits } = await supabase
+          .from("professional_limits")
+          .select("*")
+          .eq("professional_id", professionalId)
+          .maybeSingle();
+
+        const extraCampaigns = profLimits?.extra_campaigns_purchased || 0;
+        const extraContacts = profLimits?.extra_contacts_purchased || 0;
+
         // Check daily campaign count
         const today = new Date().toISOString().split("T")[0];
         const { data: usage } = await supabase
