@@ -296,6 +296,12 @@ const PublicPage = () => {
                 onChange={setComponentColor}
                 presets={COLOR_PRESETS}
               />
+              <ColorPicker
+                label="Cor de Todas as Fontes"
+                value={textColor}
+                onChange={setTextColor}
+                presets={TEXT_PRESETS}
+              />
             </div>
           </SectionCard>
 
