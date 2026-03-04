@@ -348,6 +348,63 @@ const Campaigns = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Addon Store Dialog */}
+      <Dialog open={showAddons} onOpenChange={setShowAddons}>
+        <DialogContent className="max-w-lg bg-background border-border max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-foreground flex items-center gap-2">
+              <Package size={18} className="text-accent" />
+              Loja de Extras
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 mt-2">
+            {(["reminders", "campaigns", "contacts"] as AddonType[]).map((type) => {
+              const typeLabels: Record<AddonType, string> = {
+                reminders: "📨 Lembretes Extras",
+                campaigns: "📣 Campanhas Extras",
+                contacts: "👥 Contatos por Campanha",
+              };
+              const typeDescs: Record<AddonType, string> = {
+                reminders: "Envie mais lembretes de agendamento por dia",
+                campaigns: "Envie mais campanhas de marketing por dia",
+                contacts: "Aumente o limite de contatos por campanha",
+              };
+              const packages = getPackagesByType(type);
+              return (
+                <div key={type}>
+                  <h3 className="font-semibold text-foreground mb-1">{typeLabels[type]}</h3>
+                  <p className="text-xs text-muted-foreground mb-3">{typeDescs[type]}</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {packages.map((pkg) => (
+                      <button
+                        key={pkg.id}
+                        onClick={() => handleBuyAddon(pkg.priceId)}
+                        disabled={!!buyingAddon}
+                        className={cn(
+                          "flex flex-col items-center gap-1 p-3 rounded-xl border border-border/50 bg-muted/30 hover:bg-accent/10 hover:border-accent/50 transition-all text-center",
+                          buyingAddon === pkg.priceId && "opacity-50"
+                        )}
+                      >
+                        <span className="text-lg font-bold text-foreground">{pkg.quantity}</span>
+                        <span className="text-[10px] text-muted-foreground">{type === "reminders" ? "lembretes" : type === "campaigns" ? "campanhas" : "contatos"}</span>
+                        <span className="text-xs font-semibold text-accent mt-1">{pkg.priceDisplay}</span>
+                        {buyingAddon === pkg.priceId && <Loader2 size={12} className="animate-spin text-accent" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+            <div className="flex items-start gap-2 bg-accent/5 rounded-xl p-3">
+              <AlertTriangle size={14} className="text-accent mt-0.5 shrink-0" />
+              <p className="text-xs text-muted-foreground">
+                Os extras são adicionados ao seu limite atual do plano. Após o pagamento, o crédito é aplicado automaticamente à sua conta.
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
