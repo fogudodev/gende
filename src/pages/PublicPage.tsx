@@ -112,6 +112,9 @@ const PublicPage = () => {
     setSlug(clean);
     setSlugError("");
     setSuggestions([]);
+    // Debounce iframe reload
+    clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => setDebouncedSlug(clean), 800);
   };
 
   const uploadFile = async (file: File, type: "logo" | "cover") => {
