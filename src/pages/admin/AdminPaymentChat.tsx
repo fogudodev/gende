@@ -67,7 +67,7 @@ const AdminPaymentChat = () => {
 
   const sendMessage = useMutation({
     mutationFn: async (params: { message?: string; attachment_url?: string }) => {
-      const { error } = await (supabase.from("chat_messages" as any) as any).insert({
+      const { error } = await supabase.from("chat_messages").insert({
         professional_id: selectedProfId!,
         sender_role: "support",
         sender_name: "Admin",

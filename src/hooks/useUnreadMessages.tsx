@@ -38,21 +38,21 @@ export const useUnreadMessages = () => {
 
       const [{ count: paymentCount }, { count: supportCount }, { data: recentPayment }, { data: recentSupport }] = await Promise.all([
         supabase
-          .from("chat_messages" as any)
+          .from("chat_messages")
           .select("*", { count: "exact", head: true })
           .eq("professional_id", professional.id)
           .eq("chat_type", "payment")
           .neq("sender_role", "user")
           .gt("created_at", paymentLastSeen),
         supabase
-          .from("chat_messages" as any)
+          .from("chat_messages")
           .select("*", { count: "exact", head: true })
           .eq("professional_id", professional.id)
           .eq("chat_type", "support")
           .neq("sender_role", "user")
           .gt("created_at", supportLastSeen),
         supabase
-          .from("chat_messages" as any)
+          .from("chat_messages")
           .select("id, message, sender_name, chat_type, created_at, attachment_url")
           .eq("professional_id", professional.id)
           .eq("chat_type", "payment")
@@ -61,7 +61,7 @@ export const useUnreadMessages = () => {
           .order("created_at", { ascending: false })
           .limit(5),
         supabase
-          .from("chat_messages" as any)
+          .from("chat_messages")
           .select("id, message, sender_name, chat_type, created_at, attachment_url")
           .eq("professional_id", professional.id)
           .eq("chat_type", "support")
