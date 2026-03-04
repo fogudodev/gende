@@ -130,6 +130,16 @@ serve(async (req) => {
           });
       }
 
+      // Record purchase history
+      const amountCents = session.amount_total || 0;
+      await supabase.from("addon_purchases").insert({
+        professional_id: professionalId,
+        addon_type: addonType,
+        quantity: addonQuantity,
+        amount_cents: amountCents,
+        stripe_session_id: sessionId,
+      });
+
       return new Response(JSON.stringify({ success: true, type: addonType, quantity: addonQuantity }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

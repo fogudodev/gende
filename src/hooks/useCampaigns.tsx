@@ -53,6 +53,23 @@ export const useSendCampaign = () => {
   });
 };
 
+export const useAddonPurchases = () => {
+  const { data: professional } = useProfessional();
+  return useQuery({
+    queryKey: ["addon-purchases", professional?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("addon_purchases")
+        .select("*")
+        .eq("professional_id", professional!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!professional?.id,
+  });
+};
+
 export const useCampaignContacts = (campaignId: string | null) => {
   return useQuery({
     queryKey: ["campaign-contacts", campaignId],
