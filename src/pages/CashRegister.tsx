@@ -34,6 +34,9 @@ import {
   FileBarChart,
 } from "lucide-react";
 import { format } from "date-fns";
+import type { Tables } from "@/integrations/supabase/types";
+
+type CashTransaction = Tables<"cash_transactions">;
 
 const CashRegister = () => {
   const { data: professional } = useProfessional();
@@ -66,18 +69,27 @@ const CashRegister = () => {
     openMutation.mutate({
       professionalId: profId,
       openedBy: employeeId,
-      openingAmount: Number(openingAmount) || 0,
+      openingAmount: Math.max(0, Number(openingAmount) || 0),
     });
     setOpeningAmount("");
   };
 
+  const totalEntries = (transactions || [])
+    .filter((t: CashTransaction) => t.type === "entry")
+    .reduce((sum: number, t: CashTransaction) => sum + Number(t.amount), 0);
+  const totalWithdrawals = (transactions || [])
+    .filter((t: CashTransaction) => t.type === "withdrawal")
+    .reduce((sum: number, t: CashTransaction) => sum + Number(t.amount), 0);
+  const currentBalance = Number(openRegister?.opening_amount || 0) + totalEntries - totalWithdrawals;
+
   const handleCloseCash = () => {
     if (!openRegister) return;
-    const expected = Number(openRegister.opening_amount) + totalEntries - totalWithdrawals;
+    const closingVal = Number(closingAmount);
+    if (closingVal < 0) return;
     closeMutation.mutate({
       id: openRegister.id,
-      closingAmount: Number(closingAmount) || 0,
-      expectedAmount: expected,
+      closingAmount: closingVal || 0,
+      expectedAmount: currentBalance,
       notes: closingNotes,
     });
     setCloseDialogOpen(false);
@@ -87,11 +99,13 @@ const CashRegister = () => {
 
   const handleAddTransaction = () => {
     if (!openRegister || !profId) return;
+    const amount = Number(txForm.amount);
+    if (!amount || amount <= 0) return;
     addTransaction.mutate({
       cash_register_id: openRegister.id,
       professional_id: profId,
       type: txForm.type,
-      amount: Number(txForm.amount) || 0,
+      amount,
       payment_method: txForm.payment_method,
       description: txForm.description,
       created_by: employeeId,
@@ -100,14 +114,6 @@ const CashRegister = () => {
     setTxForm({ type: "entry", amount: "", payment_method: "cash", description: "" });
   };
 
-  const totalEntries = (transactions || [])
-    .filter((t: any) => t.type === "entry")
-    .reduce((sum: number, t: any) => sum + Number(t.amount), 0);
-  const totalWithdrawals = (transactions || [])
-    .filter((t: any) => t.type === "withdrawal")
-    .reduce((sum: number, t: any) => sum + Number(t.amount), 0);
-  const currentBalance = Number(openRegister?.opening_amount || 0) + totalEntries - totalWithdrawals;
-
   const paymentMethodLabel: Record<string, string> = {
     cash: "Dinheiro",
     pix: "PIX",
@@ -115,7 +121,7 @@ const CashRegister = () => {
     other: "Outro",
   };
 
-  const paymentMethodIcon: Record<string, any> = {
+  const paymentMethodIcon: Record<string, typeof DollarSign> = {
     cash: Banknote,
     pix: QrCode,
     card: CreditCard,
@@ -242,8 +248,8 @@ const CashRegister = () => {
                   <p className="text-sm text-muted-foreground text-center py-6">Nenhuma movimentação registrada</p>
                 ) : (
                   <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                    {transactions.map((tx: any) => {
-                      const Icon = paymentMethodIcon[tx.payment_method] || DollarSign;
+                    {transactions.map((tx: CashTransaction) => {
+                      const Icon = paymentMethodIcon[tx.payment_method || "other"] || DollarSign;
                       const isEntry = tx.type === "entry";
                       return (
                         <div key={tx.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/20 border border-border">
@@ -255,7 +261,7 @@ const CashRegister = () => {
                               <p className="text-sm font-medium">{tx.description || (isEntry ? "Entrada" : "Sangria")}</p>
                               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <Icon size={12} />
-                                <span>{paymentMethodLabel[tx.payment_method] || tx.payment_method}</span>
+                                <span>{paymentMethodLabel[tx.payment_method || "other"] || tx.payment_method}</span>
                                 <span>• {format(new Date(tx.created_at), "HH:mm")}</span>
                               </div>
                             </div>
@@ -290,7 +296,7 @@ const CashRegister = () => {
               <Input
                 type="number"
                 step="0.01"
-                min="0"
+                min="0.01"
                 value={txForm.amount}
                 onChange={(e) => setTxForm({ ...txForm, amount: e.target.value })}
                 placeholder="R$ 0,00"
@@ -318,7 +324,11 @@ const CashRegister = () => {
                 placeholder="Ex: Pagamento corte masculino"
               />
             </div>
-            <Button onClick={handleAddTransaction} className="w-full" disabled={!txForm.amount || addTransaction.isPending}>
+            <Button
+              onClick={handleAddTransaction}
+              className="w-full"
+              disabled={!txForm.amount || Number(txForm.amount) <= 0 || addTransaction.isPending}
+            >
               {txForm.type === "entry" ? "Registrar Entrada" : "Registrar Sangria"}
             </Button>
           </div>
@@ -369,7 +379,7 @@ const CashRegister = () => {
                 placeholder="Opcional"
               />
             </div>
-            <Button variant="destructive" onClick={handleCloseCash} className="w-full" disabled={!closingAmount || closeMutation.isPending}>
+            <Button variant="destructive" onClick={handleCloseCash} className="w-full" disabled={!closingAmount || Number(closingAmount) < 0 || closeMutation.isPending}>
               <Lock size={16} className="mr-2" />
               Confirmar Fechamento
             </Button>

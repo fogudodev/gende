@@ -24,6 +24,10 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import type { Tables } from "@/integrations/supabase/types";
+
+type CashRegister = Tables<"cash_registers">;
+type CashTransaction = Tables<"cash_transactions">;
 
 interface Props {
   professionalId: string | undefined;
@@ -36,7 +40,7 @@ const paymentMethodLabel: Record<string, string> = {
   other: "Outro",
 };
 
-const paymentMethodIcon: Record<string, any> = {
+const paymentMethodIcon: Record<string, typeof DollarSign> = {
   cash: Banknote,
   pix: QrCode,
   card: CreditCard,
@@ -47,7 +51,7 @@ const CashRegisterReport = ({ professionalId }: Props) => {
   const { data: registers } = useCashRegisters(professionalId, 50);
   const [selectedRegisterId, setSelectedRegisterId] = useState<string | null>(null);
 
-  const closedRegisters = (registers || []).filter((r: any) => r.status === "closed");
+  const closedRegisters = (registers || []).filter((r: CashRegister) => r.status === "closed");
 
   const { data: selectedTransactions } = useQuery({
     queryKey: ["cash-transactions-report", selectedRegisterId],
@@ -58,14 +62,14 @@ const CashRegisterReport = ({ professionalId }: Props) => {
         .eq("cash_register_id", selectedRegisterId!)
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return data;
+      return data as CashTransaction[];
     },
     enabled: !!selectedRegisterId,
   });
 
-  const selectedRegister = closedRegisters.find((r: any) => r.id === selectedRegisterId);
+  const selectedRegister = closedRegisters.find((r: CashRegister) => r.id === selectedRegisterId);
 
-  const getPaymentTotals = (transactions: any[]) => {
+  const getPaymentTotals = (transactions: CashTransaction[]) => {
     const totals: Record<string, { entries: number; withdrawals: number }> = {};
     for (const tx of transactions) {
       const method = tx.payment_method || "other";
@@ -78,8 +82,8 @@ const CashRegisterReport = ({ professionalId }: Props) => {
 
   // Summary stats
   const totalRegisters = closedRegisters.length;
-  const totalRevenue = closedRegisters.reduce((sum: number, r: any) => sum + Number(r.closing_amount || 0), 0);
-  const totalDifference = closedRegisters.reduce((sum: number, r: any) => {
+  const totalRevenue = closedRegisters.reduce((sum: number, r: CashRegister) => sum + Number(r.closing_amount || 0), 0);
+  const totalDifference = closedRegisters.reduce((sum: number, r: CashRegister) => {
     if (r.expected_amount == null) return sum;
     return sum + (Number(r.closing_amount || 0) - Number(r.expected_amount));
   }, 0);
@@ -115,7 +119,7 @@ const CashRegisterReport = ({ professionalId }: Props) => {
 
       {/* Register List */}
       <div className="space-y-2">
-        {closedRegisters.map((r: any) => {
+        {closedRegisters.map((r: CashRegister) => {
           const diff = r.expected_amount != null ? Number(r.closing_amount || 0) - Number(r.expected_amount) : null;
           return (
             <Card
@@ -211,8 +215,8 @@ const CashRegisterReport = ({ professionalId }: Props) => {
               <div>
                 <h4 className="text-sm font-semibold mb-2">Movimentações ({selectedTransactions.length})</h4>
                 <div className="space-y-1.5 max-h-60 overflow-y-auto">
-                  {selectedTransactions.map((tx: any) => {
-                    const Icon = paymentMethodIcon[tx.payment_method] || DollarSign;
+                  {selectedTransactions.map((tx: CashTransaction) => {
+                    const Icon = paymentMethodIcon[tx.payment_method || "other"] || DollarSign;
                     const isEntry = tx.type === "entry";
                     return (
                       <div key={tx.id} className="flex items-center justify-between p-2.5 rounded-lg bg-muted/10 border border-border text-sm">
