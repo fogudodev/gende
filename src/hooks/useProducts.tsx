@@ -60,7 +60,7 @@ export const useUpdateProduct = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["products"] }); toast.success("Produto atualizado!"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["products"] }); },
     onError: (e: Error) => toast.error("Erro: " + e.message),
   });
 };
