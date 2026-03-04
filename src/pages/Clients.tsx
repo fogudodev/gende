@@ -1,5 +1,6 @@
 import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { motion } from "framer-motion";
 import { Plus, Search, Phone, Mail, CalendarDays, Pencil, Trash2, Loader2, Download, Upload } from "lucide-react";
 import { exportToCSV, importCSVFile } from "@/lib/csv-utils";
@@ -25,7 +26,7 @@ const Clients = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Client | null>(null);
   const [form, setForm] = useState(defaultForm);
-
+  const [deleteTarget, setDeleteTarget] = useState<Client | null>(null);
   const filtered = (clients || []).filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     (c.email || "").toLowerCase().includes(search.toLowerCase()) ||
@@ -61,11 +62,13 @@ const Clients = () => {
     } catch { toast.error("Erro ao salvar cliente"); }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await deleteClient.mutateAsync(id);
+      await deleteClient.mutateAsync(deleteTarget.id);
       toast.success("Cliente excluído!");
     } catch { toast.error("Erro ao excluir cliente"); }
+    setDeleteTarget(null);
   };
 
   return (
@@ -187,7 +190,7 @@ const Clients = () => {
                   <button onClick={() => openEdit(client)} className="p-1.5 rounded-lg hover:bg-muted/50 transition-colors">
                     <Pencil size={14} className="text-muted-foreground" />
                   </button>
-                  <button onClick={() => handleDelete(client.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
+                  <button onClick={() => setDeleteTarget(client)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
                     <Trash2 size={14} className="text-destructive" />
                   </button>
                 </div>
@@ -216,7 +219,7 @@ const Clients = () => {
                     <button onClick={() => openEdit(client)} className="p-1.5 rounded-lg hover:bg-muted/50 transition-colors">
                       <Pencil size={14} className="text-muted-foreground" />
                     </button>
-                    <button onClick={() => handleDelete(client.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
+                    <button onClick={() => setDeleteTarget(client)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
                       <Trash2 size={14} className="text-destructive" />
                     </button>
                   </div>
@@ -262,6 +265,22 @@ const Clients = () => {
           </div>
         </DialogContent>
       </Dialog>
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir cliente</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir <strong>{deleteTarget?.name}</strong>? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
