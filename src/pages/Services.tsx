@@ -158,11 +158,13 @@ const Services = () => {
     } catch { toast.error("Erro ao salvar serviço"); }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await deleteService.mutateAsync(id);
+      await deleteService.mutateAsync(deleteTarget.id);
       toast.success("Serviço excluído!");
     } catch { toast.error("Erro ao excluir serviço"); }
+    setDeleteTarget(null);
   };
 
   const handleExport = () => {
