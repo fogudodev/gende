@@ -1112,8 +1112,8 @@ function Step5Confirm({ professional, selectedEmployee, selectedService, selecte
               </div>
               <div className="h-px my-1" style={{ background: `${accent}30` }} />
               <div className="flex justify-between items-center">
-                <div><span className="text-xs font-semibold" style={{ color: "#374151" }}>Restante no local</span><p className="text-xs" style={{ color: "#94A3B8" }}>Pago pessoalmente no dia</p></div>
-                <span className="text-sm font-bold" style={{ color: "#374151" }}>{formatCurrency(remainingValue)}</span>
+                <div><span className="text-xs font-semibold" style={{ color: textSecondary }}>Restante no local</span><p className="text-xs" style={{ color: textMuted }}>Pago pessoalmente no dia</p></div>
+                <span className="text-sm font-bold" style={{ color: textSecondary }}>{formatCurrency(remainingValue)}</span>
               </div>
             </div>
           </div>
