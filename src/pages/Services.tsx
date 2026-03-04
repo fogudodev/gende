@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { motion } from "framer-motion";
 import { Plus, Clock, DollarSign, MoreVertical, Pencil, Trash2, Loader2, Download, Upload, Users, Search, Scissors, ChevronDown, Check } from "lucide-react";
 import { exportToCSV, importCSVFile } from "@/lib/csv-utils";
@@ -118,6 +119,7 @@ const Services = () => {
   const [form, setForm] = useState(defaultForm);
   const [activeCategory, setActiveCategory] = useState("Todos");
   const [search, setSearch] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Service | null>(null);
 
   const existingCategories = useMemo(() => [...new Set((services || []).map(s => s.category || "Geral"))], [services]);
   const categories = ["Todos", ...existingCategories];
@@ -156,11 +158,13 @@ const Services = () => {
     } catch { toast.error("Erro ao salvar serviço"); }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await deleteService.mutateAsync(id);
+      await deleteService.mutateAsync(deleteTarget.id);
       toast.success("Serviço excluído!");
     } catch { toast.error("Erro ao excluir serviço"); }
+    setDeleteTarget(null);
   };
 
   const handleExport = () => {
@@ -386,7 +390,7 @@ const Services = () => {
                       <DropdownMenuItem onClick={() => openEdit(service)}>
                         <Pencil size={14} className="mr-2" /> Editar
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(service.id)}>
+                      <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(service)}>
                         <Trash2 size={14} className="mr-2" /> Excluir
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -450,6 +454,22 @@ const Services = () => {
           </div>
         </DialogContent>
       </Dialog>
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir serviço</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir <strong>{deleteTarget?.name}</strong>? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
