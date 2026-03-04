@@ -154,7 +154,7 @@ const PublicBooking = () => {
 
   const isSalon = professional?.account_type === "salon";
   const totalSteps = isSalon ? 5 : 4;
-  const accent = professional?.primary_color || "#7C3AED";
+  const accent = professional?.component_color || professional?.primary_color || "#7C3AED";
   const accentLight = accent + "1a";
   const accentBorder = accent + "33";
   const textPrimary = professional?.text_color || "#1A1A2E";
