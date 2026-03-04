@@ -22,6 +22,7 @@ const Campaigns = () => {
   const { data: limitsData, refetch: refetchLimits } = useCampaignLimits();
   const { data: clients } = useClients();
   const sendCampaign = useSendCampaign();
+  const { data: purchases } = useAddonPurchases();
   const [showNew, setShowNew] = useState(false);
   const [detailCampaignId, setDetailCampaignId] = useState<string | null>(null);
   const { data: contacts, isLoading: loadingContacts } = useCampaignContacts(detailCampaignId);
