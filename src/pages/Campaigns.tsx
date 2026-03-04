@@ -19,7 +19,7 @@ import { ADDON_PACKAGES, getPackagesByType, type AddonType } from "@/lib/addon-p
 const Campaigns = () => {
   const { data: professional } = useProfessional();
   const { data: campaigns, isLoading } = useCampaigns();
-  const { data: limitsData } = useCampaignLimits();
+  const { data: limitsData, refetch: refetchLimits } = useCampaignLimits();
   const { data: clients } = useClients();
   const sendCampaign = useSendCampaign();
   const [showNew, setShowNew] = useState(false);
@@ -31,6 +31,38 @@ const Campaigns = () => {
   const [sending, setSending] = useState(false);
   const [showAddons, setShowAddons] = useState(false);
   const [buyingAddon, setBuyingAddon] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
+
+  // Auto-verify addon payment on return from Stripe
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get("addon_session_id");
+    if (!sessionId || !professional || verifying) return;
+
+    const verify = async () => {
+      setVerifying(true);
+      // Clean URL immediately
+      window.history.replaceState({}, "", window.location.pathname);
+      try {
+        const { data, error } = await supabase.functions.invoke("purchase-addon", {
+          body: { action: "verify-payment", sessionId, professionalId: professional.id },
+        });
+        if (error) throw error;
+        if (data?.success) {
+          const typeLabels: Record<string, string> = { reminders: "lembretes", campaigns: "campanhas", contacts: "contatos" };
+          toast.success(`✅ ${data.quantity} ${typeLabels[data.type] || "extras"} adicionados à sua conta!`);
+          refetchLimits();
+        } else {
+          toast.error(data?.error || "Pagamento não confirmado ainda. Tente novamente em instantes.");
+        }
+      } catch (err: any) {
+        toast.error("Erro ao verificar pagamento: " + (err.message || ""));
+      } finally {
+        setVerifying(false);
+      }
+    };
+    verify();
+  }, [professional?.id]);
 
   const handleBuyAddon = async (priceId: string) => {
     if (!professional) return;
