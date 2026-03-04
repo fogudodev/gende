@@ -12,12 +12,12 @@ const ADDON_PACKAGES: Record<string, { type: "reminders" | "campaigns" | "contac
   "price_1T7H4vFjVGP9lWs0BKNJX8I3": { type: "reminders", quantity: 10, priceId: "price_1T7H4vFjVGP9lWs0BKNJX8I3" },
   "price_1T7H6MFjVGP9lWs0Wcq9WHwV": { type: "reminders", quantity: 25, priceId: "price_1T7H6MFjVGP9lWs0Wcq9WHwV" },
   "price_1T7H8fFjVGP9lWs0zrDZP5GZ": { type: "reminders", quantity: 50, priceId: "price_1T7H8fFjVGP9lWs0zrDZP5GZ" },
-  "price_1T7H9mFjVGP9lWs0hzVB3sCh": { type: "campaigns", quantity: 5, priceId: "price_1T7H9mFjVGP9lWs0hzVB3sCh" },
-  "price_1T7HAuFjVGP9lWs09jVeY1Vy": { type: "campaigns", quantity: 15, priceId: "price_1T7HAuFjVGP9lWs09jVeY1Vy" },
-  "price_1T7HBAFjVGP9lWs04LhAdYG3": { type: "campaigns", quantity: 30, priceId: "price_1T7HBAFjVGP9lWs04LhAdYG3" },
-  "price_1T7HCrFjVGP9lWs01wIiaQQR": { type: "contacts", quantity: 20, priceId: "price_1T7HCrFjVGP9lWs01wIiaQQR" },
-  "price_1T7HE0FjVGP9lWs0rFMVyMZx": { type: "contacts", quantity: 50, priceId: "price_1T7HE0FjVGP9lWs0rFMVyMZx" },
-  "price_1T7HEGFjVGP9lWs0GkXJXdHA": { type: "contacts", quantity: 100, priceId: "price_1T7HEGFjVGP9lWs0GkXJXdHA" },
+  "price_1T7HWPFjVGP9lWs0NdSjwuwO": { type: "campaigns", quantity: 5, priceId: "price_1T7HWPFjVGP9lWs0NdSjwuwO" },
+  "price_1T7HWjFjVGP9lWs03IzoPU8w": { type: "campaigns", quantity: 15, priceId: "price_1T7HWjFjVGP9lWs03IzoPU8w" },
+  "price_1T7HXIFjVGP9lWs023qLe4y1": { type: "campaigns", quantity: 30, priceId: "price_1T7HXIFjVGP9lWs023qLe4y1" },
+  "price_1T7HXcFjVGP9lWs0pUGKjxSb": { type: "contacts", quantity: 20, priceId: "price_1T7HXcFjVGP9lWs0pUGKjxSb" },
+  "price_1T7HXpFjVGP9lWs0FBVYdSZa": { type: "contacts", quantity: 50, priceId: "price_1T7HXpFjVGP9lWs0FBVYdSZa" },
+  "price_1T7HYzFjVGP9lWs0K0QZWPzr": { type: "contacts", quantity: 100, priceId: "price_1T7HYzFjVGP9lWs0K0QZWPzr" },
 };
 
 serve(async (req) => {
