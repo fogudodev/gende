@@ -190,7 +190,7 @@ const Clients = () => {
                   <button onClick={() => openEdit(client)} className="p-1.5 rounded-lg hover:bg-muted/50 transition-colors">
                     <Pencil size={14} className="text-muted-foreground" />
                   </button>
-                  <button onClick={() => handleDelete(client.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
+                  <button onClick={() => setDeleteTarget(client)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
                     <Trash2 size={14} className="text-destructive" />
                   </button>
                 </div>
