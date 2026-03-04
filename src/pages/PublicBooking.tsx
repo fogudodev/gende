@@ -1100,7 +1100,7 @@ function Step5Confirm({ professional, selectedEmployee, selectedService, selecte
         {/* Payment summary */}
         {signalAmount && (
           <div className="rounded-2xl p-4 mb-4" style={{ background: `${accent}10`, border: `1.5px solid ${accent}30` }}>
-            <p className="text-sm font-bold mb-3" style={{ color: "#1A1A2E" }}>💰 Resumo de Pagamento</p>
+            <p className="text-sm font-bold mb-3" style={{ color: textPrimary }}>💰 Resumo de Pagamento</p>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-xs" style={{ color: "#64748B" }}>Valor total do serviço</span>
