@@ -499,6 +499,7 @@ const PublicBooking = () => {
             <Step1ClientInfo
               professional={professional}
               accent={accent}
+              colors={colors}
               clientName={clientName}
               setClientName={setClientName}
               clientPhone={clientPhone}
