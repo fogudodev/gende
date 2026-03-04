@@ -29,6 +29,26 @@ const Campaigns = () => {
   const [message, setMessage] = useState("");
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [sending, setSending] = useState(false);
+  const [showAddons, setShowAddons] = useState(false);
+  const [buyingAddon, setBuyingAddon] = useState<string | null>(null);
+
+  const handleBuyAddon = async (priceId: string) => {
+    if (!professional) return;
+    setBuyingAddon(priceId);
+    try {
+      const { data, error } = await supabase.functions.invoke("purchase-addon", {
+        body: { action: "create-checkout", priceId, professionalId: professional.id },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao iniciar compra");
+    } finally {
+      setBuyingAddon(null);
+    }
+  };
 
   const handleSend = async () => {
     if (!professional || !name.trim() || !message.trim()) {
