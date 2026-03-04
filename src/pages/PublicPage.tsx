@@ -361,16 +361,6 @@ const PublicPage = () => {
                 />
               </div>
 
-              <div className="border-t border-border/50 pt-4">
-                <ColorPicker
-                  label="Cor da Fonte"
-                  value={textColor}
-                  onChange={setTextColor}
-                  presets={TEXT_PRESETS}
-                />
-              </div>
-            </div>
-          </SectionCard>
 
           {/* Save Button */}
           <Button
