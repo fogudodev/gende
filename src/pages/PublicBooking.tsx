@@ -1100,20 +1100,20 @@ function Step5Confirm({ professional, selectedEmployee, selectedService, selecte
         {/* Payment summary */}
         {signalAmount && (
           <div className="rounded-2xl p-4 mb-4" style={{ background: `${accent}10`, border: `1.5px solid ${accent}30` }}>
-            <p className="text-sm font-bold mb-3" style={{ color: textPrimary }}>💰 Resumo de Pagamento</p>
+            <p className="text-sm font-bold mb-3" style={{ color: "#1A1A2E" }}>💰 Resumo de Pagamento</p>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-xs" style={{ color: textSecondary }}>Valor total do serviço</span>
-                <span className="text-sm font-bold" style={{ color: textPrimary }}>{formatCurrency(totalPrice)}</span>
+                <span className="text-xs" style={{ color: "#64748B" }}>Valor total do serviço</span>
+                <span className="text-sm font-bold" style={{ color: "#1A1A2E" }}>{formatCurrency(totalPrice)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <div><span className="text-xs font-semibold" style={{ color: accent }}>Sinal — via PIX</span><p className="text-xs" style={{ color: textMuted }}>Pago agora para reservar a vaga</p></div>
+                <div><span className="text-xs font-semibold" style={{ color: accent }}>Sinal — via PIX</span><p className="text-xs" style={{ color: "#94A3B8" }}>Pago agora para reservar a vaga</p></div>
                 <span className="text-sm font-bold" style={{ color: accent }}>{formatCurrency(signalAmount)}</span>
               </div>
               <div className="h-px my-1" style={{ background: `${accent}30` }} />
               <div className="flex justify-between items-center">
-                <div><span className="text-xs font-semibold" style={{ color: textPrimary }}>Restante no local</span><p className="text-xs" style={{ color: textMuted }}>Pago pessoalmente no dia</p></div>
-                <span className="text-sm font-bold" style={{ color: textPrimary }}>{formatCurrency(remainingValue)}</span>
+                <div><span className="text-xs font-semibold" style={{ color: "#374151" }}>Restante no local</span><p className="text-xs" style={{ color: "#94A3B8" }}>Pago pessoalmente no dia</p></div>
+                <span className="text-sm font-bold" style={{ color: "#374151" }}>{formatCurrency(remainingValue)}</span>
               </div>
             </div>
           </div>
