@@ -136,13 +136,17 @@ const Campaigns = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.03 }}
-              className="glass-card rounded-2xl p-5"
+              className="glass-card rounded-2xl p-5 cursor-pointer hover:ring-2 hover:ring-accent/30 transition-all"
+              onClick={() => setDetailCampaignId(c.id)}
             >
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-semibold text-foreground">{c.name}</h3>
-                <span className={cn("px-2 py-0.5 rounded-full text-xs font-semibold", statusColors[c.status] || "bg-muted")}>
-                  {statusLabels[c.status] || c.status}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={cn("px-2 py-0.5 rounded-full text-xs font-semibold", statusColors[c.status] || "bg-muted")}>
+                    {statusLabels[c.status] || c.status}
+                  </span>
+                  <Eye size={14} className="text-muted-foreground" />
+                </div>
               </div>
               <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{c.message}</p>
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
