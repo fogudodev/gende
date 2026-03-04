@@ -659,7 +659,7 @@ const PublicBooking = () => {
                   <div className={`mb-4${!expired && pixTimeLeft <= 60 ? " animate-pulse" : ""}`}>
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <span className={`text-lg${!expired && pixTimeLeft <= 60 ? " animate-bounce" : ""}`} role="img">⏱️</span>
-                      <span className={`font-mono font-bold text-lg${!expired && pixTimeLeft <= 60 ? " scale-110" : ""} transition-transform`} style={{ color: expired ? "#EF4444" : pixTimeLeft <= 60 ? "#EF4444" : textPrimary }}>
+                      <span className={`font-mono font-bold text-lg${!expired && pixTimeLeft <= 60 ? " scale-110" : ""} transition-transform`} style={{ color: expired ? "#EF4444" : pixTimeLeft <= 60 ? "#EF4444" : "#1A1A2E" }}>
                         {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
                       </span>
                     </div>
