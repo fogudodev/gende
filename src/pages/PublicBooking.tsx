@@ -914,7 +914,7 @@ function Step3Services({ services, groupedServices, selected, selectedEmployee, 
                     <div className="flex items-start gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <h3 className="font-bold text-sm" style={{ color: "#1A1A2E" }}>{svc.name}</h3>
+                          <h3 className="font-bold text-sm" style={{ color: textPrimary }}>{svc.name}</h3>
                           {isSelected && <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-xs flex-shrink-0" style={{ background: accent }}>✓</div>}
                         </div>
                         {svc.description && <p className="text-xs mt-0.5 leading-relaxed" style={{ color: "#64748B" }}>{svc.description}</p>}
