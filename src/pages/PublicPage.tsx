@@ -220,8 +220,8 @@ const PublicPage = () => {
     );
   }
 
-  const previewUrl = slug
-    ? `${window.location.origin}/p/${slug}`
+  const previewUrl = debouncedSlug
+    ? `${window.location.origin}/p/${debouncedSlug}`
     : null;
 
   const toggleSection = (section: ActiveSection) => {
