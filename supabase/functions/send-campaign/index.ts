@@ -288,9 +288,24 @@ serve(async (req) => {
           .eq("usage_date", today)
           .maybeSingle();
 
+        // Get professional extras
+        const { data: profLimits } = await supabase
+          .from("professional_limits")
+          .select("*")
+          .eq("professional_id", professionalId)
+          .maybeSingle();
+
+        const baseLimits = limits || { daily_reminders: 5, daily_campaigns: 0, campaign_max_contacts: 0, campaign_min_interval_hours: 6 };
+        const extras = {
+          extra_reminders: profLimits?.extra_reminders_purchased || 0,
+          extra_campaigns: profLimits?.extra_campaigns_purchased || 0,
+          extra_contacts: profLimits?.extra_contacts_purchased || 0,
+        };
+
         return new Response(JSON.stringify({
           planId,
-          limits: limits || { daily_reminders: 5, daily_campaigns: 0, campaign_max_contacts: 0, campaign_min_interval_hours: 6 },
+          limits: baseLimits,
+          extras,
           usage: { reminders_sent: usage?.reminders_sent || 0, campaigns_sent: usage?.campaigns_sent || 0 },
         }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
