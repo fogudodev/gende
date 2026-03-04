@@ -81,10 +81,12 @@ serve(async (req) => {
 
         const campaignsSent = usage?.campaigns_sent || 0;
 
-        if (limits.daily_campaigns !== -1 && campaignsSent >= limits.daily_campaigns) {
+        const effectiveDailyCampaigns = limits.daily_campaigns === -1 ? -1 : limits.daily_campaigns + extraCampaigns;
+
+        if (effectiveDailyCampaigns !== -1 && campaignsSent >= effectiveDailyCampaigns) {
           return new Response(JSON.stringify({
             success: false,
-            error: `Limite diário de campanhas atingido (${limits.daily_campaigns} por dia no plano ${planId})`
+            error: `Limite diário de campanhas atingido (${effectiveDailyCampaigns} por dia). Compre mais add-ons para expandir.`
           }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
 
