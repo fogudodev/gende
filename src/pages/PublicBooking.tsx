@@ -543,6 +543,7 @@ const PublicBooking = () => {
             <Step4DateTime
               service={selectedService}
               accent={accent}
+              colors={colors}
               days={days14}
               today={today}
               selectedDate={selectedDate}
