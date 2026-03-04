@@ -159,7 +159,7 @@ const PublicPage = () => {
   const removeImage = async (type: "logo" | "cover") => {
     if (!professional) return;
     const field = type === "logo" ? "logo_url" : "cover_url";
-    await supabase.from("professionals").update({ [field]: null } as any).eq("id", professional.id);
+    await supabase.from("professionals").update({ [field]: null }).eq("id", professional.id);
     type === "logo" ? setLogoUrl("") : setCoverUrl("");
     qc.invalidateQueries({ queryKey: ["professional"] });
     toast.success("Imagem removida");
