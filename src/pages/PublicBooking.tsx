@@ -615,7 +615,7 @@ const PublicBooking = () => {
             <div className="px-5 pb-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold" style={{ color: textPrimary, fontFamily: "'Poppins', sans-serif" }}>Pagamento via PIX</h3>
-                <button onClick={() => setShowPaymentModal(false)} className="w-8 h-8 rounded-full flex items-center justify-center text-sm" style={{ background: "#F3F4F6", color: "#6B7280" }}>✕</button>
+                <button onClick={() => setShowPaymentModal(false)} className="w-8 h-8 rounded-full flex items-center justify-center text-sm" style={{ background: `${textPrimary}10`, color: textMuted }}>✕</button>
               </div>
               <div className="rounded-2xl p-4 mb-4" style={{ background: `${accent}10`, border: `1px solid ${accent}30` }}>
                 <div className="space-y-2">
