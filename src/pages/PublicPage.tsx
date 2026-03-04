@@ -144,7 +144,7 @@ const PublicPage = () => {
       const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
 
       const field = isLogo ? "logo_url" : "cover_url";
-      await supabase.from("professionals").update({ [field]: publicUrl } as any).eq("id", professional.id);
+      await supabase.from("professionals").update({ [field]: publicUrl }).eq("id", professional.id);
 
       isLogo ? setLogoUrl(publicUrl) : setCoverUrl(publicUrl);
       qc.invalidateQueries({ queryKey: ["professional"] });
