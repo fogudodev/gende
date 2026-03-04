@@ -390,7 +390,7 @@ const Services = () => {
                       <DropdownMenuItem onClick={() => openEdit(service)}>
                         <Pencil size={14} className="mr-2" /> Editar
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(service.id)}>
+                      <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(service)}>
                         <Trash2 size={14} className="mr-2" /> Excluir
                       </DropdownMenuItem>
                     </DropdownMenuContent>
