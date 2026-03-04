@@ -614,15 +614,15 @@ const PublicBooking = () => {
             <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full" style={{ background: "#E5E7EB" }} /></div>
             <div className="px-5 pb-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold" style={{ color: textPrimary, fontFamily: "'Poppins', sans-serif" }}>Pagamento via PIX</h3>
-                <button onClick={() => setShowPaymentModal(false)} className="w-8 h-8 rounded-full flex items-center justify-center text-sm" style={{ background: "#F3F4F6", color: textMuted }}>✕</button>
+                <h3 className="text-lg font-bold" style={{ color: "#1A1A2E", fontFamily: "'Poppins', sans-serif" }}>Pagamento via PIX</h3>
+                <button onClick={() => setShowPaymentModal(false)} className="w-8 h-8 rounded-full flex items-center justify-center text-sm" style={{ background: "#F3F4F6", color: "#6B7280" }}>✕</button>
               </div>
               <div className="rounded-2xl p-4 mb-4" style={{ background: `${accent}10`, border: `1px solid ${accent}30` }}>
                 <div className="space-y-2">
-                  <div className="flex justify-between"><span className="text-xs" style={{ color: textSecondary }}>Serviço completo</span><span className="text-sm font-bold" style={{ color: textPrimary }}>{formatCurrency(totalPrice)}</span></div>
+                  <div className="flex justify-between"><span className="text-xs" style={{ color: "#64748B" }}>Serviço completo</span><span className="text-sm font-bold" style={{ color: "#1A1A2E" }}>{formatCurrency(totalPrice)}</span></div>
                   <div className="flex justify-between items-center"><span className="text-xs font-semibold" style={{ color: accent }}>Sinal a pagar agora (PIX)</span><span className="text-lg font-bold" style={{ color: accent }}>{formatCurrency(signalAmount)}</span></div>
                   <div className="h-px" style={{ background: `${accent}20` }} />
-                  <div className="flex justify-between"><span className="text-xs" style={{ color: textSecondary }}>Restante no local</span><span className="text-sm font-semibold" style={{ color: textPrimary }}>{formatCurrency(remainingValue)}</span></div>
+                  <div className="flex justify-between"><span className="text-xs" style={{ color: "#64748B" }}>Restante no local</span><span className="text-sm font-semibold" style={{ color: "#374151" }}>{formatCurrency(remainingValue)}</span></div>
                 </div>
               </div>
               {(() => {
@@ -632,13 +632,13 @@ const PublicBooking = () => {
                     {payload && (
                       <div className="flex justify-center mb-4">
                         <div className="p-3 rounded-2xl" style={{ background: "white", border: `2px solid ${accent}20` }}>
-                          <QRCodeSVG value={payload} size={180} fgColor={textPrimary} />
+                          <QRCodeSVG value={payload} size={180} fgColor="#1A1A2E" />
                         </div>
                       </div>
                     )}
-                    <p className="text-xs font-semibold mb-2 text-center" style={{ color: textSecondary }}>PIX Copia e Cola:</p>
+                    <p className="text-xs font-semibold mb-2 text-center" style={{ color: "#64748B" }}>PIX Copia e Cola:</p>
                     <div className="rounded-xl p-3 flex items-center gap-2" style={{ background: "#F9FAFB", border: "1px solid #E5E7EB" }}>
-                      <p className="text-[10px] flex-1 font-mono break-all leading-relaxed max-h-16 overflow-y-auto" style={{ color: textPrimary }}>
+                      <p className="text-[10px] flex-1 font-mono break-all leading-relaxed max-h-16 overflow-y-auto" style={{ color: "#374151" }}>
                         {payload || paymentConfig.pix_key}
                       </p>
                       <button onClick={copyPixKey} className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95 text-white" style={{ background: pixCopied ? "#10B981" : accent }}>
@@ -659,7 +659,7 @@ const PublicBooking = () => {
                   <div className={`mb-4${!expired && pixTimeLeft <= 60 ? " animate-pulse" : ""}`}>
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <span className={`text-lg${!expired && pixTimeLeft <= 60 ? " animate-bounce" : ""}`} role="img">⏱️</span>
-                      <span className={`font-mono font-bold text-lg${!expired && pixTimeLeft <= 60 ? " scale-110" : ""} transition-transform`} style={{ color: expired ? "#EF4444" : pixTimeLeft <= 60 ? "#EF4444" : textPrimary }}>
+                      <span className={`font-mono font-bold text-lg${!expired && pixTimeLeft <= 60 ? " scale-110" : ""} transition-transform`} style={{ color: expired ? "#EF4444" : pixTimeLeft <= 60 ? "#EF4444" : "#1A1A2E" }}>
                         {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
                       </span>
                     </div>
@@ -674,7 +674,7 @@ const PublicBooking = () => {
                         </button>
                       </div>
                     ) : (
-                      <p className="text-[10px] text-center mt-1" style={{ color: textMuted }}>Realize o pagamento dentro do prazo</p>
+                      <p className="text-[10px] text-center mt-1" style={{ color: "#94A3B8" }}>Realize o pagamento dentro do prazo</p>
                     )}
                   </div>
                 );
@@ -684,7 +684,7 @@ const PublicBooking = () => {
                   ✅ Já realizei o pagamento
                 </button>
               )}
-              <p className="text-center text-xs mt-3" style={{ color: textMuted }}>Após o pagamento, você receberá confirmação no WhatsApp</p>
+              <p className="text-center text-xs mt-3" style={{ color: "#94A3B8" }}>Após o pagamento, você receberá confirmação no WhatsApp</p>
             </div>
           </div>
         </div>
@@ -767,7 +767,7 @@ function Step1ClientInfo({ professional, accent, colors, clientName, setClientNa
               <input type="text" placeholder="Ex: Maria Silva" value={clientName}
                 onChange={e => { setClientName(e.target.value); if (errors.name) setErrors({...errors, name: ""}); }}
                 className="w-full pl-10 pr-4 py-3.5 rounded-xl text-sm font-medium transition-all outline-none focus:ring-2"
-                style={{ background: errors.name ? "#FFF1F2" : "white", border: `1.5px solid ${errors.name ? "#F87171" : clientName ? accent : "#E2E8F0"}`, color: textPrimary, boxShadow: "0 1px 3px rgba(0,0,0,0.04)", ["--tw-ring-color" as any]: accent }}
+                style={{ background: errors.name ? "#FFF1F2" : "white", border: `1.5px solid ${errors.name ? "#F87171" : clientName ? accent : "#E2E8F0"}`, color: "#1A1A2E", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", ["--tw-ring-color" as any]: accent }}
               />
             </div>
             {errors.name && <p className="text-xs mt-1 font-medium" style={{ color: "#EF4444" }}>{errors.name}</p>}
@@ -781,7 +781,7 @@ function Step1ClientInfo({ professional, accent, colors, clientName, setClientNa
               <input type="tel" placeholder="(11) 99999-9999" value={clientPhone}
                 onChange={e => { setClientPhone(formatPhone(e.target.value)); if (errors.phone) setErrors({...errors, phone: ""}); }}
                 className="w-full pl-10 pr-4 py-3.5 rounded-xl text-sm font-medium transition-all outline-none focus:ring-2"
-                style={{ background: errors.phone ? "#FFF1F2" : "white", border: `1.5px solid ${errors.phone ? "#F87171" : clientPhone ? accent : "#E2E8F0"}`, color: textPrimary, boxShadow: "0 1px 3px rgba(0,0,0,0.04)", ["--tw-ring-color" as any]: accent }}
+                style={{ background: errors.phone ? "#FFF1F2" : "white", border: `1.5px solid ${errors.phone ? "#F87171" : clientPhone ? accent : "#E2E8F0"}`, color: "#1A1A2E", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", ["--tw-ring-color" as any]: accent }}
               />
             </div>
             {errors.phone && <p className="text-xs mt-1 font-medium" style={{ color: "#EF4444" }}>{errors.phone}</p>}
@@ -838,14 +838,14 @@ function Step2Employees({ employees, selected, clientName, accent, colors, emplo
                     {isSelected && <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: accent }}>✓</div>}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-sm" style={{ color: textPrimary }}>{emp.name}</h3>
+                    <h3 className="font-bold text-sm" style={{ color: "#1A1A2E" }}>{emp.name}</h3>
                     {emp.specialty && <p className="text-xs font-medium mt-0.5" style={{ color: accent }}>{emp.specialty}</p>}
                     <div className="flex items-center gap-3 mt-1.5 flex-wrap">
                       {stats?.avgRating != null && (
                         <div className="flex items-center gap-1">
                           <Star size={12} className="fill-amber-400 text-amber-400" />
-                          <span className="text-xs font-semibold" style={{ color: textPrimary }}>{stats.avgRating}</span>
-                          <span className="text-[10px]" style={{ color: textMuted }}>({stats.reviewCount})</span>
+                          <span className="text-xs font-semibold" style={{ color: "#1A1A2E" }}>{stats.avgRating}</span>
+                          <span className="text-[10px]" style={{ color: "#94A3B8" }}>({stats.reviewCount})</span>
                         </div>
                       )}
                       {stats?.completedBookings > 0 && (
@@ -894,7 +894,7 @@ function Step3Services({ services, groupedServices, selected, selectedEmployee, 
               <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold" style={{ background: `${accent}20`, color: accent }}>{selectedEmployee.name[0]}</div>
             )}
             <div>
-              <p className="text-sm font-bold" style={{ color: textPrimary }}>{selectedEmployee.name}</p>
+              <p className="text-sm font-bold" style={{ color: "#1A1A2E" }}>{selectedEmployee.name}</p>
               {selectedEmployee.specialty && <p className="text-xs" style={{ color: accent }}>{selectedEmployee.specialty}</p>}
             </div>
           </div>
@@ -914,10 +914,10 @@ function Step3Services({ services, groupedServices, selected, selectedEmployee, 
                     <div className="flex items-start gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <h3 className="font-bold text-sm" style={{ color: textPrimary }}>{svc.name}</h3>
+                          <h3 className="font-bold text-sm" style={{ color: "#1A1A2E" }}>{svc.name}</h3>
                           {isSelected && <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-xs flex-shrink-0" style={{ background: accent }}>✓</div>}
                         </div>
-                        {svc.description && <p className="text-xs mt-0.5 leading-relaxed" style={{ color: textSecondary }}>{svc.description}</p>}
+                        {svc.description && <p className="text-xs mt-0.5 leading-relaxed" style={{ color: "#64748B" }}>{svc.description}</p>}
                         <div className="flex items-center gap-3 mt-2">
                           <span className="text-base font-bold" style={{ color: accent }}>{formatCurrency(Number(svc.price))}</span>
                           <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: `${accent}10`, color: accent }}>⏱ {svc.duration_minutes} min</span>
@@ -976,8 +976,8 @@ function Step4DateTime({ service, accent, colors, days, today, selectedDate, set
               <button key={d.toISOString()} onClick={() => handleDaySelect(d)}
                 className="flex-shrink-0 flex flex-col items-center gap-1 py-3 px-3 rounded-xl transition-all active:scale-90 min-w-[56px]"
                 style={{ background: isSelected ? `linear-gradient(135deg, ${accent}, ${accent}cc)` : isToday ? `${accent}08` : "white", border: `1.5px solid ${isSelected ? accent : isToday ? `${accent}40` : "#F1F5F9"}`, boxShadow: isSelected ? `0 4px 12px ${accent}40` : "0 1px 3px rgba(0,0,0,0.04)" }}>
-                <span className="text-[10px] font-semibold uppercase" style={{ color: isSelected ? "rgba(255,255,255,0.8)" : textMuted }}>{DAYS_PT[d.getDay()]}</span>
-                <span className="text-lg font-bold leading-none" style={{ color: isSelected ? "white" : textPrimary }}>{d.getDate()}</span>
+                <span className="text-[10px] font-semibold uppercase" style={{ color: isSelected ? "rgba(255,255,255,0.8)" : "#94A3B8" }}>{DAYS_PT[d.getDay()]}</span>
+                <span className="text-lg font-bold leading-none" style={{ color: isSelected ? "white" : "#1A1A2E" }}>{d.getDate()}</span>
                 {isToday && !isSelected && <div className="w-1.5 h-1.5 rounded-full" style={{ background: accent }} />}
               </button>
             );
@@ -1001,7 +1001,7 @@ function Step4DateTime({ service, accent, colors, days, today, selectedDate, set
                   return (
                     <button key={slot.start_time} onClick={() => handleTimeSelect(slot)}
                       className="py-3 rounded-xl text-sm font-semibold transition-all active:scale-95"
-                      style={{ background: isSelected ? `linear-gradient(135deg, ${accent}, ${accent}cc)` : "white", color: isSelected ? "white" : textPrimary, border: `1.5px solid ${isSelected ? accent : "#F1F5F9"}`, boxShadow: isSelected ? `0 4px 12px ${accent}40` : "0 1px 3px rgba(0,0,0,0.04)" }}>
+                      style={{ background: isSelected ? `linear-gradient(135deg, ${accent}, ${accent}cc)` : "white", color: isSelected ? "white" : "#374151", border: `1.5px solid ${isSelected ? accent : "#F1F5F9"}`, boxShadow: isSelected ? `0 4px 12px ${accent}40` : "0 1px 3px rgba(0,0,0,0.04)" }}>
                       {time}
                     </button>
                   );
@@ -1090,8 +1090,8 @@ function Step5Confirm({ professional, selectedEmployee, selectedService, selecte
             ].map(item => (
               <div key={item.label} className="flex items-center gap-3">
                 <span className="text-base w-6 text-center">{item.icon}</span>
-                <span className="text-xs flex-1" style={{ color: textSecondary }}>{item.label}</span>
-                <span className="text-xs font-semibold" style={{ color: textPrimary }}>{item.value}</span>
+                <span className="text-xs flex-1" style={{ color: "#64748B" }}>{item.label}</span>
+                <span className="text-xs font-semibold" style={{ color: "#1A1A2E" }}>{item.value}</span>
               </div>
             ))}
           </div>
@@ -1100,20 +1100,20 @@ function Step5Confirm({ professional, selectedEmployee, selectedService, selecte
         {/* Payment summary */}
         {signalAmount && (
           <div className="rounded-2xl p-4 mb-4" style={{ background: `${accent}10`, border: `1.5px solid ${accent}30` }}>
-            <p className="text-sm font-bold mb-3" style={{ color: textPrimary }}>💰 Resumo de Pagamento</p>
+            <p className="text-sm font-bold mb-3" style={{ color: "#1A1A2E" }}>💰 Resumo de Pagamento</p>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-xs" style={{ color: textSecondary }}>Valor total do serviço</span>
-                <span className="text-sm font-bold" style={{ color: textPrimary }}>{formatCurrency(totalPrice)}</span>
+                <span className="text-xs" style={{ color: "#64748B" }}>Valor total do serviço</span>
+                <span className="text-sm font-bold" style={{ color: "#1A1A2E" }}>{formatCurrency(totalPrice)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <div><span className="text-xs font-semibold" style={{ color: accent }}>Sinal — via PIX</span><p className="text-xs" style={{ color: textMuted }}>Pago agora para reservar a vaga</p></div>
+                <div><span className="text-xs font-semibold" style={{ color: accent }}>Sinal — via PIX</span><p className="text-xs" style={{ color: "#94A3B8" }}>Pago agora para reservar a vaga</p></div>
                 <span className="text-sm font-bold" style={{ color: accent }}>{formatCurrency(signalAmount)}</span>
               </div>
               <div className="h-px my-1" style={{ background: `${accent}30` }} />
               <div className="flex justify-between items-center">
-                <div><span className="text-xs font-semibold" style={{ color: textPrimary }}>Restante no local</span><p className="text-xs" style={{ color: textMuted }}>Pago pessoalmente no dia</p></div>
-                <span className="text-sm font-bold" style={{ color: textPrimary }}>{formatCurrency(remainingValue)}</span>
+                <div><span className="text-xs font-semibold" style={{ color: "#374151" }}>Restante no local</span><p className="text-xs" style={{ color: "#94A3B8" }}>Pago pessoalmente no dia</p></div>
+                <span className="text-sm font-bold" style={{ color: "#374151" }}>{formatCurrency(remainingValue)}</span>
               </div>
             </div>
           </div>
@@ -1181,8 +1181,8 @@ function SuccessView({ professional, selectedEmployee, selectedService, selected
               ].map(item => (
                 <div key={item.label} className="flex items-center gap-2">
                   <span className="text-base">{item.icon}</span>
-                  <span className="text-xs" style={{ color: textSecondary }}>{item.label}:</span>
-                  <span className="text-xs font-bold ml-auto" style={{ color: textPrimary }}>{item.value}</span>
+                  <span className="text-xs" style={{ color: "#64748B" }}>{item.label}:</span>
+                  <span className="text-xs font-bold ml-auto" style={{ color: "#1A1A2E" }}>{item.value}</span>
                 </div>
               ))}
             </div>
@@ -1192,10 +1192,10 @@ function SuccessView({ professional, selectedEmployee, selectedService, selected
         {/* Review Form */}
         {!reviewSubmitted ? (
           <div className="rounded-2xl p-5 mb-6 text-left" style={{ background: "white", border: `1px solid ${accent}20` }}>
-            <h3 className="font-semibold text-sm flex items-center gap-2 mb-3" style={{ color: textPrimary }}>
+            <h3 className="font-semibold text-sm flex items-center gap-2 mb-3" style={{ color: "#1A1A2E" }}>
               <Star size={16} className="text-yellow-500" /> Como foi sua experiência com a plataforma?
             </h3>
-            <p className="text-xs mb-3" style={{ color: textMuted }}>Avalie o processo de agendamento online</p>
+            <p className="text-xs mb-3" style={{ color: "#94A3B8" }}>Avalie o processo de agendamento online</p>
             <div className="flex items-center justify-center gap-2 mb-3">
               {[1, 2, 3, 4, 5].map(s => (
                 <button key={s} onClick={() => setReviewRating(s)} className="transition-transform hover:scale-110">
@@ -1204,7 +1204,7 @@ function SuccessView({ professional, selectedEmployee, selectedService, selected
               ))}
             </div>
             <textarea value={reviewComment} onChange={e => setReviewComment(e.target.value)} placeholder="Conte como foi (opcional)" maxLength={500} rows={3}
-              className="w-full px-4 py-3 rounded-xl text-sm resize-none outline-none mb-3" style={{ background: `${accent}06`, border: `1.5px solid ${accent}15`, color: textPrimary }} />
+              className="w-full px-4 py-3 rounded-xl text-sm resize-none outline-none mb-3" style={{ background: `${accent}06`, border: `1.5px solid ${accent}15`, color: "#1A1A2E" }} />
             <button onClick={onSubmitReview} disabled={submittingReview}
               className="w-full py-2.5 rounded-xl text-white font-medium text-sm flex items-center justify-center gap-2 disabled:opacity-50"
               style={{ background: accent }}>
