@@ -684,7 +684,7 @@ const PublicBooking = () => {
                   ✅ Já realizei o pagamento
                 </button>
               )}
-              <p className="text-center text-xs mt-3" style={{ color: textMuted }}>Após o pagamento, você receberá confirmação no WhatsApp</p>
+              <p className="text-center text-xs mt-3" style={{ color: "#94A3B8" }}>Após o pagamento, você receberá confirmação no WhatsApp</p>
             </div>
           </div>
         </div>
