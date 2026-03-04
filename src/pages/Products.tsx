@@ -193,7 +193,9 @@ const Products = () => {
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Badge variant="outline">R$ {Number(p.price).toFixed(2)}</Badge>
-                  <Badge variant="secondary">{p.stock_quantity} em estoque</Badge>
+                  <Badge variant={p.stock_quantity === 0 ? "destructive" : p.stock_quantity <= 5 ? "default" : "secondary"} className={p.stock_quantity > 0 && p.stock_quantity <= 5 ? "bg-amber-500/15 text-amber-600 border-amber-500/30 hover:bg-amber-500/20" : ""}>
+                    {p.stock_quantity === 0 ? "Sem estoque" : p.stock_quantity <= 5 ? `⚠ ${p.stock_quantity} restante(s)` : `${p.stock_quantity} em estoque`}
+                  </Badge>
                   <Badge variant={p.is_active ? "default" : "secondary"}>{p.is_active ? "Ativo" : "Inativo"}</Badge>
                 </div>
                 {p.stock_quantity > 0 && (
