@@ -176,8 +176,10 @@ const PublicBooking = () => {
   const accentLight = accent + "1a";
   const accentBorder = accent + "33";
   const textPrimary = professional?.text_color || "#1A1A2E";
-  const textSecondary = textPrimary + "b3"; // 70% opacity
-  const textMuted = textPrimary + "80"; // 50% opacity
+  // Only append hex opacity suffix for valid 6-digit hex colors
+  const isHex6 = /^#[0-9A-Fa-f]{6}$/.test(textPrimary);
+  const textSecondary = isHex6 ? textPrimary + "b3" : textPrimary; // 70% opacity
+  const textMuted = isHex6 ? textPrimary + "80" : textPrimary; // 50% opacity
   const colors = { textPrimary, textSecondary, textMuted };
   const cardBg = "rgba(255,255,255,0.95)";
   const cardBorder = `${accent}15`;
