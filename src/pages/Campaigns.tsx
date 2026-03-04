@@ -3,7 +3,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion } from "framer-motion";
 import {
   Send, Megaphone, Loader2, Users, Clock, AlertTriangle,
-  CheckCircle2, XCircle, Plus, MessageSquare,
+  CheckCircle2, XCircle, Plus, MessageSquare, Eye, Phone,
 } from "lucide-react";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useClients } from "@/hooks/useClients";
