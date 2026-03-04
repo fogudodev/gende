@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -63,16 +63,21 @@ const PublicPage = () => {
   const [welcomeTitle, setWelcomeTitle] = useState("Bem-vindo(a)!");
   const [welcomeDescription, setWelcomeDescription] = useState("");
 
+  // Debounced slug for iframe preview
+  const [debouncedSlug, setDebouncedSlug] = useState("");
+  const debounceTimer = useRef<ReturnType<typeof setTimeout>>();
+
   useEffect(() => {
     if (professional) {
       setSlug(professional.slug || "");
-      setBgColor((professional as any).bg_color || "#09090B");
-      setTextColor((professional as any).text_color || "#FAFAFA");
-      setComponentColor((professional as any).component_color || "#C4922A");
+      setDebouncedSlug(professional.slug || "");
+      setBgColor(professional.bg_color || "#09090B");
+      setTextColor(professional.text_color || "#FAFAFA");
+      setComponentColor(professional.component_color || "#C4922A");
       setLogoUrl(professional.logo_url || "");
-      setCoverUrl((professional as any).cover_url || "");
-      setWelcomeTitle((professional as any).welcome_title || "Bem-vindo(a)!");
-      setWelcomeDescription((professional as any).welcome_description || "");
+      setCoverUrl(professional.cover_url || "");
+      setWelcomeTitle(professional.welcome_title || "Bem-vindo(a)!");
+      setWelcomeDescription(professional.welcome_description || "");
     }
   }, [professional]);
 
@@ -107,6 +112,9 @@ const PublicPage = () => {
     setSlug(clean);
     setSlugError("");
     setSuggestions([]);
+    // Debounce iframe reload
+    clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => setDebouncedSlug(clean), 800);
   };
 
   const uploadFile = async (file: File, type: "logo" | "cover") => {
@@ -136,7 +144,7 @@ const PublicPage = () => {
       const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
 
       const field = isLogo ? "logo_url" : "cover_url";
-      await supabase.from("professionals").update({ [field]: publicUrl } as any).eq("id", professional.id);
+      await supabase.from("professionals").update({ [field]: publicUrl }).eq("id", professional.id);
 
       isLogo ? setLogoUrl(publicUrl) : setCoverUrl(publicUrl);
       qc.invalidateQueries({ queryKey: ["professional"] });
@@ -151,7 +159,7 @@ const PublicPage = () => {
   const removeImage = async (type: "logo" | "cover") => {
     if (!professional) return;
     const field = type === "logo" ? "logo_url" : "cover_url";
-    await supabase.from("professionals").update({ [field]: null } as any).eq("id", professional.id);
+    await supabase.from("professionals").update({ [field]: null }).eq("id", professional.id);
     type === "logo" ? setLogoUrl("") : setCoverUrl("");
     qc.invalidateQueries({ queryKey: ["professional"] });
     toast.success("Imagem removida");
@@ -190,7 +198,7 @@ const PublicPage = () => {
         component_color: componentColor,
         welcome_title: welcomeTitle.trim(),
         welcome_description: welcomeDescription.trim(),
-      } as any)
+      })
       .eq("id", professional.id);
 
     if (error) {
@@ -212,8 +220,8 @@ const PublicPage = () => {
     );
   }
 
-  const previewUrl = slug
-    ? `${window.location.origin}/p/${slug}`
+  const previewUrl = debouncedSlug
+    ? `${window.location.origin}/p/${debouncedSlug}`
     : null;
 
   const toggleSection = (section: ActiveSection) => {
@@ -407,7 +415,7 @@ const PublicPage = () => {
           {previewUrl ? (
             <div className="flex-1 min-h-[600px] rounded-xl overflow-hidden border border-border/50">
               <iframe
-                key={slug}
+                key={debouncedSlug}
                 src={previewUrl}
                 className="w-full h-full min-h-[600px]"
                 title="Preview da página pública"

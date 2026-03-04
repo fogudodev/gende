@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -80,21 +80,39 @@ function formatCurrency(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-/** Convert a UTC ISO string to a Date shifted to São Paulo (UTC-3) for display purposes */
-function toSaoPaulo(utcStr: string): Date {
-  const d = new Date(utcStr);
-  // Shift by -3h from UTC to get São Paulo time, then treat as local for formatting
-  return new Date(d.getTime() + (-3) * 60 * 60 * 1000);
-}
+/** Format a UTC ISO string as São Paulo time using Intl (handles DST correctly) */
+const spFormatter = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "America/Sao_Paulo",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+const spDateFormatter = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "America/Sao_Paulo",
+  weekday: "short",
+  day: "numeric",
+  month: "numeric",
+  year: "numeric",
+});
 
 function formatTimeSP(utcStr: string): string {
-  const sp = toSaoPaulo(utcStr);
-  return `${String(sp.getUTCHours()).padStart(2, "0")}:${String(sp.getUTCMinutes()).padStart(2, "0")}`;
+  return spFormatter.format(new Date(utcStr));
 }
 
 function formatDateSP(utcStr: string) {
-  const sp = toSaoPaulo(utcStr);
-  return { day: sp.getUTCDay(), date: sp.getUTCDate(), month: sp.getUTCMonth() };
+  const d = new Date(utcStr);
+  const parts = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    weekday: "short",
+    day: "numeric",
+    month: "numeric",
+  }).formatToParts(d);
+  const dayNum = Number(parts.find(p => p.type === "day")?.value || 0);
+  const monthNum = Number(parts.find(p => p.type === "month")?.value || 1) - 1;
+  // Map weekday abbreviation to DOW index
+  const wdMap: Record<string, number> = { dom: 0, seg: 1, ter: 2, qua: 3, qui: 4, sex: 5, "sáb": 6, sab: 6 };
+  const wd = (parts.find(p => p.type === "weekday")?.value || "").toLowerCase().replace(".", "");
+  return { day: wdMap[wd] ?? 0, date: dayNum, month: monthNum };
 }
 
 /* ── Main Component ────────────────────────────── */
@@ -158,8 +176,10 @@ const PublicBooking = () => {
   const accentLight = accent + "1a";
   const accentBorder = accent + "33";
   const textPrimary = professional?.text_color || "#1A1A2E";
-  const textSecondary = textPrimary + "b3"; // 70% opacity
-  const textMuted = textPrimary + "80"; // 50% opacity
+  // Only append hex opacity suffix for valid 6-digit hex colors
+  const isHex6 = /^#[0-9A-Fa-f]{6}$/.test(textPrimary);
+  const textSecondary = isHex6 ? textPrimary + "b3" : textPrimary; // 70% opacity
+  const textMuted = isHex6 ? textPrimary + "80" : textPrimary; // 50% opacity
   const colors = { textPrimary, textSecondary, textMuted };
   const cardBg = "rgba(255,255,255,0.95)";
   const cardBorder = `${accent}15`;
@@ -309,10 +329,14 @@ const PublicBooking = () => {
       p_client_phone: phoneClean,
     });
     if (error) { toast.error("Erro ao agendar. Tente novamente."); setSubmitting(false); return; }
-    const result = data as any;
-    if (result?.success) {
+    const result = data as { success: boolean; booking_id?: string; error?: string; price?: number; duration_minutes?: number; end_time?: string };
+    if (result?.success && result.booking_id) {
+      // Atomically set employee_id before exposing booking_id to client state
       if (isSalon && selectedEmployee) {
-        await supabase.from("bookings").update({ employee_id: selectedEmployee.id }).eq("id", result.booking_id);
+        const { error: empError } = await supabase.from("bookings").update({ employee_id: selectedEmployee.id }).eq("id", result.booking_id);
+        if (empError) {
+          console.error("Failed to assign employee:", empError);
+        }
       }
       setBookingId(result.booking_id);
       // If signal payment, show modal; otherwise confirm directly
@@ -363,7 +387,7 @@ const PublicBooking = () => {
   const handleSubmitReview = async () => {
     if (!professional || reviewSubmitted) return;
     setSubmittingReview(true);
-    const { error } = await supabase.from("platform_reviews" as any).insert({
+    const { error } = await supabase.from("platform_reviews").insert({
       professional_id: professional.id,
       booking_id: bookingId,
       client_name: clientName.trim(),
@@ -394,7 +418,13 @@ const PublicBooking = () => {
   };
 
   // Generate 14 days for date picker
-  const today = useMemo(() => new Date(), []);
+  const todayRef = useRef(new Date());
+  // Update reference if day changed (user left page open past midnight)
+  const now = new Date();
+  if (now.toDateString() !== todayRef.current.toDateString()) {
+    todayRef.current = now;
+  }
+  const today = todayRef.current;
   const days14 = useMemo(() => Array.from({ length: 14 }, (_, i) => { const d = new Date(today); d.setDate(today.getDate() + i); return d; }), [today]);
 
   // Filter services by selected employee's assigned services (if salon & employee selected & has assignments)
