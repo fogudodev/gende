@@ -15,7 +15,7 @@ export interface Coupon {
   is_active: boolean;
   valid_from: string | null;
   valid_until: string | null;
-  min_amount: number;
+  min_amount: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -51,7 +51,7 @@ export const useCreateCoupon = () => {
       return data;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["coupons"] }); toast.success("Cupom criado!"); },
-    onError: (e: Error) => toast.error("Erro: " + e.message),
+    onError: () => { /* handled by caller for duplicate detection */ },
   });
 };
 
@@ -64,7 +64,7 @@ export const useUpdateCoupon = () => {
       return data;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["coupons"] }); toast.success("Cupom atualizado!"); },
-    onError: (e: Error) => toast.error("Erro: " + e.message),
+    onError: () => { /* handled by caller for duplicate detection */ },
   });
 };
 
@@ -76,6 +76,6 @@ export const useDeleteCoupon = () => {
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["coupons"] }); toast.success("Cupom removido!"); },
-    onError: (e: Error) => toast.error("Erro: " + e.message),
+    onError: (e: Error) => toast.error("Erro ao remover: " + e.message),
   });
 };

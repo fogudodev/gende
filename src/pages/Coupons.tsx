@@ -4,13 +4,20 @@ import { useCoupons, useCreateCoupon, useUpdateCoupon, useDeleteCoupon, Coupon }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, Ticket, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+
+const MAX_CODE_LENGTH = 30;
+
+const sanitizeCode = (value: string) =>
+  value.toUpperCase().replace(/[^A-Z0-9_-]/g, "").slice(0, MAX_CODE_LENGTH);
 
 const Coupons = () => {
   const { data: coupons, isLoading } = useCoupons();
@@ -19,6 +26,7 @@ const Coupons = () => {
   const deleteCoupon = useDeleteCoupon();
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [editing, setEditing] = useState<Coupon | null>(null);
   const [form, setForm] = useState({
     code: "", description: "", discount_type: "percentage" as "percentage" | "fixed", discount_value: 10, max_uses: null as number | null, is_active: true, valid_until: "" as string, min_amount: 0,
@@ -39,31 +47,58 @@ const Coupons = () => {
       max_uses: c.max_uses,
       is_active: c.is_active,
       valid_until: c.valid_until ? format(new Date(c.valid_until), "yyyy-MM-dd") : "",
-      min_amount: c.min_amount,
+      min_amount: c.min_amount ?? 0,
     });
     setDialogOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.code.trim()) return toast.error("Código é obrigatório");
-    const payload = {
-      ...form,
-      code: form.code.toUpperCase().trim(),
-      valid_until: form.valid_until ? new Date(form.valid_until).toISOString() : null,
-    };
-    if (editing) {
-      await updateCoupon.mutateAsync({ id: editing.id, ...payload });
-    } else {
-      await createCoupon.mutateAsync(payload);
+    const code = sanitizeCode(form.code);
+    if (!code) return toast.error("Código é obrigatório");
+    if (code.length < 3) return toast.error("Código deve ter pelo menos 3 caracteres");
+
+    const discountValue = Math.max(0, form.discount_value);
+    if (form.discount_type === "percentage" && discountValue > 100) {
+      return toast.error("Percentual não pode ser maior que 100%");
     }
-    setDialogOpen(false);
-    resetForm();
+    if (discountValue <= 0) return toast.error("Valor do desconto deve ser maior que zero");
+
+    const payload = {
+      code,
+      description: form.description.trim() || undefined,
+      discount_type: form.discount_type,
+      discount_value: discountValue,
+      max_uses: form.max_uses,
+      is_active: form.is_active,
+      valid_until: form.valid_until ? new Date(form.valid_until).toISOString() : null,
+      min_amount: Math.max(0, form.min_amount),
+    };
+
+    try {
+      if (editing) {
+        await updateCoupon.mutateAsync({ id: editing.id, ...payload });
+      } else {
+        await createCoupon.mutateAsync(payload);
+      }
+      setDialogOpen(false);
+      resetForm();
+    } catch (err: any) {
+      const msg = err?.message || "";
+      if (msg.includes("duplicate") || msg.includes("unique")) {
+        toast.error("Já existe um cupom com este código");
+      }
+      // other errors already handled by hook toast
+    }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Remover este cupom?")) return;
-    await deleteCoupon.mutateAsync(id);
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteCoupon.mutateAsync(deleteTarget);
+    } finally {
+      setDeleteTarget(null);
+    }
   };
 
   const copyCode = (code: string) => {
@@ -89,12 +124,19 @@ const Coupons = () => {
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4 mt-2">
                 <div className="space-y-2">
-                  <Label>Código *</Label>
-                  <Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="Ex: DESCONTO10" className="uppercase" required />
+                  <Label>Código * <span className="text-xs text-muted-foreground">({form.code.length}/{MAX_CODE_LENGTH})</span></Label>
+                  <Input
+                    value={form.code}
+                    onChange={(e) => setForm({ ...form, code: sanitizeCode(e.target.value) })}
+                    placeholder="Ex: DESCONTO10"
+                    className="uppercase"
+                    maxLength={MAX_CODE_LENGTH}
+                    required
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Descrição</Label>
-                  <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Descrição opcional" />
+                  <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Descrição opcional" maxLength={200} />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
@@ -109,13 +151,25 @@ const Coupons = () => {
                   </div>
                   <div className="space-y-2">
                     <Label>Valor</Label>
-                    <Input type="number" step="0.01" min={0} max={form.discount_type === "percentage" ? 100 : undefined} value={form.discount_value} onChange={(e) => setForm({ ...form, discount_value: Number(e.target.value) })} />
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min={0.01}
+                      max={form.discount_type === "percentage" ? 100 : undefined}
+                      value={form.discount_value || ""}
+                      onChange={(e) => {
+                        let val = Number(e.target.value);
+                        if (form.discount_type === "percentage") val = Math.min(100, val);
+                        setForm({ ...form, discount_value: Math.max(0, val) });
+                      }}
+                      placeholder="0"
+                    />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label>Máx. de usos</Label>
-                    <Input type="number" min={0} value={form.max_uses ?? ""} onChange={(e) => setForm({ ...form, max_uses: e.target.value ? Number(e.target.value) : null })} placeholder="Ilimitado" />
+                    <Input type="number" min={0} value={form.max_uses ?? ""} onChange={(e) => setForm({ ...form, max_uses: e.target.value ? Math.max(0, Math.floor(Number(e.target.value))) : null })} placeholder="Ilimitado" />
                   </div>
                   <div className="space-y-2">
                     <Label>Válido até</Label>
@@ -124,12 +178,19 @@ const Coupons = () => {
                 </div>
                 <div className="space-y-2">
                   <Label>Valor mínimo do pedido (R$)</Label>
-                  <Input type="number" step="0.01" min={0} value={form.min_amount} onChange={(e) => setForm({ ...form, min_amount: Number(e.target.value) })} />
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min={0}
+                    value={form.min_amount || ""}
+                    onChange={(e) => setForm({ ...form, min_amount: Math.max(0, Number(e.target.value)) })}
+                    placeholder="0,00"
+                  />
                 </div>
-                <label className="flex items-center gap-2 text-sm cursor-pointer">
-                  <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} className="rounded" />
-                  Cupom ativo
-                </label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="coupon-active" className="cursor-pointer">Cupom ativo</Label>
+                  <Switch id="coupon-active" checked={form.is_active} onCheckedChange={(checked) => setForm({ ...form, is_active: checked })} />
+                </div>
                 <Button type="submit" className="w-full" disabled={createCoupon.isPending || updateCoupon.isPending}>
                   {editing ? "Salvar" : "Criar Cupom"}
                 </Button>
@@ -156,7 +217,13 @@ const Coupons = () => {
                   </div>
                   <div className="flex gap-1">
                     <button onClick={() => openEdit(c)} className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-secondary"><Pencil size={14} /></button>
-                    <button onClick={() => handleDelete(c.id)} className="p-1.5 text-muted-foreground hover:text-destructive rounded-lg hover:bg-destructive/10"><Trash2 size={14} /></button>
+                    <button
+                      onClick={() => setDeleteTarget(c.id)}
+                      disabled={deleteCoupon.isPending}
+                      className="p-1.5 text-muted-foreground hover:text-destructive rounded-lg hover:bg-destructive/10 disabled:opacity-50"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -164,7 +231,7 @@ const Coupons = () => {
                     {c.discount_type === "percentage" ? `${c.discount_value}% OFF` : `R$ ${Number(c.discount_value).toFixed(2)} OFF`}
                   </Badge>
                   <Badge variant={c.is_active ? "default" : "secondary"}>{c.is_active ? "Ativo" : "Inativo"}</Badge>
-                  {c.max_uses && <Badge variant="outline">{c.used_count}/{c.max_uses} usos</Badge>}
+                  {c.max_uses != null && c.max_uses > 0 && <Badge variant="outline">{c.used_count}/{c.max_uses} usos</Badge>}
                 </div>
                 {c.valid_until && (
                   <p className="text-xs text-muted-foreground mt-2">Válido até {format(new Date(c.valid_until), "dd/MM/yyyy")}</p>
@@ -181,6 +248,21 @@ const Coupons = () => {
           </div>
         )}
       </div>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover cupom?</AlertDialogTitle>
+            <AlertDialogDescription>Esta ação não pode ser desfeita. O cupom será removido permanentemente.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={deleteCoupon.isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleteCoupon.isPending ? "Removendo..." : "Remover"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
