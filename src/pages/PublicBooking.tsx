@@ -781,7 +781,7 @@ function Step1ClientInfo({ professional, accent, colors, clientName, setClientNa
               <input type="tel" placeholder="(11) 99999-9999" value={clientPhone}
                 onChange={e => { setClientPhone(formatPhone(e.target.value)); if (errors.phone) setErrors({...errors, phone: ""}); }}
                 className="w-full pl-10 pr-4 py-3.5 rounded-xl text-sm font-medium transition-all outline-none focus:ring-2"
-                style={{ background: errors.phone ? "#FFF1F2" : "white", border: `1.5px solid ${errors.phone ? "#F87171" : clientPhone ? accent : "#E2E8F0"}`, color: "#1A1A2E", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", ["--tw-ring-color" as any]: accent }}
+                style={{ background: errors.phone ? "#FFF1F2" : "white", border: `1.5px solid ${errors.phone ? "#F87171" : clientPhone ? accent : "#E2E8F0"}`, color: textPrimary, boxShadow: "0 1px 3px rgba(0,0,0,0.04)", ["--tw-ring-color" as any]: accent }}
               />
             </div>
             {errors.phone && <p className="text-xs mt-1 font-medium" style={{ color: "#EF4444" }}>{errors.phone}</p>}
