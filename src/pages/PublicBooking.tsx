@@ -387,7 +387,7 @@ const PublicBooking = () => {
   const handleSubmitReview = async () => {
     if (!professional || reviewSubmitted) return;
     setSubmittingReview(true);
-    const { error } = await supabase.from("platform_reviews" as any).insert({
+    const { error } = await supabase.from("platform_reviews").insert({
       professional_id: professional.id,
       booking_id: bookingId,
       client_name: clientName.trim(),
