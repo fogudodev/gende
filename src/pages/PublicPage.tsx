@@ -296,6 +296,12 @@ const PublicPage = () => {
                 onChange={setComponentColor}
                 presets={COLOR_PRESETS}
               />
+              <ColorPicker
+                label="Cor de Todas as Fontes"
+                value={textColor}
+                onChange={setTextColor}
+                presets={TEXT_PRESETS}
+              />
             </div>
           </SectionCard>
 
@@ -354,17 +360,9 @@ const PublicPage = () => {
                   className="w-full px-3 py-2 rounded-xl bg-muted/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none"
                 />
               </div>
-
-              <div className="border-t border-border/50 pt-4">
-                <ColorPicker
-                  label="Cor da Fonte"
-                  value={textColor}
-                  onChange={setTextColor}
-                  presets={TEXT_PRESETS}
-                />
-              </div>
             </div>
           </SectionCard>
+
 
           {/* Save Button */}
           <Button
