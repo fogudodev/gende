@@ -415,7 +415,7 @@ const PublicPage = () => {
           {previewUrl ? (
             <div className="flex-1 min-h-[600px] rounded-xl overflow-hidden border border-border/50">
               <iframe
-                key={slug}
+                key={debouncedSlug}
                 src={previewUrl}
                 className="w-full h-full min-h-[600px]"
                 title="Preview da página pública"
