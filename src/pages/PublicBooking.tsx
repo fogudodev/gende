@@ -531,6 +531,7 @@ const PublicBooking = () => {
               selected={selectedService}
               selectedEmployee={selectedEmployee}
               accent={accent}
+              colors={colors}
               isSalon={isSalon}
               onSelect={(svc) => { setSelectedService(svc); setSelectedDate(null); setSelectedSlot(null); setSelectedTime(""); goNext(); }}
               onBack={goBack}
