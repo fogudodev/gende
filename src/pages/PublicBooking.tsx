@@ -158,8 +158,9 @@ const PublicBooking = () => {
   const accentLight = accent + "1a";
   const accentBorder = accent + "33";
   const textPrimary = professional?.text_color || "#1A1A2E";
-  const textSecondary = "#64748B";
-  const textMuted = "#94A3B8";
+  const textSecondary = textPrimary + "b3"; // 70% opacity
+  const textMuted = textPrimary + "80"; // 50% opacity
+  const colors = { textPrimary, textSecondary, textMuted };
   const cardBg = "rgba(255,255,255,0.95)";
   const cardBorder = `${accent}15`;
   const cardShadow = `0 4px 24px -4px ${accent}12, 0 1px 3px rgba(0,0,0,0.06)`;
