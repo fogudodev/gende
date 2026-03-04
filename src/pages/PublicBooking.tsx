@@ -632,13 +632,13 @@ const PublicBooking = () => {
                     {payload && (
                       <div className="flex justify-center mb-4">
                         <div className="p-3 rounded-2xl" style={{ background: "white", border: `2px solid ${accent}20` }}>
-                          <QRCodeSVG value={payload} size={180} fgColor={textPrimary} />
+                          <QRCodeSVG value={payload} size={180} fgColor="#1A1A2E" />
                         </div>
                       </div>
                     )}
-                    <p className="text-xs font-semibold mb-2 text-center" style={{ color: textSecondary }}>PIX Copia e Cola:</p>
+                    <p className="text-xs font-semibold mb-2 text-center" style={{ color: "#64748B" }}>PIX Copia e Cola:</p>
                     <div className="rounded-xl p-3 flex items-center gap-2" style={{ background: "#F9FAFB", border: "1px solid #E5E7EB" }}>
-                      <p className="text-[10px] flex-1 font-mono break-all leading-relaxed max-h-16 overflow-y-auto" style={{ color: textPrimary }}>
+                      <p className="text-[10px] flex-1 font-mono break-all leading-relaxed max-h-16 overflow-y-auto" style={{ color: "#374151" }}>
                         {payload || paymentConfig.pix_key}
                       </p>
                       <button onClick={copyPixKey} className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95 text-white" style={{ background: pixCopied ? "#10B981" : accent }}>
