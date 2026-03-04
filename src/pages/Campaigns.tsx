@@ -77,6 +77,11 @@ const Campaigns = () => {
 
   const limits = limitsData?.limits;
   const usage = limitsData?.usage;
+  const extras = limitsData?.extras || { extra_reminders: 0, extra_campaigns: 0, extra_contacts: 0 };
+
+  const effectiveCampaigns = limits ? (limits.daily_campaigns === -1 ? -1 : limits.daily_campaigns + extras.extra_campaigns) : 0;
+  const effectiveReminders = limits ? (limits.daily_reminders === -1 ? -1 : limits.daily_reminders + extras.extra_reminders) : 0;
+  const effectiveContacts = limits ? (limits.campaign_max_contacts === -1 ? -1 : limits.campaign_max_contacts + extras.extra_contacts) : 0;
 
   const statusLabels: Record<string, string> = {
     draft: "Rascunho",
