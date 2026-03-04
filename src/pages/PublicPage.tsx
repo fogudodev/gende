@@ -360,6 +360,8 @@ const PublicPage = () => {
                   className="w-full px-3 py-2 rounded-xl bg-muted/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none"
                 />
               </div>
+            </div>
+          </SectionCard>
 
 
           {/* Save Button */}
