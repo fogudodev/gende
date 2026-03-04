@@ -126,7 +126,7 @@ const PublicPage = () => {
         return;
       }
 
-      const path = `${user.id}/${type}.${ext}`;
+      const path = `${professional.id}/${type}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from("professionals")
         .upload(path, file, { upsert: true, contentType: file.type });
