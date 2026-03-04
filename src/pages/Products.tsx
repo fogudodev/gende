@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, Package, Search, MinusCircle } from "lucide-react";
@@ -23,12 +24,13 @@ const Products = () => {
   const [consumeQty, setConsumeQty] = useState(1);
   const [editing, setEditing] = useState<Product | null>(null);
   const [search, setSearch] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [form, setForm] = useState({
-    name: "", description: "", price: 0, cost_price: 0, stock_quantity: 0, is_active: true, category: "Geral",
+    name: "", description: "", price: "", cost_price: "", stock_quantity: "", is_active: true, category: "Geral",
   });
 
   const resetForm = () => {
-    setForm({ name: "", description: "", price: 0, cost_price: 0, stock_quantity: 0, is_active: true, category: "Geral" });
+    setForm({ name: "", description: "", price: "", cost_price: "", stock_quantity: "", is_active: true, category: "Geral" });
     setEditing(null);
   };
 
@@ -37,9 +39,9 @@ const Products = () => {
     setForm({
       name: p.name,
       description: p.description || "",
-      price: p.price,
-      cost_price: p.cost_price,
-      stock_quantity: p.stock_quantity,
+      price: String(p.price),
+      cost_price: String(p.cost_price),
+      stock_quantity: String(p.stock_quantity),
       is_active: p.is_active,
       category: p.category || "Geral",
     });
@@ -49,45 +51,62 @@ const Products = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) return toast.error("Nome é obrigatório");
+    const price = Math.max(0, Number(form.price) || 0);
+    const cost_price = Math.max(0, Number(form.cost_price) || 0);
+    const stock_quantity = Math.max(0, Math.floor(Number(form.stock_quantity) || 0));
+    const payload = { name: form.name.trim(), description: form.description.trim() || undefined, price, cost_price, stock_quantity, is_active: form.is_active, category: form.category.trim() || "Geral" };
     if (editing) {
-      await updateProduct.mutateAsync({ id: editing.id, ...form });
+      await updateProduct.mutateAsync({ id: editing.id, ...payload });
     } else {
-      await createProduct.mutateAsync(form);
+      await createProduct.mutateAsync(payload);
     }
     setDialogOpen(false);
     resetForm();
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Remover este produto?")) return;
-    await deleteProduct.mutateAsync(id);
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    await deleteProduct.mutateAsync(deleteTarget);
+    setDeleteTarget(null);
   };
 
   const handleConsume = async () => {
     if (!consumeDialog || consumeQty < 1) return;
-    if (consumeQty > consumeDialog.stock_quantity) {
+    // Re-fetch current stock to avoid stale data
+    const freshProduct = products?.find(p => p.id === consumeDialog.id);
+    const currentStock = freshProduct?.stock_quantity ?? consumeDialog.stock_quantity;
+    if (consumeQty > currentStock) {
       toast.error("Quantidade maior que estoque disponível");
       return;
     }
     const totalCost = consumeDialog.cost_price * consumeQty;
-    // Decrement stock
-    await updateProduct.mutateAsync({
-      id: consumeDialog.id,
-      stock_quantity: consumeDialog.stock_quantity - consumeQty,
-    });
-    // Auto-register expense
-    if (totalCost > 0) {
-      await createExpense.mutateAsync({
-        description: `Consumo: ${consumeQty}x ${consumeDialog.name}`,
-        amount: totalCost,
-        category: "Produtos",
-        expense_date: new Date().toISOString().split("T")[0],
-        employee_id: null,
+    try {
+      // Update stock first
+      await updateProduct.mutateAsync({
+        id: consumeDialog.id,
+        stock_quantity: currentStock - consumeQty,
       });
+      // Then register expense
+      if (totalCost > 0) {
+        await createExpense.mutateAsync({
+          description: `Consumo: ${consumeQty}x ${consumeDialog.name}`,
+          amount: totalCost,
+          category: "Produtos",
+          expense_date: new Date().toISOString().split("T")[0],
+          employee_id: null,
+        });
+      }
+      toast.success(`${consumeQty}x ${consumeDialog.name} consumido(s)`);
+    } catch {
+      toast.error("Erro ao registrar consumo. Verifique o estoque.");
     }
-    toast.success(`${consumeQty}x ${consumeDialog.name} consumido(s)`);
     setConsumeDialog(null);
     setConsumeQty(1);
+  };
+
+  const getMargin = (price: number, cost: number): string => {
+    if (price <= 0) return "—";
+    return ((price - cost) / price * 100).toFixed(0) + "%";
   };
 
   const filtered = products?.filter(p => p.name.toLowerCase().includes(search.toLowerCase())) || [];
@@ -120,17 +139,17 @@ const Products = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label>Preço de venda (R$)</Label>
-                    <Input type="number" step="0.01" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
+                    <Input type="number" step="0.01" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="0,00" />
                   </div>
                   <div className="space-y-2">
                     <Label>Custo (R$)</Label>
-                    <Input type="number" step="0.01" min={0} value={form.cost_price} onChange={(e) => setForm({ ...form, cost_price: Number(e.target.value) })} />
+                    <Input type="number" step="0.01" min={0} value={form.cost_price} onChange={(e) => setForm({ ...form, cost_price: e.target.value })} placeholder="0,00" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label>Estoque</Label>
-                    <Input type="number" min={0} value={form.stock_quantity} onChange={(e) => setForm({ ...form, stock_quantity: Number(e.target.value) })} />
+                    <Input type="number" min={0} step={1} value={form.stock_quantity} onChange={(e) => setForm({ ...form, stock_quantity: e.target.value })} placeholder="0" />
                   </div>
                   <div className="space-y-2">
                     <Label>Categoria</Label>
@@ -169,7 +188,7 @@ const Products = () => {
                   </div>
                   <div className="flex gap-1">
                     <button onClick={() => openEdit(p)} className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-secondary"><Pencil size={14} /></button>
-                    <button onClick={() => handleDelete(p.id)} className="p-1.5 text-muted-foreground hover:text-destructive rounded-lg hover:bg-destructive/10"><Trash2 size={14} /></button>
+                    <button onClick={() => setDeleteTarget(p.id)} className="p-1.5 text-muted-foreground hover:text-destructive rounded-lg hover:bg-destructive/10"><Trash2 size={14} /></button>
                   </div>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -186,7 +205,7 @@ const Products = () => {
                   </button>
                 )}
                 {p.cost_price > 0 && (
-                  <p className="text-xs text-muted-foreground mt-2">Custo: R$ {Number(p.cost_price).toFixed(2)} · Margem: {((p.price - p.cost_price) / p.price * 100).toFixed(0)}%</p>
+                  <p className="text-xs text-muted-foreground mt-2">Custo: R$ {Number(p.cost_price).toFixed(2)} · Margem: {getMargin(p.price, p.cost_price)}</p>
                 )}
               </Card>
             ))}
@@ -199,6 +218,20 @@ const Products = () => {
             <Button onClick={() => setDialogOpen(true)} className="gap-2"><Plus size={16} />Adicionar produto</Button>
           </div>
         )}
+
+        {/* Delete Confirmation */}
+        <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remover produto?</AlertDialogTitle>
+              <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteConfirm}>Remover</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Consume Dialog */}
         <Dialog open={!!consumeDialog} onOpenChange={(o) => { if (!o) setConsumeDialog(null); }}>
@@ -214,7 +247,7 @@ const Products = () => {
                 <p className="text-sm text-muted-foreground">Estoque atual: {consumeDialog.stock_quantity} | Custo unitário: R$ {Number(consumeDialog.cost_price).toFixed(2)}</p>
                 <div className="space-y-2">
                   <Label>Quantidade</Label>
-                  <Input type="number" min={1} max={consumeDialog.stock_quantity} value={consumeQty} onChange={(e) => setConsumeQty(Number(e.target.value))} />
+                  <Input type="number" min={1} max={consumeDialog.stock_quantity} value={consumeQty} onChange={(e) => setConsumeQty(Math.max(1, Math.floor(Number(e.target.value) || 1)))} />
                 </div>
                 <p className="text-sm font-medium text-foreground">
                   Despesa gerada: R$ {(consumeDialog.cost_price * consumeQty).toFixed(2)}
