@@ -418,7 +418,13 @@ const PublicBooking = () => {
   };
 
   // Generate 14 days for date picker
-  const today = useMemo(() => new Date(), []);
+  const todayRef = useRef(new Date());
+  // Update reference if day changed (user left page open past midnight)
+  const now = new Date();
+  if (now.toDateString() !== todayRef.current.toDateString()) {
+    todayRef.current = now;
+  }
+  const today = todayRef.current;
   const days14 = useMemo(() => Array.from({ length: 14 }, (_, i) => { const d = new Date(today); d.setDate(today.getDate() + i); return d; }), [today]);
 
   // Filter services by selected employee's assigned services (if salon & employee selected & has assignments)
