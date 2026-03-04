@@ -26,7 +26,7 @@ const Clients = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Client | null>(null);
   const [form, setForm] = useState(defaultForm);
-
+  const [deleteTarget, setDeleteTarget] = useState<Client | null>(null);
   const filtered = (clients || []).filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     (c.email || "").toLowerCase().includes(search.toLowerCase()) ||
