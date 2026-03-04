@@ -49,13 +49,13 @@ const AdminPaymentChat = () => {
     queryKey: ["admin-payment-chat", selectedProfId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("chat_messages" as any)
+        .from("chat_messages")
         .select("*")
         .eq("professional_id", selectedProfId!)
         .eq("chat_type", "payment")
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return data as any[];
+      return data;
     },
     enabled: !!selectedProfId,
     refetchInterval: 3000,
