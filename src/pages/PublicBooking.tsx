@@ -329,10 +329,14 @@ const PublicBooking = () => {
       p_client_phone: phoneClean,
     });
     if (error) { toast.error("Erro ao agendar. Tente novamente."); setSubmitting(false); return; }
-    const result = data as any;
-    if (result?.success) {
+    const result = data as { success: boolean; booking_id?: string; error?: string; price?: number; duration_minutes?: number; end_time?: string };
+    if (result?.success && result.booking_id) {
+      // Atomically set employee_id before exposing booking_id to client state
       if (isSalon && selectedEmployee) {
-        await supabase.from("bookings").update({ employee_id: selectedEmployee.id }).eq("id", result.booking_id);
+        const { error: empError } = await supabase.from("bookings").update({ employee_id: selectedEmployee.id }).eq("id", result.booking_id);
+        if (empError) {
+          console.error("Failed to assign employee:", empError);
+        }
       }
       setBookingId(result.booking_id);
       // If signal payment, show modal; otherwise confirm directly
