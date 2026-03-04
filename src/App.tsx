@@ -54,68 +54,72 @@ import AdminPlatformReviews from "./pages/admin/AdminPlatformReviews";
 
 const queryClient = new QueryClient();
 
+const AppContent = () => (
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <ImpersonationBanner />
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/landing" element={<Landing />} />
+            
+            {/* Professional routes */}
+            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
+            <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
+            <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
+            <Route path="/automations" element={<ProtectedRoute><Automations /></ProtectedRoute>} />
+            <Route path="/finance" element={<ProtectedRoute><Finance /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+            <Route path="/public-page" element={<ProtectedRoute><PublicPage /></ProtectedRoute>} />
+            <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
+            <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
+            <Route path="/coupons" element={<ProtectedRoute><Coupons /></ProtectedRoute>} />
+            <Route path="/payment-settings" element={<Navigate to="/settings" replace />} />
+            <Route path="/reviews" element={<ProtectedRoute><Reviews /></ProtectedRoute>} />
+            <Route path="/commission-report" element={<ProtectedRoute><CommissionReport /></ProtectedRoute>} />
+            <Route path="/team-performance" element={<ProtectedRoute><TeamPerformance /></ProtectedRoute>} />
+            <Route path="/campaigns" element={<ProtectedRoute><Campaigns /></ProtectedRoute>} />
+            <Route path="/payment-chat" element={<ProtectedRoute><PaymentChat /></ProtectedRoute>} />
+            <Route path="/support-chat" element={<ProtectedRoute><SupportChat /></ProtectedRoute>} />
+            <Route path="/ai-assistant" element={<ProtectedRoute><AIAssistant /></ProtectedRoute>} />
+            <Route path="/cash-register" element={<ProtectedRoute><CashRegister /></ProtectedRoute>} />
+
+            {/* Admin Master routes */}
+            <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+            <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+            <Route path="/admin/plans" element={<AdminRoute><AdminPlans /></AdminRoute>} />
+            <Route path="/admin/subscribers" element={<AdminRoute><AdminSubscribers /></AdminRoute>} />
+            <Route path="/admin/integrations" element={<AdminRoute><AdminIntegrations /></AdminRoute>} />
+            <Route path="/admin/features" element={<AdminRoute><AdminFeatures /></AdminRoute>} />
+            <Route path="/admin/bookings" element={<AdminRoute><AdminBookings /></AdminRoute>} />
+            <Route path="/admin/whatsapp" element={<AdminRoute><AdminWhatsAppPage /></AdminRoute>} />
+            <Route path="/admin/whatsapp-logs" element={<AdminRoute><AdminWhatsAppLogsPage /></AdminRoute>} />
+            <Route path="/admin/plan-limits" element={<AdminRoute><AdminPlanLimits /></AdminRoute>} />
+            <Route path="/admin/professional-limits" element={<AdminRoute><AdminProfessionalLimits /></AdminRoute>} />
+            <Route path="/admin/message-usage" element={<AdminRoute><AdminMessageUsagePage /></AdminRoute>} />
+            <Route path="/admin/logs" element={<AdminRoute><AdminLogsPage /></AdminRoute>} />
+            <Route path="/admin/support-chat" element={<AdminRoute><AdminSupportChat /></AdminRoute>} />
+            <Route path="/admin/payment-chat" element={<AdminRoute><AdminPaymentChat /></AdminRoute>} />
+            <Route path="/admin/platform-reviews" element={<AdminRoute><AdminPlatformReviews /></AdminRoute>} />
+
+            {/* Public routes */}
+            <Route path="/p/:slug" element={<PublicBooking />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
+  </QueryClientProvider>
+);
+
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <ImpersonationBanner />
-            <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/landing" element={<Landing />} />
-              
-              {/* Professional routes */}
-              <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-              <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
-              <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
-              <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
-              <Route path="/automations" element={<ProtectedRoute><Automations /></ProtectedRoute>} />
-              <Route path="/finance" element={<ProtectedRoute><Finance /></ProtectedRoute>} />
-              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-              <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-              <Route path="/public-page" element={<ProtectedRoute><PublicPage /></ProtectedRoute>} />
-              <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
-              <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
-              <Route path="/coupons" element={<ProtectedRoute><Coupons /></ProtectedRoute>} />
-              <Route path="/payment-settings" element={<Navigate to="/settings" replace />} />
-              <Route path="/reviews" element={<ProtectedRoute><Reviews /></ProtectedRoute>} />
-              <Route path="/commission-report" element={<ProtectedRoute><CommissionReport /></ProtectedRoute>} />
-              <Route path="/team-performance" element={<ProtectedRoute><TeamPerformance /></ProtectedRoute>} />
-              <Route path="/campaigns" element={<ProtectedRoute><Campaigns /></ProtectedRoute>} />
-              <Route path="/payment-chat" element={<ProtectedRoute><PaymentChat /></ProtectedRoute>} />
-              <Route path="/support-chat" element={<ProtectedRoute><SupportChat /></ProtectedRoute>} />
-              <Route path="/ai-assistant" element={<ProtectedRoute><AIAssistant /></ProtectedRoute>} />
-              <Route path="/cash-register" element={<ProtectedRoute><CashRegister /></ProtectedRoute>} />
-
-              {/* Admin Master routes */}
-              <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
-              <Route path="/admin/plans" element={<AdminRoute><AdminPlans /></AdminRoute>} />
-              <Route path="/admin/subscribers" element={<AdminRoute><AdminSubscribers /></AdminRoute>} />
-              <Route path="/admin/integrations" element={<AdminRoute><AdminIntegrations /></AdminRoute>} />
-              <Route path="/admin/features" element={<AdminRoute><AdminFeatures /></AdminRoute>} />
-              <Route path="/admin/bookings" element={<AdminRoute><AdminBookings /></AdminRoute>} />
-              <Route path="/admin/whatsapp" element={<AdminRoute><AdminWhatsAppPage /></AdminRoute>} />
-              <Route path="/admin/whatsapp-logs" element={<AdminRoute><AdminWhatsAppLogsPage /></AdminRoute>} />
-              <Route path="/admin/plan-limits" element={<AdminRoute><AdminPlanLimits /></AdminRoute>} />
-              <Route path="/admin/professional-limits" element={<AdminRoute><AdminProfessionalLimits /></AdminRoute>} />
-              <Route path="/admin/message-usage" element={<AdminRoute><AdminMessageUsagePage /></AdminRoute>} />
-              <Route path="/admin/logs" element={<AdminRoute><AdminLogsPage /></AdminRoute>} />
-              <Route path="/admin/support-chat" element={<AdminRoute><AdminSupportChat /></AdminRoute>} />
-              <Route path="/admin/payment-chat" element={<AdminRoute><AdminPaymentChat /></AdminRoute>} />
-              <Route path="/admin/platform-reviews" element={<AdminRoute><AdminPlatformReviews /></AdminRoute>} />
-
-              {/* Public routes */}
-              <Route path="/p/:slug" element={<PublicBooking />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <AppContent />
   </ThemeProvider>
 );
 
