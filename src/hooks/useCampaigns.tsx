@@ -53,6 +53,22 @@ export const useSendCampaign = () => {
   });
 };
 
+export const useCampaignContacts = (campaignId: string | null) => {
+  return useQuery({
+    queryKey: ["campaign-contacts", campaignId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("campaign_contacts")
+        .select("*")
+        .eq("campaign_id", campaignId!)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!campaignId,
+  });
+};
+
 export const usePlanLimits = () => {
   return useQuery({
     queryKey: ["plan-limits-all"],
