@@ -1204,7 +1204,7 @@ function SuccessView({ professional, selectedEmployee, selectedService, selected
               ))}
             </div>
             <textarea value={reviewComment} onChange={e => setReviewComment(e.target.value)} placeholder="Conte como foi (opcional)" maxLength={500} rows={3}
-              className="w-full px-4 py-3 rounded-xl text-sm resize-none outline-none mb-3" style={{ background: `${accent}06`, border: `1.5px solid ${accent}15`, color: textPrimary }} />
+              className="w-full px-4 py-3 rounded-xl text-sm resize-none outline-none mb-3" style={{ background: `${accent}06`, border: `1.5px solid ${accent}15`, color: "#1A1A2E" }} />
             <button onClick={onSubmitReview} disabled={submittingReview}
               className="w-full py-2.5 rounded-xl text-white font-medium text-sm flex items-center justify-center gap-2 disabled:opacity-50"
               style={{ background: accent }}>
