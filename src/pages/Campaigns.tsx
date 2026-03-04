@@ -435,6 +435,39 @@ const Campaigns = () => {
                 Os extras são adicionados ao seu limite atual do plano. Após o pagamento, o crédito é aplicado automaticamente à sua conta.
               </p>
             </div>
+
+            {/* Purchase History */}
+            {purchases && purchases.length > 0 && (
+              <div>
+                <h3 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                  <Receipt size={16} className="text-accent" /> Histórico de Compras
+                </h3>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {purchases.map((p: any) => {
+                    const typeLabels: Record<string, string> = { reminders: "Lembretes", campaigns: "Campanhas", contacts: "Contatos" };
+                    const typeEmojis: Record<string, string> = { reminders: "📨", campaigns: "📣", contacts: "👥" };
+                    return (
+                      <div key={p.id} className="flex items-center justify-between p-2.5 rounded-xl bg-muted/30 border border-border/50">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-sm">{typeEmojis[p.addon_type] || "📦"}</span>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-foreground">
+                              +{p.quantity} {typeLabels[p.addon_type] || p.addon_type}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {format(new Date(p.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-xs font-semibold text-accent shrink-0">
+                          R$ {(p.amount_cents / 100).toFixed(2).replace(".", ",")}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
