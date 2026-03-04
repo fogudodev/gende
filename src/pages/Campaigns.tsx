@@ -3,11 +3,11 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion } from "framer-motion";
 import {
   Send, Megaphone, Loader2, Users, Clock, AlertTriangle,
-  CheckCircle2, XCircle, Plus, MessageSquare,
+  CheckCircle2, XCircle, Plus, MessageSquare, Eye, Phone,
 } from "lucide-react";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useClients } from "@/hooks/useClients";
-import { useCampaigns, useCampaignLimits, useSendCampaign } from "@/hooks/useCampaigns";
+import { useCampaigns, useCampaignLimits, useSendCampaign, useCampaignContacts } from "@/hooks/useCampaigns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -21,6 +21,8 @@ const Campaigns = () => {
   const { data: clients } = useClients();
   const sendCampaign = useSendCampaign();
   const [showNew, setShowNew] = useState(false);
+  const [detailCampaignId, setDetailCampaignId] = useState<string | null>(null);
+  const { data: contacts, isLoading: loadingContacts } = useCampaignContacts(detailCampaignId);
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
@@ -134,13 +136,17 @@ const Campaigns = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.03 }}
-              className="glass-card rounded-2xl p-5"
+              className="glass-card rounded-2xl p-5 cursor-pointer hover:ring-2 hover:ring-accent/30 transition-all"
+              onClick={() => setDetailCampaignId(c.id)}
             >
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-semibold text-foreground">{c.name}</h3>
-                <span className={cn("px-2 py-0.5 rounded-full text-xs font-semibold", statusColors[c.status] || "bg-muted")}>
-                  {statusLabels[c.status] || c.status}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={cn("px-2 py-0.5 rounded-full text-xs font-semibold", statusColors[c.status] || "bg-muted")}>
+                    {statusLabels[c.status] || c.status}
+                  </span>
+                  <Eye size={14} className="text-muted-foreground" />
+                </div>
               </div>
               <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{c.message}</p>
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
@@ -234,6 +240,72 @@ const Campaigns = () => {
               {sending ? "Enviando..." : "Enviar Campanha"}
             </button>
           </div>
+        </DialogContent>
+      </Dialog>
+      {/* Campaign Detail Dialog */}
+      <Dialog open={!!detailCampaignId} onOpenChange={(open) => !open && setDetailCampaignId(null)}>
+        <DialogContent className="max-w-lg bg-background border-border max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-foreground flex items-center gap-2">
+              <Megaphone size={18} className="text-accent" />
+              {campaigns?.find((c: any) => c.id === detailCampaignId)?.name || "Detalhes"}
+            </DialogTitle>
+          </DialogHeader>
+          {loadingContacts ? (
+            <div className="flex justify-center py-8"><Loader2 className="animate-spin text-muted-foreground" size={24} /></div>
+          ) : !contacts?.length ? (
+            <p className="text-sm text-muted-foreground text-center py-8">Nenhum contato registrado</p>
+          ) : (
+            <div className="overflow-y-auto space-y-2 pr-1">
+              <div className="flex items-center gap-3 mb-3 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1"><CheckCircle2 size={12} className="text-emerald-500" /> {contacts.filter(c => c.status === "sent").length} enviadas</span>
+                <span className="flex items-center gap-1"><XCircle size={12} className="text-destructive" /> {contacts.filter(c => c.status === "failed").length} falhas</span>
+                <span className="flex items-center gap-1"><Clock size={12} /> {contacts.filter(c => c.status === "pending").length} pendentes</span>
+              </div>
+              {contacts.map((contact: any) => {
+                const contactStatusColors: Record<string, string> = {
+                  sent: "text-emerald-500",
+                  failed: "text-destructive",
+                  pending: "text-muted-foreground",
+                };
+                const contactStatusIcons: Record<string, any> = {
+                  sent: CheckCircle2,
+                  failed: XCircle,
+                  pending: Clock,
+                };
+                const contactStatusLabels: Record<string, string> = {
+                  sent: "Enviada",
+                  failed: "Falhou",
+                  pending: "Pendente",
+                };
+                const Icon = contactStatusIcons[contact.status] || Clock;
+                return (
+                  <div key={contact.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/50">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Icon size={16} className={contactStatusColors[contact.status] || "text-muted-foreground"} />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{contact.client_name || "Sem nome"}</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1"><Phone size={10} /> {contact.phone}</p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0 ml-2">
+                      <span className={cn("text-xs font-semibold", contactStatusColors[contact.status])}>
+                        {contactStatusLabels[contact.status] || contact.status}
+                      </span>
+                      {contact.sent_at && (
+                        <p className="text-[10px] text-muted-foreground">{format(new Date(contact.sent_at), "HH:mm:ss")}</p>
+                      )}
+                      {contact.error_message && (
+                        <p className="text-[10px] text-destructive truncate max-w-[120px]" title={contact.error_message}>
+                          {contact.error_message.slice(0, 30)}...
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </DashboardLayout>
