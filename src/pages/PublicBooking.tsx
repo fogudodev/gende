@@ -767,7 +767,7 @@ function Step1ClientInfo({ professional, accent, colors, clientName, setClientNa
               <input type="text" placeholder="Ex: Maria Silva" value={clientName}
                 onChange={e => { setClientName(e.target.value); if (errors.name) setErrors({...errors, name: ""}); }}
                 className="w-full pl-10 pr-4 py-3.5 rounded-xl text-sm font-medium transition-all outline-none focus:ring-2"
-                style={{ background: errors.name ? "#FFF1F2" : "white", border: `1.5px solid ${errors.name ? "#F87171" : clientName ? accent : "#E2E8F0"}`, color: textPrimary, boxShadow: "0 1px 3px rgba(0,0,0,0.04)", ["--tw-ring-color" as any]: accent }}
+                style={{ background: errors.name ? "#FFF1F2" : "white", border: `1.5px solid ${errors.name ? "#F87171" : clientName ? accent : "#E2E8F0"}`, color: "hsl(0 0% 0%)", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", ["--tw-ring-color" as any]: accent }}
               />
             </div>
             {errors.name && <p className="text-xs mt-1 font-medium" style={{ color: "#EF4444" }}>{errors.name}</p>}
