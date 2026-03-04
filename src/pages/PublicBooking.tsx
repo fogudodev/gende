@@ -1181,8 +1181,8 @@ function SuccessView({ professional, selectedEmployee, selectedService, selected
               ].map(item => (
                 <div key={item.label} className="flex items-center gap-2">
                   <span className="text-base">{item.icon}</span>
-                  <span className="text-xs" style={{ color: textSecondary }}>{item.label}:</span>
-                  <span className="text-xs font-bold ml-auto" style={{ color: textPrimary }}>{item.value}</span>
+                  <span className="text-xs" style={{ color: "#64748B" }}>{item.label}:</span>
+                  <span className="text-xs font-bold ml-auto" style={{ color: "#1A1A2E" }}>{item.value}</span>
                 </div>
               ))}
             </div>
