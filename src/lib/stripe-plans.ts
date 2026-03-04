@@ -92,15 +92,15 @@ export const ADDON_PRODUCTS = {
   },
   extraCampaign: {
     name: "Campanha Extra",
-    price: 1.20, // R$1,20 per extra campaign
-    priceId: "price_1T5d4XFjVGP9lWs0FAtwPDL7",
-    productId: "prod_U3kZfa16Fp7wB0",
+    price: 3.00, // R$3,00 per extra campaign (R$15/5)
+    priceId: "price_1T7HWPFjVGP9lWs0NdSjwuwO",
+    productId: "prod_U5SRYA26gJU9in",
   },
   extraCampaignContact: {
     name: "Contato Extra em Campanha",
-    price: 0.50, // R$0,50 per extra contact
-    priceId: "price_1T5d53FjVGP9lWs0ssuTLWHj",
-    productId: "prod_U3ka9BK26LKyO1",
+    price: 0.70, // R$0,70 per extra contact (R$14/20)
+    priceId: "price_1T7HXcFjVGP9lWs0pUGKjxSb",
+    productId: "prod_U5SS8wni1RuSLr",
   },
 } as const;
 
