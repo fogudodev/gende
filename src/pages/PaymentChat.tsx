@@ -35,13 +35,13 @@ const PaymentChat = () => {
     queryKey: ["payment-chat", professional?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("chat_messages" as any)
+        .from("chat_messages")
         .select("*")
         .eq("professional_id", professional!.id)
         .eq("chat_type", "payment")
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return data as any[];
+      return data;
     },
     enabled: !!professional?.id,
     refetchInterval: 5000,
