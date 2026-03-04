@@ -21,6 +21,8 @@ const Campaigns = () => {
   const { data: clients } = useClients();
   const sendCampaign = useSendCampaign();
   const [showNew, setShowNew] = useState(false);
+  const [detailCampaignId, setDetailCampaignId] = useState<string | null>(null);
+  const { data: contacts, isLoading: loadingContacts } = useCampaignContacts(detailCampaignId);
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
