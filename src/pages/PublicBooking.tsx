@@ -619,10 +619,10 @@ const PublicBooking = () => {
               </div>
               <div className="rounded-2xl p-4 mb-4" style={{ background: `${accent}10`, border: `1px solid ${accent}30` }}>
                 <div className="space-y-2">
-                  <div className="flex justify-between"><span className="text-xs" style={{ color: "#64748B" }}>Serviço completo</span><span className="text-sm font-bold" style={{ color: "#1A1A2E" }}>{formatCurrency(totalPrice)}</span></div>
+                  <div className="flex justify-between"><span className="text-xs" style={{ color: textSecondary }}>Serviço completo</span><span className="text-sm font-bold" style={{ color: textPrimary }}>{formatCurrency(totalPrice)}</span></div>
                   <div className="flex justify-between items-center"><span className="text-xs font-semibold" style={{ color: accent }}>Sinal a pagar agora (PIX)</span><span className="text-lg font-bold" style={{ color: accent }}>{formatCurrency(signalAmount)}</span></div>
                   <div className="h-px" style={{ background: `${accent}20` }} />
-                  <div className="flex justify-between"><span className="text-xs" style={{ color: "#64748B" }}>Restante no local</span><span className="text-sm font-semibold" style={{ color: "#374151" }}>{formatCurrency(remainingValue)}</span></div>
+                  <div className="flex justify-between"><span className="text-xs" style={{ color: textSecondary }}>Restante no local</span><span className="text-sm font-semibold" style={{ color: textSecondary }}>{formatCurrency(remainingValue)}</span></div>
                 </div>
               </div>
               {(() => {
