@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion } from "framer-motion";
 import {
   Send, Megaphone, Loader2, Users, Clock, AlertTriangle,
   CheckCircle2, XCircle, Plus, MessageSquare, Eye, Phone,
+  ShoppingCart, Package,
 } from "lucide-react";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useClients } from "@/hooks/useClients";
@@ -13,7 +14,8 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-
+import { supabase } from "@/integrations/supabase/client";
+import { ADDON_PACKAGES, getPackagesByType, type AddonType } from "@/lib/addon-packages";
 const Campaigns = () => {
   const { data: professional } = useProfessional();
   const { data: campaigns, isLoading } = useCampaigns();
