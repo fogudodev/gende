@@ -32,7 +32,7 @@ const AdminSupportChat = () => {
     queryKey: ["admin-support-conversations"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("chat_messages" as any)
+        .from("chat_messages")
         .select("professional_id, created_at")
         .eq("chat_type", "support")
         .order("created_at", { ascending: false });
@@ -51,13 +51,13 @@ const AdminSupportChat = () => {
     queryKey: ["admin-support-chat", selectedProfId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("chat_messages" as any)
+        .from("chat_messages")
         .select("*")
         .eq("professional_id", selectedProfId!)
         .eq("chat_type", "support")
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return data as any[];
+      return data;
     },
     enabled: !!selectedProfId,
     refetchInterval: 3000,
@@ -69,7 +69,7 @@ const AdminSupportChat = () => {
 
   const sendMessage = useMutation({
     mutationFn: async (params: { message?: string; attachment_url?: string }) => {
-      const { error } = await (supabase.from("chat_messages" as any) as any).insert({
+      const { error } = await supabase.from("chat_messages").insert({
         professional_id: selectedProfId!,
         sender_role: "support",
         sender_name: "Admin",

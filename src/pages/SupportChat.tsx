@@ -35,13 +35,13 @@ const SupportChat = () => {
     queryKey: ["support-chat", professional?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("chat_messages" as any)
+        .from("chat_messages")
         .select("*")
         .eq("professional_id", professional!.id)
         .eq("chat_type", "support")
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return data as any[];
+      return data;
     },
     enabled: !!professional?.id,
     refetchInterval: 5000,
@@ -73,7 +73,7 @@ const SupportChat = () => {
 
   const sendMessage = useMutation({
     mutationFn: async (params: { message?: string; attachment_url?: string }) => {
-      const { error } = await (supabase.from("chat_messages" as any) as any).insert({
+      const { error } = await supabase.from("chat_messages").insert({
         professional_id: professional!.id,
         sender_role: "user",
         sender_name: professional!.name,
