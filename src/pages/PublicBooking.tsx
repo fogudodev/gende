@@ -844,8 +844,8 @@ function Step2Employees({ employees, selected, clientName, accent, colors, emplo
                       {stats?.avgRating != null && (
                         <div className="flex items-center gap-1">
                           <Star size={12} className="fill-amber-400 text-amber-400" />
-                          <span className="text-xs font-semibold" style={{ color: "#1A1A2E" }}>{stats.avgRating}</span>
-                          <span className="text-[10px]" style={{ color: "#94A3B8" }}>({stats.reviewCount})</span>
+                          <span className="text-xs font-semibold" style={{ color: textPrimary }}>{stats.avgRating}</span>
+                          <span className="text-[10px]" style={{ color: textMuted }}>({stats.reviewCount})</span>
                         </div>
                       )}
                       {stats?.completedBookings > 0 && (
