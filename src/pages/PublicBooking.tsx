@@ -516,6 +516,7 @@ const PublicBooking = () => {
               selected={selectedEmployee}
               clientName={clientName}
               accent={accent}
+              colors={colors}
               employeeStatsMap={employeeStatsMap}
               onSelect={(emp) => { setSelectedEmployee(emp); goNext(); }}
               onBack={goBack}
