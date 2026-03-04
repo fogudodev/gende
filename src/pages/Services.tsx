@@ -119,6 +119,7 @@ const Services = () => {
   const [form, setForm] = useState(defaultForm);
   const [activeCategory, setActiveCategory] = useState("Todos");
   const [search, setSearch] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Service | null>(null);
 
   const existingCategories = useMemo(() => [...new Set((services || []).map(s => s.category || "Geral"))], [services]);
   const categories = ["Todos", ...existingCategories];
