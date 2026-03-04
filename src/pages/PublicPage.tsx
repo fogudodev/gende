@@ -63,16 +63,21 @@ const PublicPage = () => {
   const [welcomeTitle, setWelcomeTitle] = useState("Bem-vindo(a)!");
   const [welcomeDescription, setWelcomeDescription] = useState("");
 
+  // Debounced slug for iframe preview
+  const [debouncedSlug, setDebouncedSlug] = useState("");
+  const debounceTimer = useRef<ReturnType<typeof setTimeout>>();
+
   useEffect(() => {
     if (professional) {
       setSlug(professional.slug || "");
-      setBgColor((professional as any).bg_color || "#09090B");
-      setTextColor((professional as any).text_color || "#FAFAFA");
-      setComponentColor((professional as any).component_color || "#C4922A");
+      setDebouncedSlug(professional.slug || "");
+      setBgColor(professional.bg_color || "#09090B");
+      setTextColor(professional.text_color || "#FAFAFA");
+      setComponentColor(professional.component_color || "#C4922A");
       setLogoUrl(professional.logo_url || "");
-      setCoverUrl((professional as any).cover_url || "");
-      setWelcomeTitle((professional as any).welcome_title || "Bem-vindo(a)!");
-      setWelcomeDescription((professional as any).welcome_description || "");
+      setCoverUrl(professional.cover_url || "");
+      setWelcomeTitle(professional.welcome_title || "Bem-vindo(a)!");
+      setWelcomeDescription(professional.welcome_description || "");
     }
   }, [professional]);
 
