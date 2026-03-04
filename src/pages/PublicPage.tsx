@@ -198,7 +198,7 @@ const PublicPage = () => {
         component_color: componentColor,
         welcome_title: welcomeTitle.trim(),
         welcome_description: welcomeDescription.trim(),
-      } as any)
+      })
       .eq("id", professional.id);
 
     if (error) {
