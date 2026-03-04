@@ -242,6 +242,72 @@ const Campaigns = () => {
           </div>
         </DialogContent>
       </Dialog>
+      {/* Campaign Detail Dialog */}
+      <Dialog open={!!detailCampaignId} onOpenChange={(open) => !open && setDetailCampaignId(null)}>
+        <DialogContent className="max-w-lg bg-background border-border max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-foreground flex items-center gap-2">
+              <Megaphone size={18} className="text-accent" />
+              {campaigns?.find((c: any) => c.id === detailCampaignId)?.name || "Detalhes"}
+            </DialogTitle>
+          </DialogHeader>
+          {loadingContacts ? (
+            <div className="flex justify-center py-8"><Loader2 className="animate-spin text-muted-foreground" size={24} /></div>
+          ) : !contacts?.length ? (
+            <p className="text-sm text-muted-foreground text-center py-8">Nenhum contato registrado</p>
+          ) : (
+            <div className="overflow-y-auto space-y-2 pr-1">
+              <div className="flex items-center gap-3 mb-3 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1"><CheckCircle2 size={12} className="text-emerald-500" /> {contacts.filter(c => c.status === "sent").length} enviadas</span>
+                <span className="flex items-center gap-1"><XCircle size={12} className="text-destructive" /> {contacts.filter(c => c.status === "failed").length} falhas</span>
+                <span className="flex items-center gap-1"><Clock size={12} /> {contacts.filter(c => c.status === "pending").length} pendentes</span>
+              </div>
+              {contacts.map((contact: any) => {
+                const contactStatusColors: Record<string, string> = {
+                  sent: "text-emerald-500",
+                  failed: "text-destructive",
+                  pending: "text-muted-foreground",
+                };
+                const contactStatusIcons: Record<string, any> = {
+                  sent: CheckCircle2,
+                  failed: XCircle,
+                  pending: Clock,
+                };
+                const contactStatusLabels: Record<string, string> = {
+                  sent: "Enviada",
+                  failed: "Falhou",
+                  pending: "Pendente",
+                };
+                const Icon = contactStatusIcons[contact.status] || Clock;
+                return (
+                  <div key={contact.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/50">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Icon size={16} className={contactStatusColors[contact.status] || "text-muted-foreground"} />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{contact.client_name || "Sem nome"}</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1"><Phone size={10} /> {contact.phone}</p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0 ml-2">
+                      <span className={cn("text-xs font-semibold", contactStatusColors[contact.status])}>
+                        {contactStatusLabels[contact.status] || contact.status}
+                      </span>
+                      {contact.sent_at && (
+                        <p className="text-[10px] text-muted-foreground">{format(new Date(contact.sent_at), "HH:mm:ss")}</p>
+                      )}
+                      {contact.error_message && (
+                        <p className="text-[10px] text-destructive truncate max-w-[120px]" title={contact.error_message}>
+                          {contact.error_message.slice(0, 30)}...
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
