@@ -122,8 +122,8 @@ const CommissionReport = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         {[
           { label: "Total", value: totalAll, icon: DollarSign, color: "text-primary" },
-          { label: "Pendentes", value: totalPending, icon: Clock, color: "text-yellow-400" },
-          { label: "Pagas", value: totalPaid, icon: CheckCircle2, color: "text-green-400" },
+          { label: "Pendentes", value: totalPending, icon: Clock, color: "text-warning" },
+          { label: "Pagas", value: totalPaid, icon: CheckCircle2, color: "text-success" },
           { label: "Profissionais", value: null, count: byEmployee.length, icon: Users, color: "text-muted-foreground" },
         ].map((s, i) => (
           <motion.div
@@ -260,7 +260,7 @@ const CommissionReport = () => {
                     </div>
                     <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-green-500 transition-all"
+                        className="h-full rounded-full bg-success transition-all"
                         style={{ width: `${paidPct}%` }}
                       />
                     </div>
@@ -295,7 +295,7 @@ const CommissionReport = () => {
                       <p className="text-[11px] text-muted-foreground">{format(parseISO(c.created_at), "dd/MM/yyyy")}</p>
                     </div>
                   </div>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${c.status === "paid" ? "bg-green-500/15 text-green-400" : "bg-yellow-500/15 text-yellow-400"}`}>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${c.status === "paid" ? "bg-success/15 text-success" : "bg-warning/15 text-warning"}`}>
                     {c.status === "paid" ? "Pago" : "Pendente"}
                   </span>
                 </div>
@@ -331,7 +331,7 @@ const CommissionReport = () => {
                     <td className="px-5 py-3 text-right text-muted-foreground">{c.commission_percentage}%</td>
                     <td className="px-5 py-3 text-right font-semibold text-foreground">R$ {c.commission_amount.toFixed(2)}</td>
                     <td className="px-5 py-3 text-center">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${c.status === "paid" ? "bg-green-500/15 text-green-400" : "bg-yellow-500/15 text-yellow-400"}`}>
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${c.status === "paid" ? "bg-success/15 text-success" : "bg-warning/15 text-warning"}`}>
                         {c.status === "paid" ? <><CheckCircle2 size={11} /> Pago</> : <><Clock size={11} /> Pendente</>}
                       </span>
                     </td>

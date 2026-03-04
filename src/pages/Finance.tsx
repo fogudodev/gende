@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion } from "framer-motion";
 import {
@@ -11,7 +11,7 @@ import { useExpenses, useCreateExpense, useDeleteExpense, Expense } from "@/hook
 import { useCommissions, usePayCommission } from "@/hooks/useCommissions";
 import { useSalonEmployees } from "@/hooks/useSalonEmployees";
 import { useProfessional } from "@/hooks/useProfessional";
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subMonths, startOfQuarter, endOfQuarter, eachMonthOfInterval, isSameMonth } from "date-fns";
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subMonths, startOfQuarter, endOfQuarter, eachMonthOfInterval, isSameMonth, parseISO, isWithinInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import {
@@ -50,7 +50,10 @@ const Finance = () => {
   const [customStart, setCustomStart] = useState<Date | undefined>(undefined);
   const [customEnd, setCustomEnd] = useState<Date | undefined>(undefined);
 
-  const now = new Date();
+  // Stable "now" that only changes when periodFilter changes
+  const nowRef = useRef(new Date());
+  const now = nowRef.current;
+
   const periodRange = useMemo(() => {
     switch (periodFilter) {
       case "week":
@@ -62,7 +65,7 @@ const Finance = () => {
       case "custom":
         return { start: customStart || startOfMonth(now), end: customEnd || endOfMonth(now) };
     }
-  }, [periodFilter, customStart, customEnd]);
+  }, [periodFilter, customStart, customEnd, now]);
 
   const periodLabel = useMemo(() => {
     const labels: Record<PeriodFilter, string> = {
@@ -91,15 +94,28 @@ const Finance = () => {
     });
   }, [expenses, periodRange]);
 
+  // Filter commissions by period
+  const filteredCommissions = useMemo(() => {
+    return (commissions || []).filter(c => {
+      const date = parseISO(c.created_at);
+      return isWithinInterval(date, { start: periodRange.start, end: periodRange.end });
+    });
+  }, [commissions, periodRange]);
+
   const completed = filteredBookings.filter(b => b.status === "confirmed" || b.status === "completed");
   const cancelled = filteredBookings.filter(b => b.status === "cancelled");
   const totalRevenue = completed.reduce((s, b) => s + Number(b.price), 0);
   const avgTicket = completed.length > 0 ? Math.round(totalRevenue / completed.length) : 0;
   const totalExpenses = filteredExpenses.reduce((s, e) => s + Number(e.amount), 0);
 
+  // Only show revenueMonthChange when period is "month"
+  const revenueChangeLabel = periodFilter === "month" && stats
+    ? `${stats.revenueMonthChange >= 0 ? "+" : ""}${stats.revenueMonthChange}%`
+    : `${completed.length} atend.`;
+
   const financeStats = [
-    { label: `Receita (${periodLabel})`, value: `R$ ${totalRevenue.toLocaleString("pt-BR")}`, change: stats ? `${stats.revenueMonthChange >= 0 ? "+" : ""}${stats.revenueMonthChange}%` : "", icon: TrendingUp, positive: true },
-    { label: "Despesas", value: `R$ ${totalExpenses.toLocaleString("pt-BR")}`, change: "", icon: ArrowDownRight, positive: false },
+    { label: `Receita (${periodLabel})`, value: `R$ ${totalRevenue.toLocaleString("pt-BR")}`, change: revenueChangeLabel, icon: TrendingUp, positive: true },
+    { label: "Despesas", value: `R$ ${totalExpenses.toLocaleString("pt-BR")}`, change: `${filteredExpenses.length} registros`, icon: ArrowDownRight, positive: false },
     { label: "Lucro Líquido", value: `R$ ${(totalRevenue - totalExpenses).toLocaleString("pt-BR")}`, change: "", icon: DollarSign, positive: totalRevenue > totalExpenses },
     { label: "Ticket Médio", value: `R$ ${avgTicket}`, change: `${completed.length} atendimentos`, icon: ArrowUpRight, positive: true },
   ];
@@ -120,19 +136,19 @@ const Finance = () => {
         despesas: monthExpenses,
       };
     });
-  }, [recentBookings, expenses]);
+  }, [recentBookings, expenses, now]);
 
   const chartConfig = {
     receita: { label: "Receita", color: "hsl(var(--accent))" },
     despesas: { label: "Despesas", color: "hsl(var(--destructive))" },
   };
 
-  // Employee revenue breakdown
+  // Employee revenue breakdown - uses filtered bookings & commissions
   const employeeRevenue = isSalon && employees
     ? employees.map(emp => {
-        const empBookings = completed.filter(b => (b as any).employee_id === emp.id);
+        const empBookings = completed.filter(b => b.employee_id === emp.id);
         const revenue = empBookings.reduce((s, b) => s + Number(b.price), 0);
-        const pendingCommissions = (commissions || []).filter(c => c.employee_id === emp.id && c.status === "pending");
+        const pendingCommissions = filteredCommissions.filter(c => c.employee_id === emp.id && c.status === "pending");
         const pendingTotal = pendingCommissions.reduce((s, c) => s + Number(c.commission_amount), 0);
         return { ...emp, revenue, bookingCount: empBookings.length, pendingCommissions: pendingTotal, pendingIds: pendingCommissions.map(c => c.id) };
       }).sort((a, b) => b.revenue - a.revenue)
@@ -361,7 +377,7 @@ const Finance = () => {
                   value={expenseAmount}
                   onChange={e => setExpenseAmount(e.target.value)}
                   placeholder="Valor (R$)"
-                  min="0"
+                  min="0.01"
                   step="0.01"
                   className="px-4 py-2.5 rounded-xl bg-muted/50 border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30"
                 />
@@ -377,7 +393,7 @@ const Finance = () => {
               </div>
               <button
                 onClick={handleAddExpense}
-                disabled={!expenseDesc.trim() || !expenseAmount}
+                disabled={!expenseDesc.trim() || !expenseAmount || parseFloat(expenseAmount) <= 0}
                 className="px-6 py-2 rounded-xl gradient-accent text-accent-foreground text-sm font-medium disabled:opacity-50"
               >
                 Salvar
@@ -410,13 +426,15 @@ const Finance = () => {
 
       {tab === "commissions" && isSalon && (
         <>
-          <h3 className="font-semibold text-foreground mb-6">Comissões por Profissional</h3>
+          <h3 className="font-semibold text-foreground mb-6">Comissões por Profissional ({periodLabel})</h3>
           {(employees || []).map(emp => {
-            const empCommissions = (commissions || []).filter(c => c.employee_id === emp.id);
+            const empCommissions = filteredCommissions.filter(c => c.employee_id === emp.id);
             const pending = empCommissions.filter(c => c.status === "pending");
             const paid = empCommissions.filter(c => c.status === "paid");
             const pendingTotal = pending.reduce((s, c) => s + Number(c.commission_amount), 0);
             const paidTotal = paid.reduce((s, c) => s + Number(c.commission_amount), 0);
+
+            if (empCommissions.length === 0) return null;
 
             return (
               <motion.div key={emp.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-2xl p-5 mb-4">
@@ -462,8 +480,8 @@ const Finance = () => {
               </motion.div>
             );
           })}
-          {!(employees || []).length && (
-            <p className="text-center text-muted-foreground text-sm py-12">Nenhum profissional cadastrado na equipe</p>
+          {filteredCommissions.length === 0 && (
+            <p className="text-center text-muted-foreground text-sm py-12">Nenhuma comissão encontrada neste período</p>
           )}
         </>
       )}
