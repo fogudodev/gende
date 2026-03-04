@@ -569,6 +569,7 @@ const PublicBooking = () => {
               clientName={clientName}
               clientPhone={clientPhone}
               accent={accent}
+              colors={colors}
               isSalon={isSalon}
               paymentConfig={paymentConfig}
               signalAmount={signalAmount}
