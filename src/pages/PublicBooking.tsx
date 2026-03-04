@@ -976,8 +976,8 @@ function Step4DateTime({ service, accent, colors, days, today, selectedDate, set
               <button key={d.toISOString()} onClick={() => handleDaySelect(d)}
                 className="flex-shrink-0 flex flex-col items-center gap-1 py-3 px-3 rounded-xl transition-all active:scale-90 min-w-[56px]"
                 style={{ background: isSelected ? `linear-gradient(135deg, ${accent}, ${accent}cc)` : isToday ? `${accent}08` : "white", border: `1.5px solid ${isSelected ? accent : isToday ? `${accent}40` : "#F1F5F9"}`, boxShadow: isSelected ? `0 4px 12px ${accent}40` : "0 1px 3px rgba(0,0,0,0.04)" }}>
-                <span className="text-[10px] font-semibold uppercase" style={{ color: isSelected ? "rgba(255,255,255,0.8)" : textMuted }}>{DAYS_PT[d.getDay()]}</span>
-                <span className="text-lg font-bold leading-none" style={{ color: isSelected ? "white" : textPrimary }}>{d.getDate()}</span>
+                <span className="text-[10px] font-semibold uppercase" style={{ color: isSelected ? "rgba(255,255,255,0.8)" : "#94A3B8" }}>{DAYS_PT[d.getDay()]}</span>
+                <span className="text-lg font-bold leading-none" style={{ color: isSelected ? "white" : "#1A1A2E" }}>{d.getDate()}</span>
                 {isToday && !isSelected && <div className="w-1.5 h-1.5 rounded-full" style={{ background: accent }} />}
               </button>
             );
