@@ -60,6 +60,16 @@ serve(async (req) => {
 
         if (!limits) throw new Error("Limites do plano não encontrados");
 
+        // Get professional extras
+        const { data: profLimits } = await supabase
+          .from("professional_limits")
+          .select("*")
+          .eq("professional_id", professionalId)
+          .maybeSingle();
+
+        const extraCampaigns = profLimits?.extra_campaigns_purchased || 0;
+        const extraContacts = profLimits?.extra_contacts_purchased || 0;
+
         // Check daily campaign count
         const today = new Date().toISOString().split("T")[0];
         const { data: usage } = await supabase
@@ -71,10 +81,12 @@ serve(async (req) => {
 
         const campaignsSent = usage?.campaigns_sent || 0;
 
-        if (limits.daily_campaigns !== -1 && campaignsSent >= limits.daily_campaigns) {
+        const effectiveDailyCampaigns = limits.daily_campaigns === -1 ? -1 : limits.daily_campaigns + extraCampaigns;
+
+        if (effectiveDailyCampaigns !== -1 && campaignsSent >= effectiveDailyCampaigns) {
           return new Response(JSON.stringify({
             success: false,
-            error: `Limite diário de campanhas atingido (${limits.daily_campaigns} por dia no plano ${planId})`
+            error: `Limite diário de campanhas atingido (${effectiveDailyCampaigns} por dia). Compre mais add-ons para expandir.`
           }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
 
@@ -126,10 +138,11 @@ serve(async (req) => {
           });
         }
 
-        // Enforce contact limit
+        // Enforce contact limit (plan + extras)
         const maxContacts = limits.campaign_max_contacts;
-        if (maxContacts !== -1 && clients.length > maxContacts) {
-          clients = clients.slice(0, maxContacts);
+        const effectiveMaxContacts = maxContacts === -1 ? -1 : maxContacts + extraContacts;
+        if (effectiveMaxContacts !== -1 && clients.length > effectiveMaxContacts) {
+          clients = clients.slice(0, effectiveMaxContacts);
         }
 
         // Create campaign
@@ -275,9 +288,24 @@ serve(async (req) => {
           .eq("usage_date", today)
           .maybeSingle();
 
+        // Get professional extras
+        const { data: profLimits } = await supabase
+          .from("professional_limits")
+          .select("*")
+          .eq("professional_id", professionalId)
+          .maybeSingle();
+
+        const baseLimits = limits || { daily_reminders: 5, daily_campaigns: 0, campaign_max_contacts: 0, campaign_min_interval_hours: 6 };
+        const extras = {
+          extra_reminders: profLimits?.extra_reminders_purchased || 0,
+          extra_campaigns: profLimits?.extra_campaigns_purchased || 0,
+          extra_contacts: profLimits?.extra_contacts_purchased || 0,
+        };
+
         return new Response(JSON.stringify({
           planId,
-          limits: limits || { daily_reminders: 5, daily_campaigns: 0, campaign_max_contacts: 0, campaign_min_interval_hours: 6 },
+          limits: baseLimits,
+          extras,
           usage: { reminders_sent: usage?.reminders_sent || 0, campaigns_sent: usage?.campaigns_sent || 0 },
         }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }

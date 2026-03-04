@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion } from "framer-motion";
 import {
   Send, Megaphone, Loader2, Users, Clock, AlertTriangle,
   CheckCircle2, XCircle, Plus, MessageSquare, Eye, Phone,
+  ShoppingCart, Package,
 } from "lucide-react";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useClients } from "@/hooks/useClients";
@@ -13,7 +14,8 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-
+import { supabase } from "@/integrations/supabase/client";
+import { ADDON_PACKAGES, getPackagesByType, type AddonType } from "@/lib/addon-packages";
 const Campaigns = () => {
   const { data: professional } = useProfessional();
   const { data: campaigns, isLoading } = useCampaigns();
@@ -27,6 +29,26 @@ const Campaigns = () => {
   const [message, setMessage] = useState("");
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [sending, setSending] = useState(false);
+  const [showAddons, setShowAddons] = useState(false);
+  const [buyingAddon, setBuyingAddon] = useState<string | null>(null);
+
+  const handleBuyAddon = async (priceId: string) => {
+    if (!professional) return;
+    setBuyingAddon(priceId);
+    try {
+      const { data, error } = await supabase.functions.invoke("purchase-addon", {
+        body: { action: "create-checkout", priceId, professionalId: professional.id },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao iniciar compra");
+    } finally {
+      setBuyingAddon(null);
+    }
+  };
 
   const handleSend = async () => {
     if (!professional || !name.trim() || !message.trim()) {
@@ -55,6 +77,11 @@ const Campaigns = () => {
 
   const limits = limitsData?.limits;
   const usage = limitsData?.usage;
+  const extras = limitsData?.extras || { extra_reminders: 0, extra_campaigns: 0, extra_contacts: 0 };
+
+  const effectiveCampaigns = limits ? (limits.daily_campaigns === -1 ? -1 : limits.daily_campaigns + extras.extra_campaigns) : 0;
+  const effectiveReminders = limits ? (limits.daily_reminders === -1 ? -1 : limits.daily_reminders + extras.extra_reminders) : 0;
+  const effectiveContacts = limits ? (limits.campaign_max_contacts === -1 ? -1 : limits.campaign_max_contacts + extras.extra_contacts) : 0;
 
   const statusLabels: Record<string, string> = {
     draft: "Rascunho",
@@ -82,9 +109,10 @@ const Campaigns = () => {
             <p className="text-xl font-bold text-foreground">
               {usage?.campaigns_sent || 0}
               <span className="text-sm font-normal text-muted-foreground">
-                /{limits.daily_campaigns === -1 ? "∞" : limits.daily_campaigns}
+                /{effectiveCampaigns === -1 ? "∞" : effectiveCampaigns}
               </span>
             </p>
+            {extras.extra_campaigns > 0 && <p className="text-[10px] text-accent mt-1">+{extras.extra_campaigns} extras</p>}
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="glass-card rounded-2xl p-4">
             <div className="flex items-center justify-between mb-1">
@@ -94,9 +122,10 @@ const Campaigns = () => {
             <p className="text-xl font-bold text-foreground">
               {usage?.reminders_sent || 0}
               <span className="text-sm font-normal text-muted-foreground">
-                /{limits.daily_reminders === -1 ? "∞" : limits.daily_reminders}
+                /{effectiveReminders === -1 ? "∞" : effectiveReminders}
               </span>
             </p>
+            {extras.extra_reminders > 0 && <p className="text-[10px] text-accent mt-1">+{extras.extra_reminders} extras</p>}
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card rounded-2xl p-4">
             <div className="flex items-center justify-between mb-1">
@@ -104,11 +133,22 @@ const Campaigns = () => {
               <Users size={14} className="text-accent" />
             </div>
             <p className="text-xl font-bold text-foreground">
-              {limits.campaign_max_contacts === -1 ? "∞" : limits.campaign_max_contacts}
+              {effectiveContacts === -1 ? "∞" : effectiveContacts}
             </p>
+            {extras.extra_contacts > 0 && <p className="text-[10px] text-accent mt-1">+{extras.extra_contacts} extras</p>}
           </motion.div>
         </div>
       )}
+
+      {/* Addon Store Button */}
+      <motion.button
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        onClick={() => setShowAddons(true)}
+        className="w-full glass-card rounded-2xl p-4 flex items-center justify-center gap-2 text-foreground font-medium hover:bg-accent/5 transition-colors mb-4 border border-dashed border-accent/30"
+      >
+        <ShoppingCart size={16} className="text-accent" /> Comprar Extras (Lembretes, Campanhas, Contatos)
+      </motion.button>
 
       {/* New Campaign Button */}
       <motion.button
@@ -306,6 +346,63 @@ const Campaigns = () => {
               })}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Addon Store Dialog */}
+      <Dialog open={showAddons} onOpenChange={setShowAddons}>
+        <DialogContent className="max-w-lg bg-background border-border max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-foreground flex items-center gap-2">
+              <Package size={18} className="text-accent" />
+              Loja de Extras
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 mt-2">
+            {(["reminders", "campaigns", "contacts"] as AddonType[]).map((type) => {
+              const typeLabels: Record<AddonType, string> = {
+                reminders: "📨 Lembretes Extras",
+                campaigns: "📣 Campanhas Extras",
+                contacts: "👥 Contatos por Campanha",
+              };
+              const typeDescs: Record<AddonType, string> = {
+                reminders: "Envie mais lembretes de agendamento por dia",
+                campaigns: "Envie mais campanhas de marketing por dia",
+                contacts: "Aumente o limite de contatos por campanha",
+              };
+              const packages = getPackagesByType(type);
+              return (
+                <div key={type}>
+                  <h3 className="font-semibold text-foreground mb-1">{typeLabels[type]}</h3>
+                  <p className="text-xs text-muted-foreground mb-3">{typeDescs[type]}</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {packages.map((pkg) => (
+                      <button
+                        key={pkg.id}
+                        onClick={() => handleBuyAddon(pkg.priceId)}
+                        disabled={!!buyingAddon}
+                        className={cn(
+                          "flex flex-col items-center gap-1 p-3 rounded-xl border border-border/50 bg-muted/30 hover:bg-accent/10 hover:border-accent/50 transition-all text-center",
+                          buyingAddon === pkg.priceId && "opacity-50"
+                        )}
+                      >
+                        <span className="text-lg font-bold text-foreground">{pkg.quantity}</span>
+                        <span className="text-[10px] text-muted-foreground">{type === "reminders" ? "lembretes" : type === "campaigns" ? "campanhas" : "contatos"}</span>
+                        <span className="text-xs font-semibold text-accent mt-1">{pkg.priceDisplay}</span>
+                        {buyingAddon === pkg.priceId && <Loader2 size={12} className="animate-spin text-accent" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+            <div className="flex items-start gap-2 bg-accent/5 rounded-xl p-3">
+              <AlertTriangle size={14} className="text-accent mt-0.5 shrink-0" />
+              <p className="text-xs text-muted-foreground">
+                Os extras são adicionados ao seu limite atual do plano. Após o pagamento, o crédito é aplicado automaticamente à sua conta.
+              </p>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </DashboardLayout>
