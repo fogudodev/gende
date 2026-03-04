@@ -632,7 +632,7 @@ const PublicBooking = () => {
                     {payload && (
                       <div className="flex justify-center mb-4">
                         <div className="p-3 rounded-2xl" style={{ background: "white", border: `2px solid ${accent}20` }}>
-                          <QRCodeSVG value={payload} size={180} fgColor="#1A1A2E" />
+                          <QRCodeSVG value={payload} size={180} fgColor={textPrimary} />
                         </div>
                       </div>
                     )}
