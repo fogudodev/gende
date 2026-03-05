@@ -163,6 +163,7 @@ type NavEntry = NavItem & { type?: "item" } | NavGroup;
 const standaloneItems: NavItem[] = [
   { icon: DashboardIcon, label: "Dashboard", path: "/", featureKey: "dashboard" },
   { icon: CalendarIcon, label: "Agendamentos", path: "/bookings", featureKey: "bookings" },
+  { icon: WaitlistIcon, label: "Lista de Espera", path: "/waitlist", featureKey: "bookings" },
   { icon: ScissorsIcon, label: "Serviços", path: "/services", featureKey: "services" },
   { icon: ClientsIcon, label: "Clientes", path: "/clients", featureKey: "clients" },
 ];
