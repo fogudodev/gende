@@ -1073,8 +1073,8 @@ function WaitlistForm({ professionalId, serviceId, serviceName, selectedDate, ac
 }
 
 /* ── Step 4: Date & Time ── */
-function Step4DateTime({ service, accent, colors, days, today, selectedDate, setSelectedDate, selectedTime, setSelectedTime, slots, loadingSlots, selectedSlot, setSelectedSlot, onNext, onBack }: {
-  service: Service; accent: string; colors: TextColors; days: Date[]; today: Date; selectedDate: Date | null; setSelectedDate: (d: Date | null) => void; selectedTime: string; setSelectedTime: (t: string) => void; slots: Slot[]; loadingSlots: boolean; selectedSlot: Slot | null; setSelectedSlot: (s: Slot | null) => void; onNext: () => void; onBack: () => void;
+function Step4DateTime({ service, professional, accent, colors, days, today, selectedDate, setSelectedDate, selectedTime, setSelectedTime, slots, loadingSlots, selectedSlot, setSelectedSlot, waitlistEnabled, clientName, clientPhone, onNext, onBack }: {
+  service: Service; professional: Professional; accent: string; colors: TextColors; days: Date[]; today: Date; selectedDate: Date | null; setSelectedDate: (d: Date | null) => void; selectedTime: string; setSelectedTime: (t: string) => void; slots: Slot[]; loadingSlots: boolean; selectedSlot: Slot | null; setSelectedSlot: (s: Slot | null) => void; waitlistEnabled: boolean; clientName: string; clientPhone: string; onNext: () => void; onBack: () => void;
 }) {
   const { textPrimary, textSecondary, textMuted } = colors;
   const handleDaySelect = (d: Date) => { setSelectedDate(d); setSelectedTime(""); setSelectedSlot(null); };
