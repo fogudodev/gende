@@ -130,6 +130,7 @@ const PublicBooking = () => {
   const [employeeStatsMap, setEmployeeStatsMap] = useState<Record<string, EmployeeStats>>({});
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [waitlistEnabled, setWaitlistEnabled] = useState(false);
 
   // Wizard
   const [step, setStep] = useState(1);
