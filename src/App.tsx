@@ -35,6 +35,7 @@ import Waitlist from "./pages/Waitlist";
 import ServicePackages from "./pages/ServicePackages";
 import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
+import Instructions from "./pages/Instructions";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
