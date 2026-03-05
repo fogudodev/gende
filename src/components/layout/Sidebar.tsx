@@ -5,6 +5,7 @@ import { useIsAdmin } from "@/hooks/useAdmin";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useReceptionEmployee } from "@/hooks/useReceptionEmployee";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { useIsFeatureEnabled } from "@/hooks/useFeatureFlags";
 import {
   LayoutDashboard,
   CalendarDays,
