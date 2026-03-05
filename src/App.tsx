@@ -107,6 +107,7 @@ const AppContent = () => (
             <Route path="/admin/support-chat" element={<AdminRoute><AdminSupportChat /></AdminRoute>} />
             <Route path="/admin/payment-chat" element={<AdminRoute><AdminPaymentChat /></AdminRoute>} />
             <Route path="/admin/platform-reviews" element={<AdminRoute><AdminPlatformReviews /></AdminRoute>} />
+            <Route path="/admin/feature-flags" element={<AdminRoute><AdminFeatureFlags /></AdminRoute>} />
 
             {/* Public routes */}
             <Route path="/p/:slug" element={<PublicBooking />} />

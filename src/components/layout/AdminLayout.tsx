@@ -22,6 +22,7 @@ import {
   Headphones,
   Wallet,
   Star,
+  Flag,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 
