@@ -33,6 +33,7 @@ import {
   ChevronDown,
   MessageSquare,
   Send,
+  Clock,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 import calendarIcon from "@/assets/icon-calendar.png";
