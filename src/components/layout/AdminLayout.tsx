@@ -42,6 +42,7 @@ const allAdminNavItems = [
   { icon: Wallet, label: "Chat Pagamento", path: "/admin/payment-chat", supportAccess: true },
   { icon: FileText, label: "Logs", path: "/admin/logs", supportAccess: true },
   { icon: Star, label: "Avaliações Plataforma", path: "/admin/platform-reviews", supportAccess: true },
+  { icon: Flag, label: "Feature Flags", path: "/admin/feature-flags", supportAccess: false },
 ];
 
 interface AdminLayoutProps {
