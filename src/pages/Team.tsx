@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 const Team = () => {
   const { data: professional } = useProfessional();
   const { data: employees, isLoading } = useSalonEmployees();
+  const { enabled: employeeHoursEnabled } = useIsFeatureEnabled("employee_working_hours");
   const createEmployee = useCreateSalonEmployee();
   const updateEmployee = useUpdateSalonEmployee();
   const deleteEmployee = useDeleteSalonEmployee();
