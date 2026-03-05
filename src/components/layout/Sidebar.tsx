@@ -5,7 +5,7 @@ import { useIsAdmin } from "@/hooks/useAdmin";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useReceptionEmployee } from "@/hooks/useReceptionEmployee";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
-import { useIsFeatureEnabled } from "@/hooks/useFeatureFlags";
+import { useMyFeatureGate } from "@/hooks/useMyFeatureGate";
 import {
   LayoutDashboard,
   CalendarDays,
@@ -147,28 +147,78 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
   const { data: professional } = useProfessional();
   const { data: reception } = useReceptionEmployee();
   const { isLocked, requiredPlan, currentPlan } = useFeatureAccess();
+  const { isFeatureDisabledForMe } = useMyFeatureGate();
 
-  const { enabled: servicePackagesEnabled } = useIsFeatureEnabled("service_packages");
   const isReception = !!reception && !professional;
   const isSalon = professional?.account_type === "salon";
   const displayName = isReception ? reception.name : (professional?.business_name || professional?.name || "Gende");
   const displayLogo = isReception ? logo : (professional?.logo_url || logo);
   const planLabel = currentPlan === "enterprise" ? "Enterprise" : currentPlan === "essencial" ? "Essencial" : "";
-  
+
+  // Map sidebar paths to feature_flags keys
+  const pathToFlagKey: Record<string, string> = {
+    "/": "dashboard",
+    "/bookings": "bookings",
+    "/waitlist": "waitlist",
+    "/services": "services",
+    "/clients": "clients",
+    "/team": "team",
+    "/commission-report": "commission_report",
+    "/team-performance": "team_performance",
+    "/automations": "whatsapp_automations",
+    "/campaigns": "campaigns",
+    "/payment-chat": "payment_chat",
+    "/support-chat": "support_chat",
+    "/ai-assistant": "ai_assistant",
+    "/finance": "finance",
+    "/cash-register": "cash_register",
+    "/public-page": "public_page",
+    "/products": "products",
+    "/service-packages": "service_packages",
+    "/coupons": "coupons",
+    "/reports": "reports",
+    "/reviews": "reviews",
+    "/settings": "settings",
+  };
+
+  const isPathDisabled = (path: string): boolean => {
+    const flagKey = pathToFlagKey[path];
+    if (!flagKey) return false; // no flag = always visible (e.g. /instructions)
+    return isFeatureDisabledForMe(flagKey);
+  };
+
+  const filterItems = (items: NavItem[]): NavItem[] =>
+    items.filter((item) => !isPathDisabled(item.path));
+
   const buildNavEntries = (): NavEntry[] => {
     if (isReception) {
-      return receptionNavItems;
+      return filterItems(receptionNavItems);
     }
-    const entries: NavEntry[] = [...standaloneItems];
+    const entries: NavEntry[] = [...filterItems(standaloneItems)];
     if (isSalon) {
-      entries.push(...salonOnlyItems);
-      entries.push(cashRegisterItem);
+      const salonFiltered = filterItems(salonOnlyItems);
+      entries.push(...salonFiltered);
+      if (!isPathDisabled(cashRegisterItem.path)) {
+        entries.push(cashRegisterItem);
+      }
     }
-    const filteredAfterGroupItems = afterGroupItems.filter((item) => {
-      if (item.path === "/service-packages" && !servicePackagesEnabled) return false;
-      return true;
-    });
-    entries.push(whatsappGroup, communicationGroup, ...filteredAfterGroupItems);
+
+    // Filter groups children
+    const filteredWhatsapp: NavGroup = {
+      ...whatsappGroup,
+      children: filterItems(whatsappGroup.children),
+    };
+    const filteredComm: NavGroup = {
+      ...communicationGroup,
+      children: filterItems(communicationGroup.children),
+    };
+
+    const filteredAfterGroupItems = filterItems(afterGroupItems);
+
+    // Only add groups that still have children
+    if (filteredWhatsapp.children.length > 0) entries.push(filteredWhatsapp);
+    if (filteredComm.children.length > 0) entries.push(filteredComm);
+    entries.push(...filteredAfterGroupItems);
     return entries;
   };
 
