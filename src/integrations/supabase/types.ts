@@ -479,6 +479,79 @@ export type Database = {
           },
         ]
       }
+      client_packages: {
+        Row: {
+          amount_paid: number
+          client_id: string | null
+          client_name: string
+          client_phone: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          package_id: string | null
+          professional_id: string
+          purchased_at: string
+          status: string
+          total_sessions: number
+          updated_at: string
+          used_sessions: number
+        }
+        Insert: {
+          amount_paid?: number
+          client_id?: string | null
+          client_name: string
+          client_phone?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          package_id?: string | null
+          professional_id: string
+          purchased_at?: string
+          status?: string
+          total_sessions?: number
+          updated_at?: string
+          used_sessions?: number
+        }
+        Update: {
+          amount_paid?: number
+          client_id?: string | null
+          client_name?: string
+          client_phone?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          package_id?: string | null
+          professional_id?: string
+          purchased_at?: string
+          status?: string
+          total_sessions?: number
+          updated_at?: string
+          used_sessions?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_packages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_packages_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "service_packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_packages_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           created_at: string
@@ -1357,6 +1430,63 @@ export type Database = {
             columns: ["salon_id"]
             isOneToOne: false
             referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_packages: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          original_price: number
+          price: number
+          professional_id: string
+          service_id: string | null
+          total_sessions: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          original_price?: number
+          price?: number
+          professional_id: string
+          service_id?: string | null
+          total_sessions?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          original_price?: number
+          price?: number
+          professional_id?: string
+          service_id?: string | null
+          total_sessions?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_packages_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_packages_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
             referencedColumns: ["id"]
           },
         ]
