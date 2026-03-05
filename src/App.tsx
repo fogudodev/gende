@@ -41,6 +41,7 @@ import AdminPlans from "./pages/admin/AdminPlans";
 import AdminSubscribers from "./pages/admin/AdminSubscribers";
 import AdminIntegrations from "./pages/admin/AdminIntegrations";
 import AdminFeatures from "./pages/admin/AdminFeatures";
+import AdminFeatureFlags from "./pages/admin/AdminFeatureFlags";
 import AdminBookings from "./pages/admin/AdminBookings";
 import AdminWhatsAppPage from "./pages/admin/AdminWhatsAppPage";
 import AdminWhatsAppLogsPage from "./pages/admin/AdminWhatsAppLogsPage";
@@ -106,6 +107,7 @@ const AppContent = () => (
             <Route path="/admin/support-chat" element={<AdminRoute><AdminSupportChat /></AdminRoute>} />
             <Route path="/admin/payment-chat" element={<AdminRoute><AdminPaymentChat /></AdminRoute>} />
             <Route path="/admin/platform-reviews" element={<AdminRoute><AdminPlatformReviews /></AdminRoute>} />
+            <Route path="/admin/feature-flags" element={<AdminRoute><AdminFeatureFlags /></AdminRoute>} />
 
             {/* Public routes */}
             <Route path="/p/:slug" element={<PublicBooking />} />
