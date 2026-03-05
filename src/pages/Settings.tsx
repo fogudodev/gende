@@ -1,11 +1,13 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  User, CreditCard, Clock, Globe, Shield, MessageSquare,
+  CreditCard, Clock, Globe, Shield, MessageSquare,
   ArrowLeft, Save, Loader2, CheckCircle2, QrCode, Power,
   Palette, Eye, EyeOff, Crown, AlertTriangle, Camera, ImageIcon, X,
   Plus, Trash2, CalendarOff, Plane, Calendar as CalendarIcon,
+  User,
+  LucideIcon,
 } from "lucide-react";
 import { GoogleCalendarSection } from "@/components/settings/GoogleCalendarSection";
 import { usePaymentConfig, useSavePaymentConfig } from "@/hooks/usePaymentConfig";
@@ -16,6 +18,10 @@ import { useBlockedTimes, useCreateBlockedTime, useDeleteBlockedTime } from "@/h
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -76,22 +82,26 @@ const Settings = () => {
               className="space-y-3"
             >
               {sections.map((s, i) => (
-                <motion.button
+                <motion.div
                   key={s.id}
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  onClick={() => setActiveSection(s.id)}
-                  className="w-full glass-card rounded-2xl p-5 flex items-center gap-4 hover-lift group text-left"
                 >
-                  <div className="w-11 h-11 rounded-xl bg-muted/50 flex items-center justify-center group-hover:bg-accent/10 transition-colors">
-                    <s.icon size={20} className="text-muted-foreground group-hover:text-accent transition-colors" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">{s.title}</h3>
-                    <p className="text-sm text-muted-foreground">{s.description}</p>
-                  </div>
-                </motion.button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setActiveSection(s.id)}
+                    className="w-full glass-card rounded-2xl p-5 h-auto flex items-center gap-4 hover-lift group text-left justify-start"
+                  >
+                    <div className="w-11 h-11 rounded-xl bg-muted/50 flex items-center justify-center group-hover:bg-accent/10 transition-colors">
+                      <s.icon size={20} className="text-muted-foreground group-hover:text-accent transition-colors" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground">{s.title}</h3>
+                      <p className="text-sm text-muted-foreground">{s.description}</p>
+                    </div>
+                  </Button>
+                </motion.div>
               ))}
             </motion.div>
           ) : (
@@ -101,12 +111,14 @@ const Settings = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
             >
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setActiveSection(null)}
                 className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
               >
                 <ArrowLeft size={14} /> Voltar
-              </button>
+              </Button>
 
               {activeSection === "system" && <SystemAppearanceSection />}
               {activeSection === "hours" && <WorkingHoursSection />}
@@ -163,6 +175,7 @@ const SystemAppearanceSection = () => {
   const qc = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [removingLogo, setRemovingLogo] = useState(false);
 
   const [businessName, setBusinessName] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
@@ -174,9 +187,9 @@ const SystemAppearanceSection = () => {
     if (professional) {
       setBusinessName(professional.business_name || professional.name || "");
       setLogoUrl(professional.logo_url || "");
-      setAccentColor((professional as any).system_accent_color || professional.primary_color || "#FF0066");
-      setSidebarColor((professional as any).system_sidebar_color || "#09090B");
-      setSidebarTextColor((professional as any).system_sidebar_text_color || "#FFFFFF");
+      setAccentColor(professional.system_accent_color || professional.primary_color || "#FF0066");
+      setSidebarColor(professional.system_sidebar_color || "#09090B");
+      setSidebarTextColor(professional.system_sidebar_text_color || "#FFFFFF");
     }
   }, [professional]);
 
@@ -201,8 +214,9 @@ const SystemAppearanceSection = () => {
       setLogoUrl(publicUrl);
       qc.invalidateQueries({ queryKey: ["professional"] });
       toast.success("Logo atualizada!");
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao fazer upload");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro ao fazer upload";
+      toast.error(message);
     } finally {
       setUploadingLogo(false);
     }
@@ -210,10 +224,17 @@ const SystemAppearanceSection = () => {
 
   const removeLogo = async () => {
     if (!professional) return;
-    await supabase.from("professionals").update({ logo_url: null }).eq("id", professional.id);
-    setLogoUrl("");
-    qc.invalidateQueries({ queryKey: ["professional"] });
-    toast.success("Logo removida");
+    setRemovingLogo(true);
+    try {
+      await supabase.from("professionals").update({ logo_url: null }).eq("id", professional.id);
+      setLogoUrl("");
+      qc.invalidateQueries({ queryKey: ["professional"] });
+      toast.success("Logo removida");
+    } catch {
+      toast.error("Erro ao remover logo");
+    } finally {
+      setRemovingLogo(false);
+    }
   };
 
   const handleSave = async () => {
@@ -227,13 +248,12 @@ const SystemAppearanceSection = () => {
         system_accent_color: accentColor,
         system_sidebar_color: sidebarColor,
         system_sidebar_text_color: sidebarTextColor,
-      } as any)
+      })
       .eq("id", professional.id);
 
     if (error) {
       toast.error("Erro ao salvar");
     } else {
-      // Apply colors immediately
       applySystemColors(accentColor, sidebarColor, sidebarTextColor);
       toast.success("Aparência atualizada!");
       qc.invalidateQueries({ queryKey: ["professional"] });
@@ -257,113 +277,51 @@ const SystemAppearanceSection = () => {
             label="Logo"
             imageUrl={logoUrl}
             uploading={uploadingLogo}
+            removing={removingLogo}
             icon={<ImageIcon size={24} className="text-muted-foreground" />}
             onUpload={uploadLogo}
             onRemove={removeLogo}
           />
           <div className="flex-1">
-            <label className="text-sm font-medium text-foreground mb-1.5 block">Nome exibido no menu</label>
-            <input
-              type="text"
+            <Label className="mb-1.5 block">Nome exibido no menu</Label>
+            <Input
               value={businessName}
               onChange={(e) => setBusinessName(e.target.value)}
               maxLength={30}
               placeholder="Nome do seu negócio"
-              className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all text-sm"
             />
           </div>
         </div>
       </div>
 
       {/* System Accent Color */}
-      <div className="glass-card rounded-2xl p-6 space-y-4">
-        <div className="flex items-center gap-2">
-          <Palette size={18} className="text-accent" />
-          <h3 className="font-semibold text-foreground">Cor de Destaque (Accent)</h3>
-        </div>
-        <p className="text-xs text-muted-foreground">Usada em botões, ícones ativos e destaques do sistema.</p>
-        <div className="flex flex-wrap gap-3">
-          {ACCENT_PRESETS.map((c) => (
-            <button
-              key={c}
-              onClick={() => setAccentColor(c)}
-              className={cn(
-                "w-9 h-9 rounded-xl transition-all",
-                accentColor === c ? "ring-2 ring-offset-2 ring-accent scale-110" : "hover:scale-105"
-              )}
-              style={{ backgroundColor: c }}
-            />
-          ))}
-          <label className="w-9 h-9 rounded-xl border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-accent transition-colors overflow-hidden relative">
-            <Palette size={14} className="text-muted-foreground" />
-            <input type="color" value={accentColor} onChange={(e) => setAccentColor(e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer" />
-          </label>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl" style={{ backgroundColor: accentColor }} />
-          <span className="text-sm text-muted-foreground font-mono">{accentColor}</span>
-        </div>
-      </div>
+      <ColorPickerCard
+        title="Cor de Destaque (Accent)"
+        description="Usada em botões, ícones ativos e destaques do sistema."
+        presets={ACCENT_PRESETS}
+        value={accentColor}
+        onChange={setAccentColor}
+      />
 
       {/* Sidebar Color */}
-      <div className="glass-card rounded-2xl p-6 space-y-4">
-        <div className="flex items-center gap-2">
-          <Palette size={18} className="text-accent" />
-          <h3 className="font-semibold text-foreground">Cor da Sidebar</h3>
-        </div>
-        <p className="text-xs text-muted-foreground">Cor de fundo do menu lateral.</p>
-        <div className="flex flex-wrap gap-3">
-          {SIDEBAR_PRESETS.map((c) => (
-            <button
-              key={c}
-              onClick={() => setSidebarColor(c)}
-              className={cn(
-                "w-9 h-9 rounded-xl transition-all border border-border/30",
-                sidebarColor === c ? "ring-2 ring-offset-2 ring-accent scale-110" : "hover:scale-105"
-              )}
-              style={{ backgroundColor: c }}
-            />
-          ))}
-          <label className="w-9 h-9 rounded-xl border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-accent transition-colors overflow-hidden relative">
-            <Palette size={14} className="text-muted-foreground" />
-            <input type="color" value={sidebarColor} onChange={(e) => setSidebarColor(e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer" />
-          </label>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl border border-border/30" style={{ backgroundColor: sidebarColor }} />
-          <span className="text-sm text-muted-foreground font-mono">{sidebarColor}</span>
-        </div>
-      </div>
+      <ColorPickerCard
+        title="Cor da Sidebar"
+        description="Cor de fundo do menu lateral."
+        presets={SIDEBAR_PRESETS}
+        value={sidebarColor}
+        onChange={setSidebarColor}
+        showBorder
+      />
 
       {/* Sidebar Text Color */}
-      <div className="glass-card rounded-2xl p-6 space-y-4">
-        <div className="flex items-center gap-2">
-          <Palette size={18} className="text-accent" />
-          <h3 className="font-semibold text-foreground">Cor do Texto da Sidebar</h3>
-        </div>
-        <p className="text-xs text-muted-foreground">Cor dos textos e ícones do menu lateral.</p>
-        <div className="flex flex-wrap gap-3">
-          {SIDEBAR_TEXT_PRESETS.map((c) => (
-            <button
-              key={c}
-              onClick={() => setSidebarTextColor(c)}
-              className={cn(
-                "w-9 h-9 rounded-xl transition-all border border-border/30",
-                sidebarTextColor === c ? "ring-2 ring-offset-2 ring-accent scale-110" : "hover:scale-105"
-              )}
-              style={{ backgroundColor: c }}
-            />
-          ))}
-          <label className="w-9 h-9 rounded-xl border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-accent transition-colors overflow-hidden relative">
-            <Palette size={14} className="text-muted-foreground" />
-            <input type="color" value={sidebarTextColor} onChange={(e) => setSidebarTextColor(e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer" />
-          </label>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl border border-border/30" style={{ backgroundColor: sidebarTextColor }} />
-          <span className="text-sm text-muted-foreground font-mono">{sidebarTextColor}</span>
-        </div>
-      </div>
+      <ColorPickerCard
+        title="Cor do Texto da Sidebar"
+        description="Cor dos textos e ícones do menu lateral."
+        presets={SIDEBAR_TEXT_PRESETS}
+        value={sidebarTextColor}
+        onChange={setSidebarTextColor}
+        showBorder
+      />
 
       {/* Preview */}
       <div className="glass-card rounded-2xl p-6 space-y-3">
@@ -418,243 +376,6 @@ export function applySystemColors(accent?: string | null, sidebar?: string | nul
     root.style.setProperty("--sidebar-foreground", hsl);
   }
 }
-
-/* ===================== PROFILE SECTION ===================== */
-const ProfileSection = () => {
-  const { data: professional, isLoading } = useProfessional();
-  const { user } = useAuth();
-  const qc = useQueryClient();
-  const [saving, setSaving] = useState(false);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [form, setForm] = useState({
-    name: "", business_name: "", email: "", phone: "",
-    bio: "", slug: "", primary_color: "#C4922A",
-    avatar_url: "", logo_url: "",
-  });
-
-  useEffect(() => {
-    if (professional) {
-      setForm({
-        name: professional.name || "",
-        business_name: professional.business_name || "",
-        email: professional.email || "",
-        phone: professional.phone || "",
-        bio: professional.bio || "",
-        slug: professional.slug || "",
-        primary_color: professional.primary_color || "#C4922A",
-        avatar_url: professional.avatar_url || "",
-        logo_url: professional.logo_url || "",
-      });
-    }
-  }, [professional]);
-
-  const uploadFile = async (file: File, type: "avatar" | "logo") => {
-    if (!user || !professional) return;
-    const isAvatar = type === "avatar";
-    isAvatar ? setUploadingAvatar(true) : setUploadingLogo(true);
-
-    try {
-      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      const allowed = ["jpg", "jpeg", "png", "webp", "gif"];
-      if (!allowed.includes(ext)) {
-        toast.error("Formato não suportado. Use JPG, PNG ou WebP.");
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Arquivo muito grande. Máximo 5MB.");
-        return;
-      }
-
-      const path = `${user.id}/${type}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("professionals")
-        .upload(path, file, { upsert: true, contentType: file.type });
-
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage
-        .from("professionals")
-        .getPublicUrl(path);
-
-      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-
-      const updateField = isAvatar ? "avatar_url" : "logo_url";
-      const { error: dbError } = await supabase
-        .from("professionals")
-        .update({ [updateField]: publicUrl })
-        .eq("id", professional.id);
-
-      if (dbError) throw dbError;
-
-      setForm((prev) => ({ ...prev, [updateField]: publicUrl }));
-      qc.invalidateQueries({ queryKey: ["professional"] });
-      toast.success(`${isAvatar ? "Foto" : "Logo"} atualizada!`);
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao fazer upload");
-    } finally {
-      isAvatar ? setUploadingAvatar(false) : setUploadingLogo(false);
-    }
-  };
-
-  const removeImage = async (type: "avatar" | "logo") => {
-    if (!professional) return;
-    const updateField = type === "avatar" ? "avatar_url" : "logo_url";
-    const { error } = await supabase
-      .from("professionals")
-      .update({ [updateField]: null })
-      .eq("id", professional.id);
-
-    if (!error) {
-      setForm((prev) => ({ ...prev, [updateField]: "" }));
-      qc.invalidateQueries({ queryKey: ["professional"] });
-      toast.success("Imagem removida");
-    }
-  };
-
-  const handleSave = async () => {
-    if (!professional) return;
-    setSaving(true);
-
-    const slugClean = form.slug.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 50);
-
-    const { error } = await supabase
-      .from("professionals")
-      .update({
-        name: form.name.trim(),
-        business_name: form.business_name.trim(),
-        phone: form.phone.trim(),
-        bio: form.bio.trim(),
-        slug: slugClean || null,
-        primary_color: form.primary_color,
-      })
-      .eq("id", professional.id);
-
-    if (error) {
-      toast.error(error.message.includes("duplicate") ? "Este slug já está em uso" : "Erro ao salvar");
-    } else {
-      toast.success("Perfil atualizado!");
-      qc.invalidateQueries({ queryKey: ["professional"] });
-    }
-    setSaving(false);
-  };
-
-  if (isLoading) return <LoadingState />;
-
-  return (
-    <div className="space-y-6">
-      <SectionHeader icon={User} title="Perfil e Página Pública" />
-
-      {/* Avatar & Logo Upload */}
-      <div className="glass-card rounded-2xl p-6 space-y-5">
-        <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
-          <Camera size={16} className="text-accent" /> Foto e Logo
-        </h3>
-        <div className="flex flex-wrap gap-6">
-          {/* Avatar */}
-          <ImageUploadCard
-            label="Foto de Perfil"
-            imageUrl={form.avatar_url}
-            uploading={uploadingAvatar}
-            icon={<User size={24} className="text-muted-foreground" />}
-            onUpload={(f) => uploadFile(f, "avatar")}
-            onRemove={() => removeImage("avatar")}
-            rounded
-          />
-          {/* Logo */}
-          <ImageUploadCard
-            label="Logo do Negócio"
-            imageUrl={form.logo_url}
-            uploading={uploadingLogo}
-            icon={<ImageIcon size={24} className="text-muted-foreground" />}
-            onUpload={(f) => uploadFile(f, "logo")}
-            onRemove={() => removeImage("logo")}
-          />
-        </div>
-      </div>
-
-      <div className="glass-card rounded-2xl p-6 space-y-5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField label="Nome" value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
-          <FormField label="Nome do negócio" value={form.business_name} onChange={(v) => setForm({ ...form, business_name: v })} />
-          <FormField label="Email" value={form.email} disabled />
-          <FormField label="Telefone" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
-        </div>
-
-        <div>
-          <label className="text-sm font-medium text-foreground mb-1.5 block">Bio</label>
-          <textarea
-            value={form.bio}
-            onChange={(e) => setForm({ ...form, bio: e.target.value })}
-            maxLength={300}
-            rows={3}
-            className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all resize-none text-sm"
-          />
-        </div>
-      </div>
-
-      {/* Slug */}
-      <div className="glass-card rounded-2xl p-6 space-y-4">
-        <div className="flex items-center gap-2">
-          <Globe size={18} className="text-accent" />
-          <h3 className="font-semibold text-foreground">URL da Página Pública</h3>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground whitespace-nowrap">…/p/</span>
-          <input
-            value={form.slug}
-            onChange={(e) => setForm({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") })}
-            placeholder="meu-salao"
-            maxLength={50}
-            className="flex-1 px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/30"
-          />
-        </div>
-        {form.slug && (
-          <p className="text-xs text-muted-foreground">
-            Sua página ficará acessível em: <span className="text-accent font-medium">/p/{form.slug}</span>
-          </p>
-        )}
-      </div>
-
-      {/* Color */}
-      <div className="glass-card rounded-2xl p-6 space-y-4">
-        <div className="flex items-center gap-2">
-          <Palette size={18} className="text-accent" />
-          <h3 className="font-semibold text-foreground">Cor Principal</h3>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          {COLOR_PRESETS.map((c) => (
-            <button
-              key={c}
-              onClick={() => setForm({ ...form, primary_color: c })}
-              className={cn(
-                "w-9 h-9 rounded-xl transition-all",
-                form.primary_color === c ? "ring-2 ring-offset-2 ring-accent scale-110" : "hover:scale-105"
-              )}
-              style={{ backgroundColor: c }}
-            />
-          ))}
-          <label className="w-9 h-9 rounded-xl border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-accent transition-colors overflow-hidden relative">
-            <Palette size={14} className="text-muted-foreground" />
-            <input
-              type="color"
-              value={form.primary_color}
-              onChange={(e) => setForm({ ...form, primary_color: e.target.value })}
-              className="absolute inset-0 opacity-0 cursor-pointer"
-            />
-          </label>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl" style={{ backgroundColor: form.primary_color }} />
-          <span className="text-sm text-muted-foreground font-mono">{form.primary_color}</span>
-        </div>
-      </div>
-
-      <SaveButton saving={saving} onClick={handleSave} />
-    </div>
-  );
-};
 
 /* ===================== WORKING HOURS ===================== */
 const DEFAULT_HOURS = Array.from({ length: 7 }, (_, i) => ({
@@ -776,25 +497,27 @@ const WorkingHoursSection = () => {
       <div className="glass-card rounded-2xl p-6 space-y-3">
         {local.map((h) => (
           <div key={h.day_of_week} className="flex items-center gap-3 py-2">
-            <button
+            <Button
+              variant={h.is_active ? "default" : "secondary"}
+              size="icon"
               onClick={() => toggle(h.day_of_week)}
               className={cn(
-                "w-9 h-9 rounded-xl flex items-center justify-center transition-all text-xs font-bold shrink-0",
-                h.is_active ? "gradient-accent text-accent-foreground" : "bg-muted text-muted-foreground"
+                "w-9 h-9 rounded-xl text-xs font-bold shrink-0",
+                h.is_active && "gradient-accent text-accent-foreground"
               )}
             >
               {getDayName(h.day_of_week).slice(0, 3)}
-            </button>
+            </Button>
             <span className={cn("text-sm w-20 shrink-0", h.is_active ? "text-foreground font-medium" : "text-muted-foreground")}>
               {getDayName(h.day_of_week)}
             </span>
             {h.is_active ? (
               <div className="flex items-center gap-2">
-                <input type="time" value={h.start_time} onChange={(e) => update(h.day_of_week, "start_time", e.target.value)}
-                  className="px-2 py-1.5 rounded-lg bg-muted/50 border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/30" />
+                <Input type="time" value={h.start_time} onChange={(e) => update(h.day_of_week, "start_time", e.target.value)}
+                  className="w-auto px-2 py-1.5 h-9" />
                 <span className="text-muted-foreground text-xs">até</span>
-                <input type="time" value={h.end_time} onChange={(e) => update(h.day_of_week, "end_time", e.target.value)}
-                  className="px-2 py-1.5 rounded-lg bg-muted/50 border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/30" />
+                <Input type="time" value={h.end_time} onChange={(e) => update(h.day_of_week, "end_time", e.target.value)}
+                  className="w-auto px-2 py-1.5 h-9" />
               </div>
             ) : (
               <span className="text-xs text-muted-foreground">Fechado</span>
@@ -812,12 +535,13 @@ const WorkingHoursSection = () => {
             <CalendarOff size={20} className="text-accent" />
             <h2 className="text-lg font-bold text-foreground">Ausências</h2>
           </div>
-          <button
+          <Button
+            size="sm"
             onClick={() => setShowAddBlocked(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
+            className="flex items-center gap-1.5"
           >
             <Plus size={14} /> Nova ausência
-          </button>
+          </Button>
         </div>
 
         {futureBlocked.length === 0 ? (
@@ -859,12 +583,34 @@ const WorkingHoursSection = () => {
                       </p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleDeleteBlocked(bt.id)}
-                    className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Remover ausência?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          A ausência "{bt.reason || "Ausência"}" será removida permanentemente.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDeleteBlocked(bt.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Remover
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </motion.div>
               );
             })}
@@ -885,9 +631,30 @@ const WorkingHoursSection = () => {
                       {format(new Date(bt.start_time), "dd/MM/yyyy")} → {format(new Date(bt.end_time), "dd/MM/yyyy")}
                     </p>
                   </div>
-                  <button onClick={() => handleDeleteBlocked(bt.id)} className="p-1 text-muted-foreground hover:text-destructive">
-                    <Trash2 size={12} />
-                  </button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
+                        <Trash2 size={12} />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Remover ausência?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta ausência passada será removida permanentemente.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDeleteBlocked(bt.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Remover
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               ))}
             </div>
@@ -910,18 +677,15 @@ const WorkingHoursSection = () => {
               <Label className="text-xs text-muted-foreground mb-2 block">Motivo</Label>
               <div className="flex flex-wrap gap-2">
                 {REASON_PRESETS.map(r => (
-                  <button
+                  <Button
                     key={r.label}
+                    variant={blockedReason === r.label ? "default" : "outline"}
+                    size="sm"
                     onClick={() => setBlockedReason(r.label)}
-                    className={cn(
-                      "text-xs px-3 py-1.5 rounded-lg border transition-all font-medium",
-                      blockedReason === r.label
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-muted/30 text-foreground border-border/30 hover:border-primary/50"
-                    )}
+                    className="text-xs"
                   >
                     {r.icon} {r.label}
-                  </button>
+                  </Button>
                 ))}
               </div>
               {blockedReason === "Outro" && (
@@ -937,28 +701,22 @@ const WorkingHoursSection = () => {
             <div>
               <Label className="text-xs text-muted-foreground mb-2 block">Tipo de ausência</Label>
               <div className="flex gap-2">
-                <button
+                <Button
+                  variant={blockedType === "period" ? "default" : "outline"}
+                  size="sm"
                   onClick={() => setBlockedType("period")}
-                  className={cn(
-                    "flex-1 text-xs py-2.5 rounded-xl border transition-all font-medium flex items-center justify-center gap-1.5",
-                    blockedType === "period"
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-muted/30 text-foreground border-border/30"
-                  )}
+                  className="flex-1"
                 >
                   <CalendarIcon size={13} /> Dia(s) inteiro(s)
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant={blockedType === "hours" ? "default" : "outline"}
+                  size="sm"
                   onClick={() => setBlockedType("hours")}
-                  className={cn(
-                    "flex-1 text-xs py-2.5 rounded-xl border transition-all font-medium flex items-center justify-center gap-1.5",
-                    blockedType === "hours"
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-muted/30 text-foreground border-border/30"
-                  )}
+                  className="flex-1"
                 >
                   <Clock size={13} /> Horário específico
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -1047,24 +805,22 @@ const SubscriptionSection = () => {
 
       {/* Billing toggle */}
       <div className="flex items-center justify-center gap-2">
-        <button
+        <Button
+          variant={billing === "monthly" ? "default" : "secondary"}
+          size="sm"
           onClick={() => setBilling("monthly")}
-          className={cn(
-            "text-xs px-5 py-2 rounded-xl font-medium transition-all",
-            billing === "monthly" ? "gradient-accent text-accent-foreground" : "bg-muted text-muted-foreground"
-          )}
+          className={cn(billing === "monthly" && "gradient-accent text-accent-foreground")}
         >
           Mensal
-        </button>
-        <button
+        </Button>
+        <Button
+          variant={billing === "annual" ? "default" : "secondary"}
+          size="sm"
           onClick={() => setBilling("annual")}
-          className={cn(
-            "text-xs px-5 py-2 rounded-xl font-medium transition-all flex items-center gap-1.5",
-            billing === "annual" ? "gradient-accent text-accent-foreground" : "bg-muted text-muted-foreground"
-          )}
+          className={cn("flex items-center gap-1.5", billing === "annual" && "gradient-accent text-accent-foreground")}
         >
           Anual <span className="text-[9px] bg-accent/20 px-1.5 py-0.5 rounded-full">2 meses grátis</span>
-        </button>
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1105,13 +861,13 @@ const SubscriptionSection = () => {
                 ))}
               </ul>
               {!isCurrent && priceId && (
-                <button
+                <Button
                   onClick={() => handleCheckout(priceId)}
                   disabled={loadingCheckout === priceId}
-                  className="w-full py-2 rounded-xl gradient-accent text-accent-foreground text-xs font-semibold hover-lift disabled:opacity-50"
+                  className="w-full gradient-accent text-accent-foreground hover-lift"
                 >
-                  {loadingCheckout === priceId ? <Loader2 className="w-4 h-4 mx-auto animate-spin" /> : "Assinar"}
-                </button>
+                  {loadingCheckout === priceId ? <Loader2 className="w-4 h-4 animate-spin" /> : "Assinar"}
+                </Button>
               )}
             </div>
           );
@@ -1124,13 +880,13 @@ const SubscriptionSection = () => {
             <p className="text-sm font-semibold text-foreground">Gerenciar assinatura</p>
             <p className="text-xs text-muted-foreground">Cancelar, trocar forma de pagamento ou upgrade</p>
           </div>
-          <button
+          <Button
+            variant="outline"
             onClick={handlePortal}
             disabled={loadingPortal}
-            className="px-4 py-2 rounded-xl border border-border text-sm font-medium text-foreground hover:bg-muted/50 transition-colors disabled:opacity-50"
           >
             {loadingPortal ? <Loader2 className="w-4 h-4 animate-spin" /> : "Gerenciar"}
-          </button>
+          </Button>
         </div>
       )}
     </div>
@@ -1157,7 +913,6 @@ const WhatsAppSection = () => {
       });
       if (error) throw error;
 
-      // Try to get QR code
       const { data: qrData } = await supabase.functions.invoke("whatsapp", {
         body: { action: "get-qrcode", instanceName },
       });
@@ -1217,13 +972,14 @@ const WhatsAppSection = () => {
           </div>
 
           {!isConnected && (
-            <button
+            <Button
               onClick={handleConnect}
               disabled={connecting}
-              className="px-4 py-2 rounded-xl gradient-accent text-accent-foreground text-xs font-semibold hover-lift disabled:opacity-50 flex items-center gap-1.5"
+              className="gradient-accent text-accent-foreground hover-lift"
+              size="sm"
             >
               {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><QrCode size={14} /> Conectar</>}
-            </button>
+            </Button>
           )}
         </div>
 
@@ -1243,14 +999,15 @@ const WhatsAppSection = () => {
               Abra o WhatsApp &gt; Dispositivos conectados &gt; Conectar dispositivo
             </p>
             <div className="flex justify-center">
-              <button
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleCheckStatus}
                 disabled={checkingStatus}
-                className="px-4 py-2 rounded-xl border border-border text-xs font-medium text-foreground hover:bg-muted/50 transition-colors disabled:opacity-50 flex items-center gap-1.5"
               >
                 {checkingStatus ? <Loader2 className="w-3 h-3 animate-spin" /> : <Power size={12} />}
                 Verificar conexão
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -1267,18 +1024,10 @@ const WhatsAppSection = () => {
                   <p className="text-sm font-medium text-foreground">{TRIGGER_LABELS[a.trigger_type] || a.trigger_type}</p>
                   <p className="text-xs text-muted-foreground line-clamp-1">{a.message_template}</p>
                 </div>
-                <button
-                  onClick={() => toggleAutomation.mutate({ id: a.id, is_active: !a.is_active })}
-                  className={cn(
-                    "w-10 h-6 rounded-full transition-colors relative",
-                    a.is_active ? "bg-accent" : "bg-muted"
-                  )}
-                >
-                  <div className={cn(
-                    "w-4 h-4 rounded-full bg-white absolute top-1 transition-all",
-                    a.is_active ? "right-1" : "left-1"
-                  )} />
-                </button>
+                <Switch
+                  checked={a.is_active}
+                  onCheckedChange={() => toggleAutomation.mutate({ id: a.id, is_active: !a.is_active })}
+                />
               </div>
             ))}
           </div>
@@ -1297,7 +1046,6 @@ const WhatsAppSection = () => {
 
 /* ===================== SECURITY ===================== */
 const SecuritySection = () => {
-  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPasswords, setShowPasswords] = useState(false);
@@ -1320,7 +1068,6 @@ const SecuritySection = () => {
       toast.error(error.message);
     } else {
       toast.success("Senha alterada com sucesso!");
-      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     }
@@ -1334,42 +1081,56 @@ const SecuritySection = () => {
       <form onSubmit={handleChangePassword} className="glass-card rounded-2xl p-6 space-y-4">
         <h3 className="font-semibold text-foreground text-sm">Alterar senha</h3>
 
-        <PasswordField
-          label="Nova senha"
-          value={newPassword}
-          onChange={setNewPassword}
-          show={showPasswords}
-        />
-        <PasswordField
-          label="Confirmar nova senha"
-          value={confirmPassword}
-          onChange={setConfirmPassword}
-          show={showPasswords}
-        />
+        <div>
+          <Label className="mb-1.5 block">Nova senha</Label>
+          <Input
+            type={showPasswords ? "text" : "password"}
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="••••••••"
+            required
+            minLength={6}
+            maxLength={72}
+          />
+        </div>
+        <div>
+          <Label className="mb-1.5 block">Confirmar nova senha</Label>
+          <Input
+            type={showPasswords ? "text" : "password"}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="••••••••"
+            required
+            minLength={6}
+            maxLength={72}
+          />
+        </div>
 
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           onClick={() => setShowPasswords(!showPasswords)}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+          className="text-xs text-muted-foreground"
         >
           {showPasswords ? <EyeOff size={12} /> : <Eye size={12} />}
           {showPasswords ? "Ocultar senhas" : "Mostrar senhas"}
-        </button>
+        </Button>
 
-        <button
+        <Button
           type="submit"
           disabled={saving || !newPassword || !confirmPassword}
-          className="w-full py-3 rounded-xl gradient-accent text-accent-foreground font-semibold text-sm flex items-center justify-center gap-2 hover-lift disabled:opacity-50 disabled:pointer-events-none"
+          className="w-full gradient-accent text-accent-foreground hover-lift"
         >
           {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Save size={16} /> Alterar senha</>}
-        </button>
+        </Button>
       </form>
     </div>
   );
 };
 
 /* ===================== SHARED COMPONENTS ===================== */
-const SectionHeader = ({ icon: Icon, title }: { icon: any; title: string }) => (
+const SectionHeader = ({ icon: Icon, title }: { icon: LucideIcon; title: string }) => (
   <div className="flex items-center gap-2 mb-2">
     <Icon size={20} className="text-accent" />
     <h2 className="text-lg font-bold text-foreground">{title}</h2>
@@ -1383,49 +1144,58 @@ const LoadingState = () => (
 );
 
 const SaveButton = ({ saving, onClick }: { saving: boolean; onClick: () => void }) => (
-  <button
+  <Button
     onClick={onClick}
     disabled={saving}
-    className="w-full py-3 rounded-xl gradient-accent text-accent-foreground font-semibold text-sm flex items-center justify-center gap-2 hover-lift disabled:opacity-50 disabled:pointer-events-none"
+    className="w-full gradient-accent text-accent-foreground hover-lift"
   >
     {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Save size={16} /> Salvar alterações</>}
-  </button>
+  </Button>
 );
 
-const FormField = ({ label, value, onChange, disabled }: { label: string; value: string; onChange?: (v: string) => void; disabled?: boolean }) => (
-  <div>
-    <label className="text-sm font-medium text-foreground mb-1.5 block">{label}</label>
-    <input
-      type="text"
-      value={value}
-      onChange={onChange ? (e) => onChange(e.target.value) : undefined}
-      disabled={disabled}
-      maxLength={100}
-      className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all disabled:opacity-50 text-sm"
-    />
-  </div>
-);
-
-const PasswordField = ({ label, value, onChange, show }: { label: string; value: string; onChange: (v: string) => void; show: boolean }) => (
-  <div>
-    <label className="text-sm font-medium text-foreground mb-1.5 block">{label}</label>
-    <input
-      type={show ? "text" : "password"}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder="••••••••"
-      required
-      minLength={6}
-      maxLength={72}
-      className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all text-sm"
-    />
+const ColorPickerCard = ({
+  title, description, presets, value, onChange, showBorder,
+}: {
+  title: string; description: string; presets: string[];
+  value: string; onChange: (v: string) => void; showBorder?: boolean;
+}) => (
+  <div className="glass-card rounded-2xl p-6 space-y-4">
+    <div className="flex items-center gap-2">
+      <Palette size={18} className="text-accent" />
+      <h3 className="font-semibold text-foreground">{title}</h3>
+    </div>
+    <p className="text-xs text-muted-foreground">{description}</p>
+    <div className="flex flex-wrap gap-3">
+      {presets.map((c) => (
+        <Button
+          key={c}
+          variant="ghost"
+          size="icon"
+          onClick={() => onChange(c)}
+          className={cn(
+            "w-9 h-9 rounded-xl transition-all p-0",
+            value === c ? "ring-2 ring-offset-2 ring-accent scale-110" : "hover:scale-105",
+            showBorder && "border border-border/30"
+          )}
+          style={{ backgroundColor: c }}
+        />
+      ))}
+      <label className="w-9 h-9 rounded-xl border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-accent transition-colors overflow-hidden relative">
+        <Palette size={14} className="text-muted-foreground" />
+        <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer" />
+      </label>
+    </div>
+    <div className="flex items-center gap-3">
+      <div className={cn("w-10 h-10 rounded-xl", showBorder && "border border-border/30")} style={{ backgroundColor: value }} />
+      <span className="text-sm text-muted-foreground font-mono">{value}</span>
+    </div>
   </div>
 );
 
 const ImageUploadCard = ({
-  label, imageUrl, uploading, icon, onUpload, onRemove, rounded,
+  label, imageUrl, uploading, removing, icon, onUpload, onRemove, rounded,
 }: {
-  label: string; imageUrl: string; uploading: boolean;
+  label: string; imageUrl: string; uploading: boolean; removing?: boolean;
   icon: React.ReactNode; onUpload: (f: File) => void; onRemove: () => void;
   rounded?: boolean;
 }) => (
@@ -1442,9 +1212,15 @@ const ImageUploadCard = ({
               <Camera size={14} className="text-white" />
               <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0])} />
             </label>
-            <button onClick={onRemove} className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors">
-              <X size={14} className="text-white" />
-            </button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onRemove}
+              disabled={removing}
+              className="p-1.5 h-auto w-auto rounded-full bg-white/20 hover:bg-white/30"
+            >
+              {removing ? <Loader2 size={14} className="text-white animate-spin" /> : <X size={14} className="text-white" />}
+            </Button>
           </div>
         </>
       ) : (
