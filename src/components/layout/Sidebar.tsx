@@ -5,147 +5,43 @@ import { useIsAdmin } from "@/hooks/useAdmin";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useReceptionEmployee } from "@/hooks/useReceptionEmployee";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
-import { BookOpen } from "lucide-react";
 import {
   LayoutDashboard,
+  CalendarDays,
+  Clock,
   Scissors,
   Users,
-  MessageCircle,
-  Settings,
-  CreditCard,
-  Globe,
-  BarChart3,
-  LogOut,
-  ShieldCheck,
-  X,
   UserPlus,
-  Package,
-  Ticket,
-  QrCode,
-  Star,
-  FileBarChart,
-  Activity,
+  MessageCircle,
   Megaphone,
-  Lock,
-  Shield,
+  MessageSquare,
   Wallet,
   Headphones,
   Bot,
+  CreditCard,
+  Globe,
+  Package,
+  Ticket,
+  BarChart3,
+  Star,
+  Settings,
+  BookOpen,
+  Activity,
+  LogOut,
+  ShieldCheck,
+  Shield,
+  X,
+  Lock,
   ChevronDown,
-  MessageSquare,
-  Send,
-  Clock,
+  Zap,
+  type LucideIcon,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
-import calendarIcon from "@/assets/icon-calendar.png";
-import dashboardIcon from "@/assets/icon-dashboard.png";
-import scissorsIcon from "@/assets/icon-scissors.png";
-import clientsIcon from "@/assets/icon-clients.png";
-import teamIcon from "@/assets/icon-team.png";
-import commissionIcon from "@/assets/icon-commission.png";
-import performanceIcon from "@/assets/icon-performance.png";
-import whatsappIcon from "@/assets/icon-whatsapp.png";
-import automationsIcon from "@/assets/icon-automations.png";
-import campaignsIcon from "@/assets/icon-campaigns.png";
-import communicationIcon from "@/assets/icon-communication.png";
-import paymentChatIcon from "@/assets/icon-payment-chat.png";
-import supportChatIcon from "@/assets/icon-support-chat.png";
-import aiIcon from "@/assets/icon-ai.png";
-import financeIcon from "@/assets/icon-finance.png";
-import publicPageIcon from "@/assets/icon-public-page.png";
-import productsIcon from "@/assets/icon-products.png";
-import couponsIcon from "@/assets/icon-coupons.png";
-import reportsIcon from "@/assets/icon-reports.png";
-import reviewsIcon from "@/assets/icon-reviews.png";
-import settingsIcon from "@/assets/icon-settings.png";
-import cashRegisterIcon from "@/assets/icon-cash-register.png";
-
-// Wrapper component for custom icons
-// Sidebar always has dark bg, so icons should always be inverted (white) in sidebar
-// But in mobile drawer & bottom nav, icons follow theme
-const SidebarIcon = ({ src, size = 18, className, active }: { src: string; size?: number; className?: string; active?: boolean }) => (
-  <img src={src} alt="" width={size} height={size} className={`inline-block brightness-0 ${active ? 'opacity-75 dark:invert dark:opacity-90' : 'invert opacity-40'} ${className || ''}`} />
-);
-
-const ThemeAwareIcon = ({ src, size = 18, className, active }: { src: string; size?: number; className?: string; active?: boolean }) => (
-  <img src={src} alt="" width={size} height={size} className={`inline-block brightness-0 ${active ? 'opacity-100 dark:opacity-90' : 'opacity-40'} dark:invert ${className || ''}`} />
-);
-
-const CalendarIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
-  mobile ? <ThemeAwareIcon src={calendarIcon} size={size} className={className} active={active} /> : <SidebarIcon src={calendarIcon} size={size} className={className} active={active} />;
-
-const DashboardIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
-  mobile ? <ThemeAwareIcon src={dashboardIcon} size={size} className={className} active={active} /> : <SidebarIcon src={dashboardIcon} size={size} className={className} active={active} />;
-
-const ScissorsIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
-  mobile ? <ThemeAwareIcon src={scissorsIcon} size={size} className={className} active={active} /> : <SidebarIcon src={scissorsIcon} size={size} className={className} active={active} />;
-
-const ClientsIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
-  mobile ? <ThemeAwareIcon src={clientsIcon} size={size} className={className} active={active} /> : <SidebarIcon src={clientsIcon} size={size} className={className} active={active} />;
-
-const TeamIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
-  mobile ? <ThemeAwareIcon src={teamIcon} size={size} className={className} active={active} /> : <SidebarIcon src={teamIcon} size={size} className={className} active={active} />;
-
-const CommissionIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
-  mobile ? <ThemeAwareIcon src={commissionIcon} size={size} className={className} active={active} /> : <SidebarIcon src={commissionIcon} size={size} className={className} active={active} />;
-
-const PerformanceIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
-  mobile ? <ThemeAwareIcon src={performanceIcon} size={size} className={className} active={active} /> : <SidebarIcon src={performanceIcon} size={size} className={className} active={active} />;
-
-const WhatsAppIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
-  mobile ? <ThemeAwareIcon src={whatsappIcon} size={size} className={className} active={active} /> : <SidebarIcon src={whatsappIcon} size={size} className={className} active={active} />;
-
-const AutomationsIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
-  mobile ? <ThemeAwareIcon src={automationsIcon} size={size} className={className} active={active} /> : <SidebarIcon src={automationsIcon} size={size} className={className} active={active} />;
-
-const CampaignsIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
-  mobile ? <ThemeAwareIcon src={campaignsIcon} size={size} className={className} active={active} /> : <SidebarIcon src={campaignsIcon} size={size} className={className} active={active} />;
-
-const CommunicationIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
-  mobile ? <ThemeAwareIcon src={communicationIcon} size={size} className={className} active={active} /> : <SidebarIcon src={communicationIcon} size={size} className={className} active={active} />;
-
-const PaymentChatIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
-  mobile ? <ThemeAwareIcon src={paymentChatIcon} size={size} className={className} active={active} /> : <SidebarIcon src={paymentChatIcon} size={size} className={className} active={active} />;
-
-const SupportChatIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
-  mobile ? <ThemeAwareIcon src={supportChatIcon} size={size} className={className} active={active} /> : <SidebarIcon src={supportChatIcon} size={size} className={className} active={active} />;
-
-const AIIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
-  mobile ? <ThemeAwareIcon src={aiIcon} size={size} className={className} active={active} /> : <SidebarIcon src={aiIcon} size={size} className={className} active={active} />;
-
-const FinanceIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
-  mobile ? <ThemeAwareIcon src={financeIcon} size={size} className={className} active={active} /> : <SidebarIcon src={financeIcon} size={size} className={className} active={active} />;
-
-const CashRegisterNavIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
-  mobile ? <ThemeAwareIcon src={cashRegisterIcon} size={size} className={className} active={active} /> : <SidebarIcon src={cashRegisterIcon} size={size} className={className} active={active} />;
-
-const PublicPageIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
-  mobile ? <ThemeAwareIcon src={publicPageIcon} size={size} className={className} active={active} /> : <SidebarIcon src={publicPageIcon} size={size} className={className} active={active} />;
-
-const ProductsIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
-  mobile ? <ThemeAwareIcon src={productsIcon} size={size} className={className} active={active} /> : <SidebarIcon src={productsIcon} size={size} className={className} active={active} />;
-
-const CouponsIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
-  mobile ? <ThemeAwareIcon src={couponsIcon} size={size} className={className} active={active} /> : <SidebarIcon src={couponsIcon} size={size} className={className} active={active} />;
-
-const ReportsIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
-  mobile ? <ThemeAwareIcon src={reportsIcon} size={size} className={className} active={active} /> : <SidebarIcon src={reportsIcon} size={size} className={className} active={active} />;
-
-const ReviewsIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
-  mobile ? <ThemeAwareIcon src={reviewsIcon} size={size} className={className} active={active} /> : <SidebarIcon src={reviewsIcon} size={size} className={className} active={active} />;
-
-const SettingsIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
-  mobile ? <ThemeAwareIcon src={settingsIcon} size={size} className={className} active={active} /> : <SidebarIcon src={settingsIcon} size={size} className={className} active={active} />;
-
-const WaitlistIcon = ({ size = 18, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => (
-  <Clock size={size} className={`inline-block ${mobile ? (active ? 'opacity-100 dark:opacity-90' : 'opacity-40') : (active ? 'opacity-75' : 'opacity-40')} ${!mobile ? 'text-current' : ''}`} />
-);
-
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
 
 interface NavItem {
-  icon: any;
+  icon: LucideIcon;
   label: string;
   path: string;
   featureKey: FeatureKey;
@@ -153,7 +49,7 @@ interface NavItem {
 
 interface NavGroup {
   type: "group";
-  icon: any;
+  icon: LucideIcon;
   label: string;
   featureKey: FeatureKey;
   children: NavItem[];
@@ -162,75 +58,75 @@ interface NavGroup {
 type NavEntry = NavItem & { type?: "item" } | NavGroup;
 
 const standaloneItems: NavItem[] = [
-  { icon: DashboardIcon, label: "Dashboard", path: "/", featureKey: "dashboard" },
-  { icon: CalendarIcon, label: "Agendamentos", path: "/bookings", featureKey: "bookings" },
-  { icon: WaitlistIcon, label: "Lista de Espera", path: "/waitlist", featureKey: "bookings" },
-  { icon: ScissorsIcon, label: "Serviços", path: "/services", featureKey: "services" },
-  { icon: ClientsIcon, label: "Clientes", path: "/clients", featureKey: "clients" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/", featureKey: "dashboard" },
+  { icon: CalendarDays, label: "Agendamentos", path: "/bookings", featureKey: "bookings" },
+  { icon: Clock, label: "Lista de Espera", path: "/waitlist", featureKey: "bookings" },
+  { icon: Scissors, label: "Serviços", path: "/services", featureKey: "services" },
+  { icon: Users, label: "Clientes", path: "/clients", featureKey: "clients" },
 ];
 
 const whatsappGroup: NavGroup = {
   type: "group",
-  icon: WhatsAppIcon,
+  icon: MessageCircle,
   label: "WhatsApp",
   featureKey: "automations",
   children: [
-    { icon: AutomationsIcon, label: "Automações", path: "/automations", featureKey: "automations" },
-    { icon: CampaignsIcon, label: "Campanhas", path: "/campaigns", featureKey: "campaigns" },
+    { icon: Zap, label: "Automações", path: "/automations", featureKey: "automations" },
+    { icon: Megaphone, label: "Campanhas", path: "/campaigns", featureKey: "campaigns" },
   ],
 };
 
 const communicationGroup: NavGroup = {
   type: "group",
-  icon: CommunicationIcon,
+  icon: MessageSquare,
   label: "Comunicação",
-  featureKey: "dashboard", // Group always visible, children individually checked
+  featureKey: "dashboard",
   children: [
-    { icon: PaymentChatIcon, label: "Chat Pagamento", path: "/payment-chat", featureKey: "payment-chat" },
-    { icon: SupportChatIcon, label: "Chat Suporte", path: "/support-chat", featureKey: "support-chat" },
-    { icon: AIIcon, label: "Assistente IA", path: "/ai-assistant", featureKey: "ai-assistant" },
+    { icon: Wallet, label: "Chat Pagamento", path: "/payment-chat", featureKey: "payment-chat" },
+    { icon: Headphones, label: "Chat Suporte", path: "/support-chat", featureKey: "support-chat" },
+    { icon: Bot, label: "Assistente IA", path: "/ai-assistant", featureKey: "ai-assistant" },
   ],
 };
 
 const afterGroupItems: NavItem[] = [
-  { icon: FinanceIcon, label: "Financeiro", path: "/finance", featureKey: "finance" },
-  { icon: PublicPageIcon, label: "Página Pública", path: "/public-page", featureKey: "public-page" },
-  { icon: ProductsIcon, label: "Produtos", path: "/products", featureKey: "products" },
-  { icon: ({ size, mobile, active }: any) => <Package size={size} className={`inline-block ${mobile ? (active ? 'opacity-100 dark:opacity-90' : 'opacity-40') : (active ? 'opacity-75' : 'opacity-40')} ${!mobile ? 'text-current' : ''}`} />, label: "Pacotes", path: "/service-packages", featureKey: "products" },
-  { icon: CouponsIcon, label: "Cupons", path: "/coupons", featureKey: "coupons" },
-  { icon: ReportsIcon, label: "Relatórios", path: "/reports", featureKey: "reports" },
-  { icon: ReviewsIcon, label: "Avaliações", path: "/reviews", featureKey: "reviews" },
-  { icon: SettingsIcon, label: "Configurações", path: "/settings", featureKey: "settings" },
-  { icon: ({ size, mobile, active }: any) => <BookOpen size={size} className={`inline-block ${mobile ? (active ? 'opacity-100 dark:opacity-90' : 'opacity-40') : (active ? 'opacity-75' : 'opacity-40')} ${!mobile ? 'text-current' : ''}`} />, label: "Central de Ajuda", path: "/instructions", featureKey: "dashboard" },
+  { icon: CreditCard, label: "Financeiro", path: "/finance", featureKey: "finance" },
+  { icon: Globe, label: "Página Pública", path: "/public-page", featureKey: "public-page" },
+  { icon: Package, label: "Produtos", path: "/products", featureKey: "products" },
+  { icon: Package, label: "Pacotes", path: "/service-packages", featureKey: "products" },
+  { icon: Ticket, label: "Cupons", path: "/coupons", featureKey: "coupons" },
+  { icon: BarChart3, label: "Relatórios", path: "/reports", featureKey: "reports" },
+  { icon: Star, label: "Avaliações", path: "/reviews", featureKey: "reviews" },
+  { icon: Settings, label: "Configurações", path: "/settings", featureKey: "settings" },
+  { icon: BookOpen, label: "Central de Ajuda", path: "/instructions", featureKey: "dashboard" },
 ];
 
 const salonOnlyItems: NavItem[] = [
-  { icon: TeamIcon, label: "Equipe", path: "/team", featureKey: "team" },
-  { icon: CommissionIcon, label: "Comissões", path: "/commission-report", featureKey: "commission-report" },
-  { icon: PerformanceIcon, label: "Desempenho", path: "/team-performance", featureKey: "team-performance" },
+  { icon: UserPlus, label: "Equipe", path: "/team", featureKey: "team" },
+  { icon: Activity, label: "Comissões", path: "/commission-report", featureKey: "commission-report" },
+  { icon: BarChart3, label: "Desempenho", path: "/team-performance", featureKey: "team-performance" },
 ];
 
-const cashRegisterItem: NavItem = { icon: CashRegisterNavIcon, label: "Caixa", path: "/cash-register", featureKey: "finance" };
+const cashRegisterItem: NavItem = { icon: Wallet, label: "Caixa", path: "/cash-register", featureKey: "finance" };
 
 const receptionNavItems: NavItem[] = [
-  { icon: CalendarIcon, label: "Agendamentos", path: "/bookings", featureKey: "bookings" },
-  { icon: ClientsIcon, label: "Clientes", path: "/clients", featureKey: "clients" },
-  { icon: CashRegisterNavIcon, label: "Caixa", path: "/cash-register", featureKey: "finance" },
-  { icon: AutomationsIcon, label: "Conversas WhatsApp", path: "/automations", featureKey: "automations" },
+  { icon: CalendarDays, label: "Agendamentos", path: "/bookings", featureKey: "bookings" },
+  { icon: Users, label: "Clientes", path: "/clients", featureKey: "clients" },
+  { icon: Wallet, label: "Caixa", path: "/cash-register", featureKey: "finance" },
+  { icon: Zap, label: "Conversas WhatsApp", path: "/automations", featureKey: "automations" },
 ];
 
 const mobileNavItems = [
-  { icon: DashboardIcon, label: "Dashboard", path: "/" },
-  { icon: CalendarIcon, label: "Agenda", path: "/bookings" },
-  { icon: ClientsIcon, label: "Clientes", path: "/clients" },
-  { icon: FinanceIcon, label: "Financeiro", path: "/finance" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+  { icon: CalendarDays, label: "Agenda", path: "/bookings" },
+  { icon: Users, label: "Clientes", path: "/clients" },
+  { icon: CreditCard, label: "Financeiro", path: "/finance" },
 ];
 
 const receptionMobileNavItems = [
-  { icon: CalendarIcon, label: "Agenda", path: "/bookings" },
-  { icon: ClientsIcon, label: "Clientes", path: "/clients" },
-  { icon: CashRegisterNavIcon, label: "Caixa", path: "/cash-register" },
-  { icon: AutomationsIcon, label: "WhatsApp", path: "/automations" },
+  { icon: CalendarDays, label: "Agenda", path: "/bookings" },
+  { icon: Users, label: "Clientes", path: "/clients" },
+  { icon: Wallet, label: "Caixa", path: "/cash-register" },
+  { icon: Zap, label: "WhatsApp", path: "/automations" },
 ];
 
 interface SidebarProps {
@@ -284,9 +180,17 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
     setUpgradeOpen(true);
   };
 
+  const iconClass = (isActive: boolean, mobile?: boolean) => {
+    if (mobile) {
+      return `flex-shrink-0 ${isActive ? "text-accent" : "text-muted-foreground"}`;
+    }
+    return `flex-shrink-0 ${isActive ? "text-sidebar-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground"}`;
+  };
+
   const renderItem = (item: NavItem, opts: { onNav?: () => void; mobile?: boolean }) => {
     const isActive = location.pathname === item.path;
     const locked = isLocked(item.featureKey);
+    const Icon = item.icon;
 
     if (locked) {
       return (
@@ -302,7 +206,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
               : "text-sidebar-foreground/30 hover:bg-sidebar-accent/20"
           } transition-all duration-200 group overflow-hidden`}
         >
-          <item.icon size={18} mobile={opts.mobile} className={`flex-shrink-0 ${opts.mobile ? "" : "text-sidebar-foreground/25"}`} />
+          <Icon size={18} className={`flex-shrink-0 ${opts.mobile ? "" : "text-sidebar-foreground/25"}`} />
           {(opts.mobile || expanded) && <span className="text-sm font-medium truncate">{item.label}</span>}
           {(opts.mobile || expanded) && <Lock size={11} className="ml-auto opacity-40 flex-shrink-0" />}
         </button>
@@ -321,7 +225,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
               : "text-muted-foreground hover:text-foreground hover:bg-secondary"
           }`}
         >
-          <item.icon size={18} mobile={true} active={isActive} />
+          <Icon size={18} className={iconClass(isActive, true)} />
           <span className="text-sm font-medium">{item.label}</span>
         </Link>
       );
@@ -337,7 +241,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
             : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
         }`}
       >
-        <item.icon size={18} mobile={opts.mobile} active={isActive} className={`flex-shrink-0 ${isActive ? "text-sidebar-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground"}`} />
+        <Icon size={18} className={iconClass(isActive, false)} />
         {expanded && <span className="text-sm font-medium truncate">{item.label}</span>}
         {isActive && expanded && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-sidebar-primary flex-shrink-0" />}
       </Link>
@@ -348,6 +252,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
     const groupActive = isGroupActive(group);
     const isOpen = openGroups[group.label] ?? groupActive;
     const locked = isLocked(group.featureKey);
+    const GroupIcon = group.icon;
 
     if (locked && !opts.mobile && !expanded) {
       return (
@@ -356,7 +261,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
           onClick={() => handleLockedClick(group.label, group.featureKey)}
           className="flex items-center gap-3 px-3 py-1.5 rounded-lg w-full text-sidebar-foreground/30 cursor-pointer hover:bg-sidebar-accent/20 transition-all duration-200 overflow-hidden"
         >
-          <group.icon size={18} mobile={opts.mobile} className="text-sidebar-foreground/25" />
+          <GroupIcon size={18} className="text-sidebar-foreground/25" />
         </button>
       );
     }
@@ -375,10 +280,8 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
                 : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
           }`}
         >
-          <group.icon
+          <GroupIcon
             size={18}
-            mobile={opts.mobile}
-            active={groupActive}
             className={
               groupActive
                 ? opts.mobile ? "text-accent" : "text-sidebar-primary"
@@ -424,6 +327,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 flex items-center justify-around h-16 md:hidden safe-area-bottom">
         {(isReception ? receptionMobileNavItems : mobileNavItems).map((item) => {
           const isActive = location.pathname === item.path;
+          const Icon = item.icon;
           return (
             <Link
               key={item.path}
@@ -432,7 +336,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
                 isActive ? "text-accent" : "text-muted-foreground"
               }`}
             >
-              <item.icon size={20} mobile={true} />
+              <Icon size={20} />
               <span className="text-[10px] font-medium">{item.label}</span>
             </Link>
           );

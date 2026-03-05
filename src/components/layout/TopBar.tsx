@@ -1,6 +1,4 @@
-import { Bell, Search, Sun, Moon, Menu, Crown, Headphones, Sparkles, Wallet, CreditCard, MessageSquare, CheckCheck } from "lucide-react";
-import aiIcon from "@/assets/icon-ai.png";
-import supportChatIcon from "@/assets/icon-support-chat.png";
+import { Bell, Search, Sun, Moon, Menu, Crown, Headphones, Sparkles, Wallet, CreditCard, MessageSquare, CheckCheck, Bot } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useProfessional } from "@/hooks/useProfessional";
@@ -82,7 +80,7 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
           aria-label="Assistente IA"
           title="Assistente IA"
         >
-          <img src={aiIcon} alt="Assistente IA" width={16} height={16} className="brightness-0 opacity-60 dark:invert" />
+          <Bot size={16} className="text-muted-foreground hover:text-foreground transition-colors" />
         </button>
         <button
           onClick={() => navigate("/support-chat")}
@@ -90,7 +88,7 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
           aria-label="Chat de suporte"
           title="Suporte"
         >
-          <img src={supportChatIcon} alt="Suporte" width={16} height={16} className="brightness-0 opacity-60 dark:invert" />
+          <Headphones size={16} className="text-muted-foreground hover:text-foreground transition-colors" />
         </button>
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
