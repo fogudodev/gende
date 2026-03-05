@@ -148,6 +148,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
   const { data: reception } = useReceptionEmployee();
   const { isLocked, requiredPlan, currentPlan } = useFeatureAccess();
 
+  const { enabled: servicePackagesEnabled } = useIsFeatureEnabled("service_packages");
   const isReception = !!reception && !professional;
   const isSalon = professional?.account_type === "salon";
   const displayName = isReception ? reception.name : (professional?.business_name || professional?.name || "Gende");
