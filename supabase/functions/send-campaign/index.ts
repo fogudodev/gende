@@ -50,7 +50,7 @@ serve(async (req) => {
         const { professionalId, name, message, clientIds } = params;
 
         // Get professional's plan
-        const { data: sub } = await supabase
+        const { data: sub } = await supabaseAdmin
           .from("subscriptions")
           .select("plan_id")
           .eq("professional_id", professionalId)
@@ -59,7 +59,7 @@ serve(async (req) => {
         const planId = sub?.plan_id || "free";
 
         // Get plan limits
-        const { data: limits } = await supabase
+        const { data: limits } = await supabaseAdmin
           .from("plan_limits")
           .select("*")
           .eq("plan_id", planId)
@@ -68,7 +68,7 @@ serve(async (req) => {
         if (!limits) throw new Error("Limites do plano não encontrados");
 
         // Get professional extras
-        const { data: profLimits } = await supabase
+        const { data: profLimits } = await supabaseAdmin
           .from("professional_limits")
           .select("*")
           .eq("professional_id", professionalId)
@@ -79,7 +79,7 @@ serve(async (req) => {
 
         // Check daily campaign count
         const today = new Date().toISOString().split("T")[0];
-        const { data: usage } = await supabase
+        const { data: usage } = await supabaseAdmin
           .from("daily_message_usage")
           .select("*")
           .eq("professional_id", professionalId)
@@ -98,7 +98,7 @@ serve(async (req) => {
         }
 
         // Check interval between campaigns
-        const { data: lastCampaign } = await supabase
+        const { data: lastCampaign } = await supabaseAdmin
           .from("campaigns")
           .select("started_at")
           .eq("professional_id", professionalId)
@@ -122,7 +122,7 @@ serve(async (req) => {
         // Get clients
         let clients;
         if (clientIds && clientIds.length > 0) {
-          const { data } = await supabase
+          const { data } = await supabaseAdmin
             .from("clients")
             .select("id, name, phone")
             .eq("professional_id", professionalId)
@@ -130,7 +130,7 @@ serve(async (req) => {
             .not("phone", "is", null);
           clients = data;
         } else {
-          const { data } = await supabase
+          const { data } = await supabaseAdmin
             .from("clients")
             .select("id, name, phone")
             .eq("professional_id", professionalId)
@@ -153,7 +153,7 @@ serve(async (req) => {
         }
 
         // Create campaign
-        const { data: campaign, error: campError } = await supabase
+        const { data: campaign, error: campError } = await supabaseAdmin
           .from("campaigns")
           .insert({
             professional_id: professionalId,
@@ -178,24 +178,24 @@ serve(async (req) => {
           status: "pending",
         }));
 
-        await supabase.from("campaign_contacts").insert(contacts);
+        await supabaseAdmin.from("campaign_contacts").insert(contacts);
 
         // Get WhatsApp instance
-        const { data: inst } = await supabase
+        const { data: inst } = await supabaseAdmin
           .from("whatsapp_instances")
           .select("instance_name, status")
           .eq("professional_id", professionalId)
           .single();
 
         if (!inst || inst.status !== "connected") {
-          await supabase.from("campaigns").update({ status: "failed" }).eq("id", campaign.id);
+          await supabaseAdmin.from("campaigns").update({ status: "failed" }).eq("id", campaign.id);
           return new Response(JSON.stringify({ success: false, error: "WhatsApp não conectado" }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" }
           });
         }
 
         // Get professional info for variables
-        const { data: prof } = await supabase
+        const { data: prof } = await supabaseAdmin
           .from("professionals")
           .select("slug, name, business_name")
           .eq("id", professionalId)
@@ -221,21 +221,21 @@ serve(async (req) => {
 
             if (sendRes.ok) {
               sentCount++;
-              await supabase.from("campaign_contacts")
+              await supabaseAdmin.from("campaign_contacts")
                 .update({ status: "sent", sent_at: new Date().toISOString() })
                 .eq("campaign_id", campaign.id)
                 .eq("phone", contact.phone);
             } else {
               failedCount++;
               const errData = await sendRes.json();
-              await supabase.from("campaign_contacts")
+              await supabaseAdmin.from("campaign_contacts")
                 .update({ status: "failed", error_message: JSON.stringify(errData) })
                 .eq("campaign_id", campaign.id)
                 .eq("phone", contact.phone);
             }
           } catch (e) {
             failedCount++;
-            await supabase.from("campaign_contacts")
+            await supabaseAdmin.from("campaign_contacts")
               .update({ status: "failed", error_message: e.message })
               .eq("campaign_id", campaign.id)
               .eq("phone", contact.phone);
@@ -246,7 +246,7 @@ serve(async (req) => {
         }
 
         // Update campaign
-        await supabase.from("campaigns").update({
+        await supabaseAdmin.from("campaigns").update({
           status: "completed",
           sent_count: sentCount,
           failed_count: failedCount,
@@ -254,7 +254,7 @@ serve(async (req) => {
         }).eq("id", campaign.id);
 
         // Update daily usage
-        await supabase.from("daily_message_usage").upsert({
+        await supabaseAdmin.from("daily_message_usage").upsert({
           professional_id: professionalId,
           usage_date: today,
           campaigns_sent: campaignsSent + 1,
@@ -273,7 +273,7 @@ serve(async (req) => {
       case "get-limits": {
         const { professionalId } = params;
 
-        const { data: sub } = await supabase
+        const { data: sub } = await supabaseAdmin
           .from("subscriptions")
           .select("plan_id")
           .eq("professional_id", professionalId)
@@ -281,14 +281,14 @@ serve(async (req) => {
 
         const planId = sub?.plan_id || "free";
 
-        const { data: limits } = await supabase
+        const { data: limits } = await supabaseAdmin
           .from("plan_limits")
           .select("*")
           .eq("plan_id", planId)
           .single();
 
         const today = new Date().toISOString().split("T")[0];
-        const { data: usage } = await supabase
+        const { data: usage } = await supabaseAdmin
           .from("daily_message_usage")
           .select("*")
           .eq("professional_id", professionalId)
@@ -296,7 +296,7 @@ serve(async (req) => {
           .maybeSingle();
 
         // Get professional extras
-        const { data: profLimits } = await supabase
+        const { data: profLimits } = await supabaseAdmin
           .from("professional_limits")
           .select("*")
           .eq("professional_id", professionalId)
