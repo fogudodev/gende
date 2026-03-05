@@ -5,30 +5,34 @@ import { useProfessional } from "@/hooks/useProfessional";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import {
-  BookOpen,
-  LayoutDashboard,
-  CalendarDays,
-  Scissors,
-  Users,
-  MessageCircle,
-  CreditCard,
-  Globe,
-  BarChart3,
-  Settings,
-  Package,
-  Ticket,
-  Star,
-  Megaphone,
-  Bot,
-  Headphones,
-  Wallet,
-  UserPlus,
-  Clock,
-  Search,
-} from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import type { PlanId } from "@/lib/stripe-plans";
+
+import dashboardIcon from "@/assets/icon-dashboard.png";
+import calendarIcon from "@/assets/icon-calendar.png";
+import scissorsIcon from "@/assets/icon-scissors.png";
+import clientsIcon from "@/assets/icon-clients.png";
+import automationsIcon from "@/assets/icon-automations.png";
+import campaignsIcon from "@/assets/icon-campaigns.png";
+import paymentChatIcon from "@/assets/icon-payment-chat.png";
+import supportChatIcon from "@/assets/icon-support-chat.png";
+import aiIcon from "@/assets/icon-ai.png";
+import financeIcon from "@/assets/icon-finance.png";
+import cashRegisterIcon from "@/assets/icon-cash-register.png";
+import publicPageIcon from "@/assets/icon-public-page.png";
+import productsIcon from "@/assets/icon-products.png";
+import couponsIcon from "@/assets/icon-coupons.png";
+import reportsIcon from "@/assets/icon-reports.png";
+import reviewsIcon from "@/assets/icon-reviews.png";
+import teamIcon from "@/assets/icon-team.png";
+import commissionIcon from "@/assets/icon-commission.png";
+import performanceIcon from "@/assets/icon-performance.png";
+import settingsIcon from "@/assets/icon-settings.png";
+
+const InstructionIcon = ({ src, size = 20, className = "" }: { src: string; size?: number; className?: string }) => (
+  <img src={src} alt="" width={size} height={size} className={`inline-block brightness-0 opacity-75 dark:invert dark:opacity-90 ${className}`} />
+);
 
 interface InstructionSection {
   id: string;
