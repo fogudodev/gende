@@ -19,7 +19,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabase = createClient(
+  const supabaseAdmin = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     { auth: { persistSession: false } }
@@ -29,12 +29,19 @@ serve(async (req) => {
   const EVOLUTION_KEY = Deno.env.get("EVOLUTION_API_KEY") || "";
 
   try {
-    // Auth check
+    // Auth check using getClaims
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
+    if (!authHeader?.startsWith("Bearer ")) throw new Error("Unauthorized");
+
+    const anonClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !userData.user) throw new Error("Unauthorized");
+    const { data: claimsData, error: authError } = await anonClient.auth.getClaims(token);
+    if (authError || !claimsData?.claims?.sub) throw new Error("Unauthorized");
 
     const { action, ...params } = await req.json();
 
