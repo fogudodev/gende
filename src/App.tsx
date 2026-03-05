@@ -35,6 +35,7 @@ import Waitlist from "./pages/Waitlist";
 import ServicePackages from "./pages/ServicePackages";
 import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
+import Instructions from "./pages/Instructions";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -93,6 +94,7 @@ const AppContent = () => (
             <Route path="/cash-register" element={<ProtectedRoute><CashRegister /></ProtectedRoute>} />
             <Route path="/waitlist" element={<ProtectedRoute><Waitlist /></ProtectedRoute>} />
             <Route path="/service-packages" element={<ProtectedRoute><ServicePackages /></ProtectedRoute>} />
+            <Route path="/instructions" element={<ProtectedRoute><Instructions /></ProtectedRoute>} />
 
             {/* Admin Master routes */}
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />

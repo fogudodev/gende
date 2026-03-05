@@ -5,6 +5,7 @@ import { useIsAdmin } from "@/hooks/useAdmin";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useReceptionEmployee } from "@/hooks/useReceptionEmployee";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { BookOpen } from "lucide-react";
 import {
   LayoutDashboard,
   Scissors,
@@ -200,6 +201,7 @@ const afterGroupItems: NavItem[] = [
   { icon: ReportsIcon, label: "Relatórios", path: "/reports", featureKey: "reports" },
   { icon: ReviewsIcon, label: "Avaliações", path: "/reviews", featureKey: "reviews" },
   { icon: SettingsIcon, label: "Configurações", path: "/settings", featureKey: "settings" },
+  { icon: ({ size, mobile, active }: any) => <BookOpen size={size} className={`inline-block ${mobile ? (active ? 'opacity-100 dark:opacity-90' : 'opacity-40') : (active ? 'opacity-75' : 'opacity-40')} ${!mobile ? 'text-current' : ''}`} />, label: "Central de Ajuda", path: "/instructions", featureKey: "dashboard" },
 ];
 
 const salonOnlyItems: NavItem[] = [
