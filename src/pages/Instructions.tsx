@@ -37,7 +37,7 @@ const InstructionIcon = ({ src, size = 20, className = "" }: { src: string; size
 interface InstructionSection {
   id: string;
   title: string;
-  icon: any;
+  icon: string;
   plans: Array<PlanId | "all">;
   steps: string[];
   tips?: string[];
