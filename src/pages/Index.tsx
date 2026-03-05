@@ -7,7 +7,9 @@ import CustomerJourney from "@/components/dashboard/CustomerJourney";
 import ServicesOverview from "@/components/dashboard/ServicesOverview";
 import TicketsChart from "@/components/dashboard/TicketsChart";
 import MessageUsage from "@/components/dashboard/MessageUsage";
+import MobileDayOverview from "@/components/dashboard/MobileDayOverview";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { useIsFeatureEnabled } from "@/hooks/useFeatureFlags";
 import { DollarSign, CalendarDays, Users, TrendingUp } from "lucide-react";
 
 const formatCurrency = (value: number) =>
@@ -15,6 +17,7 @@ const formatCurrency = (value: number) =>
 
 const Index = () => {
   const { data: stats } = useDashboardStats();
+  const { enabled: mobileDashEnabled } = useIsFeatureEnabled("mobile_dashboard");
 
   const todayRevenue = stats?.todayRevenue ?? 0;
   const monthRevenue = stats?.monthRevenue ?? 0;
@@ -28,11 +31,16 @@ const Index = () => {
   return (
     <DashboardLayout title="Dashboard" subtitle="Visão geral do seu negócio">
       <div className="space-y-4 md:space-y-6">
-        {/* Hero */}
-        <HeroSection />
+        {/* Mobile Day Overview - replaces hero on mobile when enabled */}
+        {mobileDashEnabled && <MobileDayOverview />}
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        {/* Hero - hidden on mobile when mobile dashboard is active */}
+        <div className={mobileDashEnabled ? "hidden md:block" : ""}>
+          <HeroSection />
+        </div>
+
+        {/* Stats - hidden on mobile when mobile dashboard is active (already shown in overview) */}
+        <div className={`grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 ${mobileDashEnabled ? "hidden md:grid" : ""}`}>
           <StatsCard title="Receita Hoje" value={formatCurrency(todayRevenue)} change={`${revenueTodayChange >= 0 ? "+" : ""}${revenueTodayChange}% vs ontem`} changeType={revenueTodayChange >= 0 ? "positive" : "negative"} icon={DollarSign} delay={0} />
           <StatsCard title="Receita Mês" value={formatCurrency(monthRevenue)} change={`${revenueMonthChange >= 0 ? "+" : ""}${revenueMonthChange}% vs anterior`} changeType={revenueMonthChange >= 0 ? "positive" : "negative"} icon={TrendingUp} delay={0.1} />
           <StatsCard title="Agend. Hoje" value={String(todayCount)} change={`${todayPending} pendente${todayPending !== 1 ? "s" : ""}`} changeType="neutral" icon={CalendarDays} delay={0.15} />
