@@ -1491,6 +1491,66 @@ export type Database = {
         }
         Relationships: []
       }
+      waitlist: {
+        Row: {
+          client_name: string
+          client_phone: string
+          created_at: string
+          id: string
+          notes: string | null
+          notified_at: string | null
+          preferred_date: string
+          preferred_period: string
+          professional_id: string
+          service_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_name: string
+          client_phone: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          notified_at?: string | null
+          preferred_date: string
+          preferred_period?: string
+          professional_id: string
+          service_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string
+          client_phone?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          notified_at?: string | null
+          preferred_date?: string
+          preferred_period?: string
+          professional_id?: string
+          service_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_automations: {
         Row: {
           created_at: string
