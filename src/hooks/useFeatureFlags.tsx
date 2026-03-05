@@ -22,7 +22,7 @@ export const useFeatureFlags = () => {
         .select("*")
         .order("category", { ascending: true });
       if (error) throw error;
-      return (data || []) as FeatureFlag[];
+      return (data || []) as unknown as FeatureFlag[];
     },
   });
 };
