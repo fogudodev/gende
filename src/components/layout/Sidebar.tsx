@@ -5,6 +5,7 @@ import { useIsAdmin } from "@/hooks/useAdmin";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useReceptionEmployee } from "@/hooks/useReceptionEmployee";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { BookOpen } from "lucide-react";
 import {
   LayoutDashboard,
   Scissors,
