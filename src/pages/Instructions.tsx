@@ -523,7 +523,7 @@ const Instructions = () => {
   };
 
   return (
-    <DashboardLayout>
+    <DashboardLayout title="Central de Ajuda" subtitle="Aprenda a usar cada funcionalidade do sistema">
       <div className="space-y-6 max-w-4xl mx-auto">
         {/* Header */}
         <div className="space-y-2">
