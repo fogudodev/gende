@@ -2,6 +2,7 @@ import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useSalonEmployees, useCreateSalonEmployee, useUpdateSalonEmployee, useDeleteSalonEmployee, SalonEmployee } from "@/hooks/useSalonEmployees";
 import { useProfessional } from "@/hooks/useProfessional";
+import { useIsFeatureEnabled } from "@/hooks/useFeatureFlags";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,12 +12,14 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Plus, Pencil, Trash2, UserPlus, Users } from "lucide-react";
 import EmployeeServiceAssignment from "@/components/team/EmployeeServiceAssignment";
+import EmployeeWorkingHours from "@/components/team/EmployeeWorkingHours";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const Team = () => {
   const { data: professional } = useProfessional();
   const { data: employees, isLoading } = useSalonEmployees();
+  const { enabled: employeeHoursEnabled } = useIsFeatureEnabled("employee_working_hours");
   const createEmployee = useCreateSalonEmployee();
   const updateEmployee = useUpdateSalonEmployee();
   const deleteEmployee = useDeleteSalonEmployee();
@@ -305,6 +308,9 @@ const Team = () => {
                   </div>
                 )}
                 <EmployeeServiceAssignment employeeId={emp.id} employeeName={emp.name} />
+                {employeeHoursEnabled && (emp as any).role !== "reception" && (
+                  <EmployeeWorkingHours employeeId={emp.id} employeeName={emp.name} />
+                )}
               </Card>
             ))}
           </div>

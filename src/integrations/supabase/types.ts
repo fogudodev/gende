@@ -784,6 +784,51 @@ export type Database = {
           },
         ]
       }
+      employee_working_hours: {
+        Row: {
+          day_of_week: number
+          employee_id: string
+          end_time: string
+          id: string
+          is_active: boolean
+          professional_id: string
+          start_time: string
+        }
+        Insert: {
+          day_of_week: number
+          employee_id: string
+          end_time: string
+          id?: string
+          is_active?: boolean
+          professional_id: string
+          start_time: string
+        }
+        Update: {
+          day_of_week?: number
+          employee_id?: string
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          professional_id?: string
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_working_hours_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "salon_employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_working_hours_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expenses: {
         Row: {
           amount: number
