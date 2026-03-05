@@ -47,7 +47,7 @@ const allSections: InstructionSection[] = [
   {
     id: "dashboard",
     title: "Dashboard (Painel Inicial)",
-    icon: LayoutDashboard,
+    icon: dashboardIcon,
     plans: ["all"],
     steps: [
       "Ao fazer login, você será direcionado automaticamente para o Dashboard.",
@@ -65,7 +65,7 @@ const allSections: InstructionSection[] = [
   {
     id: "bookings",
     title: "Agendamentos",
-    icon: CalendarDays,
+    icon: calendarIcon,
     plans: ["all"],
     steps: [
       "Clique em \"Agendamentos\" no menu lateral para acessar sua agenda.",
@@ -88,7 +88,7 @@ const allSections: InstructionSection[] = [
   {
     id: "waitlist",
     title: "Lista de Espera",
-    icon: Clock,
+    icon: calendarIcon,
     plans: ["all"],
     steps: [
       "Acesse \"Lista de Espera\" no menu lateral.",
@@ -106,7 +106,7 @@ const allSections: InstructionSection[] = [
   {
     id: "services",
     title: "Serviços",
-    icon: Scissors,
+    icon: scissorsIcon,
     plans: ["all"],
     steps: [
       "Clique em \"Serviços\" no menu lateral para gerenciar todos os serviços que você oferece.",
@@ -128,7 +128,7 @@ const allSections: InstructionSection[] = [
   {
     id: "clients",
     title: "Clientes",
-    icon: Users,
+    icon: clientsIcon,
     plans: ["all"],
     steps: [
       "Acesse \"Clientes\" no menu lateral para ver todos os seus clientes cadastrados.",
@@ -150,7 +150,7 @@ const allSections: InstructionSection[] = [
   {
     id: "automations",
     title: "Automações (WhatsApp)",
-    icon: MessageCircle,
+    icon: automationsIcon,
     plans: ["essencial", "enterprise"],
     steps: [
       "Acesse \"WhatsApp > Automações\" no menu lateral.",
@@ -172,7 +172,7 @@ const allSections: InstructionSection[] = [
   {
     id: "campaigns",
     title: "Campanhas (WhatsApp)",
-    icon: Megaphone,
+    icon: campaignsIcon,
     plans: ["enterprise"],
     steps: [
       "Acesse \"WhatsApp > Campanhas\" no menu lateral.",
@@ -193,7 +193,7 @@ const allSections: InstructionSection[] = [
   {
     id: "communication",
     title: "Chat de Pagamento",
-    icon: Wallet,
+    icon: paymentChatIcon,
     plans: ["essencial", "enterprise"],
     steps: [
       "Acesse \"Comunicação > Chat Pagamento\" no menu lateral.",
@@ -211,7 +211,7 @@ const allSections: InstructionSection[] = [
   {
     id: "support-chat",
     title: "Chat de Suporte",
-    icon: Headphones,
+    icon: supportChatIcon,
     plans: ["essencial", "enterprise"],
     steps: [
       "Acesse \"Comunicação > Chat Suporte\" no menu lateral.",
@@ -228,7 +228,7 @@ const allSections: InstructionSection[] = [
   {
     id: "ai-assistant",
     title: "Assistente IA",
-    icon: Bot,
+    icon: aiIcon,
     plans: ["enterprise"],
     steps: [
       "Acesse \"Comunicação > Assistente IA\" no menu lateral.",
@@ -246,7 +246,7 @@ const allSections: InstructionSection[] = [
   {
     id: "finance",
     title: "Financeiro",
-    icon: CreditCard,
+    icon: financeIcon,
     plans: ["essencial", "enterprise"],
     steps: [
       "Acesse \"Financeiro\" no menu lateral para gerenciar as finanças do seu negócio.",
@@ -268,7 +268,7 @@ const allSections: InstructionSection[] = [
   {
     id: "cash-register",
     title: "Caixa",
-    icon: Wallet,
+    icon: cashRegisterIcon,
     plans: ["essencial", "enterprise"],
     steps: [
       "Acesse \"Caixa\" no menu lateral (visível para contas do tipo Salão).",
@@ -287,7 +287,7 @@ const allSections: InstructionSection[] = [
   {
     id: "public-page",
     title: "Página Pública",
-    icon: Globe,
+    icon: publicPageIcon,
     plans: ["essencial", "enterprise"],
     steps: [
       "Acesse \"Página Pública\" no menu lateral.",
@@ -307,7 +307,7 @@ const allSections: InstructionSection[] = [
   {
     id: "products",
     title: "Produtos (Estoque)",
-    icon: Package,
+    icon: productsIcon,
     plans: ["essencial", "enterprise"],
     steps: [
       "Acesse \"Produtos\" no menu lateral para gerenciar seu estoque de produtos para venda.",
@@ -328,7 +328,7 @@ const allSections: InstructionSection[] = [
   {
     id: "service-packages",
     title: "Pacotes de Serviço",
-    icon: Package,
+    icon: productsIcon,
     plans: ["essencial", "enterprise"],
     steps: [
       "Acesse \"Pacotes\" no menu lateral.",
@@ -348,7 +348,7 @@ const allSections: InstructionSection[] = [
   {
     id: "coupons",
     title: "Cupons de Desconto",
-    icon: Ticket,
+    icon: couponsIcon,
     plans: ["enterprise"],
     steps: [
       "Acesse \"Cupons\" no menu lateral.",
@@ -369,7 +369,7 @@ const allSections: InstructionSection[] = [
   {
     id: "reports",
     title: "Relatórios",
-    icon: BarChart3,
+    icon: reportsIcon,
     plans: ["essencial", "enterprise"],
     steps: [
       "Acesse \"Relatórios\" no menu lateral para ver análises detalhadas do seu negócio.",
@@ -388,7 +388,7 @@ const allSections: InstructionSection[] = [
   {
     id: "reviews",
     title: "Avaliações",
-    icon: Star,
+    icon: reviewsIcon,
     plans: ["enterprise"],
     steps: [
       "Acesse \"Avaliações\" no menu lateral para ver o feedback dos seus clientes.",
@@ -405,7 +405,7 @@ const allSections: InstructionSection[] = [
   {
     id: "team",
     title: "Equipe (Profissionais)",
-    icon: UserPlus,
+    icon: teamIcon,
     plans: ["enterprise"],
     steps: [
       "Acesse \"Equipe\" no menu lateral (disponível apenas para contas do tipo Salão).",
@@ -427,7 +427,7 @@ const allSections: InstructionSection[] = [
   {
     id: "commission-report",
     title: "Comissões",
-    icon: CreditCard,
+    icon: commissionIcon,
     plans: ["enterprise"],
     steps: [
       "Acesse \"Comissões\" no menu lateral.",
@@ -445,7 +445,7 @@ const allSections: InstructionSection[] = [
   {
     id: "team-performance",
     title: "Desempenho da Equipe",
-    icon: BarChart3,
+    icon: performanceIcon,
     plans: ["enterprise"],
     steps: [
       "Acesse \"Desempenho\" no menu lateral.",
@@ -462,7 +462,7 @@ const allSections: InstructionSection[] = [
   {
     id: "settings",
     title: "Configurações",
-    icon: Settings,
+    icon: settingsIcon,
     plans: ["all"],
     steps: [
       "Acesse \"Configurações\" no menu lateral para ajustar seu perfil e preferências.",
@@ -492,13 +492,11 @@ const Instructions = () => {
   const isSalon = professional?.account_type === "salon";
 
   const filteredSections = allSections.filter((section) => {
-    // Filter by plan
     const planMatch =
       section.plans.includes("all") ||
       section.plans.includes(currentPlan as PlanId);
     if (!planMatch) return false;
 
-    // Hide salon-only sections for non-salon accounts
     if (
       ["team", "commission-report", "team-performance", "cash-register"].includes(section.id) &&
       !isSalon
@@ -506,7 +504,6 @@ const Instructions = () => {
       return false;
     }
 
-    // Filter by search
     if (search.trim()) {
       const q = search.toLowerCase();
       return (
@@ -521,7 +518,7 @@ const Instructions = () => {
   const planBadge = (plans: Array<PlanId | "all">) => {
     if (plans.includes("all")) return null;
     if (plans.includes("enterprise") && !plans.includes("essencial")) {
-      return <Badge variant="secondary" className="text-xs bg-amber-500/20 text-amber-400 border-amber-500/30">Enterprise</Badge>;
+      return <Badge variant="secondary" className="text-xs bg-accent/20 text-accent border-accent/30">Enterprise</Badge>;
     }
     return null;
   };
@@ -533,7 +530,7 @@ const Instructions = () => {
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-primary/10">
-              <BookOpen className="h-6 w-6 text-primary" />
+              <InstructionIcon src={supportChatIcon} size={24} />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">Central de Ajuda</h1>
@@ -574,7 +571,7 @@ const Instructions = () => {
                   href={`#${section.id}`}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary/50 hover:bg-secondary text-sm text-foreground transition-colors"
                 >
-                  <section.icon className="h-3.5 w-3.5" />
+                  <InstructionIcon src={section.icon} size={14} />
                   {section.title.split(" (")[0]}
                 </a>
               ))}
@@ -603,7 +600,7 @@ const Instructions = () => {
                 <AccordionTrigger className="px-4 py-4 hover:no-underline gap-3">
                   <div className="flex items-center gap-3 text-left flex-1">
                     <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
-                      <section.icon className="h-5 w-5 text-primary" />
+                      <InstructionIcon src={section.icon} size={20} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -648,14 +645,14 @@ const Instructions = () => {
 
                     {/* Tips */}
                     {section.tips && section.tips.length > 0 && (
-                      <div className="mt-4 p-4 rounded-lg bg-amber-500/5 border border-amber-500/10">
-                        <h4 className="text-sm font-semibold text-amber-500 flex items-center gap-2 mb-2">
+                      <div className="mt-4 p-4 rounded-lg bg-accent/5 border border-accent/10">
+                        <h4 className="text-sm font-semibold text-accent flex items-center gap-2 mb-2">
                           💡 Dicas úteis
                         </h4>
                         <ul className="space-y-1.5">
                           {section.tips.map((tip, i) => (
                             <li key={i} className="text-sm text-muted-foreground flex gap-2">
-                              <span className="text-amber-500 flex-shrink-0">→</span>
+                              <span className="text-accent flex-shrink-0">→</span>
                               <span>{tip}</span>
                             </li>
                           ))}
@@ -673,7 +670,7 @@ const Instructions = () => {
         <Card className="border-primary/20 bg-primary/5">
           <CardContent className="py-5">
             <div className="flex items-start gap-3">
-              <Headphones className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+              <InstructionIcon src={supportChatIcon} size={20} />
               <div>
                 <p className="text-sm font-medium text-foreground">
                   Ainda tem dúvidas?
