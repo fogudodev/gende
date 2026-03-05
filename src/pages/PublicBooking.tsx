@@ -263,6 +263,13 @@ const PublicBooking = () => {
         });
         setEmployeeStatsMap(statsMap);
       }
+      // Check waitlist feature flag
+      const { data: waitlistFlag } = await supabase
+        .from("feature_flags" as any)
+        .select("enabled")
+        .eq("key", "waitlist")
+        .maybeSingle();
+      setWaitlistEnabled((waitlistFlag as any)?.enabled === true);
       setLoading(false);
     };
     fetchData();
