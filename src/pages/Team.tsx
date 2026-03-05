@@ -308,6 +308,9 @@ const Team = () => {
                   </div>
                 )}
                 <EmployeeServiceAssignment employeeId={emp.id} employeeName={emp.name} />
+                {employeeHoursEnabled && (emp as any).role !== "reception" && (
+                  <EmployeeWorkingHours employeeId={emp.id} employeeName={emp.name} />
+                )}
               </Card>
             ))}
           </div>
