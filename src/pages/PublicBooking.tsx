@@ -573,6 +573,7 @@ const PublicBooking = () => {
           {step === dateStep && selectedService && !confirmed && (
             <Step4DateTime
               service={selectedService}
+              professional={professional}
               accent={accent}
               colors={colors}
               days={days14}
@@ -585,6 +586,9 @@ const PublicBooking = () => {
               loadingSlots={loadingSlots}
               selectedSlot={selectedSlot}
               setSelectedSlot={setSelectedSlot}
+              waitlistEnabled={waitlistEnabled}
+              clientName={clientName}
+              clientPhone={clientPhone}
               onNext={goNext}
               onBack={goBack}
             />
