@@ -82,6 +82,10 @@ export const useToggleReviewVisibility = () => {
       const { error } = await supabase.from("reviews").update({ is_public }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["reviews"] }); },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ["reviews"] });
+      toast.success(variables.is_public ? "Avaliação tornada pública" : "Avaliação ocultada");
+    },
+    onError: (e: Error) => toast.error("Erro ao alterar visibilidade: " + e.message),
   });
 };
