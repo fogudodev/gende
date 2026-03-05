@@ -41,6 +41,7 @@ import AdminPlans from "./pages/admin/AdminPlans";
 import AdminSubscribers from "./pages/admin/AdminSubscribers";
 import AdminIntegrations from "./pages/admin/AdminIntegrations";
 import AdminFeatures from "./pages/admin/AdminFeatures";
+import AdminFeatureFlags from "./pages/admin/AdminFeatureFlags";
 import AdminBookings from "./pages/admin/AdminBookings";
 import AdminWhatsAppPage from "./pages/admin/AdminWhatsAppPage";
 import AdminWhatsAppLogsPage from "./pages/admin/AdminWhatsAppLogsPage";
