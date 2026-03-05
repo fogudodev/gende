@@ -1,30 +1,31 @@
 import { useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Star, Loader2, MessageSquare, Trash2 } from "lucide-react";
+import { Star, Loader2, MessageSquare, Trash2, Search } from "lucide-react";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import type { Tables } from "@/integrations/supabase/types";
 
-interface PlatformReview {
-  id: string;
-  professional_id: string;
-  booking_id: string | null;
-  client_name: string;
-  client_phone: string | null;
-  rating: number;
-  comment: string | null;
-  created_at: string;
+type PlatformReview = Tables<"platform_reviews"> & {
   professionals?: { name: string; business_name: string | null };
-}
+};
 
 const AdminPlatformReviews = () => {
-  const { data: reviews, isLoading, refetch } = useQuery({
+  const qc = useQueryClient();
+  const [search, setSearch] = useState("");
+  const [ratingFilter, setRatingFilter] = useState<string>("all");
+
+  const { data: reviews, isLoading } = useQuery({
     queryKey: ["admin-platform-reviews"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("platform_reviews" as any)
+        .from("platform_reviews")
         .select("*, professionals:professional_id(name, business_name)")
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -32,11 +33,23 @@ const AdminPlatformReviews = () => {
     },
   });
 
-  const handleDelete = async (id: string) => {
-    const { error } = await supabase.from("platform_reviews" as any).delete().eq("id", id);
-    if (!error) { toast.success("Avaliação removida"); refetch(); }
-    else toast.error("Erro ao remover");
-  };
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("platform_reviews").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-platform-reviews"] });
+      toast.success("Avaliação removida com sucesso");
+    },
+    onError: (e: Error) => toast.error("Erro ao remover: " + e.message),
+  });
+
+  const filtered = (reviews || []).filter(r => {
+    const matchesSearch = !search || r.client_name.toLowerCase().includes(search.toLowerCase()) || r.comment?.toLowerCase().includes(search.toLowerCase());
+    const matchesRating = ratingFilter === "all" || r.rating === Number(ratingFilter);
+    return matchesSearch && matchesRating;
+  });
 
   const avgRating = reviews?.length
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
@@ -81,15 +94,43 @@ const AdminPlatformReviews = () => {
             </motion.div>
           </div>
 
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-3 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+              <Input
+                placeholder="Buscar por nome ou comentário..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={ratingFilter} onValueChange={setRatingFilter}>
+              <SelectTrigger className="w-full sm:w-40">
+                <SelectValue placeholder="Filtrar estrelas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="5">5 estrelas</SelectItem>
+                <SelectItem value="4">4 estrelas</SelectItem>
+                <SelectItem value="3">3 estrelas</SelectItem>
+                <SelectItem value="2">2 estrelas</SelectItem>
+                <SelectItem value="1">1 estrela</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Reviews list */}
           <div className="space-y-4">
-            {!(reviews || []).length && (
+            {!filtered.length && (
               <div className="glass-card rounded-2xl p-12 text-center">
                 <MessageSquare size={40} className="mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">Nenhuma avaliação da plataforma recebida ainda</p>
+                <p className="text-muted-foreground">
+                  {search || ratingFilter !== "all" ? "Nenhuma avaliação encontrada com esses filtros" : "Nenhuma avaliação da plataforma recebida ainda"}
+                </p>
               </div>
             )}
-            {(reviews || []).map((review, i) => (
+            {filtered.map((review, i) => (
               <motion.div
                 key={review.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -114,13 +155,36 @@ const AdminPlatformReviews = () => {
                     {review.comment && <p className="text-sm text-foreground mt-2">{review.comment}</p>}
                     {review.client_phone && <p className="text-xs text-muted-foreground mt-1">📱 {review.client_phone}</p>}
                   </div>
-                  <button
-                    onClick={() => handleDelete(review.id)}
-                    className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                    title="Remover avaliação"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        title="Remover avaliação"
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Remover avaliação?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta ação não pode ser desfeita. A avaliação de "{review.client_name}" será removida permanentemente.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => deleteMutation.mutate(review.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Remover
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </motion.div>
             ))}
