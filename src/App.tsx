@@ -90,6 +90,7 @@ const AppContent = () => (
             <Route path="/support-chat" element={<ProtectedRoute><SupportChat /></ProtectedRoute>} />
             <Route path="/ai-assistant" element={<ProtectedRoute><AIAssistant /></ProtectedRoute>} />
             <Route path="/cash-register" element={<ProtectedRoute><CashRegister /></ProtectedRoute>} />
+            <Route path="/waitlist" element={<ProtectedRoute><Waitlist /></ProtectedRoute>} />
 
             {/* Admin Master routes */}
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
