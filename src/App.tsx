@@ -31,6 +31,7 @@ import PaymentChat from "./pages/PaymentChat";
 import SupportChat from "./pages/SupportChat";
 import AIAssistant from "./pages/AIAssistant";
 import CashRegister from "./pages/CashRegister";
+import Waitlist from "./pages/Waitlist";
 import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
 
