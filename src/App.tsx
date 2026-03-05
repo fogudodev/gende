@@ -31,6 +31,7 @@ import PaymentChat from "./pages/PaymentChat";
 import SupportChat from "./pages/SupportChat";
 import AIAssistant from "./pages/AIAssistant";
 import CashRegister from "./pages/CashRegister";
+import Waitlist from "./pages/Waitlist";
 import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
 
@@ -89,6 +90,7 @@ const AppContent = () => (
             <Route path="/support-chat" element={<ProtectedRoute><SupportChat /></ProtectedRoute>} />
             <Route path="/ai-assistant" element={<ProtectedRoute><AIAssistant /></ProtectedRoute>} />
             <Route path="/cash-register" element={<ProtectedRoute><CashRegister /></ProtectedRoute>} />
+            <Route path="/waitlist" element={<ProtectedRoute><Waitlist /></ProtectedRoute>} />
 
             {/* Admin Master routes */}
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
