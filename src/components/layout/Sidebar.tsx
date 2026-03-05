@@ -195,6 +195,7 @@ const afterGroupItems: NavItem[] = [
   { icon: FinanceIcon, label: "Financeiro", path: "/finance", featureKey: "finance" },
   { icon: PublicPageIcon, label: "Página Pública", path: "/public-page", featureKey: "public-page" },
   { icon: ProductsIcon, label: "Produtos", path: "/products", featureKey: "products" },
+  { icon: ({ size, mobile, active }: any) => <Package size={size} className={`inline-block ${mobile ? (active ? 'opacity-100 dark:opacity-90' : 'opacity-40') : (active ? 'opacity-75' : 'opacity-40')} ${!mobile ? 'text-current' : ''}`} />, label: "Pacotes", path: "/service-packages", featureKey: "products" },
   { icon: CouponsIcon, label: "Cupons", path: "/coupons", featureKey: "coupons" },
   { icon: ReportsIcon, label: "Relatórios", path: "/reports", featureKey: "reports" },
   { icon: ReviewsIcon, label: "Avaliações", path: "/reviews", featureKey: "reviews" },
