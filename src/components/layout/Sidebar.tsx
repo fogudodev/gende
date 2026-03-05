@@ -164,7 +164,11 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
       entries.push(...salonOnlyItems);
       entries.push(cashRegisterItem);
     }
-    entries.push(whatsappGroup, communicationGroup, ...afterGroupItems);
+    const filteredAfterGroupItems = afterGroupItems.filter((item) => {
+      if (item.path === "/service-packages" && !servicePackagesEnabled) return false;
+      return true;
+    });
+    entries.push(whatsappGroup, communicationGroup, ...filteredAfterGroupItems);
     return entries;
   };
 
