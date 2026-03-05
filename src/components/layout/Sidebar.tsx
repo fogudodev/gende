@@ -5,6 +5,7 @@ import { useIsAdmin } from "@/hooks/useAdmin";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useReceptionEmployee } from "@/hooks/useReceptionEmployee";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { useIsFeatureEnabled } from "@/hooks/useFeatureFlags";
 import {
   LayoutDashboard,
   CalendarDays,
@@ -147,6 +148,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
   const { data: reception } = useReceptionEmployee();
   const { isLocked, requiredPlan, currentPlan } = useFeatureAccess();
 
+  const { enabled: servicePackagesEnabled } = useIsFeatureEnabled("service_packages");
   const isReception = !!reception && !professional;
   const isSalon = professional?.account_type === "salon";
   const displayName = isReception ? reception.name : (professional?.business_name || professional?.name || "Gende");
@@ -162,7 +164,11 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
       entries.push(...salonOnlyItems);
       entries.push(cashRegisterItem);
     }
-    entries.push(whatsappGroup, communicationGroup, ...afterGroupItems);
+    const filteredAfterGroupItems = afterGroupItems.filter((item) => {
+      if (item.path === "/service-packages" && !servicePackagesEnabled) return false;
+      return true;
+    });
+    entries.push(whatsappGroup, communicationGroup, ...filteredAfterGroupItems);
     return entries;
   };
 
