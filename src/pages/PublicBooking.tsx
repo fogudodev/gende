@@ -970,6 +970,108 @@ function Step3Services({ services, groupedServices, selected, selectedEmployee, 
   );
 }
 
+/* ── Waitlist Form (shown when no slots available) ── */
+function WaitlistForm({ professionalId, serviceId, serviceName, selectedDate, accent, colors, clientName, clientPhone, onClose }: {
+  professionalId: string; serviceId: string; serviceName: string; selectedDate: Date; accent: string; colors: TextColors; clientName: string; clientPhone: string; onClose: () => void;
+}) {
+  const { textPrimary, textSecondary, textMuted } = colors;
+  const [period, setPeriod] = useState("any");
+  const [notes, setNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    const { error } = await supabase.from("waitlist" as any).insert({
+      professional_id: professionalId,
+      service_id: serviceId,
+      client_name: clientName,
+      client_phone: clientPhone.replace(/\D/g, ""),
+      preferred_date: format(selectedDate, "yyyy-MM-dd"),
+      preferred_period: period,
+      notes: notes.trim() || null,
+    } as any);
+    if (!error) {
+      setSubmitted(true);
+      toast.success("Você foi adicionado à lista de espera!");
+    } else {
+      toast.error("Erro ao entrar na lista de espera");
+    }
+    setSubmitting(false);
+  };
+
+  if (submitted) {
+    return (
+      <div className="rounded-2xl p-6 text-center animate-fade-in-up-bloom" style={{ background: "white", border: `2px solid ${accent}20` }}>
+        <span className="text-4xl mb-3 block">🎉</span>
+        <p className="text-sm font-bold mb-1" style={{ color: textPrimary }}>Você está na lista de espera!</p>
+        <p className="text-xs mb-3" style={{ color: textMuted }}>
+          Entraremos em contato pelo WhatsApp caso um horário fique disponível para {DAYS_FULL[selectedDate.getDay()]}, {selectedDate.getDate()} de {MONTHS_PT[selectedDate.getMonth()]}.
+        </p>
+        <p className="text-xs font-medium" style={{ color: accent }}>Serviço: {serviceName}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl p-5 animate-fade-in-up-bloom" style={{ background: "white", border: `2px solid ${accent}15`, boxShadow: `0 4px 20px ${accent}10` }}>
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-xl">⏰</span>
+        <div>
+          <p className="text-sm font-bold" style={{ color: textPrimary }}>Lista de Espera</p>
+          <p className="text-xs" style={{ color: textMuted }}>Seja avisado quando um horário abrir!</p>
+        </div>
+      </div>
+
+      <div className="mb-3">
+        <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: accent }}>Preferência de horário</label>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { value: "any", label: "Qualquer", emoji: "🕐" },
+            { value: "morning", label: "Manhã", emoji: "🌅" },
+            { value: "afternoon", label: "Tarde", emoji: "☀️" },
+            { value: "evening", label: "Noite", emoji: "🌙" },
+          ].map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => setPeriod(opt.value)}
+              className="py-2.5 rounded-xl text-xs font-semibold transition-all active:scale-95"
+              style={{
+                background: period === opt.value ? `linear-gradient(135deg, ${accent}, ${accent}cc)` : "white",
+                color: period === opt.value ? "white" : textPrimary,
+                border: `1.5px solid ${period === opt.value ? accent : "#F1F5F9"}`,
+              }}
+            >
+              {opt.emoji} {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: accent }}>Observação (opcional)</label>
+        <textarea
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
+          placeholder="Ex: Prefiro após 14h"
+          rows={2}
+          className="w-full px-3 py-2.5 rounded-xl text-xs font-medium transition-all outline-none focus:ring-2 resize-none"
+          style={{ background: "white", border: `1.5px solid ${notes ? accent : "#E2E8F0"}`, color: "hsl(0 0% 0%)", ["--tw-ring-color" as any]: accent }}
+        />
+      </div>
+
+      <button
+        onClick={handleSubmit}
+        disabled={submitting}
+        className="w-full py-3.5 rounded-xl text-white font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-60"
+        style={{ background: `linear-gradient(135deg, ${accent} 0%, ${accent}dd 100%)`, boxShadow: `0 6px 20px -6px ${accent}70` }}
+      >
+        {submitting ? "Entrando na lista..." : "Entrar na Lista de Espera 🔔"}
+      </button>
+    </div>
+  );
+}
+
 /* ── Step 4: Date & Time ── */
 function Step4DateTime({ service, accent, colors, days, today, selectedDate, setSelectedDate, selectedTime, setSelectedTime, slots, loadingSlots, selectedSlot, setSelectedSlot, onNext, onBack }: {
   service: Service; accent: string; colors: TextColors; days: Date[]; today: Date; selectedDate: Date | null; setSelectedDate: (d: Date | null) => void; selectedTime: string; setSelectedTime: (t: string) => void; slots: Slot[]; loadingSlots: boolean; selectedSlot: Slot | null; setSelectedSlot: (s: Slot | null) => void; onNext: () => void; onBack: () => void;
