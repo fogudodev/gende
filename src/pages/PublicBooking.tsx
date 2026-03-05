@@ -1146,9 +1146,24 @@ function Step4DateTime({ service, professional, accent, colors, days, today, sel
               </div>
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center py-12 rounded-2xl" style={{ background: "#F9FAFB", border: `2px dashed ${accent}20` }}>
-              <span className="text-3xl mb-2">😔</span>
-              <p className="text-sm font-medium" style={{ color: textMuted }}>Nenhum horário disponível nesta data</p>
+            <div className="space-y-4">
+              <div className="flex flex-col items-center justify-center py-8 rounded-2xl" style={{ background: "#F9FAFB", border: `2px dashed ${accent}20` }}>
+                <span className="text-3xl mb-2">😔</span>
+                <p className="text-sm font-medium" style={{ color: textMuted }}>Nenhum horário disponível nesta data</p>
+              </div>
+              {waitlistEnabled && selectedDate && service && (
+                <WaitlistForm
+                  professionalId={professional.id}
+                  serviceId={service.id}
+                  serviceName={service.name}
+                  selectedDate={selectedDate}
+                  accent={accent}
+                  colors={colors}
+                  clientName={clientName}
+                  clientPhone={clientPhone}
+                  onClose={() => {}}
+                />
+              )}
             </div>
           )
         ) : (
