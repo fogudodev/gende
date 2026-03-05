@@ -135,6 +135,11 @@ const ReviewsIcon = ({ size = 18, className, mobile, active }: { size?: number; 
 
 const SettingsIcon = ({ size = 18, className, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => 
   mobile ? <ThemeAwareIcon src={settingsIcon} size={size} className={className} active={active} /> : <SidebarIcon src={settingsIcon} size={size} className={className} active={active} />;
+
+const WaitlistIcon = ({ size = 18, mobile, active }: { size?: number; className?: string; mobile?: boolean; active?: boolean }) => (
+  <Clock size={size} className={`inline-block ${mobile ? (active ? 'opacity-100 dark:opacity-90' : 'opacity-40') : (active ? 'opacity-75' : 'opacity-40')} ${!mobile ? 'text-current' : ''}`} />
+);
+
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
 
