@@ -18,7 +18,6 @@ import {
   MessageSquare,
   Wallet,
   Headphones,
-  Bot,
   CreditCard,
   Globe,
   Package,
@@ -38,6 +37,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
+import aiAssistantIcon from "@/assets/icon-ai-assistant.png";
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
 
@@ -46,6 +46,7 @@ interface NavItem {
   label: string;
   path: string;
   featureKey: FeatureKey;
+  customIcon?: string;
 }
 
 interface NavGroup {
@@ -85,7 +86,7 @@ const communicationGroup: NavGroup = {
   children: [
     { icon: Wallet, label: "Chat Pagamento", path: "/payment-chat", featureKey: "payment-chat" },
     { icon: Headphones, label: "Chat Suporte", path: "/support-chat", featureKey: "support-chat" },
-    { icon: Bot, label: "Assistente IA", path: "/ai-assistant", featureKey: "ai-assistant" },
+    { icon: null as any, label: "Assistente IA", path: "/ai-assistant", featureKey: "ai-assistant", customIcon: "ai-assistant" },
   ],
 };
 
@@ -243,10 +244,17 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
     return `flex-shrink-0 ${isActive ? "text-sidebar-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground"}`;
   };
 
+  const renderIcon = (item: NavItem, size: number, className: string) => {
+    if (item.customIcon === "ai-assistant") {
+      return <img src={aiAssistantIcon} alt="" className={`flex-shrink-0 dark:invert ${className}`} style={{ width: size, height: size }} />;
+    }
+    const Icon = item.icon;
+    return <Icon size={size} className={className} />;
+  };
+
   const renderItem = (item: NavItem, opts: { onNav?: () => void; mobile?: boolean }) => {
     const isActive = location.pathname === item.path;
     const locked = isLocked(item.featureKey);
-    const Icon = item.icon;
 
     if (locked) {
       return (
@@ -262,7 +270,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
               : "text-sidebar-foreground/30 hover:bg-sidebar-accent/20"
           } transition-all duration-200 group overflow-hidden`}
         >
-          <Icon size={18} className={`flex-shrink-0 ${opts.mobile ? "" : "text-sidebar-foreground/25"}`} />
+          {renderIcon(item, 18, `flex-shrink-0 ${opts.mobile ? "" : "text-sidebar-foreground/25"}`)}
           {(opts.mobile || expanded) && <span className="text-sm font-medium truncate">{item.label}</span>}
           {(opts.mobile || expanded) && <Lock size={11} className="ml-auto opacity-40 flex-shrink-0" />}
         </button>
@@ -281,7 +289,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
               : "text-muted-foreground hover:text-foreground hover:bg-secondary"
           }`}
         >
-          <Icon size={18} className={iconClass(isActive, true)} />
+          {renderIcon(item, 18, iconClass(isActive, true))}
           <span className="text-sm font-medium">{item.label}</span>
         </Link>
       );
@@ -297,7 +305,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
             : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
         }`}
       >
-        <Icon size={18} className={iconClass(isActive, false)} />
+        {renderIcon(item, 18, iconClass(isActive, false))}
         {expanded && <span className="text-sm font-medium truncate">{item.label}</span>}
         {isActive && expanded && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-sidebar-primary flex-shrink-0" />}
       </Link>

@@ -1,4 +1,5 @@
-import { Bell, Search, Sun, Moon, Menu, Crown, Headphones, Sparkles, Wallet, CreditCard, MessageSquare, CheckCheck, Bot } from "lucide-react";
+import { Bell, Search, Sun, Moon, Menu, Crown, Headphones, Sparkles, Wallet, CreditCard, MessageSquare, CheckCheck } from "lucide-react";
+import aiAssistantIcon from "@/assets/icon-ai-assistant.png";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useProfessional } from "@/hooks/useProfessional";
@@ -80,7 +81,7 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
           aria-label="Assistente IA"
           title="Assistente IA"
         >
-          <Bot size={16} className="text-muted-foreground hover:text-foreground transition-colors" />
+          <img src={aiAssistantIcon} alt="Assistente IA" className="w-4 h-4 opacity-60 hover:opacity-100 transition-opacity dark:invert" />
         </button>
         <button
           onClick={() => navigate("/support-chat")}
