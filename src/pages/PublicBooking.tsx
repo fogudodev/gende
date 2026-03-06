@@ -978,7 +978,7 @@ function Step3Services({ services, groupedServices, selected, selectedEmployee, 
         ))}
         {services.length === 0 && (
           <div className="rounded-2xl p-8 text-center" style={{ background: "white", border: `2px dashed ${accent}30` }}>
-            <p style={{ color: textMuted }}>Nenhum serviço disponível no momento.</p>
+            <p style={{ color: cardTextMuted }}>Nenhum serviço disponível no momento.</p>
           </div>
         )}
       </div>
