@@ -246,7 +246,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
 
   const renderIcon = (item: NavItem, size: number, className: string) => {
     if (item.customIcon === "ai-assistant") {
-      return <img src={aiAssistantIcon} alt="" className="flex-shrink-0 invert dark:invert-0" style={{ width: size, height: size, opacity: 0.35 }} />;
+      return <span aria-hidden className={`flex-shrink-0 ${className}`} style={{ width: size, height: size, backgroundColor: "currentColor", WebkitMaskImage: `url(${aiAssistantIcon})`, maskImage: `url(${aiAssistantIcon})`, WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "center", maskPosition: "center", WebkitMaskSize: "contain", maskSize: "contain" }} />;
     }
     const Icon = item.icon;
     return <Icon size={size} className={className} />;
