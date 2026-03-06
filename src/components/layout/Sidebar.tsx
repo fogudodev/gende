@@ -46,6 +46,7 @@ interface NavItem {
   label: string;
   path: string;
   featureKey: FeatureKey;
+  customIcon?: string;
 }
 
 interface NavGroup {
