@@ -908,7 +908,7 @@ function Step2Employees({ employees, selected, clientName, accent, colors, emplo
         })}
         {employees.length === 0 && (
           <div className="rounded-2xl p-8 text-center" style={{ background: "white", border: `2px dashed ${accent}30` }}>
-            <p style={{ color: textMuted }}>Nenhum profissional disponível no momento.</p>
+            <p style={{ color: cardTextMuted }}>Nenhum profissional disponível no momento.</p>
           </div>
         )}
       </div>
