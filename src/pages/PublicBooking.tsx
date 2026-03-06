@@ -1054,7 +1054,7 @@ function WaitlistForm({ professionalId, serviceId, serviceName, selectedDate, ac
               className="py-2.5 rounded-xl text-xs font-semibold transition-all active:scale-95"
               style={{
                 background: period === opt.value ? `linear-gradient(135deg, ${accent}, ${accent}cc)` : "white",
-                color: period === opt.value ? "white" : textPrimary,
+                color: period === opt.value ? "white" : cardTextPrimary,
                 border: `1.5px solid ${period === opt.value ? accent : "#F1F5F9"}`,
               }}
             >
