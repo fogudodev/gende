@@ -244,10 +244,17 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
     return `flex-shrink-0 ${isActive ? "text-sidebar-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground"}`;
   };
 
+  const renderIcon = (item: NavItem, size: number, className: string) => {
+    if (item.customIcon === "ai-assistant") {
+      return <img src={aiAssistantIcon} alt="" className={`flex-shrink-0 dark:invert ${className}`} style={{ width: size, height: size }} />;
+    }
+    const Icon = item.icon;
+    return <Icon size={size} className={className} />;
+  };
+
   const renderItem = (item: NavItem, opts: { onNav?: () => void; mobile?: boolean }) => {
     const isActive = location.pathname === item.path;
     const locked = isLocked(item.featureKey);
-    const Icon = item.icon;
 
     if (locked) {
       return (
