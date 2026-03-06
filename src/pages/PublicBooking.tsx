@@ -1307,7 +1307,7 @@ function Step5Confirm({ professional, selectedEmployee, selectedService, selecte
 function SuccessView({ professional, selectedEmployee, selectedService, selectedSlot, clientName, clientPhone, accent, colors, signalAmount, paymentConfig, reviewRating, setReviewRating, reviewComment, setReviewComment, reviewSubmitted, submittingReview, onSubmitReview, onReset }: {
   professional: Professional; selectedEmployee: Employee | null; selectedService: Service | null; selectedSlot: Slot | null; clientName: string; clientPhone: string; accent: string; colors: TextColors; signalAmount: number | null; paymentConfig: PaymentConfig | null; reviewRating: number; setReviewRating: (n: number) => void; reviewComment: string; setReviewComment: (s: string) => void; reviewSubmitted: boolean; submittingReview: boolean; onSubmitReview: () => void; onReset: () => void;
 }) {
-  const { textPrimary, textSecondary, textMuted } = colors;
+  const { textPrimary, textSecondary, textMuted, cardTextPrimary, cardTextSecondary, cardTextMuted } = colors;
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-20px)] md:min-h-[calc(860px-20px)] px-5 text-center py-8">
       <div className="animate-scale-in">
