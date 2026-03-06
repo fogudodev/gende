@@ -1253,8 +1253,8 @@ function Step5Confirm({ professional, selectedEmployee, selectedService, selecte
             ].map(item => (
               <div key={item.label} className="flex items-center gap-3">
                 <span className="text-base w-6 text-center">{item.icon}</span>
-                <span className="text-xs flex-1" style={{ color: textSecondary }}>{item.label}</span>
-                <span className="text-xs font-semibold" style={{ color: textPrimary }}>{item.value}</span>
+                <span className="text-xs flex-1" style={{ color: cardTextSecondary }}>{item.label}</span>
+                <span className="text-xs font-semibold" style={{ color: cardTextPrimary }}>{item.value}</span>
               </div>
             ))}
           </div>
