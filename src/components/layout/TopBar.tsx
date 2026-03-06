@@ -81,7 +81,7 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
           aria-label="Assistente IA"
           title="Assistente IA"
         >
-          <img src={aiAssistantIcon} alt="Assistente IA" className="w-4 h-4 opacity-60 hover:opacity-100 transition-opacity dark:invert" />
+          <span aria-hidden className="text-muted-foreground hover:text-foreground transition-colors" style={{ display: "inline-block", width: 18, height: 18, backgroundColor: "currentColor", WebkitMaskImage: `url(${aiAssistantIcon})`, maskImage: `url(${aiAssistantIcon})`, WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "center", maskPosition: "center", WebkitMaskSize: "contain", maskSize: "contain" }} />
         </button>
         <button
           onClick={() => navigate("/support-chat")}
