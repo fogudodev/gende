@@ -85,7 +85,7 @@ const communicationGroup: NavGroup = {
   children: [
     { icon: Wallet, label: "Chat Pagamento", path: "/payment-chat", featureKey: "payment-chat" },
     { icon: Headphones, label: "Chat Suporte", path: "/support-chat", featureKey: "support-chat" },
-    { icon: Bot, label: "Assistente IA", path: "/ai-assistant", featureKey: "ai-assistant" },
+    { icon: null as any, label: "Assistente IA", path: "/ai-assistant", featureKey: "ai-assistant", customIcon: "ai-assistant" },
   ],
 };
 
