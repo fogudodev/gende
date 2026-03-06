@@ -81,7 +81,7 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
           aria-label="Assistente IA"
           title="Assistente IA"
         >
-          <Bot size={16} className="text-muted-foreground hover:text-foreground transition-colors" />
+          <img src={aiAssistantIcon} alt="Assistente IA" className="w-4 h-4 opacity-60 hover:opacity-100 transition-opacity dark:invert" />
         </button>
         <button
           onClick={() => navigate("/support-chat")}
