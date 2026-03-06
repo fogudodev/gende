@@ -884,14 +884,14 @@ function Step2Employees({ employees, selected, clientName, accent, colors, emplo
                     {isSelected && <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: accent }}>✓</div>}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-sm" style={{ color: textPrimary }}>{emp.name}</h3>
+                    <h3 className="font-bold text-sm" style={{ color: cardTextPrimary }}>{emp.name}</h3>
                     {emp.specialty && <p className="text-xs font-medium mt-0.5" style={{ color: accent }}>{emp.specialty}</p>}
                     <div className="flex items-center gap-3 mt-1.5 flex-wrap">
                       {stats?.avgRating != null && (
                         <div className="flex items-center gap-1">
                           <Star size={12} className="fill-amber-400 text-amber-400" />
-                          <span className="text-xs font-semibold" style={{ color: textPrimary }}>{stats.avgRating}</span>
-                          <span className="text-[10px]" style={{ color: textMuted }}>({stats.reviewCount})</span>
+                          <span className="text-xs font-semibold" style={{ color: cardTextPrimary }}>{stats.avgRating}</span>
+                          <span className="text-[10px]" style={{ color: cardTextMuted }}>({stats.reviewCount})</span>
                         </div>
                       )}
                       {stats?.completedBookings > 0 && (
