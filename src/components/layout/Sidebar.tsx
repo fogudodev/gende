@@ -305,7 +305,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
             : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
         }`}
       >
-        <Icon size={18} className={iconClass(isActive, false)} />
+        {renderIcon(item, 18, iconClass(isActive, false))}
         {expanded && <span className="text-sm font-medium truncate">{item.label}</span>}
         {isActive && expanded && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-sidebar-primary flex-shrink-0" />}
       </Link>
