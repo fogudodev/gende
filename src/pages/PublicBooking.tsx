@@ -855,7 +855,7 @@ function Step1ClientInfo({ professional, accent, colors, clientName, setClientNa
 function Step2Employees({ employees, selected, clientName, accent, colors, employeeStatsMap, onSelect, onBack }: {
   employees: Employee[]; selected: Employee | null; clientName: string; accent: string; colors: TextColors; employeeStatsMap: Record<string, EmployeeStats>; onSelect: (e: Employee) => void; onBack: () => void;
 }) {
-  const { textPrimary, textSecondary, textMuted } = colors;
+  const { textPrimary, textSecondary, textMuted, cardTextPrimary, cardTextSecondary, cardTextMuted } = colors;
   return (
     <div className="flex flex-col min-h-[calc(100vh-60px)] md:min-h-[calc(860px-60px)]">
       <div className="px-5 pt-4 pb-2 flex items-center gap-3">
