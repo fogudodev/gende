@@ -18,7 +18,6 @@ import {
   MessageSquare,
   Wallet,
   Headphones,
-  Bot,
   CreditCard,
   Globe,
   Package,
