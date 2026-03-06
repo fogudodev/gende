@@ -270,7 +270,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
               : "text-sidebar-foreground/30 hover:bg-sidebar-accent/20"
           } transition-all duration-200 group overflow-hidden`}
         >
-          <Icon size={18} className={`flex-shrink-0 ${opts.mobile ? "" : "text-sidebar-foreground/25"}`} />
+          {renderIcon(item, 18, `flex-shrink-0 ${opts.mobile ? "" : "text-sidebar-foreground/25"}`)}
           {(opts.mobile || expanded) && <span className="text-sm font-medium truncate">{item.label}</span>}
           {(opts.mobile || expanded) && <Lock size={11} className="ml-auto opacity-40 flex-shrink-0" />}
         </button>
