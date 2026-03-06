@@ -990,7 +990,7 @@ function Step3Services({ services, groupedServices, selected, selectedEmployee, 
 function WaitlistForm({ professionalId, serviceId, serviceName, selectedDate, accent, colors, clientName, clientPhone, onClose }: {
   professionalId: string; serviceId: string; serviceName: string; selectedDate: Date; accent: string; colors: TextColors; clientName: string; clientPhone: string; onClose: () => void;
 }) {
-  const { textPrimary, textSecondary, textMuted } = colors;
+  const { textPrimary, textSecondary, textMuted, cardTextPrimary, cardTextSecondary, cardTextMuted } = colors;
   const [period, setPeriod] = useState("any");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
