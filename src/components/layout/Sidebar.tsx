@@ -246,7 +246,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
 
   const renderIcon = (item: NavItem, size: number, className: string) => {
     if (item.customIcon === "ai-assistant") {
-      return <img src={aiAssistantIcon} alt="" className={`flex-shrink-0 dark:invert ${className}`} style={{ width: size, height: size }} />;
+      return <img src={aiAssistantIcon} alt="" className={`flex-shrink-0 dark:invert opacity-60 ${className}`} style={{ width: size, height: size }} />;
     }
     const Icon = item.icon;
     return <Icon size={size} className={className} />;
