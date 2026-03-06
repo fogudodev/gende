@@ -37,6 +37,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
+import aiAssistantIcon from "@/assets/icon-ai-assistant.png";
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
 
