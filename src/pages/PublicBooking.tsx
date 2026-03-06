@@ -181,7 +181,11 @@ const PublicBooking = () => {
   const isHex6 = /^#[0-9A-Fa-f]{6}$/.test(textPrimary);
   const textSecondary = isHex6 ? textPrimary + "b3" : textPrimary; // 70% opacity
   const textMuted = isHex6 ? textPrimary + "80" : textPrimary; // 50% opacity
-  const colors = { textPrimary, textSecondary, textMuted };
+  // Card text colors — always dark for readability on white backgrounds
+  const cardTextPrimary = "#1A1A2E";
+  const cardTextSecondary = "#1A1A2Eb3";
+  const cardTextMuted = "#1A1A2E80";
+  const colors = { textPrimary, textSecondary, textMuted, cardTextPrimary, cardTextSecondary, cardTextMuted };
   const cardBg = "rgba(255,255,255,0.95)";
   const cardBorder = `${accent}15`;
   const cardShadow = `0 4px 24px -4px ${accent}12, 0 1px 3px rgba(0,0,0,0.06)`;
@@ -739,13 +743,13 @@ const PublicBooking = () => {
 /* ══ SUB-COMPONENTS ════════════════════════════════ */
 /* ═══════════════════════════════════════════════════ */
 
-type TextColors = { textPrimary: string; textSecondary: string; textMuted: string };
+type TextColors = { textPrimary: string; textSecondary: string; textMuted: string; cardTextPrimary: string; cardTextSecondary: string; cardTextMuted: string };
 
 /* ── Step 1: Client Info ── */
 function Step1ClientInfo({ professional, accent, colors, clientName, setClientName, clientPhone, setClientPhone, onNext, reviewStats }: {
   professional: Professional; accent: string; colors: TextColors; clientName: string; setClientName: (v: string) => void; clientPhone: string; setClientPhone: (v: string) => void; onNext: () => void; reviewStats: {avg: number; count: number} | null;
 }) {
-  const { textPrimary, textSecondary, textMuted } = colors;
+  const { textPrimary, textSecondary, textMuted, cardTextPrimary, cardTextSecondary, cardTextMuted } = colors;
   const [errors, setErrors] = useState({ name: "", phone: "" });
   const validate = () => {
     const e = { name: "", phone: "" };
@@ -851,7 +855,7 @@ function Step1ClientInfo({ professional, accent, colors, clientName, setClientNa
 function Step2Employees({ employees, selected, clientName, accent, colors, employeeStatsMap, onSelect, onBack }: {
   employees: Employee[]; selected: Employee | null; clientName: string; accent: string; colors: TextColors; employeeStatsMap: Record<string, EmployeeStats>; onSelect: (e: Employee) => void; onBack: () => void;
 }) {
-  const { textPrimary, textSecondary, textMuted } = colors;
+  const { textPrimary, textSecondary, textMuted, cardTextPrimary, cardTextSecondary, cardTextMuted } = colors;
   return (
     <div className="flex flex-col min-h-[calc(100vh-60px)] md:min-h-[calc(860px-60px)]">
       <div className="px-5 pt-4 pb-2 flex items-center gap-3">
@@ -880,14 +884,14 @@ function Step2Employees({ employees, selected, clientName, accent, colors, emplo
                     {isSelected && <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: accent }}>✓</div>}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-sm" style={{ color: textPrimary }}>{emp.name}</h3>
+                    <h3 className="font-bold text-sm" style={{ color: cardTextPrimary }}>{emp.name}</h3>
                     {emp.specialty && <p className="text-xs font-medium mt-0.5" style={{ color: accent }}>{emp.specialty}</p>}
                     <div className="flex items-center gap-3 mt-1.5 flex-wrap">
                       {stats?.avgRating != null && (
                         <div className="flex items-center gap-1">
                           <Star size={12} className="fill-amber-400 text-amber-400" />
-                          <span className="text-xs font-semibold" style={{ color: textPrimary }}>{stats.avgRating}</span>
-                          <span className="text-[10px]" style={{ color: textMuted }}>({stats.reviewCount})</span>
+                          <span className="text-xs font-semibold" style={{ color: cardTextPrimary }}>{stats.avgRating}</span>
+                          <span className="text-[10px]" style={{ color: cardTextMuted }}>({stats.reviewCount})</span>
                         </div>
                       )}
                       {stats?.completedBookings > 0 && (
@@ -904,7 +908,7 @@ function Step2Employees({ employees, selected, clientName, accent, colors, emplo
         })}
         {employees.length === 0 && (
           <div className="rounded-2xl p-8 text-center" style={{ background: "white", border: `2px dashed ${accent}30` }}>
-            <p style={{ color: textMuted }}>Nenhum profissional disponível no momento.</p>
+            <p style={{ color: cardTextMuted }}>Nenhum profissional disponível no momento.</p>
           </div>
         )}
       </div>
@@ -916,7 +920,7 @@ function Step2Employees({ employees, selected, clientName, accent, colors, emplo
 function Step3Services({ services, groupedServices, selected, selectedEmployee, accent, colors, isSalon, onSelect, onBack }: {
   services: Service[]; groupedServices: Record<string, Service[]>; selected: Service | null; selectedEmployee: Employee | null; accent: string; colors: TextColors; isSalon: boolean; onSelect: (s: Service) => void; onBack: () => void;
 }) {
-  const { textPrimary, textSecondary, textMuted } = colors;
+  const { textPrimary, textSecondary, textMuted, cardTextPrimary, cardTextSecondary, cardTextMuted } = colors;
   return (
     <div className="flex flex-col min-h-[calc(100vh-60px)] md:min-h-[calc(860px-60px)]">
       <div className="px-5 pt-4 pb-3 flex items-center gap-3">
@@ -956,10 +960,10 @@ function Step3Services({ services, groupedServices, selected, selectedEmployee, 
                     <div className="flex items-start gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <h3 className="font-bold text-sm" style={{ color: textPrimary }}>{svc.name}</h3>
+                        <h3 className="font-bold text-sm" style={{ color: cardTextPrimary }}>{svc.name}</h3>
                           {isSelected && <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-xs flex-shrink-0" style={{ background: accent }}>✓</div>}
                         </div>
-                        {svc.description && <p className="text-xs mt-0.5 leading-relaxed" style={{ color: textSecondary }}>{svc.description}</p>}
+                        {svc.description && <p className="text-xs mt-0.5 leading-relaxed" style={{ color: cardTextSecondary }}>{svc.description}</p>}
                         <div className="flex items-center gap-3 mt-2">
                           <span className="text-base font-bold" style={{ color: accent }}>{formatCurrency(Number(svc.price))}</span>
                           <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: `${accent}10`, color: accent }}>⏱ {svc.duration_minutes} min</span>
@@ -974,7 +978,7 @@ function Step3Services({ services, groupedServices, selected, selectedEmployee, 
         ))}
         {services.length === 0 && (
           <div className="rounded-2xl p-8 text-center" style={{ background: "white", border: `2px dashed ${accent}30` }}>
-            <p style={{ color: textMuted }}>Nenhum serviço disponível no momento.</p>
+            <p style={{ color: cardTextMuted }}>Nenhum serviço disponível no momento.</p>
           </div>
         )}
       </div>
@@ -986,7 +990,7 @@ function Step3Services({ services, groupedServices, selected, selectedEmployee, 
 function WaitlistForm({ professionalId, serviceId, serviceName, selectedDate, accent, colors, clientName, clientPhone, onClose }: {
   professionalId: string; serviceId: string; serviceName: string; selectedDate: Date; accent: string; colors: TextColors; clientName: string; clientPhone: string; onClose: () => void;
 }) {
-  const { textPrimary, textSecondary, textMuted } = colors;
+  const { textPrimary, textSecondary, textMuted, cardTextPrimary, cardTextSecondary, cardTextMuted } = colors;
   const [period, setPeriod] = useState("any");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -1016,8 +1020,8 @@ function WaitlistForm({ professionalId, serviceId, serviceName, selectedDate, ac
     return (
       <div className="rounded-2xl p-6 text-center animate-fade-in-up-bloom" style={{ background: "white", border: `2px solid ${accent}20` }}>
         <span className="text-4xl mb-3 block">🎉</span>
-        <p className="text-sm font-bold mb-1" style={{ color: textPrimary }}>Você está na lista de espera!</p>
-        <p className="text-xs mb-3" style={{ color: textMuted }}>
+        <p className="text-sm font-bold mb-1" style={{ color: cardTextPrimary }}>Você está na lista de espera!</p>
+        <p className="text-xs mb-3" style={{ color: cardTextMuted }}>
           Entraremos em contato pelo WhatsApp caso um horário fique disponível para {DAYS_FULL[selectedDate.getDay()]}, {selectedDate.getDate()} de {MONTHS_PT[selectedDate.getMonth()]}.
         </p>
         <p className="text-xs font-medium" style={{ color: accent }}>Serviço: {serviceName}</p>
@@ -1030,8 +1034,8 @@ function WaitlistForm({ professionalId, serviceId, serviceName, selectedDate, ac
       <div className="flex items-center gap-2 mb-3">
         <span className="text-xl">⏰</span>
         <div>
-          <p className="text-sm font-bold" style={{ color: textPrimary }}>Lista de Espera</p>
-          <p className="text-xs" style={{ color: textMuted }}>Seja avisado quando um horário abrir!</p>
+          <p className="text-sm font-bold" style={{ color: cardTextPrimary }}>Lista de Espera</p>
+          <p className="text-xs" style={{ color: cardTextMuted }}>Seja avisado quando um horário abrir!</p>
         </div>
       </div>
 
@@ -1050,7 +1054,7 @@ function WaitlistForm({ professionalId, serviceId, serviceName, selectedDate, ac
               className="py-2.5 rounded-xl text-xs font-semibold transition-all active:scale-95"
               style={{
                 background: period === opt.value ? `linear-gradient(135deg, ${accent}, ${accent}cc)` : "white",
-                color: period === opt.value ? "white" : textPrimary,
+                color: period === opt.value ? "white" : cardTextPrimary,
                 border: `1.5px solid ${period === opt.value ? accent : "#F1F5F9"}`,
               }}
             >
@@ -1088,7 +1092,7 @@ function WaitlistForm({ professionalId, serviceId, serviceName, selectedDate, ac
 function Step4DateTime({ service, professional, accent, colors, days, today, selectedDate, setSelectedDate, selectedTime, setSelectedTime, slots, loadingSlots, selectedSlot, setSelectedSlot, waitlistEnabled, clientName, clientPhone, onNext, onBack }: {
   service: Service; professional: Professional; accent: string; colors: TextColors; days: Date[]; today: Date; selectedDate: Date | null; setSelectedDate: (d: Date | null) => void; selectedTime: string; setSelectedTime: (t: string) => void; slots: Slot[]; loadingSlots: boolean; selectedSlot: Slot | null; setSelectedSlot: (s: Slot | null) => void; waitlistEnabled: boolean; clientName: string; clientPhone: string; onNext: () => void; onBack: () => void;
 }) {
-  const { textPrimary, textSecondary, textMuted } = colors;
+  const { textPrimary, textSecondary, textMuted, cardTextPrimary, cardTextSecondary, cardTextMuted } = colors;
   const handleDaySelect = (d: Date) => { setSelectedDate(d); setSelectedTime(""); setSelectedSlot(null); };
   const handleTimeSelect = (slot: Slot) => { setSelectedSlot(slot); setSelectedTime(formatTimeSP(slot.start_time)); };
   const canContinue = selectedDate && selectedSlot;
@@ -1120,8 +1124,8 @@ function Step4DateTime({ service, professional, accent, colors, days, today, sel
               <button key={d.toISOString()} onClick={() => handleDaySelect(d)}
                 className="flex-shrink-0 flex flex-col items-center gap-1 py-3 px-3 rounded-xl transition-all active:scale-90 min-w-[56px]"
                 style={{ background: isSelected ? `linear-gradient(135deg, ${accent}, ${accent}cc)` : isToday ? `${accent}08` : "white", border: `1.5px solid ${isSelected ? accent : isToday ? `${accent}40` : "#F1F5F9"}`, boxShadow: isSelected ? `0 4px 12px ${accent}40` : "0 1px 3px rgba(0,0,0,0.04)" }}>
-                <span className="text-[10px] font-semibold uppercase" style={{ color: isSelected ? "rgba(255,255,255,0.8)" : textMuted }}>{DAYS_PT[d.getDay()]}</span>
-                <span className="text-lg font-bold leading-none" style={{ color: isSelected ? "white" : textPrimary }}>{d.getDate()}</span>
+                <span className="text-[10px] font-semibold uppercase" style={{ color: isSelected ? "rgba(255,255,255,0.8)" : cardTextMuted }}>{DAYS_PT[d.getDay()]}</span>
+                <span className="text-lg font-bold leading-none" style={{ color: isSelected ? "white" : cardTextPrimary }}>{d.getDate()}</span>
                 {isToday && !isSelected && <div className="w-1.5 h-1.5 rounded-full" style={{ background: accent }} />}
               </button>
             );
@@ -1145,7 +1149,7 @@ function Step4DateTime({ service, professional, accent, colors, days, today, sel
                   return (
                     <button key={slot.start_time} onClick={() => handleTimeSelect(slot)}
                       className="py-3 rounded-xl text-sm font-semibold transition-all active:scale-95"
-                      style={{ background: isSelected ? `linear-gradient(135deg, ${accent}, ${accent}cc)` : "white", color: isSelected ? "white" : textPrimary, border: `1.5px solid ${isSelected ? accent : "#F1F5F9"}`, boxShadow: isSelected ? `0 4px 12px ${accent}40` : "0 1px 3px rgba(0,0,0,0.04)" }}>
+                      style={{ background: isSelected ? `linear-gradient(135deg, ${accent}, ${accent}cc)` : "white", color: isSelected ? "white" : cardTextPrimary, border: `1.5px solid ${isSelected ? accent : "#F1F5F9"}`, boxShadow: isSelected ? `0 4px 12px ${accent}40` : "0 1px 3px rgba(0,0,0,0.04)" }}>
                       {time}
                     </button>
                   );
@@ -1156,7 +1160,7 @@ function Step4DateTime({ service, professional, accent, colors, days, today, sel
             <div className="space-y-4">
               <div className="flex flex-col items-center justify-center py-8 rounded-2xl" style={{ background: "#F9FAFB", border: `2px dashed ${accent}20` }}>
                 <span className="text-3xl mb-2">😔</span>
-                <p className="text-sm font-medium" style={{ color: textMuted }}>Nenhum horário disponível nesta data</p>
+                <p className="text-sm font-medium" style={{ color: cardTextMuted }}>Nenhum horário disponível nesta data</p>
               </div>
               {waitlistEnabled && selectedDate && service && (
                 <WaitlistForm
@@ -1176,7 +1180,7 @@ function Step4DateTime({ service, professional, accent, colors, days, today, sel
         ) : (
           <div className="flex flex-col items-center justify-center py-12 rounded-2xl" style={{ background: "#F9FAFB", border: `2px dashed ${accent}20` }}>
               <span className="text-3xl mb-2">📅</span>
-              <p className="text-sm font-medium" style={{ color: textMuted }}>Selecione um dia para ver os horários</p>
+              <p className="text-sm font-medium" style={{ color: cardTextMuted }}>Selecione um dia para ver os horários</p>
           </div>
         )}
       </div>
@@ -1205,7 +1209,7 @@ function Step4DateTime({ service, professional, accent, colors, days, today, sel
 function Step5Confirm({ professional, selectedEmployee, selectedService, selectedSlot, clientName, clientPhone, accent, colors, isSalon, paymentConfig, signalAmount, totalPrice, remainingValue, submitting, onConfirm, onBack }: {
   professional: Professional; selectedEmployee: Employee | null; selectedService: Service; selectedSlot: Slot | null; clientName: string; clientPhone: string; accent: string; colors: TextColors; isSalon: boolean; paymentConfig: PaymentConfig | null; signalAmount: number | null; totalPrice: number; remainingValue: number; submitting: boolean; onConfirm: () => void; onBack: () => void;
 }) {
-  const { textPrimary, textSecondary, textMuted } = colors;
+  const { textPrimary, textSecondary, textMuted, cardTextPrimary, cardTextSecondary, cardTextMuted } = colors;
   if (!selectedSlot) return null;
   const spDate = formatDateSP(selectedSlot.start_time);
 
@@ -1249,8 +1253,8 @@ function Step5Confirm({ professional, selectedEmployee, selectedService, selecte
             ].map(item => (
               <div key={item.label} className="flex items-center gap-3">
                 <span className="text-base w-6 text-center">{item.icon}</span>
-                <span className="text-xs flex-1" style={{ color: textSecondary }}>{item.label}</span>
-                <span className="text-xs font-semibold" style={{ color: textPrimary }}>{item.value}</span>
+                <span className="text-xs flex-1" style={{ color: cardTextSecondary }}>{item.label}</span>
+                <span className="text-xs font-semibold" style={{ color: cardTextPrimary }}>{item.value}</span>
               </div>
             ))}
           </div>
@@ -1303,7 +1307,7 @@ function Step5Confirm({ professional, selectedEmployee, selectedService, selecte
 function SuccessView({ professional, selectedEmployee, selectedService, selectedSlot, clientName, clientPhone, accent, colors, signalAmount, paymentConfig, reviewRating, setReviewRating, reviewComment, setReviewComment, reviewSubmitted, submittingReview, onSubmitReview, onReset }: {
   professional: Professional; selectedEmployee: Employee | null; selectedService: Service | null; selectedSlot: Slot | null; clientName: string; clientPhone: string; accent: string; colors: TextColors; signalAmount: number | null; paymentConfig: PaymentConfig | null; reviewRating: number; setReviewRating: (n: number) => void; reviewComment: string; setReviewComment: (s: string) => void; reviewSubmitted: boolean; submittingReview: boolean; onSubmitReview: () => void; onReset: () => void;
 }) {
-  const { textPrimary, textSecondary, textMuted } = colors;
+  const { textPrimary, textSecondary, textMuted, cardTextPrimary, cardTextSecondary, cardTextMuted } = colors;
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-20px)] md:min-h-[calc(860px-20px)] px-5 text-center py-8">
       <div className="animate-scale-in">
@@ -1351,10 +1355,10 @@ function SuccessView({ professional, selectedEmployee, selectedService, selected
         {/* Review Form */}
         {!reviewSubmitted ? (
           <div className="rounded-2xl p-5 mb-6 text-left" style={{ background: "white", border: `1px solid ${accent}20` }}>
-            <h3 className="font-semibold text-sm flex items-center gap-2 mb-3" style={{ color: textPrimary }}>
+            <h3 className="font-semibold text-sm flex items-center gap-2 mb-3" style={{ color: cardTextPrimary }}>
               <Star size={16} className="text-yellow-500" /> Como foi sua experiência com a plataforma?
             </h3>
-            <p className="text-xs mb-3" style={{ color: textMuted }}>Avalie o processo de agendamento online</p>
+            <p className="text-xs mb-3" style={{ color: cardTextMuted }}>Avalie o processo de agendamento online</p>
             <div className="flex items-center justify-center gap-2 mb-3">
               {[1, 2, 3, 4, 5].map(s => (
                 <button key={s} onClick={() => setReviewRating(s)} className="transition-transform hover:scale-110">
