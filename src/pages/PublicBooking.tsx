@@ -1034,8 +1034,8 @@ function WaitlistForm({ professionalId, serviceId, serviceName, selectedDate, ac
       <div className="flex items-center gap-2 mb-3">
         <span className="text-xl">⏰</span>
         <div>
-          <p className="text-sm font-bold" style={{ color: textPrimary }}>Lista de Espera</p>
-          <p className="text-xs" style={{ color: textMuted }}>Seja avisado quando um horário abrir!</p>
+          <p className="text-sm font-bold" style={{ color: cardTextPrimary }}>Lista de Espera</p>
+          <p className="text-xs" style={{ color: cardTextMuted }}>Seja avisado quando um horário abrir!</p>
         </div>
       </div>
 
