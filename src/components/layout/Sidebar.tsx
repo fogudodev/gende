@@ -289,7 +289,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
               : "text-muted-foreground hover:text-foreground hover:bg-secondary"
           }`}
         >
-          <Icon size={18} className={iconClass(isActive, true)} />
+          {renderIcon(item, 18, iconClass(isActive, true))}
           <span className="text-sm font-medium">{item.label}</span>
         </Link>
       );
