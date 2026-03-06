@@ -739,7 +739,7 @@ const PublicBooking = () => {
 /* ══ SUB-COMPONENTS ════════════════════════════════ */
 /* ═══════════════════════════════════════════════════ */
 
-type TextColors = { textPrimary: string; textSecondary: string; textMuted: string };
+type TextColors = { textPrimary: string; textSecondary: string; textMuted: string; cardTextPrimary: string; cardTextSecondary: string; cardTextMuted: string };
 
 /* ── Step 1: Client Info ── */
 function Step1ClientInfo({ professional, accent, colors, clientName, setClientName, clientPhone, setClientPhone, onNext, reviewStats }: {
