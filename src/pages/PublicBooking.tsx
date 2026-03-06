@@ -749,7 +749,7 @@ type TextColors = { textPrimary: string; textSecondary: string; textMuted: strin
 function Step1ClientInfo({ professional, accent, colors, clientName, setClientName, clientPhone, setClientPhone, onNext, reviewStats }: {
   professional: Professional; accent: string; colors: TextColors; clientName: string; setClientName: (v: string) => void; clientPhone: string; setClientPhone: (v: string) => void; onNext: () => void; reviewStats: {avg: number; count: number} | null;
 }) {
-  const { textPrimary, textSecondary, textMuted } = colors;
+  const { textPrimary, textSecondary, textMuted, cardTextPrimary, cardTextSecondary, cardTextMuted } = colors;
   const [errors, setErrors] = useState({ name: "", phone: "" });
   const validate = () => {
     const e = { name: "", phone: "" };
