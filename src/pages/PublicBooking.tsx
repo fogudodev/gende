@@ -920,7 +920,7 @@ function Step2Employees({ employees, selected, clientName, accent, colors, emplo
 function Step3Services({ services, groupedServices, selected, selectedEmployee, accent, colors, isSalon, onSelect, onBack }: {
   services: Service[]; groupedServices: Record<string, Service[]>; selected: Service | null; selectedEmployee: Employee | null; accent: string; colors: TextColors; isSalon: boolean; onSelect: (s: Service) => void; onBack: () => void;
 }) {
-  const { textPrimary, textSecondary, textMuted } = colors;
+  const { textPrimary, textSecondary, textMuted, cardTextPrimary, cardTextSecondary, cardTextMuted } = colors;
   return (
     <div className="flex flex-col min-h-[calc(100vh-60px)] md:min-h-[calc(860px-60px)]">
       <div className="px-5 pt-4 pb-3 flex items-center gap-3">
