@@ -181,7 +181,11 @@ const PublicBooking = () => {
   const isHex6 = /^#[0-9A-Fa-f]{6}$/.test(textPrimary);
   const textSecondary = isHex6 ? textPrimary + "b3" : textPrimary; // 70% opacity
   const textMuted = isHex6 ? textPrimary + "80" : textPrimary; // 50% opacity
-  const colors = { textPrimary, textSecondary, textMuted };
+  // Card text colors — always dark for readability on white backgrounds
+  const cardTextPrimary = "#1A1A2E";
+  const cardTextSecondary = "#1A1A2Eb3";
+  const cardTextMuted = "#1A1A2E80";
+  const colors = { textPrimary, textSecondary, textMuted, cardTextPrimary, cardTextSecondary, cardTextMuted };
   const cardBg = "rgba(255,255,255,0.95)";
   const cardBorder = `${accent}15`;
   const cardShadow = `0 4px 24px -4px ${accent}12, 0 1px 3px rgba(0,0,0,0.06)`;
