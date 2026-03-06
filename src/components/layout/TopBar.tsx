@@ -1,4 +1,5 @@
-import { Bell, Search, Sun, Moon, Menu, Crown, Headphones, Sparkles, Wallet, CreditCard, MessageSquare, CheckCheck, Bot } from "lucide-react";
+import { Bell, Search, Sun, Moon, Menu, Crown, Headphones, Sparkles, Wallet, CreditCard, MessageSquare, CheckCheck } from "lucide-react";
+import aiAssistantIcon from "@/assets/icon-ai-assistant.png";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useProfessional } from "@/hooks/useProfessional";
