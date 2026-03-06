@@ -1020,8 +1020,8 @@ function WaitlistForm({ professionalId, serviceId, serviceName, selectedDate, ac
     return (
       <div className="rounded-2xl p-6 text-center animate-fade-in-up-bloom" style={{ background: "white", border: `2px solid ${accent}20` }}>
         <span className="text-4xl mb-3 block">🎉</span>
-        <p className="text-sm font-bold mb-1" style={{ color: textPrimary }}>Você está na lista de espera!</p>
-        <p className="text-xs mb-3" style={{ color: textMuted }}>
+        <p className="text-sm font-bold mb-1" style={{ color: cardTextPrimary }}>Você está na lista de espera!</p>
+        <p className="text-xs mb-3" style={{ color: cardTextMuted }}>
           Entraremos em contato pelo WhatsApp caso um horário fique disponível para {DAYS_FULL[selectedDate.getDay()]}, {selectedDate.getDate()} de {MONTHS_PT[selectedDate.getMonth()]}.
         </p>
         <p className="text-xs font-medium" style={{ color: accent }}>Serviço: {serviceName}</p>
