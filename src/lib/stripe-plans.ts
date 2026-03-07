@@ -176,6 +176,7 @@ export const PLAN_FEATURES: Record<PlanId | "none", FeatureKey[]> = {
     "payment-chat",
     "ai-assistant",
     "cash-register",
+    "upsell",
   ],
 };
 

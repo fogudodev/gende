@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { generatePixPayload } from "@/lib/pix-utils";
 import { QRCodeSVG } from "qrcode.react";
+import UpsellSuggestions from "@/components/upsell/UpsellSuggestions";
 
 /* ── Types ─────────────────────────────────────── */
 type Professional = {
