@@ -1266,12 +1266,14 @@ function Step5Confirm({ professional, selectedEmployee, selectedService, selecte
         <UpsellSuggestions
           professionalId={professional.id}
           sourceServiceId={selectedService.id}
-          services={[]}
+          services={allServices}
           accent={accent}
           textPrimary={cardTextPrimary}
           textSecondary={cardTextSecondary}
-          onAddService={() => {}}
-          addedServiceIds={[]}
+          onAddService={(svc) => {
+            setAddedUpsellIds(prev => [...prev, svc.id]);
+          }}
+          addedServiceIds={addedUpsellIds}
         />
 
         {/* Payment summary */}
