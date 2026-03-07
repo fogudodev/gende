@@ -10,12 +10,13 @@ type Service = {
   description: string | null;
 };
 
-type UpsellRule = {
+type Suggestion = {
   id: string;
-  recommended_service_id: string;
-  promo_message: string | null;
-  promo_price: number | null;
-  priority: number;
+  name: string;
+  price: number;
+  duration_minutes: number;
+  promoMessage: string | null;
+  promoPrice: number | null;
 };
 
 interface UpsellSuggestionsProps {
@@ -39,12 +40,15 @@ const UpsellSuggestions = ({
   onAddService,
   addedServiceIds,
 }: UpsellSuggestionsProps) => {
-  const [rules, setRules] = useState<UpsellRule[]>([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchRules = async () => {
-      const { data } = await supabase
+    const fetchSuggestions = async () => {
+      setLoading(true);
+
+      // First try: manual rules from DB
+      const { data: rules } = await supabase
         .from("upsell_rules" as any)
         .select("id, recommended_service_id, promo_message, promo_price, priority")
         .eq("professional_id", professionalId)
@@ -52,36 +56,81 @@ const UpsellSuggestions = ({
         .eq("is_active", true)
         .order("priority", { ascending: true })
         .limit(3);
-      setRules((data || []) as unknown as UpsellRule[]);
-      setLoading(false);
 
-      // Track suggestion events
-      if (data && data.length > 0) {
-        for (const rule of data as any[]) {
-          await supabase.from("upsell_events" as any).insert({
-            professional_id: professionalId,
-            source_service_id: sourceServiceId,
-            recommended_service_id: rule.recommended_service_id,
-            channel: "web",
-            status: "suggested",
-          } as any);
+      const typedRules = (rules || []) as unknown as {
+        id: string;
+        recommended_service_id: string;
+        promo_message: string | null;
+        promo_price: number | null;
+      }[];
+
+      if (typedRules.length > 0) {
+        // Map rules to suggestions using services list
+        const mapped = typedRules
+          .map(rule => {
+            const svc = services.find(s => s.id === rule.recommended_service_id);
+            if (!svc) return null;
+            return {
+              id: svc.id,
+              name: svc.name,
+              price: svc.price,
+              duration_minutes: svc.duration_minutes,
+              promoMessage: rule.promo_message,
+              promoPrice: rule.promo_price,
+            };
+          })
+          .filter(Boolean) as Suggestion[];
+
+        if (mapped.length > 0) {
+          setSuggestions(mapped);
+          trackSuggestionEvents(mapped);
+          setLoading(false);
+          return;
         }
       }
+
+      // Fallback: AI-based suggestions via edge function
+      try {
+        const { data, error } = await supabase.functions.invoke("upsell-suggest", {
+          body: { professionalId, sourceServiceId },
+        });
+
+        if (!error && data?.suggestions?.length > 0) {
+          const aiSuggestions = data.suggestions.map((s: any) => ({
+            id: s.service?.id || "",
+            name: s.service?.name || "",
+            price: s.service?.price || 0,
+            duration_minutes: s.service?.duration_minutes || 0,
+            promoMessage: s.promo_message || null,
+            promoPrice: s.promo_price || null,
+          })).filter((s: Suggestion) => s.id);
+
+          setSuggestions(aiSuggestions);
+          trackSuggestionEvents(aiSuggestions);
+        }
+      } catch {
+        // Silently fail - upsell is not critical
+      }
+
+      setLoading(false);
     };
-    if (professionalId && sourceServiceId) fetchRules();
+
+    const trackSuggestionEvents = async (items: Suggestion[]) => {
+      for (const item of items) {
+        await supabase.from("upsell_events" as any).insert({
+          professional_id: professionalId,
+          source_service_id: sourceServiceId,
+          recommended_service_id: item.id,
+          channel: "web",
+          status: "suggested",
+        } as any);
+      }
+    };
+
+    if (professionalId && sourceServiceId) fetchSuggestions();
   }, [professionalId, sourceServiceId]);
 
-  if (loading || rules.length === 0) return null;
-
-  const recommendedServices = rules
-    .map(rule => {
-      const svc = services.find(s => s.id === rule.recommended_service_id);
-      if (!svc) return null;
-      return { ...svc, promoMessage: rule.promo_message, promoPrice: rule.promo_price };
-    })
-    .filter(Boolean) as (Service & { promoMessage: string | null; promoPrice: number | null })[];
-
-  if (recommendedServices.length === 0) return null;
+  if (loading || suggestions.length === 0) return null;
 
   return (
     <div className="mt-4 rounded-2xl p-4" style={{ background: `${accent}08`, border: `1px solid ${accent}20` }}>
@@ -92,7 +141,7 @@ const UpsellSuggestions = ({
         </p>
       </div>
       <div className="space-y-2">
-        {recommendedServices.map(svc => {
+        {suggestions.map(svc => {
           const isAdded = addedServiceIds.includes(svc.id);
           const displayPrice = svc.promoPrice ?? svc.price;
           const hasPromo = svc.promoPrice !== null && svc.promoPrice < svc.price;
@@ -128,7 +177,10 @@ const UpsellSuggestions = ({
                 )}
               </div>
               <button
-                onClick={() => !isAdded && onAddService(svc, svc.promoPrice)}
+                onClick={() => !isAdded && onAddService(
+                  { id: svc.id, name: svc.name, price: svc.price, duration_minutes: svc.duration_minutes, description: null },
+                  svc.promoPrice
+                )}
                 disabled={isAdded}
                 className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all active:scale-95"
                 style={{
