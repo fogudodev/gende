@@ -198,7 +198,7 @@ const Landing = () => {
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <FadeInSection>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium mb-4 sm:mb-6">
-              <Sparkles size={12} /> +3.000 profissionais já transformaram seus negócios
+              <Sparkles size={12} /> Milhares de profissionais já transformaram seus negócios
             </span>
           </FadeInSection>
 
@@ -389,7 +389,7 @@ const Landing = () => {
           <FadeInSection delay={0.1}>
             <div className="text-center mb-8 sm:mb-16">
               <p className="text-3xl sm:text-5xl font-extrabold text-gradient font-display">
-                +R$ <AnimatedCounter target={2800000} prefix="" suffix="" />
+                +R$ <AnimatedCounter target={200000} prefix="" suffix="" />
               </p>
               <p className="text-muted-foreground text-sm sm:text-base mt-1 sm:mt-2">já movimentados através da plataforma</p>
             </div>
