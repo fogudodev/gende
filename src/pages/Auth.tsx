@@ -101,7 +101,7 @@ const Auth = () => {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col relative overflow-hidden">
       {/* Wavy SVG Divider */}
-      <div className="absolute top-0 left-0 w-full">
+      <div className="absolute top-0 left-0 w-full pointer-events-none">
         <svg viewBox="0 0 1440 400" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-[45vh] block">
           <path
             d="M0,400 L0,0 L1440,0 L1440,400 C1300,320 1100,380 800,300 C500,220 200,340 0,400 Z"
