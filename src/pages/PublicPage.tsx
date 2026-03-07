@@ -221,7 +221,7 @@ const PublicPage = () => {
   }
 
   const previewUrl = debouncedSlug
-    ? `${window.location.origin}/p/${debouncedSlug}`
+    ? `${window.location.origin}/${debouncedSlug}`
     : null;
 
   const toggleSection = (section: ActiveSection) => {
