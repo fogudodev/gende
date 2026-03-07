@@ -117,6 +117,7 @@ const AppContent = () => (
 
             {/* Public routes */}
             <Route path="/p/:slug" element={<PublicBooking />} />
+            <Route path="/:slug" element={<PublicBooking />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
