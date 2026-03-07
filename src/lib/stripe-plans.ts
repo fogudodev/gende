@@ -127,7 +127,8 @@ export type FeatureKey =
   | "support-chat"
   | "payment-chat"
   | "ai-assistant"
-  | "cash-register";
+  | "cash-register"
+  | "upsell";
 
 export const PLAN_FEATURES: Record<PlanId | "none", FeatureKey[]> = {
   none: [
