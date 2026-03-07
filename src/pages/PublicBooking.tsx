@@ -1207,9 +1207,10 @@ function Step4DateTime({ service, professional, accent, colors, days, today, sel
 }
 
 /* ── Step 5: Confirmation ── */
-function Step5Confirm({ professional, selectedEmployee, selectedService, selectedSlot, clientName, clientPhone, accent, colors, isSalon, paymentConfig, signalAmount, totalPrice, remainingValue, submitting, onConfirm, onBack }: {
-  professional: Professional; selectedEmployee: Employee | null; selectedService: Service; selectedSlot: Slot | null; clientName: string; clientPhone: string; accent: string; colors: TextColors; isSalon: boolean; paymentConfig: PaymentConfig | null; signalAmount: number | null; totalPrice: number; remainingValue: number; submitting: boolean; onConfirm: () => void; onBack: () => void;
+function Step5Confirm({ professional, selectedEmployee, selectedService, selectedSlot, clientName, clientPhone, accent, colors, isSalon, paymentConfig, signalAmount, totalPrice, remainingValue, submitting, onConfirm, onBack, allServices }: {
+  professional: Professional; selectedEmployee: Employee | null; selectedService: Service; selectedSlot: Slot | null; clientName: string; clientPhone: string; accent: string; colors: TextColors; isSalon: boolean; paymentConfig: PaymentConfig | null; signalAmount: number | null; totalPrice: number; remainingValue: number; submitting: boolean; onConfirm: () => void; onBack: () => void; allServices: Service[];
 }) {
+  const [addedUpsellIds, setAddedUpsellIds] = useState<string[]>([]);
   const { textPrimary, textSecondary, textMuted, cardTextPrimary, cardTextSecondary, cardTextMuted } = colors;
   if (!selectedSlot) return null;
   const spDate = formatDateSP(selectedSlot.start_time);
