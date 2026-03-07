@@ -1260,6 +1260,18 @@ function Step5Confirm({ professional, selectedEmployee, selectedService, selecte
           </div>
         </div>
 
+        {/* Upsell Suggestions */}
+        <UpsellSuggestions
+          professionalId={professional.id}
+          sourceServiceId={selectedService.id}
+          services={[]}
+          accent={accent}
+          textPrimary={cardTextPrimary}
+          textSecondary={cardTextSecondary}
+          onAddService={() => {}}
+          addedServiceIds={[]}
+        />
+
         {/* Payment summary */}
         {signalAmount && (
           <div className="rounded-2xl p-4 mb-4" style={{ background: `${accent}10`, border: `1.5px solid ${accent}30` }}>
