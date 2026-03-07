@@ -389,7 +389,7 @@ const Landing = () => {
           <FadeInSection delay={0.1}>
             <div className="text-center mb-8 sm:mb-16">
               <p className="text-3xl sm:text-5xl font-extrabold text-gradient font-display">
-                +R$ <AnimatedCounter target={2800000} prefix="" suffix="" />
+                +R$ <AnimatedCounter target={200000} prefix="" suffix="" />
               </p>
               <p className="text-muted-foreground text-sm sm:text-base mt-1 sm:mt-2">já movimentados através da plataforma</p>
             </div>
