@@ -625,6 +625,7 @@ const PublicBooking = () => {
               submitting={submitting}
               onConfirm={handleBook}
               onBack={goBack}
+              allServices={services}
             />
           )}
 
