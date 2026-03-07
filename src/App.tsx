@@ -36,6 +36,8 @@ import ServicePackages from "./pages/ServicePackages";
 import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
 import Instructions from "./pages/Instructions";
+import UpsellConfig from "./pages/UpsellConfig";
+import UpsellDashboard from "./pages/UpsellDashboard";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -95,6 +97,8 @@ const AppContent = () => (
             <Route path="/waitlist" element={<ProtectedRoute><Waitlist /></ProtectedRoute>} />
             <Route path="/service-packages" element={<ProtectedRoute><ServicePackages /></ProtectedRoute>} />
             <Route path="/instructions" element={<ProtectedRoute><Instructions /></ProtectedRoute>} />
+            <Route path="/upsell" element={<ProtectedRoute><UpsellDashboard /></ProtectedRoute>} />
+            <Route path="/upsell/config" element={<ProtectedRoute><UpsellConfig /></ProtectedRoute>} />
 
             {/* Admin Master routes */}
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />

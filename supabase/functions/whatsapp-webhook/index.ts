@@ -603,6 +603,77 @@ Agradecemos pela preferência! 😊`;
             
             await sendWhatsAppMessage(instanceName, clientPhone, successMsg);
 
+            // Check for upsell suggestions
+            try {
+              const { data: upsellRules } = await supabase
+                .from("upsell_rules")
+                .select("recommended_service_id, promo_message, promo_price")
+                .eq("professional_id", professionalId)
+                .eq("source_service_id", bookingData.service_id)
+                .eq("is_active", true)
+                .order("priority", { ascending: true })
+                .limit(2);
+
+              if (upsellRules && upsellRules.length > 0) {
+                // Check if upsell feature is enabled
+                const { data: upsellFlag } = await supabase
+                  .from("feature_flags")
+                  .select("enabled")
+                  .eq("key", "upsell_inteligente")
+                  .maybeSingle();
+
+                if (upsellFlag?.enabled) {
+                  const { data: upsellOverride } = await supabase
+                    .from("professional_feature_overrides")
+                    .select("enabled")
+                    .eq("professional_id", professionalId)
+                    .eq("feature_key", "upsell_inteligente")
+                    .maybeSingle();
+
+                  const upsellEnabled = upsellOverride ? upsellOverride.enabled : true;
+
+                  if (upsellEnabled) {
+                    // Build upsell message
+                    const recIds = upsellRules.map((r: any) => r.recommended_service_id);
+                    const { data: recServices } = await supabase
+                      .from("services")
+                      .select("id, name, price")
+                      .in("id", recIds);
+
+                    if (recServices && recServices.length > 0) {
+                      let upsellMsg = "✨ *Aproveite para complementar seu atendimento:*\n\n";
+                      for (const rule of upsellRules as any[]) {
+                        const svc = recServices.find((s: any) => s.id === rule.recommended_service_id);
+                        if (svc) {
+                          const price = rule.promo_price || svc.price;
+                          upsellMsg += `💆 *${svc.name}* — R$ ${Number(price).toFixed(2)}`;
+                          if (rule.promo_message) upsellMsg += `\n${rule.promo_message}`;
+                          upsellMsg += "\n\n";
+
+                          // Track suggestion
+                          await supabase.from("upsell_events").insert({
+                            professional_id: professionalId,
+                            booking_id: bookingResult.booking_id,
+                            source_service_id: bookingData.service_id,
+                            recommended_service_id: svc.id,
+                            client_phone: clientPhone,
+                            channel: "whatsapp",
+                            status: "suggested",
+                          });
+                        }
+                      }
+                      upsellMsg += "Responda com o nome do serviço se quiser adicionar! 😊";
+                      
+                      // Send upsell message after a small delay
+                      await sendWhatsAppMessage(instanceName, clientPhone, upsellMsg);
+                    }
+                  }
+                }
+              }
+            } catch (upsellErr) {
+              console.error("Upsell suggestion error:", upsellErr);
+            }
+
             // Close conversation
             await supabase
               .from("whatsapp_conversations")

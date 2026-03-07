@@ -1683,6 +1683,141 @@ export type Database = {
           },
         ]
       }
+      upsell_events: {
+        Row: {
+          booking_id: string | null
+          channel: string
+          client_phone: string | null
+          created_at: string
+          id: string
+          professional_id: string
+          recommended_service_id: string | null
+          source_service_id: string | null
+          status: string
+          upsell_revenue: number
+        }
+        Insert: {
+          booking_id?: string | null
+          channel?: string
+          client_phone?: string | null
+          created_at?: string
+          id?: string
+          professional_id: string
+          recommended_service_id?: string | null
+          source_service_id?: string | null
+          status?: string
+          upsell_revenue?: number
+        }
+        Update: {
+          booking_id?: string | null
+          channel?: string
+          client_phone?: string | null
+          created_at?: string
+          id?: string
+          professional_id?: string
+          recommended_service_id?: string | null
+          source_service_id?: string | null
+          status?: string
+          upsell_revenue?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "upsell_events_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upsell_events_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upsell_events_recommended_service_id_fkey"
+            columns: ["recommended_service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upsell_events_source_service_id_fkey"
+            columns: ["source_service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      upsell_rules: {
+        Row: {
+          conversion_count: number
+          created_at: string
+          id: string
+          is_active: boolean
+          priority: number
+          professional_id: string
+          promo_message: string | null
+          promo_price: number | null
+          recommended_service_id: string
+          source_service_id: string
+          suggestion_count: number
+          updated_at: string
+        }
+        Insert: {
+          conversion_count?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          priority?: number
+          professional_id: string
+          promo_message?: string | null
+          promo_price?: number | null
+          recommended_service_id: string
+          source_service_id: string
+          suggestion_count?: number
+          updated_at?: string
+        }
+        Update: {
+          conversion_count?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          priority?: number
+          professional_id?: string
+          promo_message?: string | null
+          promo_price?: number | null
+          recommended_service_id?: string
+          source_service_id?: string
+          suggestion_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "upsell_rules_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upsell_rules_recommended_service_id_fkey"
+            columns: ["recommended_service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upsell_rules_source_service_id_fkey"
+            columns: ["source_service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string

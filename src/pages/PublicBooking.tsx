@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { generatePixPayload } from "@/lib/pix-utils";
 import { QRCodeSVG } from "qrcode.react";
+import UpsellSuggestions from "@/components/upsell/UpsellSuggestions";
 
 /* ── Types ─────────────────────────────────────── */
 type Professional = {
@@ -1259,6 +1260,18 @@ function Step5Confirm({ professional, selectedEmployee, selectedService, selecte
             ))}
           </div>
         </div>
+
+        {/* Upsell Suggestions */}
+        <UpsellSuggestions
+          professionalId={professional.id}
+          sourceServiceId={selectedService.id}
+          services={[]}
+          accent={accent}
+          textPrimary={cardTextPrimary}
+          textSecondary={cardTextSecondary}
+          onAddService={() => {}}
+          addedServiceIds={[]}
+        />
 
         {/* Payment summary */}
         {signalAmount && (
