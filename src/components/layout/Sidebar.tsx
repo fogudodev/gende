@@ -34,6 +34,7 @@ import {
   Lock,
   ChevronDown,
   Zap,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
