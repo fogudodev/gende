@@ -182,6 +182,8 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
     "/reports": "reports",
     "/reviews": "reviews",
     "/settings": "settings",
+    "/upsell": "upsell_inteligente",
+    "/upsell/config": "upsell_inteligente",
   };
 
   const isPathDisabled = (path: string): boolean => {
