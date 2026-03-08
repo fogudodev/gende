@@ -187,7 +187,7 @@ const AIAssistant = () => {
                   }`}
                 >
                   {msg.role === "assistant" ? (
-                    <div className="prose prose-sm dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                    <div className="prose prose-sm dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&>p]:mb-3 [&>ul]:mb-3 [&>ol]:mb-3 [&>h2]:mt-4 [&>h2]:mb-2 [&>h3]:mt-3 [&>h3]:mb-1.5 [&>p]:leading-relaxed [&>ul]:leading-relaxed [&>li]:mb-1">
                       <ReactMarkdown>{msg.content}</ReactMarkdown>
                     </div>
                   ) : (
