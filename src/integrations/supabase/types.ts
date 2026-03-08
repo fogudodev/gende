@@ -1838,48 +1838,71 @@ export type Database = {
       }
       waitlist: {
         Row: {
+          client_id: string | null
           client_name: string
           client_phone: string
           created_at: string
+          employee_id: string | null
           id: string
           notes: string | null
           notified_at: string | null
           preferred_date: string
           preferred_period: string
+          priority: number
           professional_id: string
           service_id: string | null
           status: string
           updated_at: string
         }
         Insert: {
+          client_id?: string | null
           client_name: string
           client_phone: string
           created_at?: string
+          employee_id?: string | null
           id?: string
           notes?: string | null
           notified_at?: string | null
           preferred_date: string
           preferred_period?: string
+          priority?: number
           professional_id: string
           service_id?: string | null
           status?: string
           updated_at?: string
         }
         Update: {
+          client_id?: string | null
           client_name?: string
           client_phone?: string
           created_at?: string
+          employee_id?: string | null
           id?: string
           notes?: string | null
           notified_at?: string | null
           preferred_date?: string
           preferred_period?: string
+          priority?: number
           professional_id?: string
           service_id?: string | null
           status?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "waitlist_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "salon_employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "waitlist_professional_id_fkey"
             columns: ["professional_id"]
@@ -1892,6 +1915,137 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      waitlist_offers: {
+        Row: {
+          booking_id: string | null
+          client_name: string
+          client_phone: string
+          created_at: string
+          created_booking_id: string | null
+          id: string
+          professional_id: string
+          reserved_until: string | null
+          responded_at: string | null
+          service_id: string | null
+          slot_end: string
+          slot_start: string
+          status: string
+          waitlist_entry_id: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          client_name: string
+          client_phone: string
+          created_at?: string
+          created_booking_id?: string | null
+          id?: string
+          professional_id: string
+          reserved_until?: string | null
+          responded_at?: string | null
+          service_id?: string | null
+          slot_end: string
+          slot_start: string
+          status?: string
+          waitlist_entry_id?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          client_name?: string
+          client_phone?: string
+          created_at?: string
+          created_booking_id?: string | null
+          id?: string
+          professional_id?: string
+          reserved_until?: string | null
+          responded_at?: string | null
+          service_id?: string | null
+          slot_end?: string
+          slot_start?: string
+          status?: string
+          waitlist_entry_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_offers_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_offers_created_booking_id_fkey"
+            columns: ["created_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_offers_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_offers_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_offers_waitlist_entry_id_fkey"
+            columns: ["waitlist_entry_id"]
+            isOneToOne: false
+            referencedRelation: "waitlist"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      waitlist_settings: {
+        Row: {
+          auto_process: boolean
+          created_at: string
+          enabled: boolean
+          id: string
+          max_notifications: number
+          prioritize_vip: boolean
+          professional_id: string
+          reservation_minutes: number
+          updated_at: string
+        }
+        Insert: {
+          auto_process?: boolean
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          max_notifications?: number
+          prioritize_vip?: boolean
+          professional_id: string
+          reservation_minutes?: number
+          updated_at?: string
+        }
+        Update: {
+          auto_process?: boolean
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          max_notifications?: number
+          prioritize_vip?: boolean
+          professional_id?: string
+          reservation_minutes?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_settings_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: true
+            referencedRelation: "professionals"
             referencedColumns: ["id"]
           },
         ]
