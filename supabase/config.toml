@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.upsell-suggest]
 verify_jwt = false
+
+[functions.waitlist-process]
+verify_jwt = false

@@ -220,16 +220,31 @@ export const useUpdateBooking = () => {
       qc.invalidateQueries({ queryKey: ["bookings-week"] });
       qc.invalidateQueries({ queryKey: ["bookings-month"] });
 
-      // If booking was cancelled and has a Google Calendar event, delete it
-      if (data && data.status === "cancelled" && (data as any).google_calendar_event_id) {
-        supabase.functions.invoke("google-calendar-sync", {
+      // If booking was cancelled, trigger waitlist processing
+      if (data && data.status === "cancelled") {
+        supabase.functions.invoke("waitlist-process", {
           body: {
-            action: "delete_event",
-            professional_id: data.professional_id,
-            booking_id: data.id,
-            event_id: (data as any).google_calendar_event_id,
+            action: "process-cancellation",
+            professionalId: data.professional_id,
+            bookingId: data.id,
+            serviceId: data.service_id,
+            startTime: data.start_time,
+            endTime: data.end_time,
+            employeeId: data.employee_id,
           },
-        }).catch(() => { /* silent fail */ });
+        }).catch((err) => { console.error("Waitlist process error:", err); });
+
+        // Delete from Google Calendar if linked
+        if ((data as any).google_calendar_event_id) {
+          supabase.functions.invoke("google-calendar-sync", {
+            body: {
+              action: "delete_event",
+              professional_id: data.professional_id,
+              booking_id: data.id,
+              event_id: (data as any).google_calendar_event_id,
+            },
+          }).catch(() => { /* silent fail */ });
+        }
       }
     },
   });
