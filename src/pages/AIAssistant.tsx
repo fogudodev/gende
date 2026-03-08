@@ -2,8 +2,10 @@ import { useState, useRef, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useAuth } from "@/hooks/useAuth";
-import { Send, Loader2, Bot, User, Sparkles, TrendingUp, Users, DollarSign, Calendar } from "lucide-react";
+import { Send, Loader2, User, Sparkles, TrendingUp, Users, DollarSign, Calendar } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import lisAvatar from "@/assets/lis-avatar.jpg";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -91,7 +93,6 @@ const AIAssistant = () => {
       }
     }
 
-    // Final flush
     if (textBuffer.trim()) {
       for (let raw of textBuffer.split("\n")) {
         if (!raw) continue;
@@ -138,20 +139,21 @@ const AIAssistant = () => {
   };
 
   return (
-    <DashboardLayout title="Assistente IA" subtitle="Análise inteligente do seu negócio">
+    <DashboardLayout title="Lis — Assistente IA" subtitle="Sua consultora especialista em negócios de beleza">
       <div className="max-w-3xl mx-auto glass-card rounded-2xl flex flex-col h-[calc(100vh-200px)] overflow-hidden">
         {/* Messages */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center px-4">
-              <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mb-4">
-                <Sparkles size={28} className="text-accent" />
-              </div>
+              <Avatar className="w-20 h-20 mb-4 ring-2 ring-accent/30 ring-offset-2 ring-offset-background">
+                <AvatarImage src={lisAvatar} alt="Lis - Assistente IA" className="object-cover" />
+                <AvatarFallback className="bg-accent/10 text-accent text-xl font-bold">L</AvatarFallback>
+              </Avatar>
               <h2 className="text-lg font-bold text-foreground mb-1">
-                Olá, {professional?.name?.split(" ")[0] || ""}! 👋
+                Olá, {professional?.name?.split(" ")[0] || ""}! Eu sou a Lis 👋
               </h2>
               <p className="text-sm text-muted-foreground mb-6 max-w-md">
-                Sou seu assistente de negócios com IA. Analiso seus dados em tempo real para te ajudar a tomar decisões melhores.
+                Sou sua assistente especialista em negócios de beleza. Analiso seus dados em tempo real para te ajudar a crescer e tomar as melhores decisões.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg">
                 {suggestedQuestions.map((q, i) => (
@@ -172,9 +174,10 @@ const AIAssistant = () => {
             messages.map((msg, i) => (
               <div key={i} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 {msg.role === "assistant" && (
-                  <div className="w-8 h-8 rounded-xl bg-accent/10 flex items-center justify-center shrink-0 mt-1">
-                    <Bot size={16} className="text-accent" />
-                  </div>
+                  <Avatar className="w-8 h-8 shrink-0 mt-1 ring-1 ring-accent/20">
+                    <AvatarImage src={lisAvatar} alt="Lis" className="object-cover" />
+                    <AvatarFallback className="bg-accent/10 text-accent text-xs font-bold">L</AvatarFallback>
+                  </Avatar>
                 )}
                 <div
                   className={`max-w-[85%] rounded-2xl px-4 py-3 ${
@@ -201,13 +204,14 @@ const AIAssistant = () => {
           )}
           {isLoading && messages[messages.length - 1]?.role === "user" && (
             <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
-                <Bot size={16} className="text-accent" />
-              </div>
+              <Avatar className="w-8 h-8 shrink-0 ring-1 ring-accent/20">
+                <AvatarImage src={lisAvatar} alt="Lis" className="object-cover" />
+                <AvatarFallback className="bg-accent/10 text-accent text-xs font-bold">L</AvatarFallback>
+              </Avatar>
               <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
                 <div className="flex items-center gap-2">
                   <Loader2 size={14} className="animate-spin text-accent" />
-                  <span className="text-xs text-muted-foreground">Analisando seus dados...</span>
+                  <span className="text-xs text-muted-foreground">Lis está analisando seus dados...</span>
                 </div>
               </div>
             </div>
@@ -222,7 +226,7 @@ const AIAssistant = () => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && send(input)}
-              placeholder="Pergunte sobre seu negócio..."
+              placeholder="Pergunte para a Lis sobre seu negócio..."
               className="flex-1 px-4 py-2.5 rounded-xl bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30"
               disabled={isLoading}
             />
