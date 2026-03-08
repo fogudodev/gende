@@ -38,7 +38,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
-import lisAvatar from "@/assets/lis-avatar.jpg";
+import aiAssistantIcon from "@/assets/icon-ai-assistant.png";
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
 
@@ -250,7 +250,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
 
   const renderIcon = (item: NavItem, size: number, className: string) => {
     if (item.customIcon === "ai-assistant") {
-      return <img src={lisAvatar} alt="Lis" className={`flex-shrink-0 rounded-full object-cover ${className}`} style={{ width: size + 2, height: size + 2 }} />;
+      return <span aria-hidden className={`flex-shrink-0 ${className}`} style={{ width: size + 2, height: size + 2, backgroundColor: "currentColor", WebkitMaskImage: `url(${aiAssistantIcon})`, maskImage: `url(${aiAssistantIcon})`, WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "center", maskPosition: "center", WebkitMaskSize: "contain", maskSize: "contain" }} />;
     }
     const Icon = item.icon;
     return <Icon size={size} className={className} />;
