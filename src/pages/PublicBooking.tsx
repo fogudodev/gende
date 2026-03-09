@@ -29,6 +29,7 @@ type Professional = {
   welcome_description: string | null;
   welcome_message: string | null;
   confirmation_message: string | null;
+  booking_advance_weeks?: number;
 };
 
 type Employee = {
