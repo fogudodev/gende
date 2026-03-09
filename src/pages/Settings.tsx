@@ -415,13 +415,13 @@ const WorkingHoursSection = () => {
   const [local, setLocal] = useState(DEFAULT_HOURS);
   const [showAddBlocked, setShowAddBlocked] = useState(false);
 
-  const currentWeeks = (professional as any)?.booking_advance_weeks ?? 2;
+  const currentWeeks = professional?.booking_advance_weeks ?? 2;
   const isPreset = ADVANCE_WEEKS_OPTIONS.some(o => o.value !== "custom" && Number(o.value) === currentWeeks);
   const [advanceWeeksMode, setAdvanceWeeksMode] = useState<string>(isPreset ? String(currentWeeks) : "custom");
   const [customWeeks, setCustomWeeks] = useState<number>(currentWeeks);
 
   useEffect(() => {
-    const w = (professional as any)?.booking_advance_weeks ?? 2;
+    const w = professional?.booking_advance_weeks ?? 2;
     const preset = ADVANCE_WEEKS_OPTIONS.some(o => o.value !== "custom" && Number(o.value) === w);
     setAdvanceWeeksMode(preset ? String(w) : "custom");
     setCustomWeeks(w);
@@ -431,7 +431,7 @@ const WorkingHoursSection = () => {
     if (!professional || weeks < 1 || weeks > 52) return;
     const { error } = await supabase
       .from("professionals")
-      .update({ booking_advance_weeks: weeks } as any)
+      .update({ booking_advance_weeks: weeks })
       .eq("id", professional.id);
     if (error) {
       toast.error("Erro ao salvar");
