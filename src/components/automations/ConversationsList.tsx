@@ -75,18 +75,6 @@ const ConversationsList = () => {
     setSendingFollowUp(conv.id);
 
     try {
-      const { data, error } = await supabase.functions.invoke("whatsapp", {
-        body: {
-          action: "send-message",
-          instanceName: "",
-          phone: conv.client_phone,
-          message: "",
-          followUpConversationId: conv.id,
-          professionalId: professional.id,
-        },
-      });
-
-      // Use dedicated follow-up action
       const { error: fErr } = await supabase.functions.invoke("whatsapp-webhook", {
         body: {
           action: "send-follow-up",

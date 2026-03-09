@@ -47,10 +47,10 @@ const Automations = () => {
 
   useEffect(() => {
     if (professional) {
-      setWelcomeMessage((professional as any).welcome_message || "");
-      setReminderMessage((professional as any).reminder_message || "");
-      setConfirmationMessage((professional as any).confirmation_message || "");
-      setFollowupMessage((professional as any).followup_message || "");
+      setWelcomeMessage(professional.welcome_message || "");
+      setReminderMessage(professional.reminder_message || "");
+      setConfirmationMessage(professional.confirmation_message || "");
+      setFollowupMessage(professional.followup_message || "");
     }
   }, [professional]);
 
@@ -73,7 +73,7 @@ const Automations = () => {
         reminder_message: reminderMessage.trim(),
         confirmation_message: confirmationMessage.trim(),
         followup_message: followupMessage.trim(),
-      } as any)
+      })
       .eq("id", professional.id);
 
     if (error) {
