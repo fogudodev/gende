@@ -219,7 +219,7 @@ const PublicBooking = () => {
       if (!slug) return;
       const { data: prof, error } = await supabase
         .from("professionals")
-        .select("id, name, business_name, bio, avatar_url, logo_url, cover_url, primary_color, bg_color, text_color, component_color, slug, account_type, welcome_title, welcome_description, welcome_message, confirmation_message")
+        .select("id, name, business_name, bio, avatar_url, logo_url, cover_url, primary_color, bg_color, text_color, component_color, slug, account_type, welcome_title, welcome_description, welcome_message, confirmation_message, booking_advance_weeks")
         .eq("slug", slug)
         .single();
 
