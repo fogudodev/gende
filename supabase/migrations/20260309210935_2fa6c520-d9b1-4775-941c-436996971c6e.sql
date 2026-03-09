@@ -1,0 +1,1 @@
+ALTER TABLE public.professionals ADD COLUMN booking_advance_weeks integer NOT NULL DEFAULT 2;
