@@ -393,15 +393,53 @@ const REASON_PRESETS = [
   { label: "Outro", icon: "📝" },
 ];
 
+const ADVANCE_WEEKS_OPTIONS = [
+  { value: "1", label: "1 semana" },
+  { value: "2", label: "2 semanas" },
+  { value: "3", label: "3 semanas" },
+  { value: "4", label: "4 semanas" },
+  { value: "6", label: "6 semanas" },
+  { value: "8", label: "8 semanas" },
+  { value: "custom", label: "Personalizado" },
+];
+
 const WorkingHoursSection = () => {
   const { data: hours, isLoading } = useWorkingHours();
   const upsert = useUpsertWorkingHours();
   const { data: blockedTimes, isLoading: blockedLoading } = useBlockedTimes();
   const createBlocked = useCreateBlockedTime();
   const deleteBlocked = useDeleteBlockedTime();
+  const { data: professional } = useProfessional();
+  const queryClient = useQueryClient();
 
   const [local, setLocal] = useState(DEFAULT_HOURS);
   const [showAddBlocked, setShowAddBlocked] = useState(false);
+
+  const currentWeeks = (professional as any)?.booking_advance_weeks ?? 2;
+  const isPreset = ADVANCE_WEEKS_OPTIONS.some(o => o.value !== "custom" && Number(o.value) === currentWeeks);
+  const [advanceWeeksMode, setAdvanceWeeksMode] = useState<string>(isPreset ? String(currentWeeks) : "custom");
+  const [customWeeks, setCustomWeeks] = useState<number>(currentWeeks);
+
+  useEffect(() => {
+    const w = (professional as any)?.booking_advance_weeks ?? 2;
+    const preset = ADVANCE_WEEKS_OPTIONS.some(o => o.value !== "custom" && Number(o.value) === w);
+    setAdvanceWeeksMode(preset ? String(w) : "custom");
+    setCustomWeeks(w);
+  }, [professional]);
+
+  const saveAdvanceWeeks = async (weeks: number) => {
+    if (!professional || weeks < 1 || weeks > 52) return;
+    const { error } = await supabase
+      .from("professionals")
+      .update({ booking_advance_weeks: weeks } as any)
+      .eq("id", professional.id);
+    if (error) {
+      toast.error("Erro ao salvar");
+    } else {
+      toast.success(`Agenda aberta para ${weeks} semana${weeks > 1 ? "s" : ""}`);
+      queryClient.invalidateQueries({ queryKey: ["professional"] });
+    }
+  };
 
   // Blocked time form
   const [blockedType, setBlockedType] = useState<"period" | "hours">("period");
@@ -527,6 +565,57 @@ const WorkingHoursSection = () => {
       </div>
 
       <SaveButton saving={upsert.isPending} onClick={handleSave} />
+
+      {/* Advance weeks */}
+      <div className="pt-4">
+        <div className="flex items-center gap-2 mb-3">
+          <CalendarIcon size={20} className="text-accent" />
+          <h2 className="text-lg font-bold text-foreground">Abertura da Agenda</h2>
+        </div>
+        <div className="glass-card rounded-2xl p-6 space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Quantas semanas à frente os clientes podem agendar?
+          </p>
+          <div className="flex items-center gap-3 flex-wrap">
+            <Select
+              value={advanceWeeksMode}
+              onValueChange={(val) => {
+                setAdvanceWeeksMode(val);
+                if (val !== "custom") {
+                  const w = Number(val);
+                  setCustomWeeks(w);
+                  saveAdvanceWeeks(w);
+                }
+              }}
+            >
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ADVANCE_WEEKS_OPTIONS.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {advanceWeeksMode === "custom" && (
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={1}
+                  max={52}
+                  value={customWeeks}
+                  onChange={(e) => setCustomWeeks(Number(e.target.value))}
+                  className="w-20 h-9"
+                />
+                <span className="text-sm text-muted-foreground">semanas</span>
+                <Button size="sm" onClick={() => saveAdvanceWeeks(customWeeks)}>
+                  <Save size={14} />
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Blocked Times / Absences */}
       <div className="pt-4">

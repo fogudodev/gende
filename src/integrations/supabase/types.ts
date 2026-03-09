@@ -1293,6 +1293,7 @@ export type Database = {
           bg_color: string | null
           bio: string | null
           blocked_reason: string | null
+          booking_advance_weeks: number
           business_name: string | null
           component_color: string | null
           confirmation_message: string | null
@@ -1328,6 +1329,7 @@ export type Database = {
           bg_color?: string | null
           bio?: string | null
           blocked_reason?: string | null
+          booking_advance_weeks?: number
           business_name?: string | null
           component_color?: string | null
           confirmation_message?: string | null
@@ -1363,6 +1365,7 @@ export type Database = {
           bg_color?: string | null
           bio?: string | null
           blocked_reason?: string | null
+          booking_advance_weeks?: number
           business_name?: string | null
           component_color?: string | null
           confirmation_message?: string | null

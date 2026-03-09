@@ -219,7 +219,7 @@ const PublicBooking = () => {
       if (!slug) return;
       const { data: prof, error } = await supabase
         .from("professionals")
-        .select("id, name, business_name, bio, avatar_url, logo_url, cover_url, primary_color, bg_color, text_color, component_color, slug, account_type, welcome_title, welcome_description, welcome_message, confirmation_message")
+        .select("id, name, business_name, bio, avatar_url, logo_url, cover_url, primary_color, bg_color, text_color, component_color, slug, account_type, welcome_title, welcome_description, welcome_message, confirmation_message, booking_advance_weeks")
         .eq("slug", slug)
         .single();
 
@@ -430,7 +430,9 @@ const PublicBooking = () => {
     setReviewSubmitted(false);
   };
 
-  // Generate 14 days for date picker
+  // Generate days for date picker based on booking_advance_weeks
+  const advanceWeeks = (professional as any)?.booking_advance_weeks ?? 2;
+  const totalDays = advanceWeeks * 7;
   const todayRef = useRef(new Date());
   // Update reference if day changed (user left page open past midnight)
   const now = new Date();
@@ -438,7 +440,7 @@ const PublicBooking = () => {
     todayRef.current = now;
   }
   const today = todayRef.current;
-  const days14 = useMemo(() => Array.from({ length: 14 }, (_, i) => { const d = new Date(today); d.setDate(today.getDate() + i); return d; }), [today]);
+  const days14 = useMemo(() => Array.from({ length: totalDays }, (_, i) => { const d = new Date(today); d.setDate(today.getDate() + i); return d; }), [today, totalDays]);
 
   // Filter services by selected employee's assigned services (if salon & employee selected & has assignments)
   const filteredServices = useMemo(() => {
