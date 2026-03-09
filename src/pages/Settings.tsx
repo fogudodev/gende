@@ -415,7 +415,7 @@ const WorkingHoursSection = () => {
   const [local, setLocal] = useState(DEFAULT_HOURS);
   const [showAddBlocked, setShowAddBlocked] = useState(false);
 
-  const currentWeeks = (professional as any)?.booking_advance_weeks ?? 2;
+  const currentWeeks = professional?.booking_advance_weeks ?? 2;
   const isPreset = ADVANCE_WEEKS_OPTIONS.some(o => o.value !== "custom" && Number(o.value) === currentWeeks);
   const [advanceWeeksMode, setAdvanceWeeksMode] = useState<string>(isPreset ? String(currentWeeks) : "custom");
   const [customWeeks, setCustomWeeks] = useState<number>(currentWeeks);
