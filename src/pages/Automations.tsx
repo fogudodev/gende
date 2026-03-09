@@ -73,7 +73,7 @@ const Automations = () => {
         reminder_message: reminderMessage.trim(),
         confirmation_message: confirmationMessage.trim(),
         followup_message: followupMessage.trim(),
-      } as any)
+      })
       .eq("id", professional.id);
 
     if (error) {
