@@ -421,7 +421,7 @@ const WorkingHoursSection = () => {
   const [customWeeks, setCustomWeeks] = useState<number>(currentWeeks);
 
   useEffect(() => {
-    const w = (professional as any)?.booking_advance_weeks ?? 2;
+    const w = professional?.booking_advance_weeks ?? 2;
     const preset = ADVANCE_WEEKS_OPTIONS.some(o => o.value !== "custom" && Number(o.value) === w);
     setAdvanceWeeksMode(preset ? String(w) : "custom");
     setCustomWeeks(w);
