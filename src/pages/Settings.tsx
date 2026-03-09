@@ -566,6 +566,57 @@ const WorkingHoursSection = () => {
 
       <SaveButton saving={upsert.isPending} onClick={handleSave} />
 
+      {/* Advance weeks */}
+      <div className="pt-4">
+        <div className="flex items-center gap-2 mb-3">
+          <CalendarIcon size={20} className="text-accent" />
+          <h2 className="text-lg font-bold text-foreground">Abertura da Agenda</h2>
+        </div>
+        <div className="glass-card rounded-2xl p-6 space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Quantas semanas à frente os clientes podem agendar?
+          </p>
+          <div className="flex items-center gap-3 flex-wrap">
+            <Select
+              value={advanceWeeksMode}
+              onValueChange={(val) => {
+                setAdvanceWeeksMode(val);
+                if (val !== "custom") {
+                  const w = Number(val);
+                  setCustomWeeks(w);
+                  saveAdvanceWeeks(w);
+                }
+              }}
+            >
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ADVANCE_WEEKS_OPTIONS.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {advanceWeeksMode === "custom" && (
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={1}
+                  max={52}
+                  value={customWeeks}
+                  onChange={(e) => setCustomWeeks(Number(e.target.value))}
+                  className="w-20 h-9"
+                />
+                <span className="text-sm text-muted-foreground">semanas</span>
+                <Button size="sm" onClick={() => saveAdvanceWeeks(customWeeks)}>
+                  <Save size={14} />
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Blocked Times / Absences */}
       <div className="pt-4">
         <div className="flex items-center justify-between mb-4">
