@@ -431,7 +431,7 @@ const WorkingHoursSection = () => {
     if (!professional || weeks < 1 || weeks > 52) return;
     const { error } = await supabase
       .from("professionals")
-      .update({ booking_advance_weeks: weeks } as any)
+      .update({ booking_advance_weeks: weeks })
       .eq("id", professional.id);
     if (error) {
       toast.error("Erro ao salvar");

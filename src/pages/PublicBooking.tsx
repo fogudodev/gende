@@ -432,7 +432,7 @@ const PublicBooking = () => {
   };
 
   // Generate days for date picker based on booking_advance_weeks
-  const advanceWeeks = (professional as any)?.booking_advance_weeks ?? 2;
+  const advanceWeeks = professional?.booking_advance_weeks ?? 2;
   const totalDays = advanceWeeks * 7;
   const todayRef = useRef(new Date());
   // Update reference if day changed (user left page open past midnight)
