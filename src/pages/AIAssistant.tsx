@@ -140,7 +140,7 @@ const AIAssistant = () => {
 
   return (
     <DashboardLayout title="Lis — Assistente IA" subtitle="Sua consultora especialista em negócios de beleza">
-      <div className="max-w-3xl mx-auto glass-card rounded-2xl flex flex-col fixed inset-x-0 bottom-0 top-[64px] md:left-[72px] md:top-[72px] m-3 md:m-6 lg:m-8 overflow-hidden z-10">
+      <div className="max-w-3xl mx-auto glass-card rounded-2xl flex flex-col fixed inset-x-0 bottom-3 top-[64px] md:left-[72px] md:top-[72px] md:bottom-6 lg:bottom-8 mx-3 md:mx-6 lg:mx-8 overflow-hidden z-10">
         {/* Messages */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 ? (
