@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import DashboardLayout from "@/components/layout/DashboardLayout";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -270,8 +270,8 @@ const SystemGuide = () => {
   const currentCategory = categories.find((c) => c.id === activeCategory);
 
   return (
-    <DashboardLayout title="Guia do Sistema" subtitle="Central de conhecimento">
-      <div className="max-w-5xl mx-auto space-y-6 md:space-y-8">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-5xl mx-auto px-3 md:px-6 lg:px-8 py-6 md:py-10 space-y-6 md:space-y-8">
 
         {/* ─── Breadcrumb ─── */}
         <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground flex-wrap">
@@ -694,7 +694,7 @@ const SystemGuide = () => {
           )}
         </AnimatePresence>
       </div>
-    </DashboardLayout>
+    </div>
   );
 };
 
