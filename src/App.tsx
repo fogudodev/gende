@@ -100,6 +100,7 @@ const AppContent = () => (
             <Route path="/instructions" element={<ProtectedRoute><Instructions /></ProtectedRoute>} />
             <Route path="/upsell" element={<ProtectedRoute><UpsellDashboard /></ProtectedRoute>} />
             <Route path="/upsell/config" element={<ProtectedRoute><UpsellConfig /></ProtectedRoute>} />
+            <Route path="/guia" element={<ProtectedRoute><SystemGuide /></ProtectedRoute>} />
 
             {/* Admin Master routes */}
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
