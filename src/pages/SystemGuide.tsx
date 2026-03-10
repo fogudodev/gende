@@ -694,7 +694,7 @@ const SystemGuide = () => {
           )}
         </AnimatePresence>
       </div>
-    </DashboardLayout>
+    </div>
   );
 };
 
