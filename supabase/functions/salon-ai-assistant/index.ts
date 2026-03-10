@@ -267,9 +267,97 @@ serve(async (req) => {
     const totalExpenseAmount = expenses.reduce((s: number, e: any) => s + Number(e.amount), 0);
     const totalCommissions = commissions.reduce((s: number, c: any) => s + Number(c.commission_amount), 0);
     const completedCount = bookings.filter((b: any) => b.status === "completed").length;
+    const cancelledCount = bookings.filter((b: any) => b.status === "cancelled").length;
+    const noShowCount = bookings.filter((b: any) => b.status === "no_show").length;
     const avgTicket = completedCount > 0 ? totalRevenue / completedCount : 0;
     const avgRating = (reviews || []).length > 0 ? (reviews || []).reduce((s: number, r: any) => s + r.rating, 0) / reviews!.length : 0;
     const firstBooking = bookings.length > 0 ? bookings[0].start_time : null;
+    const cancellationRate = bookings.length > 0 ? ((cancelledCount + noShowCount) / bookings.length * 100).toFixed(1) : "0";
+
+    // === OCCUPANCY RATE BY DAY OF WEEK ===
+    const activeWH = (workingHours || []).filter((w: any) => w.is_active);
+    const dowOccupancy = [0, 1, 2, 3, 4, 5, 6].map(d => {
+      const wh = activeWH.find((w: any) => w.day_of_week === d);
+      if (!wh) return { day: dayOfWeekName(d), active: false, occupancy: 0, totalSlots: 0, usedSlots: 0 };
+      const startH = parseInt(wh.start_time.split(":")[0]);
+      const endH = parseInt(wh.end_time.split(":")[0]);
+      const slotsPerDay = (endH - startH) * 2; // 30min slots
+      const weeksActive = sortedMonths.length > 0 ? Math.max(1, Math.ceil((now.getTime() - new Date(firstBooking || now).getTime()) / (7 * 24 * 60 * 60 * 1000))) : 1;
+      const bookingsOnDay = (dowDemand[d] || 0);
+      const totalSlots = slotsPerDay * Math.ceil(weeksActive / 7) * 4; // rough monthly
+      const occ = totalSlots > 0 ? Math.min(100, (bookingsOnDay / Math.max(1, totalSlots)) * 100) : 0;
+      return { day: dayOfWeekName(d), active: true, occupancy: occ, totalSlots, usedSlots: bookingsOnDay };
+    });
+    const occStr = dowOccupancy.filter(d => d.active).map(d =>
+      `${d.day}: ~${d.occupancy.toFixed(0)}% ocupação (${d.usedSlots} agend.)`
+    ).join("\n");
+
+    // === HOURLY OCCUPANCY (slots with low demand) ===
+    const totalBookingsForHour = Object.values(hourDemand).reduce((a: number, b: number) => a + b, 0);
+    const avgBookingsPerHour = Object.keys(hourDemand).length > 0 ? totalBookingsForHour / Object.keys(hourDemand).length : 0;
+    const lowDemandHours = Object.entries(hourDemand)
+      .filter(([, c]) => c < avgBookingsPerHour * 0.6)
+      .sort((a, b) => Number(a[0]) - Number(b[0]))
+      .map(([h, c]) => `${h}h (${c} agend.)`);
+
+    // === CLIENT RETURN FREQUENCY ===
+    const clientVisitCounts = Object.values(clientStats).map(s => s.visits);
+    const avgVisitsPerClient = clientVisitCounts.length > 0 ? clientVisitCounts.reduce((a, b) => a + b, 0) / clientVisitCounts.length : 0;
+    const singleVisitClients = clientVisitCounts.filter(v => v === 1).length;
+    const returningClients = clientVisitCounts.filter(v => v > 1).length;
+    const vipClients = clientVisitCounts.filter(v => v >= 5).length;
+    const avgSpendPerClient = Object.values(clientStats).length > 0
+      ? Object.values(clientStats).reduce((s, c) => s + c.revenue, 0) / Object.values(clientStats).length : 0;
+
+    // === INACTIVE CLIENT REVENUE POTENTIAL ===
+    const inactiveAvgSpend = inactiveClients.length > 0
+      ? inactiveClients.reduce((s, [, c]) => s + c.revenue / Math.max(1, c.visits), 0) / inactiveClients.length : 0;
+    const inactiveRevenuePotential = inactiveClients.length * inactiveAvgSpend;
+
+    // === SERVICE SCORING ===
+    const maxSvcRevenue = serviceAnalysis.length > 0 ? serviceAnalysis[0].revenue : 1;
+    const maxSvcCount = serviceAnalysis.length > 0 ? Math.max(...serviceAnalysis.map(s => s.count)) : 1;
+    const serviceScoring = serviceAnalysis.map(s => {
+      const revenueScore = (s.revenue / maxSvcRevenue) * 50;
+      const demandScore = (s.count / maxSvcCount) * 30;
+      const cancelRate = s.count > 0 ? (s.cancellations / s.count) : 0;
+      const retentionScore = (1 - cancelRate) * 20;
+      const total = revenueScore + demandScore + retentionScore;
+      const tier = total >= 70 ? "🟢 Alto Desempenho" : total >= 40 ? "🟡 Médio Desempenho" : "🔴 Baixo Desempenho";
+      const revenuePerMin = s.duration > 0 ? s.revenue / (s.count * s.duration) : 0;
+      return `- ${s.name}: Score ${total.toFixed(0)}/100 (${tier}) | R$${revenuePerMin.toFixed(2)}/min | Cancel: ${(cancelRate * 100).toFixed(0)}%`;
+    });
+
+    // === REVENUE FORECAST ===
+    const recentMonths = sortedMonths.slice(-3);
+    const recentRevenues = recentMonths.map(m => monthlyRevenue[m]?.revenue || 0);
+    const avgRecentRevenue = recentRevenues.length > 0 ? recentRevenues.reduce((a, b) => a + b, 0) / recentRevenues.length : 0;
+    const revenueTrend = recentRevenues.length >= 2
+      ? ((recentRevenues[recentRevenues.length - 1] - recentRevenues[0]) / Math.max(1, recentRevenues[0])) * 100 : 0;
+    const forecastNext = avgRecentRevenue * (1 + revenueTrend / 300); // conservative projection
+
+    // === CROSS-SELL PAIRS ===
+    const clientServicePairs: Record<string, Set<string>> = {};
+    bookings.filter((b: any) => b.client_id && b.service_id && b.status === "completed").forEach((b: any) => {
+      if (!clientServicePairs[b.client_id]) clientServicePairs[b.client_id] = new Set();
+      clientServicePairs[b.client_id].add(b.service_id);
+    });
+    const pairCount: Record<string, number> = {};
+    Object.values(clientServicePairs).forEach(svcSet => {
+      const arr = Array.from(svcSet);
+      for (let i = 0; i < arr.length; i++) {
+        for (let j = i + 1; j < arr.length; j++) {
+          const key = [arr[i], arr[j]].sort().join("+");
+          pairCount[key] = (pairCount[key] || 0) + 1;
+        }
+      }
+    });
+    const topPairs = Object.entries(pairCount).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([key, count]) => {
+      const [s1, s2] = key.split("+");
+      const svc1 = (services || []).find((s: any) => s.id === s1);
+      const svc2 = (services || []).find((s: any) => s.id === s2);
+      return `- ${svc1?.name || "?"} + ${svc2?.name || "?"}: ${count} clientes em comum`;
+    });
 
     const businessContext = `
 ## PERFIL DO NEGÓCIO
@@ -285,10 +373,27 @@ serve(async (req) => {
 - Comissões pagas: R$ ${totalCommissions.toFixed(2)}
 - Lucro bruto estimado: R$ ${(totalRevenue - totalExpenseAmount).toFixed(2)}
 - Total agendamentos: ${bookings.length}
-- Concluídos: ${completedCount} | Cancelados: ${bookings.filter((b: any) => b.status === "cancelled").length} | No-show: ${bookings.filter((b: any) => b.status === "no_show").length}
+- Concluídos: ${completedCount} | Cancelados: ${cancelledCount} | No-show: ${noShowCount}
+- Taxa de cancelamento/no-show: ${cancellationRate}%
 - Ticket médio: R$ ${avgTicket.toFixed(2)}
 - Avaliação média: ⭐${avgRating.toFixed(1)} (${(reviews || []).length} avaliações)
 - Clientes cadastrados: ${(clients || []).length} (${activeClients} ativos nos últimos 60 dias)
+
+## PREVISÃO DE FATURAMENTO
+- Média dos últimos 3 meses: R$ ${avgRecentRevenue.toFixed(0)}
+- Tendência: ${revenueTrend > 0 ? "📈" : "📉"} ${revenueTrend.toFixed(1)}%
+- Previsão próximo mês: R$ ${forecastNext.toFixed(0)}
+- Se ocupação aumentar 10%: R$ ${(forecastNext * 1.10).toFixed(0)}
+- Se ocupação aumentar 20%: R$ ${(forecastNext * 1.20).toFixed(0)}
+
+## ANÁLISE DE CLIENTES
+- Média de visitas por cliente: ${avgVisitsPerClient.toFixed(1)}
+- Gasto médio por cliente: R$ ${avgSpendPerClient.toFixed(0)}
+- Clientes com visita única: ${singleVisitClients} (${clientVisitCounts.length > 0 ? (singleVisitClients / clientVisitCounts.length * 100).toFixed(0) : 0}%)
+- Clientes recorrentes (2+): ${returningClients}
+- Clientes VIP (5+ visitas): ${vipClients}
+- Clientes inativos (60+ dias): ${inactiveClients.length}
+- Potencial de receita reativando inativos: R$ ${inactiveRevenuePotential.toFixed(0)}
 
 ## TENDÊNCIA MENSAL DE FATURAMENTO E AGENDAMENTOS
 ${monthlyTrendStr || "Sem dados"}
@@ -299,8 +404,20 @@ ${expenseTrendStr || "Sem dados"}
 ## DESPESAS POR CATEGORIA (TOTAL HISTÓRICO)
 ${expenseCategoryStr || "Sem dados"}
 
+## SCORING DE SERVIÇOS (CLASSIFICAÇÃO DE DESEMPENHO)
+${serviceScoring.join("\n") || "Sem serviços"}
+
 ## SERVIÇOS (ANÁLISE COMPLETA)
 ${serviceStr || "Sem serviços"}
+
+## PARES DE CROSS-SELL (serviços frequentemente comprados juntos)
+${topPairs.join("\n") || "Sem dados suficientes"}
+
+## OCUPAÇÃO POR DIA DA SEMANA
+${occStr || "Sem dados"}
+
+## HORÁRIOS COM BAIXA DEMANDA
+${lowDemandHours.length > 0 ? lowDemandHours.join(", ") : "Nenhum identificado"}
 
 ## DEMANDA POR DIA DA SEMANA
 ${dowStr}
@@ -338,39 +455,70 @@ ${productStr || "Nenhum"}
 
     const ownerName = professional.name?.split(" ")[0] || "";
 
-    const systemPrompt = `Você é a **Lis**, assistente especialista em negócios do Gende. Você é uma consultora estratégica calorosa, inteligente e dedicada, especializada em salões de beleza, barbearias e profissionais autônomos da área de beleza e estética.
+    const systemPrompt = `Você é a **Lis**, consultora especialista em crescimento e faturamento para negócios de beleza do Gende. Você é uma estrategista calorosa, inteligente e dedicada, que transforma dados em decisões lucrativas.
 
-Sua personalidade:
-- Você é simpática, acolhedora e profissional — como uma amiga que entende profundamente de negócios
-- Você trata o dono do negócio pelo primeiro nome (${ownerName}) e demonstra genuíno interesse pelo sucesso dele(a)
-- Você comemora conquistas e encoraja nos momentos difíceis
-- Você fala de forma natural e humana, nunca robótica
-- Na sua primeira mensagem de cada conversa, se apresente brevemente: "Oi, ${ownerName}! Sou a Lis, sua assistente especialista aqui no Gende 😊"
+## SUA PERSONALIDADE
+- Simpática, acolhedora e profissional — como uma consultora premium que realmente se importa
+- Trate o dono pelo primeiro nome (${ownerName}) com genuíno interesse pelo sucesso dele(a)
+- Comemore conquistas e encoraje nos momentos difíceis
+- Fale de forma natural e humana, nunca robótica
+- Na primeira mensagem, se apresente: "Oi, ${ownerName}! Sou a Lis, sua consultora de crescimento aqui no Gende 😊"
 
-Você tem acesso a TODO o histórico do negócio e deve usá-lo para:
+## SEU PAPEL — CONSULTORA DE CRESCIMENTO
+Você age como uma consultora especialista no mercado de beleza. Analise os dados fornecidos e gere RECOMENDAÇÕES ACIONÁVEIS para:
 
-1. **Análise profunda**: Identificar padrões, tendências de crescimento/declínio, sazonalidade
-2. **Previsões**: Projetar faturamento, demanda e crescimento com base em tendências históricas
-3. **Diagnósticos**: Detectar problemas (alta taxa de cancelamento, clientes inativos, serviços pouco rentáveis)
-4. **Estratégias**: Recomendar ações concretas de marketing, pricing, retenção, upselling
-5. **Gestão de equipe**: Avaliar produtividade, sugerir ajustes de comissão, identificar gaps
-6. **Benchmarking**: Comparar métricas com boas práticas do setor
-7. **Oportunidades**: Identificar horários ociosos, serviços complementares, potencial de cross-selling
+### 1. AUMENTO DE FATURAMENTO
+- Identifique oportunidades de receita que o dono normalmente não percebe
+- Calcule impacto financeiro de cada sugestão (ex: "pode gerar R$X adicionais")
+- Sugira ajustes de preço baseados em demanda (ex: "Escova é muito procurada, pode aumentar 8% sem perder demanda")
 
-Regras de formato:
-- SEJA CONCISA E DIRETA — respostas curtas e objetivas (máximo 200-300 palavras por resposta)
-- Use parágrafos curtos com quebras de linha entre eles
-- Use listas com bullets para organizar informações
-- Use **negrito** para destacar números e pontos-chave
-- Use headers (##) apenas quando necessário para separar seções
-- Quebre blocos grandes em partes menores e legíveis
-- Se a resposta for longa, pergunte se o usuário quer mais detalhes em vez de despejar tudo de uma vez
-- Sempre responda em português brasileiro
-- Seja estratégica e consultiva, mas com tom humano e acolhedor
-- Embase TODAS as análises nos dados reais fornecidos
+### 2. PROMOÇÕES INTELIGENTES
+- Analise serviços com baixa demanda e sugira promoções específicas
+- Ex: "Hidratação está 32% abaixo da média. Sugiro 15% de desconto nas próximas 2 semanas"
+- Sempre vincule promoções a horários/dias de baixa ocupação
+
+### 3. OCUPAÇÃO DA AGENDA
+- Identifique dias/horários com baixa ocupação usando os dados de demanda
+- Sugira estratégias para preencher esses horários
+- Ex: "Quarta 14h-17h tem ~42% de ocupação. Crie promoção específica para este período"
+
+### 4. TICKET MÉDIO
+- Analise os pares de cross-sell (serviços frequentemente comprados juntos)
+- Sugira upsell automático baseado nos dados
+- Ex: "Clientes que fazem corte têm alta chance de aceitar hidratação"
+
+### 5. REATIVAÇÃO DE CLIENTES
+- Use os dados de clientes inativos e potencial de receita calculado
+- Dê números concretos: "X clientes inativos, reativá-los pode gerar ~R$Y"
+- Sugira campanhas específicas de retorno
+
+### 6. PREVISÃO DE FATURAMENTO
+- Use a previsão calculada e apresente cenários
+- Mostre impacto de ações: "Se aumentar ocupação em 10%, faturamento sobe de R$X para R$Y"
+
+### 7. SCORING DE SERVIÇOS
+- Use o scoring fornecido para classificar serviços
+- Sugira estratégias para melhorar serviços de baixo desempenho
+- Identifique serviços com maior margem (R$/min) para priorizar
+
+### 8. GESTÃO DE EQUIPE
+- Avalie produtividade por profissional
+- Compare faturamento, avaliações e taxa de retenção
+- Sugira ajustes de comissão quando relevante
+
+## REGRAS DE FORMATO
+- SEJA CONCISA: máximo 250-350 palavras por resposta
+- Parágrafos curtos com quebras de linha
+- Listas com bullets para organizar informações
+- **Negrito** para números e pontos-chave
+- Headers (##) para separar seções quando necessário
+- Se a resposta ficaria longa, pergunte se quer mais detalhes
+- Sempre em português brasileiro
+- Embase TODAS as análises nos dados reais — NUNCA invente dados
 - Use emojis de forma natural (sem exagero)
-- Nunca invente dados — se faltar informação, diga o que acompanhar
-- Evite respostas genéricas — sempre personalize com base nos dados do negócio
+- Sempre inclua o IMPACTO FINANCEIRO estimado das sugestões
+- Evite respostas genéricas — personalize com base nos dados do negócio
+- Quando sugerir ações, seja específica: diga O QUE fazer, QUANDO e QUANTO pode gerar
 
 ${businessContext}`;
 
