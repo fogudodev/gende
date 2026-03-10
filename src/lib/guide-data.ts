@@ -1,0 +1,1240 @@
+import {
+  LayoutDashboard, Calendar, Users, Scissors, UserCheck, DollarSign,
+  Package, MessageCircle, Zap, BarChart3, Settings, Globe,
+  Bot, HelpCircle, Rocket, Clock, Bell, Star, Shield, Palette,
+  CreditCard, TrendingUp, FileText, Send, Target, Wallet,
+  BookOpen, CheckCircle, AlertTriangle, Lightbulb, Info
+} from "lucide-react";
+
+export type GuideCategory = {
+  id: string;
+  title: string;
+  description: string;
+  icon: any;
+  color: string;
+  functions: GuideFunction[];
+};
+
+export type GuideFunction = {
+  id: string;
+  title: string;
+  summary: string;
+  description: string;
+  whyImportant: string;
+  whenToUse: string;
+  problemsSolved: string[];
+  benefits: string[];
+  howToConfigure: string[];
+  howToUse: string[];
+  tips: string[];
+  bestPractices: string[];
+  commonErrors: string[];
+  importantNotes: string[];
+  expectedResult: string;
+};
+
+export type FAQ = {
+  question: string;
+  answer: string;
+};
+
+export type QuickTutorial = {
+  title: string;
+  icon: any;
+  steps: string[];
+  route: string;
+};
+
+export const quickStartSteps = [
+  { step: 1, title: "Crie sua conta", description: "Acesse o sistema, faça seu cadastro e confirme seu e-mail para ativar sua conta." },
+  { step: 2, title: "Complete seu perfil", description: "Vá em Configurações e preencha o nome do seu negócio, telefone, logo e informações de contato." },
+  { step: 3, title: "Cadastre seus serviços", description: "Adicione todos os serviços que você oferece com nome, preço, duração e descrição." },
+  { step: 4, title: "Configure seus horários", description: "Defina seus dias e horários de atendimento na aba de configurações da agenda." },
+  { step: 5, title: "Cadastre seus clientes", description: "Importe ou adicione manualmente seus clientes com nome, telefone e e-mail." },
+  { step: 6, title: "Ative sua página de agendamento", description: "Configure e publique sua página online para que clientes agendem automaticamente." },
+  { step: 7, title: "Conecte o WhatsApp", description: "Integre seu WhatsApp para enviar lembretes, confirmações e campanhas automaticamente." },
+  { step: 8, title: "Comece a agendar!", description: "Está tudo pronto! Comece a criar agendamentos e deixe o sistema trabalhar por você." },
+];
+
+export const quickTutorials: QuickTutorial[] = [
+  {
+    title: "Cadastrar um cliente",
+    icon: Users,
+    steps: ["Acesse o menu 'Clientes'", "Clique em '+ Novo Cliente'", "Preencha nome e telefone", "Clique em 'Salvar'"],
+    route: "/clients",
+  },
+  {
+    title: "Cadastrar um serviço",
+    icon: Scissors,
+    steps: ["Acesse o menu 'Serviços'", "Clique em '+ Novo Serviço'", "Preencha nome, preço e duração", "Clique em 'Salvar'"],
+    route: "/services",
+  },
+  {
+    title: "Configurar a agenda",
+    icon: Calendar,
+    steps: ["Acesse 'Configurações'", "Vá na aba 'Horários'", "Defina dias e horários de funcionamento", "Salve as alterações"],
+    route: "/settings",
+  },
+  {
+    title: "Conectar o WhatsApp",
+    icon: MessageCircle,
+    steps: ["Acesse 'Configurações'", "Vá na aba 'WhatsApp'", "Insira o token de integração", "Teste o envio"],
+    route: "/settings",
+  },
+  {
+    title: "Ativar automações",
+    icon: Zap,
+    steps: ["Acesse 'Automações'", "Ative as mensagens desejadas", "Personalize os textos", "Salve e ative"],
+    route: "/automations",
+  },
+  {
+    title: "Ver relatórios",
+    icon: BarChart3,
+    steps: ["Acesse 'Relatórios'", "Selecione o período desejado", "Escolha o tipo de relatório", "Analise os gráficos e dados"],
+    route: "/reports",
+  },
+  {
+    title: "Configurar página online",
+    icon: Globe,
+    steps: ["Acesse 'Página Pública'", "Personalize cores e informações", "Ative os serviços disponíveis", "Compartilhe o link"],
+    route: "/public-page",
+  },
+  {
+    title: "Ajustar financeiro",
+    icon: DollarSign,
+    steps: ["Acesse 'Financeiro'", "Configure métodos de pagamento", "Registre receitas e despesas", "Acompanhe o fluxo de caixa"],
+    route: "/finance",
+  },
+  {
+    title: "Usar a IA do sistema",
+    icon: Bot,
+    steps: ["Acesse 'Assistente IA'", "Faça sua pergunta ou peça uma sugestão", "Analise a resposta gerada", "Aplique a sugestão no seu negócio"],
+    route: "/ai-assistant",
+  },
+];
+
+export const faqs: FAQ[] = [
+  { question: "Como faço para alterar meu plano?", answer: "Acesse Configurações > Plano e Assinatura. Lá você pode visualizar seu plano atual e fazer upgrade para ter acesso a mais funcionalidades." },
+  { question: "Posso usar o sistema no celular?", answer: "Sim! O sistema é 100% responsivo e funciona perfeitamente em qualquer dispositivo — celular, tablet ou computador." },
+  { question: "Como meus clientes agendam online?", answer: "Após configurar sua Página de Agendamento Online, você receberá um link exclusivo. Compartilhe esse link nas redes sociais, WhatsApp ou onde preferir. Seus clientes poderão ver os horários disponíveis e agendar diretamente." },
+  { question: "Os lembretes são enviados automaticamente?", answer: "Sim, após conectar o WhatsApp e ativar as automações, o sistema envia lembretes automaticamente antes de cada atendimento, reduzindo faltas em até 70%." },
+  { question: "Posso ter mais de um profissional no sistema?", answer: "Sim! No plano adequado, você pode cadastrar sua equipe completa, cada um com seus horários, serviços e comissões individuais." },
+  { question: "Meus dados estão seguros?", answer: "Absolutamente. Utilizamos criptografia de ponta e servidores seguros. Seus dados e os de seus clientes estão protegidos com os mais altos padrões de segurança." },
+  { question: "Posso personalizar as mensagens automáticas?", answer: "Sim! Todas as mensagens de confirmação, lembrete e follow-up podem ser personalizadas com variáveis dinâmicas como nome do cliente, serviço e horário." },
+  { question: "Como funciona o relatório de comissões?", answer: "O sistema calcula automaticamente as comissões de cada profissional com base nos atendimentos realizados. Você define a porcentagem e o sistema faz todo o cálculo." },
+  { question: "Posso exportar meus dados?", answer: "Sim, os relatórios podem ser exportados em CSV e PDF para análise externa ou controle financeiro." },
+  { question: "O que acontece se eu cancelar minha assinatura?", answer: "Seus dados ficam armazenados por 30 dias após o cancelamento. Você pode reativar sua conta a qualquer momento dentro desse período sem perder nenhuma informação." },
+];
+
+export const categories: GuideCategory[] = [
+  {
+    id: "visao-geral",
+    title: "Início / Visão Geral",
+    description: "Conheça o painel principal e tenha uma visão completa do seu negócio",
+    icon: LayoutDashboard,
+    color: "from-blue-500/20 to-blue-600/10",
+    functions: [
+      {
+        id: "dashboard",
+        title: "Dashboard Principal",
+        summary: "Painel central com resumo completo do seu negócio em tempo real.",
+        description: "O Dashboard é a primeira tela que você vê ao acessar o sistema. Ele centraliza todas as informações mais importantes do seu negócio em cards, gráficos e listas, permitindo que você tenha uma visão geral instantânea sem precisar navegar por diferentes menus.",
+        whyImportant: "Ter uma visão consolidada do seu negócio economiza tempo, ajuda na tomada de decisões rápidas e permite identificar problemas antes que se tornem críticos.",
+        whenToUse: "Sempre que abrir o sistema. Use como ponto de partida do seu dia para verificar agendamentos, faturamento e métricas.",
+        problemsSolved: [
+          "Dificuldade de ter uma visão geral do negócio",
+          "Perda de tempo navegando entre múltiplas telas",
+          "Falta de acompanhamento de métricas importantes",
+          "Desorganização na rotina diária",
+        ],
+        benefits: [
+          "Visão instantânea de agendamentos do dia",
+          "Acompanhamento de faturamento em tempo real",
+          "Identificação rápida de horários vagos",
+          "Monitoramento de performance da equipe",
+          "Gráficos de evolução para tomada de decisão",
+        ],
+        howToConfigure: [
+          "O Dashboard é configurado automaticamente ao criar sua conta",
+          "Os dados são atualizados em tempo real conforme você usa o sistema",
+          "Personalize as cores do sistema em Configurações para uma experiência visual única",
+        ],
+        howToUse: [
+          "Acesse o sistema — o Dashboard é a página inicial",
+          "Verifique os cards superiores para ver resumo de agendamentos, faturamento e clientes",
+          "Analise o gráfico de receita para acompanhar a evolução",
+          "Confira a lista de agendamentos do dia na lateral",
+          "Use os atalhos rápidos para navegar para outras seções",
+        ],
+        tips: [
+          "Comece sempre o dia revisando o Dashboard",
+          "Preste atenção nos horários vagos — são oportunidades de faturamento",
+          "Use os gráficos semanais para identificar seus melhores dias",
+        ],
+        bestPractices: [
+          "Revise o Dashboard pela manhã e ao final do expediente",
+          "Compare métricas semanalmente para identificar tendências",
+          "Use os dados para ajustar preços e promoções",
+        ],
+        commonErrors: [
+          "Ignorar os dados do Dashboard e não usar para decisões",
+          "Não atualizar status dos agendamentos, gerando dados incorretos",
+        ],
+        importantNotes: [
+          "Os dados refletem informações em tempo real — mantenha tudo atualizado",
+          "Os gráficos mostram dados dos últimos 7 dias por padrão",
+        ],
+        expectedResult: "Ao usar o Dashboard corretamente, você terá total controle sobre a operação diária do seu negócio, identificará oportunidades e resolverá problemas rapidamente.",
+      },
+    ],
+  },
+  {
+    id: "agenda",
+    title: "Agenda",
+    description: "Gerencie todos os agendamentos do seu negócio de forma prática",
+    icon: Calendar,
+    color: "from-emerald-500/20 to-emerald-600/10",
+    functions: [
+      {
+        id: "agendamentos",
+        title: "Gerenciamento de Agendamentos",
+        summary: "Crie, edite, confirme e cancele agendamentos com facilidade.",
+        description: "O módulo de Agenda é o coração operacional do seu negócio. Aqui você gerencia todos os agendamentos, visualiza disponibilidade, controla status e mantém sua rotina organizada. A agenda suporta visualização por dia, semana e mês.",
+        whyImportant: "Uma agenda bem gerenciada evita conflitos de horário, reduz faltas de clientes e maximiza seu tempo produtivo, aumentando diretamente seu faturamento.",
+        whenToUse: "Sempre que precisar criar, visualizar ou gerenciar atendimentos.",
+        problemsSolved: [
+          "Agendamentos em papel que se perdem",
+          "Conflitos de horário entre clientes",
+          "Faltas e esquecimentos de clientes",
+          "Dificuldade em saber horários disponíveis",
+          "Falta de histórico de atendimentos",
+        ],
+        benefits: [
+          "Organização total dos atendimentos",
+          "Redução de faltas com lembretes automáticos",
+          "Visão clara de disponibilidade",
+          "Histórico completo de cada cliente",
+          "Sincronização com Google Calendar",
+        ],
+        howToConfigure: [
+          "Acesse Configurações > Horários de Funcionamento",
+          "Defina os dias da semana que você atende",
+          "Configure o horário de início e término de cada dia",
+          "Defina o intervalo entre atendimentos se necessário",
+          "Configure a antecedência máxima para agendamentos online",
+        ],
+        howToUse: [
+          "Acesse o menu 'Agenda'",
+          "Clique em um horário vago para criar novo agendamento",
+          "Selecione o cliente (ou cadastre um novo)",
+          "Escolha o serviço desejado",
+          "Confirme o horário e salve",
+          "Atualize o status conforme o atendimento evolui",
+        ],
+        tips: [
+          "Use a funcionalidade de arrastar para reagendar rapidamente",
+          "Bloqueie horários de pausa e almoço para evitar agendamentos",
+          "Configure lembretes automáticos para reduzir faltas",
+        ],
+        bestPractices: [
+          "Sempre confirme agendamentos com antecedência",
+          "Mantenha os status atualizados (confirmado, concluído, cancelado)",
+          "Revise a agenda no início de cada dia",
+          "Use cores diferentes para cada tipo de serviço",
+        ],
+        commonErrors: [
+          "Não atualizar o status dos agendamentos após conclusão",
+          "Esquecer de bloquear horários de intervalo",
+          "Não configurar os horários de funcionamento corretamente",
+        ],
+        importantNotes: [
+          "Agendamentos cancelados não são excluídos — ficam no histórico",
+          "Clientes podem agendar online se a página pública estiver ativa",
+          "A integração com Google Calendar sincroniza em tempo real",
+        ],
+        expectedResult: "Uma rotina organizada, sem conflitos de horário, com menos faltas e total controle sobre seus atendimentos diários.",
+      },
+      {
+        id: "bloqueio-horarios",
+        title: "Bloqueio de Horários",
+        summary: "Reserve horários para compromissos pessoais ou pausas.",
+        description: "A funcionalidade de bloqueio permite que você reserve horários na sua agenda para compromissos pessoais, pausas, almoço ou qualquer outro motivo. Horários bloqueados ficam indisponíveis para agendamento online e manual.",
+        whyImportant: "Garante que ninguém agende nos seus horários reservados, evitando conflitos e garantindo seu tempo pessoal.",
+        whenToUse: "Quando precisar reservar horários para compromissos pessoais, reuniões, pausas ou feriados.",
+        problemsSolved: [
+          "Clientes agendando em horários de pausa",
+          "Conflitos entre compromissos pessoais e profissionais",
+          "Falta de organização dos horários livres",
+        ],
+        benefits: [
+          "Proteção do seu tempo pessoal",
+          "Evita agendamentos indesejados",
+          "Organização visual clara na agenda",
+        ],
+        howToConfigure: ["Não requer configuração prévia — funciona direto na agenda."],
+        howToUse: [
+          "Acesse a Agenda",
+          "Clique no horário que deseja bloquear",
+          "Selecione a opção 'Bloquear Horário'",
+          "Defina início, fim e motivo (opcional)",
+          "Confirme o bloqueio",
+        ],
+        tips: [
+          "Bloqueie seus horários de almoço com antecedência",
+          "Use para feriados e dias de folga",
+          "Adicione um motivo para lembrar depois por que bloqueou",
+        ],
+        bestPractices: [
+          "Mantenha bloqueios recorrentes para pausas diárias",
+          "Revise bloqueios semanalmente",
+        ],
+        commonErrors: [
+          "Esquecer de bloquear horário de almoço",
+          "Bloquear o horário errado e não perceber",
+        ],
+        importantNotes: ["Bloqueios são visíveis apenas para você e sua equipe, não para clientes."],
+        expectedResult: "Seus horários pessoais protegidos e uma agenda que reflete sua real disponibilidade.",
+      },
+    ],
+  },
+  {
+    id: "clientes",
+    title: "Clientes",
+    description: "Gerencie sua base de clientes e construa relacionamentos duradouros",
+    icon: Users,
+    color: "from-violet-500/20 to-violet-600/10",
+    functions: [
+      {
+        id: "gestao-clientes",
+        title: "Gestão de Clientes",
+        summary: "Cadastre, organize e acompanhe todos os seus clientes.",
+        description: "O módulo de Clientes permite que você mantenha uma base completa e organizada de todos os seus clientes. Cada ficha contém informações de contato, histórico de atendimentos, preferências e notas importantes. É o seu CRM integrado.",
+        whyImportant: "Conhecer seus clientes profundamente permite oferecer um atendimento personalizado, aumentar a fidelização e identificar oportunidades de vendas.",
+        whenToUse: "Ao cadastrar novos clientes, antes de atendimentos para revisar histórico, e para campanhas de marketing.",
+        problemsSolved: [
+          "Informações de clientes espalhadas em cadernos e papéis",
+          "Falta de histórico de atendimentos",
+          "Dificuldade em lembrar preferências do cliente",
+          "Impossibilidade de fazer marketing direcionado",
+        ],
+        benefits: [
+          "Base centralizada de clientes",
+          "Histórico completo de atendimentos",
+          "Comunicação direta via WhatsApp",
+          "Segmentação para campanhas",
+          "Relatórios de frequência e faturamento por cliente",
+        ],
+        howToConfigure: ["O módulo está disponível imediatamente — basta começar a cadastrar."],
+        howToUse: [
+          "Acesse o menu 'Clientes'",
+          "Clique em '+ Novo Cliente'",
+          "Preencha nome, telefone e e-mail",
+          "Adicione notas ou observações importantes",
+          "Salve o cadastro",
+          "Vincule o cliente aos agendamentos futuros",
+        ],
+        tips: [
+          "Sempre peça o telefone para envio de lembretes",
+          "Use o campo de notas para registrar preferências e alergias",
+          "Revise clientes inativos mensalmente para reativar",
+        ],
+        bestPractices: [
+          "Mantenha os dados sempre atualizados",
+          "Use a busca para localizar clientes rapidamente",
+          "Exporte a lista periodicamente como backup",
+        ],
+        commonErrors: [
+          "Cadastrar o mesmo cliente duas vezes com nomes diferentes",
+          "Não preencher o telefone, impedindo lembretes",
+          "Deixar a base desatualizada com dados antigos",
+        ],
+        importantNotes: [
+          "Clientes criados via agendamento online são cadastrados automaticamente",
+          "Telefones são usados para envio de mensagens automáticas",
+        ],
+        expectedResult: "Uma base de clientes organizada, rica em informações e pronta para impulsionar seu relacionamento e vendas.",
+      },
+    ],
+  },
+  {
+    id: "servicos",
+    title: "Serviços",
+    description: "Configure e gerencie todos os serviços oferecidos pelo seu negócio",
+    icon: Scissors,
+    color: "from-pink-500/20 to-pink-600/10",
+    functions: [
+      {
+        id: "gestao-servicos",
+        title: "Catálogo de Serviços",
+        summary: "Cadastre seus serviços com preço, duração e descrição.",
+        description: "O catálogo de serviços é onde você define tudo que seu negócio oferece. Cada serviço possui nome, descrição, preço, duração estimada e categoria. Esses dados alimentam a agenda, a página de agendamento online e os relatórios financeiros.",
+        whyImportant: "Um catálogo bem configurado é a base para agendamentos corretos, precificação adequada e uma experiência profissional para seus clientes.",
+        whenToUse: "Na configuração inicial do sistema e sempre que adicionar, alterar ou desativar serviços.",
+        problemsSolved: [
+          "Falta de padronização nos serviços oferecidos",
+          "Erros de precificação",
+          "Duração incorreta gerando conflitos na agenda",
+          "Clientes sem clareza do que é oferecido",
+        ],
+        benefits: [
+          "Padronização profissional dos serviços",
+          "Cálculo automático de horários na agenda",
+          "Exibição organizada na página de agendamento",
+          "Base para relatórios financeiros precisos",
+        ],
+        howToConfigure: [
+          "Acesse o menu 'Serviços'",
+          "Clique em '+ Novo Serviço'",
+          "Defina o nome do serviço",
+          "Insira o preço cobrado",
+          "Defina a duração em minutos",
+          "Adicione uma descrição (opcional)",
+          "Escolha uma categoria",
+          "Salve o serviço",
+        ],
+        howToUse: [
+          "Os serviços cadastrados aparecem automaticamente ao criar agendamentos",
+          "Aparecem na página de agendamento online",
+          "São usados nos relatórios de faturamento",
+          "Podem ser vinculados a profissionais específicos",
+        ],
+        tips: [
+          "Use nomes claros e objetivos para os serviços",
+          "Adicione sempre uma duração realista",
+          "Organize por categorias para facilitar a navegação",
+        ],
+        bestPractices: [
+          "Revise preços periodicamente",
+          "Desative serviços que não oferece mais em vez de excluir",
+          "Use descrições para informar o que está incluso",
+        ],
+        commonErrors: [
+          "Definir duração menor que o tempo real do atendimento",
+          "Não categorizar os serviços",
+          "Deixar serviços desatualizados na página online",
+        ],
+        importantNotes: [
+          "Alterar o preço de um serviço não afeta agendamentos já criados",
+          "Serviços inativos não aparecem para agendamento online",
+        ],
+        expectedResult: "Um catálogo profissional e preciso que alimenta toda a operação do sistema corretamente.",
+      },
+      {
+        id: "pacotes",
+        title: "Pacotes de Serviços",
+        summary: "Crie pacotes com múltiplas sessões e preços especiais.",
+        description: "Pacotes permitem que você venda múltiplas sessões de um serviço com desconto. O sistema controla automaticamente quantas sessões foram usadas e quantas restam, facilitando a gestão e fidelizando clientes.",
+        whyImportant: "Pacotes aumentam o ticket médio, fidelizam clientes e garantem receita recorrente para seu negócio.",
+        whenToUse: "Quando quiser oferecer descontos por volume ou criar programas de fidelidade baseados em sessões.",
+        problemsSolved: [
+          "Controle manual de sessões restantes",
+          "Dificuldade em fidelizar clientes",
+          "Ticket médio baixo",
+        ],
+        benefits: [
+          "Aumento do ticket médio por venda",
+          "Fidelização automática do cliente",
+          "Controle preciso de sessões usadas",
+          "Receita antecipada garantida",
+        ],
+        howToConfigure: [
+          "Acesse 'Pacotes de Serviços'",
+          "Clique em '+ Novo Pacote'",
+          "Selecione o serviço base",
+          "Defina quantidade de sessões",
+          "Defina o preço do pacote (com desconto)",
+          "Salve o pacote",
+        ],
+        howToUse: [
+          "Venda o pacote para o cliente",
+          "Registre a compra no sistema",
+          "A cada atendimento, dê baixa na sessão",
+          "Acompanhe sessões restantes na ficha do cliente",
+        ],
+        tips: [
+          "Ofereça desconto de 10-20% para pacotes",
+          "Defina prazo de validade para criar urgência",
+          "Sugira pacotes para clientes frequentes",
+        ],
+        bestPractices: [
+          "Monitore pacotes próximos do vencimento",
+          "Ofereça renovação antes do término",
+          "Use pacotes como ferramenta de retenção",
+        ],
+        commonErrors: [
+          "Não dar baixa nas sessões utilizadas",
+          "Criar pacotes sem prazo de validade",
+          "Oferecer descontos muito altos que comprometem a margem",
+        ],
+        importantNotes: ["Pacotes vendidos não podem ser excluídos, apenas desativados."],
+        expectedResult: "Vendas maiores, clientes mais fiéis e controle total sobre sessões e pacotes vendidos.",
+      },
+    ],
+  },
+  {
+    id: "equipe",
+    title: "Profissionais / Equipe",
+    description: "Gerencie sua equipe, horários individuais e comissões",
+    icon: UserCheck,
+    color: "from-amber-500/20 to-amber-600/10",
+    functions: [
+      {
+        id: "gestao-equipe",
+        title: "Gestão de Equipe",
+        summary: "Cadastre profissionais, defina horários e atribua serviços.",
+        description: "O módulo de Equipe permite gerenciar todos os profissionais do seu estabelecimento. Cada membro pode ter seus próprios horários de trabalho, serviços atribuídos, comissões e até acesso próprio ao sistema.",
+        whyImportant: "Uma equipe bem organizada com horários e serviços bem definidos garante uma operação fluida e evita conflitos.",
+        whenToUse: "Ao adicionar novos membros à equipe, ajustar horários ou gerenciar comissões.",
+        problemsSolved: [
+          "Conflitos de horário entre profissionais",
+          "Falta de controle sobre comissões",
+          "Dificuldade em saber quem atende o quê",
+          "Cálculo manual de pagamentos",
+        ],
+        benefits: [
+          "Agenda individual por profissional",
+          "Cálculo automático de comissões",
+          "Controle de serviços por profissional",
+          "Relatórios de performance individual",
+          "Acesso independente ao sistema",
+        ],
+        howToConfigure: [
+          "Acesse 'Equipe'",
+          "Clique em '+ Novo Profissional'",
+          "Preencha nome, especialidade e contato",
+          "Defina os horários de trabalho",
+          "Atribua os serviços que ele realiza",
+          "Configure a porcentagem de comissão",
+        ],
+        howToUse: [
+          "Ao criar agendamentos, selecione o profissional",
+          "Acompanhe a agenda de cada um individualmente",
+          "Veja relatórios de comissão no módulo Financeiro",
+          "Monitore a performance de cada membro",
+        ],
+        tips: [
+          "Mantenha horários de cada profissional sempre atualizados",
+          "Use o relatório de comissões para pagamentos precisos",
+          "Atribua apenas serviços que o profissional realmente realiza",
+        ],
+        bestPractices: [
+          "Revise comissões mensalmente",
+          "Mantenha uma comunicação clara sobre horários",
+          "Use os relatórios para premiar os melhores desempenhos",
+        ],
+        commonErrors: [
+          "Não definir horários individuais (usar o geral para todos)",
+          "Esquecer de atribuir serviços ao novo profissional",
+          "Não ajustar comissões quando preços mudam",
+        ],
+        importantNotes: [
+          "Profissionais com login próprio veem apenas seus agendamentos",
+          "Comissões são calculadas automaticamente sobre atendimentos concluídos",
+        ],
+        expectedResult: "Equipe organizada, com horários claros, comissões justas e performance monitorada.",
+      },
+    ],
+  },
+  {
+    id: "financeiro",
+    title: "Financeiro",
+    description: "Controle total das finanças, receitas, despesas e comissões",
+    icon: DollarSign,
+    color: "from-green-500/20 to-green-600/10",
+    functions: [
+      {
+        id: "controle-financeiro",
+        title: "Controle Financeiro",
+        summary: "Acompanhe receitas, despesas e lucro do seu negócio.",
+        description: "O módulo financeiro centraliza toda a gestão do dinheiro do seu negócio. Visualize receitas provenientes de atendimentos, registre despesas, acompanhe o lucro líquido e tenha controle total sobre o fluxo de caixa.",
+        whyImportant: "Sem controle financeiro, é impossível saber se o negócio é lucrativo. Este módulo traz clareza e ajuda na tomada de decisões estratégicas.",
+        whenToUse: "Diariamente para registrar movimentações e semanalmente para análise de resultados.",
+        problemsSolved: [
+          "Falta de visão sobre lucratividade",
+          "Gastos descontrolados",
+          "Mistura entre finanças pessoais e do negócio",
+          "Dificuldade em calcular lucro real",
+        ],
+        benefits: [
+          "Visão clara de receitas e despesas",
+          "Cálculo automático de lucro",
+          "Relatórios financeiros detalhados",
+          "Controle de fluxo de caixa",
+          "Base para decisões de investimento",
+        ],
+        howToConfigure: [
+          "Acesse 'Financeiro'",
+          "Configure os métodos de pagamento aceitos",
+          "As receitas de agendamentos são registradas automaticamente",
+          "Comece a registrar despesas manualmente",
+        ],
+        howToUse: [
+          "Acesse o menu 'Financeiro'",
+          "Visualize o resumo de receitas e despesas",
+          "Registre novas despesas clicando em '+ Despesa'",
+          "Filtre por período para análise específica",
+          "Exporte relatórios para contabilidade",
+        ],
+        tips: [
+          "Registre todas as despesas, mesmo as pequenas",
+          "Faça análise semanal do fluxo de caixa",
+          "Use categorias para organizar as despesas",
+        ],
+        bestPractices: [
+          "Mantenha o registro financeiro atualizado diariamente",
+          "Separe despesas fixas de variáveis",
+          "Compare meses para identificar tendências",
+        ],
+        commonErrors: [
+          "Não registrar despesas do dia a dia",
+          "Não categorizar corretamente as despesas",
+          "Ignorar os relatórios financeiros",
+        ],
+        importantNotes: [
+          "Receitas de agendamentos são registradas quando o status é 'concluído'",
+          "Despesas não afetam o caixa automaticamente — são para controle gerencial",
+        ],
+        expectedResult: "Controle financeiro completo, com visão clara de lucro e base sólida para decisões de negócio.",
+      },
+      {
+        id: "caixa",
+        title: "Caixa Registradora",
+        summary: "Abertura e fechamento de caixa com controle detalhado.",
+        description: "A Caixa Registradora permite controlar a abertura e fechamento diário do caixa, registrar entradas e saídas, e conferir se o valor em caixa bate com o esperado. Ideal para salões com recepção.",
+        whyImportant: "Evita perdas financeiras, erros de troco e garante que todo dinheiro que entra e sai está registrado e conferido.",
+        whenToUse: "No início e final de cada dia de trabalho, e durante o dia para registrar movimentações em dinheiro.",
+        problemsSolved: [
+          "Dinheiro faltando no caixa sem explicação",
+          "Falta de controle sobre pagamentos em dinheiro",
+          "Dificuldade na prestação de contas",
+        ],
+        benefits: [
+          "Controle diário preciso",
+          "Registro de todas as movimentações",
+          "Conferência automática de valores",
+          "Relatórios de caixa por período",
+        ],
+        howToConfigure: ["Acesse 'Caixa' no menu principal", "O módulo está pronto para uso imediato"],
+        howToUse: [
+          "Abra o caixa no início do dia informando o valor inicial",
+          "Registre entradas e saídas durante o dia",
+          "Ao final do dia, feche o caixa informando o valor contado",
+          "O sistema compara com o valor esperado e mostra diferenças",
+        ],
+        tips: [
+          "Abra o caixa sempre com o mesmo valor de troco",
+          "Registre sangrias (retiradas) para manter o caixa seguro",
+          "Confira o caixa antes de fechar",
+        ],
+        bestPractices: [
+          "Nunca deixe o caixa aberto de um dia para o outro",
+          "Documente o motivo de cada sangria ou suprimento",
+          "Faça fechamentos parciais em dias de muito movimento",
+        ],
+        commonErrors: [
+          "Esquecer de registrar uma venda em dinheiro",
+          "Não fazer sangria quando o valor em caixa está alto",
+          "Não conferir o valor antes de fechar",
+        ],
+        importantNotes: ["Apenas um caixa pode estar aberto por vez."],
+        expectedResult: "Zero surpresas no caixa, com total rastreabilidade de cada centavo que entra e sai.",
+      },
+    ],
+  },
+  {
+    id: "estoque",
+    title: "Estoque / Produtos",
+    description: "Gerencie seu estoque de produtos com controle de quantidade e custos",
+    icon: Package,
+    color: "from-orange-500/20 to-orange-600/10",
+    functions: [
+      {
+        id: "gestao-produtos",
+        title: "Gestão de Produtos",
+        summary: "Cadastre e controle todos os produtos do seu estoque.",
+        description: "Gerencie produtos de revenda, insumos e materiais. Controle quantidade em estoque, preço de custo, preço de venda e receba alertas quando o estoque estiver baixo.",
+        whyImportant: "Controlar o estoque evita perda de vendas por falta de produto e reduz desperdícios, otimizando o investimento em mercadoria.",
+        whenToUse: "Ao receber mercadorias, realizar vendas de produtos e para inventários periódicos.",
+        problemsSolved: [
+          "Produtos acabando sem aviso",
+          "Falta de controle sobre o investimento em estoque",
+          "Dificuldade em calcular margem de lucro dos produtos",
+        ],
+        benefits: [
+          "Controle preciso de quantidade",
+          "Cálculo de margem de lucro",
+          "Organização por categorias",
+          "Histórico de movimentações",
+        ],
+        howToConfigure: [
+          "Acesse 'Produtos'",
+          "Cadastre seus produtos com nome, preço de custo e venda",
+          "Defina a quantidade em estoque inicial",
+          "Categorize para facilitar a busca",
+        ],
+        howToUse: [
+          "Cadastre novos produtos conforme recebe mercadoria",
+          "Atualize o estoque após vendas",
+          "Monitore produtos com estoque baixo",
+          "Use os relatórios para decisões de compra",
+        ],
+        tips: [
+          "Faça inventário mensal para conferir quantidades",
+          "Defina estoque mínimo para cada produto",
+          "Use categorias para organizar por tipo",
+        ],
+        bestPractices: [
+          "Registre toda entrada e saída de produto",
+          "Mantenha preços de custo atualizados",
+          "Analise quais produtos vendem mais para reposição estratégica",
+        ],
+        commonErrors: [
+          "Não atualizar o estoque após vendas",
+          "Não registrar o preço de custo correto",
+          "Ignorar alertas de estoque baixo",
+        ],
+        importantNotes: ["O estoque é atualizado manualmente — registre cada movimentação."],
+        expectedResult: "Estoque sempre atualizado, sem rupturas, com visão clara de margem e investimento.",
+      },
+    ],
+  },
+  {
+    id: "whatsapp",
+    title: "WhatsApp",
+    description: "Integre e automatize a comunicação com clientes via WhatsApp",
+    icon: MessageCircle,
+    color: "from-green-400/20 to-green-500/10",
+    functions: [
+      {
+        id: "integracao-whatsapp",
+        title: "Integração com WhatsApp",
+        summary: "Envie mensagens automáticas de confirmação, lembrete e follow-up.",
+        description: "A integração com WhatsApp permite que o sistema envie mensagens automáticas para seus clientes em momentos-chave: confirmação de agendamento, lembrete antes do atendimento e mensagem de follow-up após o serviço.",
+        whyImportant: "O WhatsApp é o canal de comunicação mais usado no Brasil. Automatizar mensagens reduz faltas em até 70% e melhora a experiência do cliente.",
+        whenToUse: "Configure uma vez e o sistema faz tudo automaticamente.",
+        problemsSolved: [
+          "Clientes esquecendo dos agendamentos",
+          "Tempo gasto enviando mensagens manualmente",
+          "Falta de confirmação de presença",
+          "Ausência de pós-atendimento",
+        ],
+        benefits: [
+          "Redução drástica de faltas",
+          "Comunicação profissional automática",
+          "Economia de tempo",
+          "Melhoria na experiência do cliente",
+          "Aumento de retenção com follow-up",
+        ],
+        howToConfigure: [
+          "Acesse 'Configurações'",
+          "Vá na aba 'WhatsApp'",
+          "Insira o token da API de integração",
+          "Configure o número de telefone",
+          "Teste enviando uma mensagem de exemplo",
+          "Ative as automações desejadas",
+        ],
+        howToUse: [
+          "Após configurado, as mensagens são enviadas automaticamente",
+          "Personalize os textos em 'Automações'",
+          "Acompanhe o histórico de envios",
+          "Monitore confirmações dos clientes",
+        ],
+        tips: [
+          "Personalize as mensagens com o nome do cliente",
+          "Envie lembretes 24h e 2h antes do atendimento",
+          "Use follow-up para pedir avaliação",
+        ],
+        bestPractices: [
+          "Não envie mensagens fora do horário comercial",
+          "Mantenha mensagens curtas e objetivas",
+          "Sempre inclua informações úteis (data, hora, endereço)",
+        ],
+        commonErrors: [
+          "Token da API expirado ou incorreto",
+          "Mensagens muito longas que o cliente não lê",
+          "Enviar muitas mensagens e incomodar o cliente",
+        ],
+        importantNotes: [
+          "A integração requer um plano ativo com provedor de WhatsApp API",
+          "Há limites de envio por dia conforme seu plano",
+        ],
+        expectedResult: "Comunicação profissional e automática, com drástica redução de faltas e aumento na satisfação do cliente.",
+      },
+    ],
+  },
+  {
+    id: "automacao",
+    title: "Automação",
+    description: "Configure mensagens automáticas e fluxos inteligentes",
+    icon: Zap,
+    color: "from-yellow-500/20 to-yellow-600/10",
+    functions: [
+      {
+        id: "automacoes",
+        title: "Automações de Mensagens",
+        summary: "Configure fluxos automáticos de comunicação com clientes.",
+        description: "O módulo de Automações permite criar fluxos de mensagens automáticas para diferentes momentos da jornada do cliente: ao agendar, antes do atendimento, após o atendimento e em datas especiais.",
+        whyImportant: "Automatizar a comunicação libera seu tempo, profissionaliza o atendimento e garante que nenhum cliente fique sem receber informações importantes.",
+        whenToUse: "Configure uma vez e ajuste conforme necessário. As automações rodam sozinhas.",
+        problemsSolved: [
+          "Esquecimento de enviar confirmações",
+          "Falta de follow-up pós-atendimento",
+          "Comunicação inconsistente com clientes",
+          "Tempo gasto com mensagens manuais",
+        ],
+        benefits: [
+          "Economia de horas por semana",
+          "Comunicação 100% consistente",
+          "Profissionalismo no atendimento",
+          "Aumento de retenção",
+        ],
+        howToConfigure: [
+          "Acesse 'Automações'",
+          "Ative as automações desejadas (confirmação, lembrete, follow-up)",
+          "Personalize o texto de cada mensagem",
+          "Configure os horários de envio",
+          "Salve e ative",
+        ],
+        howToUse: [
+          "Uma vez configuradas, as automações funcionam sozinhas",
+          "Monitore os envios na aba de histórico",
+          "Ajuste textos conforme feedback dos clientes",
+        ],
+        tips: [
+          "Use variáveis dinâmicas como {nome}, {serviço}, {data}",
+          "Teste cada automação antes de ativar",
+          "Revise os textos a cada 3 meses",
+        ],
+        bestPractices: [
+          "Ative pelo menos lembrete e confirmação",
+          "Use follow-up para pedir avaliação",
+          "Não exagere na quantidade de mensagens",
+        ],
+        commonErrors: [
+          "Ativar automação sem personalizar o texto",
+          "Enviar muitas mensagens por atendimento",
+          "Não monitorar se as mensagens estão chegando",
+        ],
+        importantNotes: ["Automações dependem da integração com WhatsApp estar ativa e funcionando."],
+        expectedResult: "Comunicação profissional rodando no piloto automático, com mais tempo para focar no atendimento.",
+      },
+    ],
+  },
+  {
+    id: "relatorios",
+    title: "Relatórios",
+    description: "Análises detalhadas e métricas para decisões estratégicas",
+    icon: BarChart3,
+    color: "from-indigo-500/20 to-indigo-600/10",
+    functions: [
+      {
+        id: "relatorios-gerais",
+        title: "Relatórios e Analytics",
+        summary: "Visualize métricas, gráficos e indicadores do seu negócio.",
+        description: "O módulo de Relatórios oferece uma visão analítica completa do seu negócio. Acompanhe faturamento, número de atendimentos, serviços mais populares, performance da equipe e muito mais através de gráficos e tabelas interativas.",
+        whyImportant: "Dados são a base para decisões inteligentes. Sem métricas, você gerencia no escuro. Com relatórios, cada decisão é fundamentada.",
+        whenToUse: "Semanalmente para acompanhamento e mensalmente para análise estratégica.",
+        problemsSolved: [
+          "Gestão baseada apenas em intuição",
+          "Falta de dados para precificação",
+          "Impossibilidade de medir crescimento",
+          "Dificuldade em identificar serviços mais rentáveis",
+        ],
+        benefits: [
+          "Decisões baseadas em dados reais",
+          "Identificação de tendências",
+          "Otimização de precificação",
+          "Acompanhamento de metas",
+          "Relatórios exportáveis",
+        ],
+        howToConfigure: ["Os relatórios são gerados automaticamente com base nos dados do sistema."],
+        howToUse: [
+          "Acesse 'Relatórios'",
+          "Selecione o período de análise",
+          "Navegue entre as diferentes visualizações",
+          "Exporte dados quando necessário",
+          "Use os insights para tomar decisões",
+        ],
+        tips: [
+          "Compare períodos para identificar sazonalidades",
+          "Identifique seus serviços mais lucrativos",
+          "Use dados para definir promoções estratégicas",
+        ],
+        bestPractices: [
+          "Analise relatórios semanalmente no mínimo",
+          "Defina metas baseadas em dados históricos",
+          "Compartilhe métricas relevantes com a equipe",
+        ],
+        commonErrors: [
+          "Nunca olhar os relatórios",
+          "Analisar apenas faturamento sem ver despesas",
+          "Não manter dados atualizados, gerando relatórios imprecisos",
+        ],
+        importantNotes: ["Relatórios precisos dependem de dados atualizados e corretos no sistema."],
+        expectedResult: "Visão estratégica clara do negócio, com dados para crescer de forma inteligente e sustentável.",
+      },
+    ],
+  },
+  {
+    id: "configuracoes",
+    title: "Configurações",
+    description: "Personalize o sistema de acordo com as necessidades do seu negócio",
+    icon: Settings,
+    color: "from-gray-500/20 to-gray-600/10",
+    functions: [
+      {
+        id: "configuracoes-gerais",
+        title: "Configurações do Sistema",
+        summary: "Personalize perfil, horários, pagamentos e integrações.",
+        description: "As configurações são o centro de controle do seu sistema. Aqui você personaliza tudo: informações do negócio, horários de funcionamento, métodos de pagamento, integrações, aparência e muito mais.",
+        whyImportant: "Um sistema bem configurado funciona melhor, transmite profissionalismo e automatiza processos corretamente.",
+        whenToUse: "Na configuração inicial e sempre que precisar ajustar algum aspecto do sistema.",
+        problemsSolved: [
+          "Sistema com dados padrão não personalizados",
+          "Horários de funcionamento incorretos",
+          "Métodos de pagamento não configurados",
+          "Falta de personalização visual",
+        ],
+        benefits: [
+          "Sistema totalmente personalizado",
+          "Operação otimizada",
+          "Profissionalismo na imagem do negócio",
+          "Integrações funcionando corretamente",
+        ],
+        howToConfigure: [
+          "Acesse 'Configurações'",
+          "Navegue pelas abas disponíveis",
+          "Preencha todas as informações do negócio",
+          "Configure horários de funcionamento",
+          "Defina métodos de pagamento aceitos",
+          "Personalize as cores e aparência",
+          "Configure integrações (WhatsApp, Google Calendar)",
+        ],
+        howToUse: [
+          "Revise as configurações periodicamente",
+          "Atualize horários em feriados e datas especiais",
+          "Ajuste métodos de pagamento conforme necessário",
+        ],
+        tips: [
+          "Complete 100% do perfil para melhor experiência",
+          "Use as cores da sua marca na personalização",
+          "Teste as integrações após configurar",
+        ],
+        bestPractices: [
+          "Revise configurações mensalmente",
+          "Mantenha informações de contato sempre atualizadas",
+          "Documente suas configurações de integração",
+        ],
+        commonErrors: [
+          "Deixar configurações padrão sem personalizar",
+          "Não configurar fuso horário corretamente",
+          "Esquecer de salvar alterações",
+        ],
+        importantNotes: [
+          "Algumas configurações afetam a página de agendamento online",
+          "Alterações em horários não afetam agendamentos já criados",
+        ],
+        expectedResult: "Um sistema totalmente adaptado ao seu negócio, funcionando de forma otimizada e profissional.",
+      },
+    ],
+  },
+  {
+    id: "pagina-online",
+    title: "Página de Agendamento Online",
+    description: "Sua página profissional para clientes agendarem 24 horas por dia",
+    icon: Globe,
+    color: "from-cyan-500/20 to-cyan-600/10",
+    functions: [
+      {
+        id: "pagina-agendamento",
+        title: "Página de Agendamento Online",
+        summary: "Página pública personalizada para seus clientes agendarem online.",
+        description: "Sua página de agendamento online é um mini-site personalizado com a identidade do seu negócio. Nela, seus clientes podem ver seus serviços, escolher o profissional, selecionar data e horário disponível, e agendar sem precisar ligar ou enviar mensagem.",
+        whyImportant: "Disponibilizar agendamento online 24/7 aumenta o número de agendamentos, reduz o trabalho manual e moderniza seu negócio.",
+        whenToUse: "Configure uma vez e compartilhe o link em redes sociais, WhatsApp e onde mais desejar.",
+        problemsSolved: [
+          "Clientes tentando agendar fora do horário comercial",
+          "Tempo gasto respondendo mensagens para agendar",
+          "Perda de clientes por demora na resposta",
+          "Falta de presença online profissional",
+        ],
+        benefits: [
+          "Agendamentos 24 horas por dia",
+          "Zero trabalho manual para agendar",
+          "Imagem profissional e moderna",
+          "Mais agendamentos = mais receita",
+          "Link compartilhável em qualquer plataforma",
+        ],
+        howToConfigure: [
+          "Acesse 'Página Pública'",
+          "Personalize as cores e informações",
+          "Adicione logo e capa",
+          "Selecione quais serviços aparecerão",
+          "Defina a mensagem de boas-vindas",
+          "Ative a página e copie o link",
+        ],
+        howToUse: [
+          "Copie o link da sua página",
+          "Compartilhe no WhatsApp, Instagram, Facebook",
+          "Coloque no link da bio das redes sociais",
+          "Agendamentos online chegam automaticamente na sua agenda",
+        ],
+        tips: [
+          "Use cores e logo profissionais para transmitir confiança",
+          "Coloque o link em todos os seus canais",
+          "Responda rápido aos agendamentos que chegam",
+        ],
+        bestPractices: [
+          "Mantenha os serviços e preços atualizados",
+          "Revise a aparência da página periodicamente",
+          "Ative lembretes automáticos para agendamentos online",
+        ],
+        commonErrors: [
+          "Não compartilhar o link da página",
+          "Deixar serviços desatualizados",
+          "Não configurar as cores e deixar o visual genérico",
+        ],
+        importantNotes: [
+          "Apenas serviços ativos aparecem na página",
+          "Horários já ocupados são automaticamente removidos da disponibilidade",
+        ],
+        expectedResult: "Mais agendamentos com menos esforço, presença online profissional e clientes satisfeitos com a praticidade.",
+      },
+    ],
+  },
+  {
+    id: "ia",
+    title: "IA / Recursos Inteligentes",
+    description: "Use inteligência artificial para potencializar seu negócio",
+    icon: Bot,
+    color: "from-purple-500/20 to-purple-600/10",
+    functions: [
+      {
+        id: "assistente-ia",
+        title: "Assistente de IA",
+        summary: "Converse com a IA para obter insights e sugestões personalizadas.",
+        description: "O Assistente de IA é seu consultor virtual integrado ao sistema. Ele analisa seus dados e oferece sugestões personalizadas para melhorar seu negócio, responde dúvidas sobre o sistema e ajuda na tomada de decisões.",
+        whyImportant: "Ter acesso a análises e sugestões inteligentes baseadas nos seus dados reais é como ter um consultor disponível 24 horas por dia.",
+        whenToUse: "Quando precisar de insights, sugestões de melhoria, análise de dados ou ajuda para tomar decisões.",
+        problemsSolved: [
+          "Falta de consultoria acessível para o negócio",
+          "Dificuldade em interpretar dados",
+          "Dúvidas sobre como melhorar resultados",
+          "Necessidade de análises rápidas",
+        ],
+        benefits: [
+          "Insights personalizados baseados nos seus dados",
+          "Sugestões práticas de melhoria",
+          "Respostas instantâneas",
+          "Análises que seriam caras com consultor humano",
+        ],
+        howToConfigure: ["O Assistente IA está disponível automaticamente — basta acessar."],
+        howToUse: [
+          "Acesse 'Assistente IA' no menu",
+          "Digite sua pergunta ou pedido",
+          "Aguarde a resposta personalizada",
+          "Aplique as sugestões no seu negócio",
+        ],
+        tips: [
+          "Faça perguntas específicas para respostas melhores",
+          "Peça análise de períodos específicos",
+          "Use para preparar estratégias sazonais",
+        ],
+        bestPractices: [
+          "Consulte a IA antes de tomar decisões importantes",
+          "Use para identificar oportunidades que você não percebeu",
+          "Combine insights da IA com sua experiência",
+        ],
+        commonErrors: [
+          "Fazer perguntas muito vagas",
+          "Não aplicar as sugestões recebidas",
+          "Esperar que a IA faça tudo sozinha sem sua ação",
+        ],
+        importantNotes: [
+          "A IA usa dados do seu sistema para personalizar respostas",
+          "Quanto mais dados no sistema, melhores as sugestões",
+        ],
+        expectedResult: "Decisões mais inteligentes, insights valiosos e um negócio mais estratégico e lucrativo.",
+      },
+    ],
+  },
+  {
+    id: "campanhas",
+    title: "Campanhas e Marketing",
+    description: "Crie campanhas de marketing e promoções para engajar clientes",
+    icon: Send,
+    color: "from-rose-500/20 to-rose-600/10",
+    functions: [
+      {
+        id: "campanhas-marketing",
+        title: "Campanhas de WhatsApp",
+        summary: "Envie mensagens em massa para sua base de clientes.",
+        description: "O módulo de Campanhas permite criar e enviar mensagens promocionais para grupos segmentados de clientes via WhatsApp. Ideal para promoções, novidades, datas comemorativas e reativação de clientes inativos.",
+        whyImportant: "Marketing direto via WhatsApp tem taxas de abertura superiores a 90%, sendo a forma mais eficaz de comunicar promoções e novidades.",
+        whenToUse: "Para promoções sazonais, lançamento de serviços, reativação de clientes e comunicações importantes.",
+        problemsSolved: [
+          "Dificuldade em alcançar clientes com promoções",
+          "Envio manual demorado de mensagens",
+          "Falta de segmentação na comunicação",
+          "Clientes inativos sem retorno",
+        ],
+        benefits: [
+          "Alcance massivo com pouco esforço",
+          "Segmentação por tipo de cliente",
+          "Acompanhamento de entregas e leituras",
+          "Reativação de clientes inativos",
+          "Aumento de faturamento com promoções",
+        ],
+        howToConfigure: [
+          "Certifique-se de que o WhatsApp está integrado",
+          "Acesse 'Campanhas'",
+          "Clique em '+ Nova Campanha'",
+          "Defina o nome e público-alvo",
+          "Escreva a mensagem da campanha",
+          "Revise e envie",
+        ],
+        howToUse: [
+          "Selecione o tipo de público (todos, inativos, recentes)",
+          "Escreva uma mensagem atrativa",
+          "Revise a prévia antes de enviar",
+          "Acompanhe as métricas de envio",
+        ],
+        tips: [
+          "Envie campanhas em horários com maior engajamento",
+          "Use linguagem pessoal e direta",
+          "Inclua uma chamada para ação clara",
+        ],
+        bestPractices: [
+          "Não envie mais de 2 campanhas por semana",
+          "Segmente o público para relevância",
+          "Ofereça algo de valor real nas promoções",
+        ],
+        commonErrors: [
+          "Enviar muitas campanhas e irritar os clientes",
+          "Mensagens genéricas sem personalização",
+          "Não acompanhar os resultados",
+        ],
+        importantNotes: [
+          "Respeite os limites de envio do seu plano",
+          "Campanhas são enviadas via API do WhatsApp",
+        ],
+        expectedResult: "Mais clientes engajados, promoções com alto retorno e uma base ativa e fiel.",
+      },
+    ],
+  },
+  {
+    id: "avaliacoes",
+    title: "Avaliações",
+    description: "Colete e gerencie avaliações dos seus clientes",
+    icon: Star,
+    color: "from-yellow-400/20 to-yellow-500/10",
+    functions: [
+      {
+        id: "avaliacoes-clientes",
+        title: "Sistema de Avaliações",
+        summary: "Colete feedback e avaliações dos seus clientes automaticamente.",
+        description: "O sistema de avaliações permite coletar feedback dos clientes após cada atendimento. As avaliações incluem nota de 1 a 5 estrelas e comentário opcional, ajudando a medir a satisfação e identificar pontos de melhoria.",
+        whyImportant: "Avaliações são a base para melhoria contínua. Clientes satisfeitos indicam novos, e insatisfeitos sinalizam problemas que precisam ser resolvidos.",
+        whenToUse: "Ative as avaliações automáticas e o sistema faz o trabalho — colete e analise periodicamente.",
+        problemsSolved: [
+          "Falta de feedback estruturado",
+          "Não saber o nível de satisfação dos clientes",
+          "Problemas passando despercebidos",
+        ],
+        benefits: [
+          "Medição precisa da satisfação",
+          "Identificação de pontos de melhoria",
+          "Prova social para novos clientes",
+          "Motivação para a equipe com boas avaliações",
+        ],
+        howToConfigure: [
+          "Ative o envio automático de avaliações nas Automações",
+          "Configure a mensagem de solicitação de avaliação",
+          "Defina quando enviar (após quantas horas do atendimento)",
+        ],
+        howToUse: [
+          "Avaliações são coletadas automaticamente",
+          "Acesse 'Avaliações' para ver os resultados",
+          "Analise a média geral e por profissional",
+          "Use os comentários para melhorias",
+        ],
+        tips: [
+          "Responda aos comentários negativos com atenção",
+          "Compartilhe avaliações positivas nas redes",
+          "Use a média como meta de qualidade",
+        ],
+        bestPractices: [
+          "Analise avaliações semanalmente",
+          "Reúna a equipe para discutir feedbacks",
+          "Aja rapidamente sobre avaliações negativas",
+        ],
+        commonErrors: [
+          "Ignorar avaliações negativas",
+          "Não usar os feedbacks para melhorar",
+          "Solicitar avaliações cedo demais após o atendimento",
+        ],
+        importantNotes: ["Avaliações públicas podem aparecer na sua página de agendamento online."],
+        expectedResult: "Melhoria contínua baseada em feedback real, com aumento na satisfação e reputação do negócio.",
+      },
+    ],
+  },
+  {
+    id: "cupons",
+    title: "Cupons de Desconto",
+    description: "Crie e gerencie cupons promocionais para atrair e fidelizar clientes",
+    icon: Target,
+    color: "from-red-500/20 to-red-600/10",
+    functions: [
+      {
+        id: "gestao-cupons",
+        title: "Gestão de Cupons",
+        summary: "Crie cupons de desconto personalizados para promoções.",
+        description: "Crie cupons com descontos em porcentagem ou valor fixo, defina limites de uso, validade e valor mínimo. Ideal para promoções, datas comemorativas e programas de indicação.",
+        whyImportant: "Cupons são ferramentas poderosas para atrair novos clientes, reativar inativos e aumentar o ticket médio em períodos estratégicos.",
+        whenToUse: "Para promoções sazonais, programas de indicação, aniversários de clientes e datas comemorativas.",
+        problemsSolved: [
+          "Falta de ferramentas para criar promoções",
+          "Dificuldade em controlar descontos dados",
+          "Promoções sem controle de validade ou limite",
+        ],
+        benefits: [
+          "Promoções controladas e mensuráveis",
+          "Atração de novos clientes",
+          "Reativação de clientes inativos",
+          "Controle de uso e validade",
+        ],
+        howToConfigure: [
+          "Acesse 'Cupons'",
+          "Clique em '+ Novo Cupom'",
+          "Defina o código do cupom",
+          "Escolha tipo de desconto (% ou valor fixo)",
+          "Configure limite de usos e validade",
+          "Ative o cupom",
+        ],
+        howToUse: [
+          "Crie cupons para suas campanhas",
+          "Divulgue o código nas redes e campanhas",
+          "Clientes inserem o código ao agendar",
+          "Acompanhe o uso no painel de cupons",
+        ],
+        tips: [
+          "Crie códigos memoráveis e fáceis",
+          "Limite usos para criar escassez",
+          "Use em combinação com campanhas de WhatsApp",
+        ],
+        bestPractices: [
+          "Sempre defina prazo de validade",
+          "Analise o retorno de cada cupom",
+          "Não abuse de descontos altos demais",
+        ],
+        commonErrors: [
+          "Criar cupons sem prazo de validade",
+          "Descontos altos demais que comprometem o lucro",
+          "Não divulgar os cupons criados",
+        ],
+        importantNotes: ["Cupons inativos não podem ser utilizados por clientes."],
+        expectedResult: "Promoções inteligentes que atraem clientes, geram movimento e são completamente controláveis.",
+      },
+    ],
+  },
+];

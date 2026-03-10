@@ -38,6 +38,7 @@ import Landing from "./pages/Landing";
 import Instructions from "./pages/Instructions";
 import UpsellConfig from "./pages/UpsellConfig";
 import UpsellDashboard from "./pages/UpsellDashboard";
+import SystemGuide from "./pages/SystemGuide";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -99,6 +100,7 @@ const AppContent = () => (
             <Route path="/instructions" element={<ProtectedRoute><Instructions /></ProtectedRoute>} />
             <Route path="/upsell" element={<ProtectedRoute><UpsellDashboard /></ProtectedRoute>} />
             <Route path="/upsell/config" element={<ProtectedRoute><UpsellConfig /></ProtectedRoute>} />
+            <Route path="/guia" element={<ProtectedRoute><SystemGuide /></ProtectedRoute>} />
 
             {/* Admin Master routes */}
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
