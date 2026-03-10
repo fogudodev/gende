@@ -12,10 +12,10 @@ type Msg = { role: "user" | "assistant"; content: string };
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/salon-ai-assistant`;
 
 const suggestedQuestions = [
-  { icon: TrendingUp, text: "Como está a saúde financeira do meu negócio?" },
-  { icon: Users, text: "Quais clientes estão inativos e como reativá-los?" },
-  { icon: DollarSign, text: "Qual o desempenho da minha equipe este mês?" },
-  { icon: Calendar, text: "Analise minha taxa de cancelamento e sugira melhorias" },
+  { icon: TrendingUp, text: "Faça uma análise completa do meu negócio e me diga onde posso faturar mais" },
+  { icon: Users, text: "Quantos clientes inativos eu tenho e quanto posso faturar reativando eles?" },
+  { icon: DollarSign, text: "Quais serviços precisam de promoção e quais posso aumentar o preço?" },
+  { icon: Calendar, text: "Quais horários estão vazios e como posso preencher minha agenda?" },
 ];
 
 const AIAssistant = () => {
