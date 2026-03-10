@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useAuth } from "@/hooks/useAuth";
-import { Send, Loader2, User, Sparkles, TrendingUp, Users, DollarSign, Calendar } from "lucide-react";
+import { Send, Loader2, User, TrendingUp, Users, DollarSign, Calendar } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import lisAvatar from "@/assets/lis-avatar.jpg";
@@ -140,30 +140,33 @@ const AIAssistant = () => {
 
   return (
     <DashboardLayout title="Lis — Assistente IA" subtitle="Sua consultora especialista em negócios de beleza">
-      <div className="max-w-3xl mx-auto glass-card rounded-2xl flex flex-col fixed inset-x-0 bottom-3 top-[64px] md:left-[72px] md:top-[72px] md:bottom-6 lg:bottom-8 mx-3 md:mx-6 lg:mx-8 overflow-hidden z-10">
+      <div
+        className="max-w-3xl mx-auto w-full glass-card rounded-2xl flex flex-col overflow-hidden"
+        style={{ height: 'calc(100dvh - 140px)', maxHeight: 'calc(100dvh - 100px)' }}
+      >
         {/* Messages */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4 min-h-0">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center px-4">
-              <Avatar className="w-20 h-20 mb-4 ring-2 ring-accent/30 ring-offset-2 ring-offset-background">
+            <div className="flex flex-col items-center justify-center h-full text-center px-2">
+              <Avatar className="w-14 h-14 md:w-20 md:h-20 mb-3 ring-2 ring-accent/30 ring-offset-2 ring-offset-background">
                 <AvatarImage src={lisAvatar} alt="Lis - Assistente IA" className="object-cover" />
                 <AvatarFallback className="bg-accent/10 text-accent text-xl font-bold">L</AvatarFallback>
               </Avatar>
-              <h2 className="text-lg font-bold text-foreground mb-1">
+              <h2 className="text-base md:text-lg font-bold text-foreground mb-1">
                 Olá, {professional?.name?.split(" ")[0] || ""}! Eu sou a Lis 👋
               </h2>
-              <p className="text-sm text-muted-foreground mb-6 max-w-md">
-                Sou sua assistente especialista em negócios de beleza. Analiso seus dados em tempo real para te ajudar a crescer e tomar as melhores decisões.
+              <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-6 max-w-md">
+                Sou sua assistente especialista em negócios de beleza. Analiso seus dados em tempo real para te ajudar a crescer.
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 md:gap-2 w-full max-w-lg">
                 {suggestedQuestions.map((q, i) => (
                   <button
                     key={i}
                     onClick={() => send(q.text)}
-                    className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-muted/50 hover:bg-muted border border-border text-left transition-colors group"
+                    className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-3 rounded-xl bg-muted/50 hover:bg-muted border border-border text-left transition-colors group"
                   >
-                    <q.icon size={16} className="text-accent shrink-0" />
-                    <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
+                    <q.icon size={14} className="text-accent shrink-0" />
+                    <span className="text-[11px] md:text-xs text-muted-foreground group-hover:text-foreground transition-colors line-clamp-2">
                       {q.text}
                     </span>
                   </button>
@@ -172,70 +175,70 @@ const AIAssistant = () => {
             </div>
           ) : (
             messages.map((msg, i) => (
-              <div key={i} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div key={i} className={`flex gap-2 md:gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 {msg.role === "assistant" && (
-                  <Avatar className="w-8 h-8 shrink-0 mt-1 ring-1 ring-accent/20">
+                  <Avatar className="w-7 h-7 md:w-8 md:h-8 shrink-0 mt-1 ring-1 ring-accent/20">
                     <AvatarImage src={lisAvatar} alt="Lis" className="object-cover" />
                     <AvatarFallback className="bg-accent/10 text-accent text-xs font-bold">L</AvatarFallback>
                   </Avatar>
                 )}
                 <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-3 ${
+                  className={`max-w-[88%] md:max-w-[85%] rounded-2xl px-3 py-2 md:px-4 md:py-3 ${
                     msg.role === "user"
                       ? "bg-accent text-accent-foreground rounded-br-md"
                       : "bg-muted text-foreground rounded-bl-md"
                   }`}
                 >
                   {msg.role === "assistant" ? (
-                    <div className="prose prose-sm dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&>p]:mb-3 [&>ul]:mb-3 [&>ol]:mb-3 [&>h2]:mt-4 [&>h2]:mb-2 [&>h3]:mt-3 [&>h3]:mb-1.5 [&>p]:leading-relaxed [&>ul]:leading-relaxed [&>li]:mb-1">
+                    <div className="prose prose-sm dark:prose-invert max-w-none text-xs md:text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&>p]:mb-2 [&>ul]:mb-2 [&>ol]:mb-2 [&>h2]:mt-3 [&>h2]:mb-1.5 [&>h3]:mt-2 [&>h3]:mb-1 [&>p]:leading-relaxed [&>ul]:leading-relaxed [&>li]:mb-0.5">
                       <ReactMarkdown>{msg.content}</ReactMarkdown>
                     </div>
                   ) : (
-                    <p className="text-sm">{msg.content}</p>
+                    <p className="text-xs md:text-sm">{msg.content}</p>
                   )}
                 </div>
                 {msg.role === "user" && (
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-1">
-                    <User size={16} className="text-primary" />
+                  <div className="w-7 h-7 md:w-8 md:h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-1">
+                    <User size={14} className="text-primary" />
                   </div>
                 )}
               </div>
             ))
           )}
           {isLoading && messages[messages.length - 1]?.role === "user" && (
-            <div className="flex gap-3">
-              <Avatar className="w-8 h-8 shrink-0 ring-1 ring-accent/20">
+            <div className="flex gap-2 md:gap-3">
+              <Avatar className="w-7 h-7 md:w-8 md:h-8 shrink-0 ring-1 ring-accent/20">
                 <AvatarImage src={lisAvatar} alt="Lis" className="object-cover" />
                 <AvatarFallback className="bg-accent/10 text-accent text-xs font-bold">L</AvatarFallback>
               </Avatar>
-              <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
+              <div className="bg-muted rounded-2xl rounded-bl-md px-3 py-2 md:px-4 md:py-3">
                 <div className="flex items-center gap-2">
                   <Loader2 size={14} className="animate-spin text-accent" />
-                  <span className="text-xs text-muted-foreground">Lis está analisando seus dados...</span>
+                  <span className="text-[11px] md:text-xs text-muted-foreground">Lis está analisando...</span>
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Input */}
-        <div className="border-t border-border p-3">
+        {/* Input - always pinned at bottom */}
+        <div className="border-t border-border p-2 md:p-3 shrink-0">
           <div className="flex items-center gap-2">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && send(input)}
-              placeholder="Pergunte para a Lis sobre seu negócio..."
-              className="flex-1 px-4 py-2.5 rounded-xl bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30"
+              placeholder="Pergunte para a Lis..."
+              className="flex-1 px-3 py-2 md:px-4 md:py-2.5 rounded-xl bg-muted border border-border text-xs md:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30"
               disabled={isLoading}
             />
             <button
               onClick={() => send(input)}
               disabled={!input.trim() || isLoading}
-              className="p-2.5 rounded-xl gradient-accent text-accent-foreground hover-lift disabled:opacity-50 transition-all"
+              className="p-2 md:p-2.5 rounded-xl gradient-accent text-accent-foreground hover-lift disabled:opacity-50 transition-all shrink-0"
             >
-              <Send size={18} />
+              <Send size={16} />
             </button>
           </div>
         </div>
