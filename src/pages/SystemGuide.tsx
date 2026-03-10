@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import DashboardLayout from "@/components/layout/DashboardLayout";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
