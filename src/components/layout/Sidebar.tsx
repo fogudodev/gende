@@ -35,6 +35,7 @@ import {
   ChevronDown,
   Zap,
   Sparkles,
+  Instagram,
   type LucideIcon,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
@@ -76,6 +77,7 @@ const whatsappGroup: NavGroup = {
   children: [
     { icon: Zap, label: "Automações", path: "/automations", featureKey: "automations" },
     { icon: Megaphone, label: "Campanhas", path: "/campaigns", featureKey: "campaigns" },
+    { icon: Instagram, label: "Instagram DM", path: "/instagram-automation", featureKey: "automations" },
   ],
 };
 

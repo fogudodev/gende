@@ -960,6 +960,163 @@ export type Database = {
           },
         ]
       }
+      instagram_accounts: {
+        Row: {
+          access_token: string
+          account_name: string | null
+          auto_comment_reply_enabled: boolean
+          auto_reply_enabled: boolean
+          created_at: string
+          id: string
+          instagram_user_id: string
+          is_active: boolean
+          page_id: string
+          professional_id: string
+          token_expiration: string | null
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          access_token: string
+          account_name?: string | null
+          auto_comment_reply_enabled?: boolean
+          auto_reply_enabled?: boolean
+          created_at?: string
+          id?: string
+          instagram_user_id: string
+          is_active?: boolean
+          page_id: string
+          professional_id: string
+          token_expiration?: string | null
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          access_token?: string
+          account_name?: string | null
+          auto_comment_reply_enabled?: boolean
+          auto_reply_enabled?: boolean
+          created_at?: string
+          id?: string
+          instagram_user_id?: string
+          is_active?: boolean
+          page_id?: string
+          professional_id?: string
+          token_expiration?: string | null
+          updated_at?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instagram_accounts_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: true
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instagram_keywords: {
+        Row: {
+          created_at: string
+          custom_response: string | null
+          id: string
+          is_active: boolean
+          keyword: string
+          professional_id: string
+          response_type: string
+          trigger_count: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custom_response?: string | null
+          id?: string
+          is_active?: boolean
+          keyword: string
+          professional_id: string
+          response_type?: string
+          trigger_count?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custom_response?: string | null
+          id?: string
+          is_active?: boolean
+          keyword?: string
+          professional_id?: string
+          response_type?: string
+          trigger_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instagram_keywords_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instagram_messages: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          direction: string
+          id: string
+          instagram_user_id: string
+          is_read: boolean
+          message_text: string | null
+          message_type: string
+          professional_id: string
+          sender_id: string
+          sender_username: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          direction?: string
+          id?: string
+          instagram_user_id: string
+          is_read?: boolean
+          message_text?: string | null
+          message_type?: string
+          professional_id: string
+          sender_id: string
+          sender_username?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          direction?: string
+          id?: string
+          instagram_user_id?: string
+          is_read?: boolean
+          message_text?: string | null
+          message_type?: string
+          professional_id?: string
+          sender_id?: string
+          sender_username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instagram_messages_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instagram_messages_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_config: {
         Row: {
           accept_card: boolean

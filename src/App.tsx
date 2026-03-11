@@ -39,6 +39,8 @@ import Instructions from "./pages/Instructions";
 import UpsellConfig from "./pages/UpsellConfig";
 import UpsellDashboard from "./pages/UpsellDashboard";
 import SystemGuide from "./pages/SystemGuide";
+import InstagramAutomation from "./pages/InstagramAutomation";
+import InstagramCallback from "./pages/InstagramCallback";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -101,6 +103,8 @@ const AppContent = () => (
             <Route path="/upsell" element={<ProtectedRoute><UpsellDashboard /></ProtectedRoute>} />
             <Route path="/upsell/config" element={<ProtectedRoute><UpsellConfig /></ProtectedRoute>} />
             <Route path="/guia" element={<SystemGuide />} />
+            <Route path="/instagram-automation" element={<ProtectedRoute><InstagramAutomation /></ProtectedRoute>} />
+            <Route path="/instagram-callback" element={<ProtectedRoute><InstagramCallback /></ProtectedRoute>} />
 
             {/* Admin Master routes */}
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
