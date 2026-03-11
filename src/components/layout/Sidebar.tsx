@@ -35,6 +35,7 @@ import {
   ChevronDown,
   Zap,
   Sparkles,
+  Instagram,
   type LucideIcon,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
