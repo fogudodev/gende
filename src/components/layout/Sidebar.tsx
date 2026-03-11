@@ -77,6 +77,7 @@ const whatsappGroup: NavGroup = {
   children: [
     { icon: Zap, label: "Automações", path: "/automations", featureKey: "automations" },
     { icon: Megaphone, label: "Campanhas", path: "/campaigns", featureKey: "campaigns" },
+    { icon: Instagram, label: "Instagram DM", path: "/instagram-automation", featureKey: "automations" },
   ],
 };
 
