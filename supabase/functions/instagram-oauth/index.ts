@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -78,6 +78,13 @@ serve(async (req) => {
         const code = body.code;
         const redirectUri = body.redirect_uri;
 
+        if (!code || !redirectUri) {
+          return new Response(JSON.stringify({ error: "Código ou redirect_uri inválido" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
         // Exchange code for access token
         const tokenRes = await fetch(
           `https://graph.facebook.com/v21.0/oauth/access_token?` +
@@ -88,12 +95,15 @@ serve(async (req) => {
         );
 
         const tokenData = await tokenRes.json();
-        if (tokenData.error) {
-          console.error("Token exchange error:", tokenData.error);
-          return new Response(JSON.stringify({ error: "Erro ao trocar código por token" }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
+        if (!tokenRes.ok || tokenData.error || !tokenData.access_token) {
+          console.error("Token exchange error:", tokenData?.error || tokenData);
+          return new Response(
+            JSON.stringify({ error: tokenData?.error?.message || "Erro ao trocar código por token" }),
+            {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            }
+          );
         }
 
         // Get long-lived token
@@ -106,6 +116,10 @@ serve(async (req) => {
         );
 
         const longTokenData = await longTokenRes.json();
+        if (!longTokenRes.ok && longTokenData?.error) {
+          console.warn("Long-lived token warning:", longTokenData.error);
+        }
+
         const longLivedToken = longTokenData.access_token || tokenData.access_token;
         const expiresIn = longTokenData.expires_in || 5184000; // ~60 days
 
@@ -114,44 +128,75 @@ serve(async (req) => {
           `https://graph.facebook.com/v21.0/me/accounts?access_token=${longLivedToken}`
         );
         const pagesData = await pagesRes.json();
-        const page = pagesData.data?.[0];
 
-        if (!page) {
+        if (!pagesRes.ok || pagesData?.error) {
+          console.error("Pages fetch error:", pagesData?.error || pagesData);
+          return new Response(
+            JSON.stringify({ error: pagesData?.error?.message || "Erro ao buscar páginas do Facebook" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        const pages = Array.isArray(pagesData.data) ? pagesData.data : [];
+        if (pages.length === 0) {
           return new Response(
             JSON.stringify({ error: "Nenhuma página do Facebook encontrada. Você precisa ter uma página conectada ao Instagram." }),
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
 
-        // Get Instagram business account
-        const igRes = await fetch(
-          `https://graph.facebook.com/v21.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`
-        );
-        const igData = await igRes.json();
-        const igAccountId = igData.instagram_business_account?.id;
+        // Find a page that actually has an Instagram Business account connected
+        let pageWithInstagram: { id: string; access_token: string } | null = null;
+        let igAccountId: string | null = null;
 
-        if (!igAccountId) {
+        for (const page of pages) {
+          const igRes = await fetch(
+            `https://graph.facebook.com/v21.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`
+          );
+          const igData = await igRes.json();
+
+          if (!igRes.ok || igData?.error) {
+            continue;
+          }
+
+          const candidateIgId = igData.instagram_business_account?.id;
+          if (candidateIgId) {
+            pageWithInstagram = page;
+            igAccountId = candidateIgId;
+            break;
+          }
+        }
+
+        if (!pageWithInstagram || !igAccountId) {
           return new Response(
-            JSON.stringify({ error: "Nenhuma conta Instagram Business encontrada. Certifique-se de ter uma conta profissional vinculada." }),
+            JSON.stringify({ error: "Nenhuma conta Instagram Business encontrada. Certifique-se de ter uma conta profissional vinculada a uma página do Facebook." }),
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
 
         // Get Instagram user info
         const igInfoRes = await fetch(
-          `https://graph.instagram.com/v21.0/${igAccountId}?fields=username,name&access_token=${page.access_token}`
+          `https://graph.facebook.com/v21.0/${igAccountId}?fields=username,name&access_token=${pageWithInstagram.access_token}`
         );
         const igInfo = await igInfoRes.json();
 
+        if (!igInfoRes.ok || igInfo?.error) {
+          console.error("Instagram info error:", igInfo?.error || igInfo);
+          return new Response(
+            JSON.stringify({ error: igInfo?.error?.message || "Erro ao buscar dados da conta do Instagram" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
         // Get professional_id
-        const { data: professional } = await supabaseAdmin
+        const { data: professional, error: professionalError } = await supabaseAdmin
           .from("professionals")
           .select("id")
           .eq("user_id", userId)
           .single();
 
-        if (!professional) {
-          return new Response(JSON.stringify({ error: "Profissional não encontrado" }), {
+        if (professionalError || !professional) {
+          return new Response(JSON.stringify({ error: "Profissional não encontrado para o usuário logado" }), {
             status: 404,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
@@ -168,8 +213,8 @@ serve(async (req) => {
               instagram_user_id: igAccountId,
               username: igInfo.username || "",
               account_name: igInfo.name || "",
-              page_id: page.id,
-              access_token: page.access_token,
+              page_id: pageWithInstagram.id,
+              access_token: pageWithInstagram.access_token,
               token_expiration: tokenExpiration,
               is_active: true,
             },
