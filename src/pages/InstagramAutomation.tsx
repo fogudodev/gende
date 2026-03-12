@@ -52,8 +52,39 @@ const InstagramAutomation = () => {
     sessionStorage.getItem("instagram_manual_auth_url")
   );
 
+  const isConnected = !!account;
+
+  useEffect(() => {
+    const syncManualAuthUrl = () => {
+      setManualAuthUrl(sessionStorage.getItem("instagram_manual_auth_url"));
+    };
+
+    window.addEventListener("instagram-manual-auth-ready", syncManualAuthUrl);
+    return () => {
+      window.removeEventListener("instagram-manual-auth-ready", syncManualAuthUrl);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isConnected && manualAuthUrl) {
+      sessionStorage.removeItem("instagram_manual_auth_url");
+      setManualAuthUrl(null);
+    }
+  }, [isConnected, manualAuthUrl]);
+
   const handleConnect = () => {
     connect.mutate();
+  };
+
+  const handleCopyManualLink = async () => {
+    if (!manualAuthUrl) return;
+
+    try {
+      await navigator.clipboard.writeText(manualAuthUrl);
+      toast.success("Link copiado!");
+    } catch {
+      toast.error("Não foi possível copiar automaticamente. Selecione o texto e copie manualmente.");
+    }
   };
 
   const handleDisconnect = () => {
