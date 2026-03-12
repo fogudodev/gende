@@ -41,6 +41,8 @@ import UpsellDashboard from "./pages/UpsellDashboard";
 import SystemGuide from "./pages/SystemGuide";
 import InstagramAutomation from "./pages/InstagramAutomation";
 import InstagramCallback from "./pages/InstagramCallback";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfUse from "./pages/TermsOfUse";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
