@@ -130,11 +130,27 @@ export const useInstagramConnect = () => {
       if (data?.error) throw new Error(data.error);
       return data.auth_url as string;
     },
-    onSuccess: (authUrl, _variables, context) => {
+    onSuccess: async (authUrl, _variables, context) => {
+      const isEmbeddedPreview = window.self !== window.top;
+
+      if (isEmbeddedPreview) {
+        if (context?.popup && !context.popup.closed) {
+          context.popup.close();
+        }
+        try {
+          await navigator.clipboard.writeText(authUrl);
+          toast.success("Link copiado! Abra em uma aba normal do navegador para conectar.");
+        } catch {
+          toast.error("Não foi possível abrir no preview. Copie e abra o link manualmente no navegador.");
+        }
+        return;
+      }
+
       if (context?.popup && !context.popup.closed) {
         context.popup.location.href = authUrl;
         return;
       }
+
       window.open(authUrl, "_blank");
     },
     onError: (err: any, _variables, context) => {
