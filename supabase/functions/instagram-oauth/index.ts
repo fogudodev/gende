@@ -65,8 +65,6 @@ serve(async (req) => {
           "instagram_basic",
           "instagram_manage_messages",
           "pages_show_list",
-          "pages_messaging",
-          "pages_read_engagement",
         ].join(",");
 
         const authUrl =
