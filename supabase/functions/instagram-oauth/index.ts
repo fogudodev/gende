@@ -59,6 +59,7 @@ serve(async (req) => {
           "instagram_basic",
           "instagram_manage_messages",
           "pages_show_list",
+          "business_management",
         ].join(",");
 
         const authUrl =
@@ -67,6 +68,7 @@ serve(async (req) => {
           `&redirect_uri=${encodeURIComponent(redirectUri)}` +
           `&scope=${scopes}` +
           `&state=${userId}` +
+          `&auth_type=rerequest` +
           `&response_type=code`;
 
         return new Response(JSON.stringify({ auth_url: authUrl }), {
