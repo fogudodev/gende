@@ -117,6 +117,10 @@ export const useInstagramConnect = () => {
   const queryClient = useQueryClient();
 
   const connect = useMutation({
+    onMutate: () => {
+      const popup = window.open("about:blank", "_blank");
+      return { popup };
+    },
     mutationFn: async () => {
       const redirectUri = `${window.location.origin}/instagram-callback`;
       const { data, error } = await supabase.functions.invoke("instagram-oauth", {
@@ -126,10 +130,19 @@ export const useInstagramConnect = () => {
       if (data?.error) throw new Error(data.error);
       return data.auth_url as string;
     },
-    onSuccess: (authUrl) => {
+    onSuccess: (authUrl, _variables, context) => {
+      if (context?.popup && !context.popup.closed) {
+        context.popup.location.href = authUrl;
+        return;
+      }
       window.open(authUrl, "_blank");
     },
-    onError: (err: any) => toast.error(err.message || "Erro ao conectar Instagram"),
+    onError: (err: any, _variables, context) => {
+      if (context?.popup && !context.popup.closed) {
+        context.popup.close();
+      }
+      toast.error(err.message || "Erro ao conectar Instagram");
+    },
   });
 
   const exchangeCode = useMutation({
