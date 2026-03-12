@@ -50,6 +50,7 @@ const ROUTE_TO_LABEL: Record<string, string> = {
   "/payment-chat": "Chat Pagamento",
   "/ai-assistant": "Assistente IA",
   "/cash-register": "Caixa",
+  "/instagram-automation": "Instagram DM",
 };
 
 // Routes accessible by reception employees
