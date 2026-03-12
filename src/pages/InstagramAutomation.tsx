@@ -32,7 +32,7 @@ import {
   TrendingUp,
   AlertCircle,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -48,43 +48,11 @@ const InstagramAutomation = () => {
   const [newKeyword, setNewKeyword] = useState("");
   const [newResponse, setNewResponse] = useState("");
   const [responseType, setResponseType] = useState("booking_link");
-  const [manualAuthUrl, setManualAuthUrl] = useState<string | null>(() =>
-    sessionStorage.getItem("instagram_manual_auth_url")
-  );
 
   const isConnected = !!account;
 
-  useEffect(() => {
-    const syncManualAuthUrl = () => {
-      setManualAuthUrl(sessionStorage.getItem("instagram_manual_auth_url"));
-    };
-
-    window.addEventListener("instagram-manual-auth-ready", syncManualAuthUrl);
-    return () => {
-      window.removeEventListener("instagram-manual-auth-ready", syncManualAuthUrl);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (isConnected && manualAuthUrl) {
-      sessionStorage.removeItem("instagram_manual_auth_url");
-      setManualAuthUrl(null);
-    }
-  }, [isConnected, manualAuthUrl]);
-
   const handleConnect = () => {
     connect.mutate();
-  };
-
-  const handleCopyManualLink = async () => {
-    if (!manualAuthUrl) return;
-
-    try {
-      await navigator.clipboard.writeText(manualAuthUrl);
-      toast.success("Link copiado!");
-    } catch {
-      toast.error("Não foi possível copiar automaticamente. Selecione o texto e copie manualmente.");
-    }
   };
 
   const handleDisconnect = () => {
@@ -171,43 +139,24 @@ const InstagramAutomation = () => {
         </Card>
 
         {!isConnected && (
-          <>
-            {manualAuthUrl && (
-              <Card className="p-6 border-dashed">
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-foreground">Link manual de conexão</h3>
-                  <p className="text-sm text-muted-foreground">
-                    O preview bloqueia o login do Facebook. Copie o link abaixo e abra em uma aba normal do navegador.
-                  </p>
-                  <Textarea value={manualAuthUrl} readOnly className="min-h-28 text-xs font-mono" />
-                  <div className="flex justify-end">
-                    <Button size="sm" variant="secondary" onClick={handleCopyManualLink}>
-                      Copiar link
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            <Card className="p-6 border-dashed">
-              <div className="text-center space-y-3">
-                <AlertCircle className="w-10 h-10 text-muted-foreground mx-auto" />
-                <h3 className="font-semibold text-foreground">Configure sua conta Instagram</h3>
-                <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                  Para usar a automação de Instagram, você precisa conectar sua conta Instagram Business.
-                  Certifique-se de que sua conta Instagram está vinculada a uma Página do Facebook.
-                </p>
-                <div className="bg-muted/50 rounded-lg p-4 text-left max-w-md mx-auto space-y-2">
-                  <p className="text-sm font-medium text-foreground">Pré-requisitos:</p>
-                  <ul className="text-sm text-muted-foreground space-y-1 list-disc pl-4">
-                    <li>Conta Instagram Business ou Criador</li>
-                    <li>Página do Facebook vinculada ao Instagram</li>
-                    <li>Permissões de administrador na Página</li>
-                  </ul>
-                </div>
+          <Card className="p-6 border-dashed">
+            <div className="text-center space-y-3">
+              <AlertCircle className="w-10 h-10 text-muted-foreground mx-auto" />
+              <h3 className="font-semibold text-foreground">Configure sua conta Instagram</h3>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                Para usar a automação de Instagram, você precisa conectar sua conta Instagram Business.
+                Certifique-se de que sua conta Instagram está vinculada a uma Página do Facebook.
+              </p>
+              <div className="bg-muted/50 rounded-lg p-4 text-left max-w-md mx-auto space-y-2">
+                <p className="text-sm font-medium text-foreground">Pré-requisitos:</p>
+                <ul className="text-sm text-muted-foreground space-y-1 list-disc pl-4">
+                  <li>Conta Instagram Business ou Criador</li>
+                  <li>Página do Facebook vinculada ao Instagram</li>
+                  <li>Permissões de administrador na Página</li>
+                </ul>
               </div>
-            </Card>
-          </>
+            </div>
+          </Card>
         )}
 
         {isConnected && (

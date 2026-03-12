@@ -127,16 +127,7 @@ export const useInstagramConnect = () => {
       return data.auth_url as string;
     },
     onSuccess: (authUrl) => {
-      const isEmbeddedPreview = window.self !== window.top;
-
-      if (isEmbeddedPreview) {
-        sessionStorage.setItem("instagram_manual_auth_url", authUrl);
-        window.dispatchEvent(new CustomEvent("instagram-manual-auth-ready"));
-        toast.warning("Preview bloqueia o login do Facebook. Copie o link manual exibido na tela.");
-        return;
-      }
-
-      window.location.href = authUrl;
+      window.open(authUrl, "_blank");
     },
     onError: (err: any) => toast.error(err.message || "Erro ao conectar Instagram"),
   });
