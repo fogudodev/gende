@@ -32,7 +32,7 @@ import {
   TrendingUp,
   AlertCircle,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -48,8 +48,9 @@ const InstagramAutomation = () => {
   const [newKeyword, setNewKeyword] = useState("");
   const [newResponse, setNewResponse] = useState("");
   const [responseType, setResponseType] = useState("booking_link");
-
-  const isConnected = !!account;
+  const [manualAuthUrl, setManualAuthUrl] = useState<string | null>(() =>
+    sessionStorage.getItem("instagram_manual_auth_url")
+  );
 
   const handleConnect = () => {
     connect.mutate();

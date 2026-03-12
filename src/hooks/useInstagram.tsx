@@ -117,10 +117,6 @@ export const useInstagramConnect = () => {
   const queryClient = useQueryClient();
 
   const connect = useMutation({
-    onMutate: () => {
-      const popup = window.open("about:blank", "_blank");
-      return { popup };
-    },
     mutationFn: async () => {
       const redirectUri = `${window.location.origin}/instagram-callback`;
       const { data, error } = await supabase.functions.invoke("instagram-oauth", {
@@ -130,94 +126,19 @@ export const useInstagramConnect = () => {
       if (data?.error) throw new Error(data.error);
       return data.auth_url as string;
     },
-    onSuccess: async (authUrl, _variables, context) => {
+    onSuccess: (authUrl) => {
       const isEmbeddedPreview = window.self !== window.top;
 
       if (isEmbeddedPreview) {
-        const popup = context?.popup && !context.popup.closed
-          ? context.popup
-          : window.open("about:blank", "_blank");
-
-        if (popup) {
-          const doc = popup.document;
-          doc.title = "Conectar Instagram";
-          doc.body.innerHTML = "";
-          doc.body.style.margin = "0";
-          doc.body.style.fontFamily = "system-ui, -apple-system, sans-serif";
-
-          const container = doc.createElement("div");
-          container.style.cssText = "max-width: 760px; margin: 0 auto; padding: 24px; line-height: 1.5;";
-
-          const title = doc.createElement("h2");
-          title.textContent = "Conexão manual do Instagram";
-          title.style.margin = "0 0 8px";
-
-          const description = doc.createElement("p");
-          description.textContent = "O Facebook bloqueia o login dentro do preview. Copie o link abaixo e abra em uma aba normal do seu navegador.";
-          description.style.margin = "0 0 12px";
-
-          const textarea = doc.createElement("textarea");
-          textarea.value = authUrl;
-          textarea.readOnly = true;
-          textarea.style.cssText = "width: 100%; min-height: 140px; padding: 10px; font-size: 12px;";
-
-          const actions = doc.createElement("div");
-          actions.style.cssText = "display: flex; gap: 8px; margin-top: 12px;";
-
-          const copyButton = doc.createElement("button");
-          copyButton.textContent = "Copiar link";
-          copyButton.style.cssText = "padding: 8px 12px; cursor: pointer;";
-          copyButton.onclick = async () => {
-            try {
-              await popup.navigator.clipboard.writeText(authUrl);
-              copyButton.textContent = "Copiado!";
-            } catch {
-              textarea.focus();
-              textarea.select();
-            }
-          };
-
-          const closeButton = doc.createElement("button");
-          closeButton.textContent = "Fechar";
-          closeButton.style.cssText = "padding: 8px 12px; cursor: pointer;";
-          closeButton.onclick = () => popup.close();
-
-          actions.appendChild(copyButton);
-          actions.appendChild(closeButton);
-          container.appendChild(title);
-          container.appendChild(description);
-          container.appendChild(textarea);
-          container.appendChild(actions);
-          doc.body.appendChild(container);
-
-          textarea.focus();
-          textarea.select();
-          toast.warning("Link aberto em nova aba para cópia manual.");
-          return;
-        }
-
-        try {
-          await navigator.clipboard.writeText(authUrl);
-          toast.success("Link copiado! Abra em uma aba normal do navegador para conectar.");
-        } catch {
-          toast.error(`Não foi possível abrir popup. Link: ${authUrl}`, { duration: 25000 });
-        }
+        sessionStorage.setItem("instagram_manual_auth_url", authUrl);
+        window.dispatchEvent(new CustomEvent("instagram-manual-auth-ready"));
+        toast.warning("Preview bloqueia o login do Facebook. Copie o link manual exibido na tela.");
         return;
       }
 
-      if (context?.popup && !context.popup.closed) {
-        context.popup.location.href = authUrl;
-        return;
-      }
-
-      window.open(authUrl, "_blank");
+      window.location.href = authUrl;
     },
-    onError: (err: any, _variables, context) => {
-      if (context?.popup && !context.popup.closed) {
-        context.popup.close();
-      }
-      toast.error(err.message || "Erro ao conectar Instagram");
-    },
+    onError: (err: any) => toast.error(err.message || "Erro ao conectar Instagram"),
   });
 
   const exchangeCode = useMutation({
