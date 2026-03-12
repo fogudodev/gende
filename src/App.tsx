@@ -104,7 +104,7 @@ const AppContent = () => (
             <Route path="/upsell/config" element={<ProtectedRoute><UpsellConfig /></ProtectedRoute>} />
             <Route path="/guia" element={<SystemGuide />} />
             <Route path="/instagram-automation" element={<ProtectedRoute><InstagramAutomation /></ProtectedRoute>} />
-            <Route path="/instagram-callback" element={<ProtectedRoute><InstagramCallback /></ProtectedRoute>} />
+            <Route path="/instagram-callback" element={<InstagramCallback />} />
 
             {/* Admin Master routes */}
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
