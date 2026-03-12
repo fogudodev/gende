@@ -78,8 +78,8 @@ const InstagramCallback = () => {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center space-y-4 p-8">
         {status === "loading" && <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />}
-        {status === "success" && <CheckCircle className="w-8 h-8 text-green-500 mx-auto" />}
-        {status === "error" && <XCircle className="w-8 h-8 text-red-500 mx-auto" />}
+        {status === "success" && <CheckCircle className="w-8 h-8 text-primary mx-auto" />}
+        {status === "error" && <XCircle className="w-8 h-8 text-destructive mx-auto" />}
         <p className="text-muted-foreground">{message}</p>
         {status !== "loading" && (
           <p className="text-sm text-muted-foreground">Você pode fechar esta aba e voltar à página de automações.</p>
