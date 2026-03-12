@@ -141,8 +141,12 @@ serve(async (req) => {
 
         const pages = Array.isArray(pagesData.data) ? pagesData.data : [];
         if (pages.length === 0) {
+          console.warn("No pages returned from /me/accounts for user", userId);
           return new Response(
-            JSON.stringify({ error: "Nenhuma página do Facebook encontrada. Você precisa ter uma página conectada ao Instagram." }),
+            JSON.stringify({
+              error:
+                "Nenhuma página do Facebook encontrada. Verifique se sua conta tem acesso à Página, se ela está vinculada ao Instagram Business e autorize novamente com a permissão business_management.",
+            }),
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
