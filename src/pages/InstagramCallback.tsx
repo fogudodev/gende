@@ -27,6 +27,14 @@ const InstagramCallback = () => {
         } = await supabase.auth.getSession();
 
         if (!session?.access_token) {
+          if (window.opener && !window.opener.closed) {
+            window.opener.postMessage({ type: "instagram_oauth_code", code }, "*");
+            setStatus("loading");
+            setMessage("Finalizando conexão na aba principal...");
+            setTimeout(() => window.close(), 1200);
+            return;
+          }
+
           setStatus("error");
           setMessage("Sessão não encontrada. Por favor, faça login e tente novamente.");
           return;
