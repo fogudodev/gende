@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfessional } from "./useProfessional";
@@ -127,7 +128,12 @@ export const useInstagramConnect = () => {
       return data.auth_url as string;
     },
     onSuccess: (authUrl) => {
-      window.open(authUrl, "_blank");
+      const popup = window.open(authUrl, "instagram_oauth", "width=600,height=750");
+      if (!popup) {
+        toast.error("Não foi possível abrir a janela de autenticação do Instagram");
+        return;
+      }
+      popup.focus();
     },
     onError: (err: any) => toast.error(err.message || "Erro ao conectar Instagram"),
   });
@@ -148,6 +154,17 @@ export const useInstagramConnect = () => {
     },
     onError: (err: any) => toast.error(err.message || "Erro ao conectar Instagram"),
   });
+
+  useEffect(() => {
+    const handleOAuthMessage = (event: MessageEvent) => {
+      const payload = event.data as { type?: string; code?: string } | null;
+      if (!payload || payload.type !== "instagram_oauth_code" || !payload.code) return;
+      exchangeCode.mutate(payload.code);
+    };
+
+    window.addEventListener("message", handleOAuthMessage);
+    return () => window.removeEventListener("message", handleOAuthMessage);
+  }, [exchangeCode.mutate]);
 
   const disconnect = useMutation({
     mutationFn: async () => {
