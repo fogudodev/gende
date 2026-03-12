@@ -124,11 +124,26 @@ serve(async (req) => {
         const longLivedToken = longTokenData.access_token || tokenData.access_token;
         const expiresIn = longTokenData.expires_in || 5184000; // ~60 days
 
+        // Debug: check token permissions
+        const debugRes = await fetch(
+          `https://graph.facebook.com/v21.0/me?fields=id,name&access_token=${longLivedToken}`
+        );
+        const debugData = await debugRes.json();
+        console.log("DEBUG /me response:", JSON.stringify(debugData));
+
+        // Check granted permissions
+        const permRes = await fetch(
+          `https://graph.facebook.com/v21.0/me/permissions?access_token=${longLivedToken}`
+        );
+        const permData = await permRes.json();
+        console.log("DEBUG permissions:", JSON.stringify(permData));
+
         // Get pages
         const pagesRes = await fetch(
           `https://graph.facebook.com/v21.0/me/accounts?access_token=${longLivedToken}`
         );
         const pagesData = await pagesRes.json();
+        console.log("DEBUG /me/accounts response:", JSON.stringify(pagesData));
 
         if (!pagesRes.ok || pagesData?.error) {
           console.error("Pages fetch error:", pagesData?.error || pagesData);
@@ -140,12 +155,91 @@ serve(async (req) => {
 
         const pages = Array.isArray(pagesData.data) ? pagesData.data : [];
         if (pages.length === 0) {
-          console.warn("No pages returned from /me/accounts for user", userId);
+          // Try alternative: check if user has pages via /me/accounts with fields
+          const altPagesRes = await fetch(
+            `https://graph.facebook.com/v21.0/me/accounts?fields=id,name,access_token,instagram_business_account&access_token=${longLivedToken}`
+          );
+          const altPagesData = await altPagesRes.json();
+          console.log("DEBUG /me/accounts (with fields) response:", JSON.stringify(altPagesData));
+          
+          const altPages = Array.isArray(altPagesData.data) ? altPagesData.data : [];
+          if (altPages.length === 0) {
+            return new Response(
+              JSON.stringify({
+                error:
+                  "Nenhuma página do Facebook encontrada. Verifique se: 1) Você é administrador da Página do Facebook, 2) A Página está vinculada ao seu Instagram Profissional/Business, 3) Ao autorizar, selecione todas as páginas na tela de permissões do Facebook.",
+              }),
+              { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+          
+          // Use alt pages if found
+          // Process altPages which already have instagram_business_account
+          for (const page of altPages) {
+            const candidateIgId = page.instagram_business_account?.id;
+            if (candidateIgId) {
+              // Found it directly
+              const igInfoRes2 = await fetch(
+                `https://graph.facebook.com/v21.0/${candidateIgId}?fields=username,name&access_token=${page.access_token}`
+              );
+              const igInfo2 = await igInfoRes2.json();
+              
+              if (!igInfoRes2.ok || igInfo2?.error) {
+                continue;
+              }
+
+              const { data: professional2 } = await supabaseAdmin
+                .from("professionals")
+                .select("id")
+                .eq("user_id", userId)
+                .single();
+
+              if (!professional2) {
+                return new Response(JSON.stringify({ error: "Profissional não encontrado" }), {
+                  status: 404,
+                  headers: { ...corsHeaders, "Content-Type": "application/json" },
+                });
+              }
+
+              const tokenExpiration2 = new Date(Date.now() + expiresIn * 1000).toISOString();
+              
+              const { error: upsertError2 } = await supabaseAdmin
+                .from("instagram_accounts")
+                .upsert(
+                  {
+                    professional_id: professional2.id,
+                    instagram_user_id: candidateIgId,
+                    username: igInfo2.username || "",
+                    account_name: igInfo2.name || "",
+                    page_id: page.id,
+                    access_token: page.access_token,
+                    token_expiration: tokenExpiration2,
+                    is_active: true,
+                  },
+                  { onConflict: "professional_id" }
+                );
+
+              if (upsertError2) {
+                console.error("Upsert error:", upsertError2);
+                return new Response(JSON.stringify({ error: "Erro ao salvar conta" }), {
+                  status: 500,
+                  headers: { ...corsHeaders, "Content-Type": "application/json" },
+                });
+              }
+
+              return new Response(
+                JSON.stringify({
+                  success: true,
+                  username: igInfo2.username,
+                  account_name: igInfo2.name,
+                }),
+                { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+              );
+            }
+          }
+          
           return new Response(
-            JSON.stringify({
-              error:
-                "Nenhuma página do Facebook encontrada. Verifique se sua conta tem acesso à Página, se ela está vinculada ao Instagram Business e autorize novamente com a permissão business_management.",
-            }),
+            JSON.stringify({ error: "Nenhuma conta Instagram Business encontrada vinculada às suas páginas do Facebook." }),
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
