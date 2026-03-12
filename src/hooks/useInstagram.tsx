@@ -142,7 +142,7 @@ export const useInstagramConnect = () => {
           toast.success("Link copiado! Abra em uma aba normal do navegador para conectar.");
         } catch {
           window.prompt("Copie este link e abra em uma aba normal do navegador:", authUrl);
-          toast.error("O navegador bloqueou a cópia automática; use o link exibido para continuar.");
+          toast.error(`Copie e abra este link no navegador: ${authUrl}`, { duration: 25000 });
         }
         return;
       }
