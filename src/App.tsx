@@ -128,6 +128,8 @@ const AppContent = () => (
             <Route path="/admin/feature-flags" element={<AdminRoute><AdminFeatureFlags /></AdminRoute>} />
 
             {/* Public routes */}
+            <Route path="/politica-de-privacidade" element={<PrivacyPolicy />} />
+            <Route path="/termos-de-uso" element={<TermsOfUse />} />
             <Route path="/:slug" element={<PublicBooking />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
