@@ -141,7 +141,8 @@ export const useInstagramConnect = () => {
           await navigator.clipboard.writeText(authUrl);
           toast.success("Link copiado! Abra em uma aba normal do navegador para conectar.");
         } catch {
-          toast.error("Não foi possível abrir no preview. Copie e abra o link manualmente no navegador.");
+          window.prompt("Copie este link e abra em uma aba normal do navegador:", authUrl);
+          toast.error("O navegador bloqueou a cópia automática; use o link exibido para continuar.");
         }
         return;
       }
