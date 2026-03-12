@@ -127,7 +127,7 @@ export const useInstagramConnect = () => {
       return data.auth_url as string;
     },
     onSuccess: (authUrl) => {
-      window.location.href = authUrl;
+      window.open(authUrl, "_blank");
     },
     onError: (err: any) => toast.error(err.message || "Erro ao conectar Instagram"),
   });
