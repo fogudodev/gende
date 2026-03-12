@@ -31,6 +31,7 @@ const ROUTE_TO_FEATURE: Record<string, FeatureKey> = {
   "/payment-chat": "payment-chat",
   "/ai-assistant": "ai-assistant",
   "/cash-register": "cash-register",
+  "/instagram-automation": "automations",
 };
 
 const ROUTE_TO_LABEL: Record<string, string> = {
@@ -49,6 +50,7 @@ const ROUTE_TO_LABEL: Record<string, string> = {
   "/payment-chat": "Chat Pagamento",
   "/ai-assistant": "Assistente IA",
   "/cash-register": "Caixa",
+  "/instagram-automation": "Instagram DM",
 };
 
 // Routes accessible by reception employees

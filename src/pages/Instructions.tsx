@@ -555,6 +555,31 @@ const allSections: InstructionSection[] = [
       "Pergunte sobre previsão de faturamento para planejar metas semanais e mensais.",
     ],
   },
+  {
+    id: "instagram-dm",
+    title: "Instagram DM Inteligente",
+    icon: automationsIcon,
+    plans: ["enterprise"],
+    steps: [
+      "Acesse \"WhatsApp > Instagram DM\" no menu lateral.",
+      "O Instagram DM Inteligente automatiza respostas de DMs e comentários do seu Instagram usando Inteligência Artificial.",
+      "REQUISITOS: Sua conta do Instagram precisa ser Profissional (Business ou Creator) e estar vinculada a uma Página do Facebook no Meta Business Suite.",
+      "Para CONECTAR: clique em \"Conectar Instagram\". Uma janela do Facebook abrirá pedindo permissões. Autorize todas as permissões solicitadas e selecione a Página do Facebook correta.",
+      "Após conectar, o sistema mostrará o nome de usuário do Instagram vinculado e o status da conexão.",
+      "AUTOMAÇÃO DE DMs: Quando um cliente envia uma DM, a IA responde automaticamente como uma recepcionista inteligente — tira dúvidas sobre serviços, preços e horários, e sugere agendamentos.",
+      "PALAVRAS-CHAVE: Configure palavras-chave (keywords) para disparar respostas automáticas específicas. Ex: quando alguém comenta \"preço\" em um post, o sistema envia uma DM com a tabela de preços.",
+      "Para ADICIONAR uma palavra-chave: clique em \"+ Nova Keyword\", defina a palavra, o tipo de resposta (link de agendamento ou resposta personalizada) e ative.",
+      "AUTOMAÇÃO DE COMENTÁRIOS: Quando ativada, o sistema responde automaticamente a comentários nos seus posts convidando o cliente a continuar a conversa via DM.",
+      "Você pode ativar/desativar cada tipo de automação (DMs e Comentários) independentemente usando os toggles na tela de configuração.",
+    ],
+    tips: [
+      "Certifique-se de que sua conta do Instagram é Business/Creator ANTES de tentar conectar.",
+      "A Página do Facebook deve estar corretamente vinculada ao Instagram no Meta Business Suite.",
+      "Use palavras-chave estratégicas como \"agendar\", \"preço\", \"horário\" para captar leads automaticamente.",
+      "A IA usa os dados dos seus serviços cadastrados para responder de forma personalizada.",
+      "Monitore as conversas regularmente para garantir que as respostas automáticas estão adequadas.",
+    ],
+  },
 ];
 
 const Instructions = () => {
