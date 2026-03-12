@@ -171,24 +171,43 @@ const InstagramAutomation = () => {
         </Card>
 
         {!isConnected && (
-          <Card className="p-6 border-dashed">
-            <div className="text-center space-y-3">
-              <AlertCircle className="w-10 h-10 text-muted-foreground mx-auto" />
-              <h3 className="font-semibold text-foreground">Configure sua conta Instagram</h3>
-              <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                Para usar a automação de Instagram, você precisa conectar sua conta Instagram Business.
-                Certifique-se de que sua conta Instagram está vinculada a uma Página do Facebook.
-              </p>
-              <div className="bg-muted/50 rounded-lg p-4 text-left max-w-md mx-auto space-y-2">
-                <p className="text-sm font-medium text-foreground">Pré-requisitos:</p>
-                <ul className="text-sm text-muted-foreground space-y-1 list-disc pl-4">
-                  <li>Conta Instagram Business ou Criador</li>
-                  <li>Página do Facebook vinculada ao Instagram</li>
-                  <li>Permissões de administrador na Página</li>
-                </ul>
+          <>
+            {manualAuthUrl && (
+              <Card className="p-6 border-dashed">
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-foreground">Link manual de conexão</h3>
+                  <p className="text-sm text-muted-foreground">
+                    O preview bloqueia o login do Facebook. Copie o link abaixo e abra em uma aba normal do navegador.
+                  </p>
+                  <Textarea value={manualAuthUrl} readOnly className="min-h-28 text-xs font-mono" />
+                  <div className="flex justify-end">
+                    <Button size="sm" variant="secondary" onClick={handleCopyManualLink}>
+                      Copiar link
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            <Card className="p-6 border-dashed">
+              <div className="text-center space-y-3">
+                <AlertCircle className="w-10 h-10 text-muted-foreground mx-auto" />
+                <h3 className="font-semibold text-foreground">Configure sua conta Instagram</h3>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  Para usar a automação de Instagram, você precisa conectar sua conta Instagram Business.
+                  Certifique-se de que sua conta Instagram está vinculada a uma Página do Facebook.
+                </p>
+                <div className="bg-muted/50 rounded-lg p-4 text-left max-w-md mx-auto space-y-2">
+                  <p className="text-sm font-medium text-foreground">Pré-requisitos:</p>
+                  <ul className="text-sm text-muted-foreground space-y-1 list-disc pl-4">
+                    <li>Conta Instagram Business ou Criador</li>
+                    <li>Página do Facebook vinculada ao Instagram</li>
+                    <li>Permissões de administrador na Página</li>
+                  </ul>
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          </>
         )}
 
         {isConnected && (
