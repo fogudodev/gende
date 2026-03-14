@@ -189,6 +189,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
     "/upsell": "upsell_inteligente",
     "/upsell/config": "upsell_inteligente",
     "/instagram-automation": "instagram_dm",
+    "/rewards": "gende_rewards",
   };
 
   const isPathDisabled = (path: string): boolean => {
