@@ -580,6 +580,31 @@ const allSections: InstructionSection[] = [
       "Monitore as conversas regularmente para garantir que as respostas automáticas estão adequadas.",
     ],
   },
+  {
+    id: "gende-rewards",
+    title: "Gende Rewards (Fidelidade)",
+    icon: aiIcon,
+    plans: ["enterprise"],
+    steps: [
+      "Acesse \"Gende Rewards\" no menu lateral para gerenciar todo o programa de fidelidade do seu negócio.",
+      "O módulo possui 6 abas: Painel, Cashback, Níveis, Indicações, Desafios e Ranking.",
+      "PAINEL: Visão geral com métricas de fidelização — cashback concedido, clientes ativos, clientes em risco, indicações e desafios.",
+      "CASHBACK: Ative o cashback inteligente e defina o percentual padrão. Crie regras específicas (por serviço, horário ocioso, agendamento online ou combo).",
+      "• Exemplo: Configure 15% de cashback para serviços de hidratação, ou 20% em horários ociosos.",
+      "NÍVEIS: Ative o sistema de gamificação com níveis automáticos (Bronze, Prata, Ouro, Black). Cada nível pode ter bônus de cashback extra.",
+      "• Clique em 'Criar Padrão' para gerar os 4 níveis sugeridos automaticamente, ou crie níveis personalizados.",
+      "INDICAÇÕES: Ative o programa de indicações. Defina o valor de recompensa para quem indica e o bônus para o novo cliente.",
+      "DESAFIOS: Crie desafios gamificados com data de início e fim. Exemplo: 'Faça 3 serviços este mês e ganhe R$50 de cashback'.",
+      "RANKING: Visualize o ranking dos seus melhores clientes por visitas, gasto total e nível de fidelidade.",
+    ],
+    tips: [
+      "Comece ativando apenas o cashback e vá adicionando as outras funcionalidades gradualmente.",
+      "Use desafios mensais para manter o engajamento dos clientes de forma constante.",
+      "O sistema de níveis cria uma sensação de progressão — clientes adoram subir de nível!",
+      "Combine indicações com cashback para criar um ciclo viral de aquisição de clientes.",
+      "Acompanhe o painel de 'Clientes em Risco' regularmente para prevenir perdas.",
+    ],
+  },
 ];
 
 const Instructions = () => {
