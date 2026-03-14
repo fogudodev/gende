@@ -36,6 +36,7 @@ import {
   Zap,
   Sparkles,
   Instagram,
+  Gift,
   type LucideIcon,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
