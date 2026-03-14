@@ -198,7 +198,7 @@ const Landing = () => {
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <FadeInSection>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium mb-4 sm:mb-6">
-              <Sparkles size={12} /> Milhares de profissionais já transformaram seus negócios
+              Milhares de profissionais já transformaram seus negócios
             </span>
           </FadeInSection>
 
