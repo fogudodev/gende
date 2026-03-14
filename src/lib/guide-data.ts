@@ -3,7 +3,8 @@ import {
   Package, MessageCircle, Zap, BarChart3, Settings, Globe,
   Bot, HelpCircle, Rocket, Clock, Bell, Star, Shield, Palette,
   CreditCard, TrendingUp, FileText, Send, Target, Wallet,
-  BookOpen, CheckCircle, AlertTriangle, Lightbulb, Info, Instagram
+  BookOpen, CheckCircle, AlertTriangle, Lightbulb, Info, Instagram,
+  Gift
 } from "lucide-react";
 
 export type GuideCategory = {
