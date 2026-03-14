@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,21 +9,19 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import {
   Gift, Trophy, Users, TrendingUp, Coins, Target, Star,
-  Plus, Trash2, Settings, AlertTriangle, Award, Crown,
+  Plus, Trash2, AlertTriangle, Award, Crown,
   Gem, Medal, UserPlus, Zap, Calendar, ArrowRight
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import {
   useLoyaltyConfig, useSaveLoyaltyConfig,
   useCashbackRules, useCreateCashbackRule, useToggleCashbackRule, useDeleteCashbackRule,
   useLoyaltyLevels, useCreateLoyaltyLevel, useDeleteLoyaltyLevel,
   useClientLoyalties, useClientReferrals,
   useLoyaltyChallenges, useCreateChallenge, useToggleChallenge, useDeleteChallenge,
-  useRewardsDashboardStats, useClientCashbacks, useCashbackTransactions,
+  useRewardsDashboardStats, useClientCashbacks,
 } from "@/hooks/useRewards";
 import { useServices } from "@/hooks/useServices";
 import { useClients } from "@/hooks/useClients";
@@ -48,6 +46,7 @@ const retentionLabels: Record<string, string> = {
   active: "Ativo",
   at_risk: "Em risco",
   lost: "Perdido",
+  new: "Novo",
 };
 
 // ─── Dashboard Tab ──────────────────────────────────────────────
@@ -88,7 +87,6 @@ const DashboardTab = () => {
         })}
       </div>
 
-      {/* Quick overview of at-risk clients */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
@@ -130,8 +128,8 @@ const AtRiskClientsList = () => {
                 </p>
               </div>
             </div>
-            <Badge variant="outline" className={retentionColors[l.retention_status]}>
-              {retentionLabels[l.retention_status]}
+            <Badge variant="outline" className={retentionColors[l.retention_status] || "bg-muted text-muted-foreground"}>
+              {retentionLabels[l.retention_status] || l.retention_status}
             </Badge>
           </div>
         );
@@ -142,7 +140,7 @@ const AtRiskClientsList = () => {
 
 // ─── Cashback Tab ───────────────────────────────────────────────
 const CashbackTab = () => {
-  const { data: config } = useLoyaltyConfig();
+  const { data: config, isLoading: configLoading } = useLoyaltyConfig();
   const saveConfig = useSaveLoyaltyConfig();
   const { data: rules } = useCashbackRules();
   const createRule = useCreateCashbackRule();
@@ -152,9 +150,20 @@ const CashbackTab = () => {
   const [newRule, setNewRule] = useState({ name: "", rule_type: "service", cashback_percent: 5, service_id: "" });
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  // Local state for default cashback to avoid saving on every keystroke
+  const [localPercent, setLocalPercent] = useState<number>(5);
+  useEffect(() => {
+    if (config?.default_cashback_percent != null) {
+      setLocalPercent(config.default_cashback_percent);
+    }
+  }, [config?.default_cashback_percent]);
+
+  if (configLoading) {
+    return <p className="text-sm text-muted-foreground p-4">Carregando configurações...</p>;
+  }
+
   return (
     <div className="space-y-6">
-      {/* Toggle cashback */}
       <Card>
         <CardContent className="pt-5 flex items-center justify-between">
           <div>
@@ -168,7 +177,6 @@ const CashbackTab = () => {
         </CardContent>
       </Card>
 
-      {/* Default % */}
       <Card>
         <CardContent className="pt-5">
           <div className="flex items-center gap-4">
@@ -179,8 +187,15 @@ const CashbackTab = () => {
             <Input
               type="number"
               className="w-24"
-              value={config?.default_cashback_percent || 5}
-              onChange={(e) => saveConfig.mutate({ default_cashback_percent: Number(e.target.value) })}
+              value={localPercent}
+              onChange={(e) => setLocalPercent(Number(e.target.value))}
+              onBlur={() => {
+                const clamped = Math.min(100, Math.max(0, localPercent));
+                setLocalPercent(clamped);
+                if (clamped !== config?.default_cashback_percent) {
+                  saveConfig.mutate({ default_cashback_percent: clamped });
+                }
+              }}
               min={0}
               max={100}
             />
@@ -188,7 +203,6 @@ const CashbackTab = () => {
         </CardContent>
       </Card>
 
-      {/* Rules */}
       <Card>
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <CardTitle className="text-base">Regras de Cashback</CardTitle>
@@ -248,7 +262,7 @@ const CashbackTab = () => {
                 </div>
                 <Button
                   className="w-full"
-                  disabled={!newRule.name || createRule.isPending}
+                  disabled={!newRule.name || newRule.cashback_percent <= 0 || newRule.cashback_percent > 100 || createRule.isPending}
                   onClick={() => {
                     createRule.mutate({
                       name: newRule.name,
@@ -320,8 +334,13 @@ const LevelsTab = () => {
     { name: "Black", min_visits: 30, min_spent: 3000, cashback_bonus_percent: 12, color: "#1a1a2e", sort_order: 4 },
   ];
 
-  const handleCreateDefaults = () => {
-    defaultLevels.forEach((l) => createLevel.mutate(l as any));
+  const [creatingDefaults, setCreatingDefaults] = useState(false);
+  const handleCreateDefaults = async () => {
+    setCreatingDefaults(true);
+    for (const l of defaultLevels) {
+      await createLevel.mutateAsync(l as any);
+    }
+    setCreatingDefaults(false);
   };
 
   return (
@@ -344,8 +363,8 @@ const LevelsTab = () => {
           <CardTitle className="text-base">Níveis de Fidelidade</CardTitle>
           <div className="flex gap-2">
             {!levels?.length && (
-              <Button size="sm" variant="outline" onClick={handleCreateDefaults} className="gap-1.5">
-                <Zap size={14} /> Criar Padrão
+              <Button size="sm" variant="outline" onClick={handleCreateDefaults} disabled={creatingDefaults} className="gap-1.5">
+                <Zap size={14} /> {creatingDefaults ? "Criando..." : "Criar Padrão"}
               </Button>
             )}
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -446,6 +465,15 @@ const ReferralsTab = () => {
   const { data: referrals } = useClientReferrals();
   const { data: clients } = useClients();
 
+  // Local state for referral amounts - save onBlur instead of every keystroke
+  const [localReward, setLocalReward] = useState<number>(20);
+  const [localBonus, setLocalBonus] = useState<number>(20);
+
+  useEffect(() => {
+    if (config?.referral_reward_amount != null) setLocalReward(config.referral_reward_amount);
+    if (config?.referral_new_client_bonus != null) setLocalBonus(config.referral_new_client_bonus);
+  }, [config?.referral_reward_amount, config?.referral_new_client_bonus]);
+
   const completedReferrals = referrals?.filter((r) => r.status === "completed") || [];
 
   return (
@@ -470,8 +498,13 @@ const ReferralsTab = () => {
             <Input
               type="number"
               className="mt-1.5"
-              value={config?.referral_reward_amount || 20}
-              onChange={(e) => saveConfig.mutate({ referral_reward_amount: Number(e.target.value) })}
+              value={localReward}
+              onChange={(e) => setLocalReward(Number(e.target.value))}
+              onBlur={() => {
+                if (localReward !== config?.referral_reward_amount) {
+                  saveConfig.mutate({ referral_reward_amount: localReward });
+                }
+              }}
             />
           </CardContent>
         </Card>
@@ -481,8 +514,13 @@ const ReferralsTab = () => {
             <Input
               type="number"
               className="mt-1.5"
-              value={config?.referral_new_client_bonus || 20}
-              onChange={(e) => saveConfig.mutate({ referral_new_client_bonus: Number(e.target.value) })}
+              value={localBonus}
+              onChange={(e) => setLocalBonus(Number(e.target.value))}
+              onBlur={() => {
+                if (localBonus !== config?.referral_new_client_bonus) {
+                  saveConfig.mutate({ referral_new_client_bonus: localBonus });
+                }
+              }}
             />
           </CardContent>
         </Card>
@@ -628,7 +666,7 @@ const ChallengesTab = () => {
                 </div>
                 <Button
                   className="w-full"
-                  disabled={!newChallenge.title}
+                  disabled={!newChallenge.title || createChallenge.isPending}
                   onClick={() => {
                     createChallenge.mutate({
                       ...newChallenge,
@@ -638,7 +676,7 @@ const ChallengesTab = () => {
                     setDialogOpen(false);
                   }}
                 >
-                  Criar Desafio
+                  {createChallenge.isPending ? "Criando..." : "Criar Desafio"}
                 </Button>
               </div>
             </DialogContent>
@@ -734,8 +772,8 @@ const RankingTab = () => {
                         {cashback && cashback.balance > 0 && ` • ${formatCurrency(cashback.balance)} saldo`}
                       </p>
                     </div>
-                    <Badge variant="outline" className={retentionColors[l.retention_status]}>
-                      {retentionLabels[l.retention_status]}
+                    <Badge variant="outline" className={retentionColors[l.retention_status] || "bg-muted text-muted-foreground"}>
+                      {retentionLabels[l.retention_status] || l.retention_status}
                     </Badge>
                   </div>
                 );
@@ -753,7 +791,6 @@ const Rewards = () => {
   return (
     <DashboardLayout title="Gende Rewards" subtitle="Fidelidade inteligente para seus clientes">
       <div className="space-y-6 max-w-5xl mx-auto">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
@@ -766,7 +803,6 @@ const Rewards = () => {
           </div>
         </div>
 
-        {/* Tabs */}
         <Tabs defaultValue="dashboard" className="w-full">
           <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto">
             <TabsTrigger value="dashboard" className="gap-1.5 text-xs">
