@@ -1,19 +1,23 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfessional } from "./useProfessional";
+import { useFeatureFlags } from "./useFeatureFlags";
 
 type Override = { feature_key: string; enabled: boolean };
 
 /**
- * Fetches the current professional's feature overrides and provides
- * a function to check if a feature is enabled for them.
- * 
- * Logic: if an override exists → use it; otherwise default to enabled.
+ * Checks both the global feature_flags table AND per-professional overrides.
+ *
+ * Logic:
+ * 1. If global flag exists and is disabled → feature is disabled (unless professional override enables it)
+ * 2. If professional override exists → use it
+ * 3. Otherwise → enabled
  */
 export const useMyFeatureGate = () => {
   const { data: professional } = useProfessional();
+  const { data: globalFlags, isLoading: flagsLoading } = useFeatureFlags();
 
-  const { data: overrides, isLoading } = useQuery({
+  const { data: overrides, isLoading: overridesLoading } = useQuery({
     queryKey: ["my-feature-overrides", professional?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -29,11 +33,18 @@ export const useMyFeatureGate = () => {
   const overrideMap = new Map<string, boolean>();
   (overrides || []).forEach((o) => overrideMap.set(o.feature_key, o.enabled));
 
+  const globalFlagMap = new Map<string, boolean>();
+  (globalFlags || []).forEach((f) => globalFlagMap.set(f.key, f.enabled));
+
   /** Returns true if the feature is disabled for this professional */
   const isFeatureDisabledForMe = (featureKey: string): boolean => {
+    // Professional-level override takes highest priority
     if (overrideMap.has(featureKey)) return !overrideMap.get(featureKey)!;
-    return false; // default: enabled
+    // Then check global flag
+    if (globalFlagMap.has(featureKey)) return !globalFlagMap.get(featureKey)!;
+    // No flag registered = enabled by default
+    return false;
   };
 
-  return { isFeatureDisabledForMe, isLoading };
+  return { isFeatureDisabledForMe, isLoading: flagsLoading || overridesLoading };
 };
