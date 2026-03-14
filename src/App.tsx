@@ -38,6 +38,7 @@ import Landing from "./pages/Landing";
 import Instructions from "./pages/Instructions";
 import UpsellConfig from "./pages/UpsellConfig";
 import UpsellDashboard from "./pages/UpsellDashboard";
+import Rewards from "./pages/Rewards";
 import SystemGuide from "./pages/SystemGuide";
 import InstagramAutomation from "./pages/InstagramAutomation";
 import InstagramCallback from "./pages/InstagramCallback";
