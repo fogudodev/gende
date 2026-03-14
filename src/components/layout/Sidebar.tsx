@@ -36,6 +36,7 @@ import {
   Zap,
   Sparkles,
   Instagram,
+  Gift,
   type LucideIcon,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
@@ -96,6 +97,7 @@ const communicationGroup: NavGroup = {
 const afterGroupItems: NavItem[] = [
   { icon: CreditCard, label: "Financeiro", path: "/finance", featureKey: "finance" },
   { icon: Sparkles, label: "Upsell Inteligente", path: "/upsell", featureKey: "upsell" },
+  { icon: Gift, label: "Gende Rewards", path: "/rewards", featureKey: "rewards" },
   { icon: Globe, label: "Página Pública", path: "/public-page", featureKey: "public-page" },
   { icon: Package, label: "Produtos", path: "/products", featureKey: "products" },
   { icon: Package, label: "Pacotes", path: "/service-packages", featureKey: "products" },
@@ -187,6 +189,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
     "/upsell": "upsell_inteligente",
     "/upsell/config": "upsell_inteligente",
     "/instagram-automation": "instagram_dm",
+    "/rewards": "gende_rewards",
   };
 
   const isPathDisabled = (path: string): boolean => {
