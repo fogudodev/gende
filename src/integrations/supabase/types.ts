@@ -438,6 +438,176 @@ export type Database = {
           },
         ]
       }
+      cashback_rules: {
+        Row: {
+          cashback_percent: number
+          created_at: string
+          end_hour: string | null
+          id: string
+          is_active: boolean
+          name: string
+          professional_id: string
+          rule_type: string
+          service_id: string | null
+          start_hour: string | null
+          updated_at: string
+        }
+        Insert: {
+          cashback_percent?: number
+          created_at?: string
+          end_hour?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          professional_id: string
+          rule_type?: string
+          service_id?: string | null
+          start_hour?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cashback_percent?: number
+          created_at?: string
+          end_hour?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          professional_id?: string
+          rule_type?: string
+          service_id?: string | null
+          start_hour?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cashback_rules_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cashback_rules_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cashback_transactions: {
+        Row: {
+          amount: number
+          booking_id: string | null
+          client_id: string
+          created_at: string
+          description: string | null
+          id: string
+          professional_id: string
+          type: string
+        }
+        Insert: {
+          amount?: number
+          booking_id?: string | null
+          client_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          professional_id: string
+          type?: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string | null
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          professional_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cashback_transactions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cashback_transactions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cashback_transactions_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenge_progress: {
+        Row: {
+          challenge_id: string
+          client_id: string
+          completed: boolean
+          created_at: string
+          current_value: number
+          id: string
+          professional_id: string
+          reward_claimed: boolean
+          updated_at: string
+        }
+        Insert: {
+          challenge_id: string
+          client_id: string
+          completed?: boolean
+          created_at?: string
+          current_value?: number
+          id?: string
+          professional_id: string
+          reward_claimed?: boolean
+          updated_at?: string
+        }
+        Update: {
+          challenge_id?: string
+          client_id?: string
+          completed?: boolean
+          created_at?: string
+          current_value?: number
+          id?: string
+          professional_id?: string
+          reward_claimed?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_progress_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "loyalty_challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenge_progress_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenge_progress_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           attachment_url: string | null
@@ -472,6 +642,121 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "chat_messages_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_cashback: {
+        Row: {
+          balance: number
+          client_id: string
+          created_at: string
+          id: string
+          professional_id: string
+          total_earned: number
+          total_used: number
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          client_id: string
+          created_at?: string
+          id?: string
+          professional_id: string
+          total_earned?: number
+          total_used?: number
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          client_id?: string
+          created_at?: string
+          id?: string
+          professional_id?: string
+          total_earned?: number
+          total_used?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_cashback_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_cashback_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_loyalty: {
+        Row: {
+          avg_days_between_visits: number | null
+          client_id: string
+          created_at: string
+          id: string
+          last_visit_at: string | null
+          level_id: string | null
+          professional_id: string
+          referral_count: number
+          retention_status: string
+          total_spent: number
+          total_visits: number
+          updated_at: string
+        }
+        Insert: {
+          avg_days_between_visits?: number | null
+          client_id: string
+          created_at?: string
+          id?: string
+          last_visit_at?: string | null
+          level_id?: string | null
+          professional_id: string
+          referral_count?: number
+          retention_status?: string
+          total_spent?: number
+          total_visits?: number
+          updated_at?: string
+        }
+        Update: {
+          avg_days_between_visits?: number | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          last_visit_at?: string | null
+          level_id?: string | null
+          professional_id?: string
+          referral_count?: number
+          retention_status?: string
+          total_spent?: number
+          total_visits?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_loyalty_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_loyalty_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "loyalty_levels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_loyalty_professional_id_fkey"
             columns: ["professional_id"]
             isOneToOne: false
             referencedRelation: "professionals"
@@ -548,6 +833,64 @@ export type Database = {
             columns: ["professional_id"]
             isOneToOne: false
             referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_referrals: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          professional_id: string
+          referral_code: string
+          referred_client_id: string | null
+          referrer_client_id: string
+          reward_amount: number
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          professional_id: string
+          referral_code: string
+          referred_client_id?: string | null
+          referrer_client_id: string
+          reward_amount?: number
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          professional_id?: string
+          referral_code?: string
+          referred_client_id?: string | null
+          referrer_client_id?: string
+          reward_amount?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_referrals_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_referrals_referred_client_id_fkey"
+            columns: ["referred_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_referrals_referrer_client_id_fkey"
+            columns: ["referrer_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
@@ -1110,6 +1453,165 @@ export type Database = {
           },
           {
             foreignKeyName: "instagram_messages_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty_challenges: {
+        Row: {
+          challenge_type: string
+          created_at: string
+          description: string | null
+          ends_at: string
+          id: string
+          is_active: boolean
+          professional_id: string
+          reward_description: string | null
+          reward_type: string
+          reward_value: number
+          starts_at: string
+          target_value: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          challenge_type?: string
+          created_at?: string
+          description?: string | null
+          ends_at: string
+          id?: string
+          is_active?: boolean
+          professional_id: string
+          reward_description?: string | null
+          reward_type?: string
+          reward_value?: number
+          starts_at: string
+          target_value?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          challenge_type?: string
+          created_at?: string
+          description?: string | null
+          ends_at?: string
+          id?: string
+          is_active?: boolean
+          professional_id?: string
+          reward_description?: string | null
+          reward_type?: string
+          reward_value?: number
+          starts_at?: string
+          target_value?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_challenges_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty_config: {
+        Row: {
+          cashback_enabled: boolean
+          challenges_enabled: boolean
+          created_at: string
+          default_cashback_percent: number
+          id: string
+          levels_enabled: boolean
+          professional_id: string
+          referral_enabled: boolean
+          referral_new_client_bonus: number
+          referral_reward_amount: number
+          updated_at: string
+        }
+        Insert: {
+          cashback_enabled?: boolean
+          challenges_enabled?: boolean
+          created_at?: string
+          default_cashback_percent?: number
+          id?: string
+          levels_enabled?: boolean
+          professional_id: string
+          referral_enabled?: boolean
+          referral_new_client_bonus?: number
+          referral_reward_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          cashback_enabled?: boolean
+          challenges_enabled?: boolean
+          created_at?: string
+          default_cashback_percent?: number
+          id?: string
+          levels_enabled?: boolean
+          professional_id?: string
+          referral_enabled?: boolean
+          referral_new_client_bonus?: number
+          referral_reward_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_config_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: true
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty_levels: {
+        Row: {
+          benefits: string[] | null
+          cashback_bonus_percent: number
+          color: string
+          created_at: string
+          id: string
+          min_spent: number
+          min_visits: number
+          name: string
+          professional_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          benefits?: string[] | null
+          cashback_bonus_percent?: number
+          color?: string
+          created_at?: string
+          id?: string
+          min_spent?: number
+          min_visits?: number
+          name: string
+          professional_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          benefits?: string[] | null
+          cashback_bonus_percent?: number
+          color?: string
+          created_at?: string
+          id?: string
+          min_spent?: number
+          min_visits?: number
+          name?: string
+          professional_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_levels_professional_id_fkey"
             columns: ["professional_id"]
             isOneToOne: false
             referencedRelation: "professionals"
