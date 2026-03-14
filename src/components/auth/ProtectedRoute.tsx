@@ -52,6 +52,7 @@ const ROUTE_TO_LABEL: Record<string, string> = {
   "/ai-assistant": "Assistente IA",
   "/cash-register": "Caixa",
   "/instagram-automation": "Instagram DM",
+  "/rewards": "Gende Rewards",
 };
 
 // Routes accessible by reception employees

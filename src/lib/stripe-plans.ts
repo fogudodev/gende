@@ -178,6 +178,7 @@ export const PLAN_FEATURES: Record<PlanId | "none", FeatureKey[]> = {
     "ai-assistant",
     "cash-register",
     "upsell",
+    "rewards",
   ],
 };
 

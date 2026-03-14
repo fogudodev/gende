@@ -751,7 +751,7 @@ const RankingTab = () => {
 // ─── Main Page ──────────────────────────────────────────────────
 const Rewards = () => {
   return (
-    <DashboardLayout>
+    <DashboardLayout title="Gende Rewards" subtitle="Fidelidade inteligente para seus clientes">
       <div className="space-y-6 max-w-5xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between">
