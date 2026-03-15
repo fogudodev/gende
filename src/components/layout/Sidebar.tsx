@@ -94,6 +94,19 @@ const communicationGroup: NavGroup = {
   ],
 };
 
+const coursesGroup: NavGroup = {
+  type: "group",
+  icon: GraduationCap,
+  label: "Cursos",
+  featureKey: "dashboard",
+  children: [
+    { icon: GraduationCap, label: "Dashboard", path: "/courses", featureKey: "dashboard" },
+    { icon: BookOpen, label: "Cursos", path: "/courses/list", featureKey: "dashboard" },
+    { icon: CalendarDays, label: "Turmas", path: "/courses/classes", featureKey: "dashboard" },
+    { icon: Users, label: "Alunos", path: "/courses/students", featureKey: "dashboard" },
+  ],
+};
+
 const afterGroupItems: NavItem[] = [
   { icon: CreditCard, label: "Financeiro", path: "/finance", featureKey: "finance" },
   { icon: Sparkles, label: "Upsell Inteligente", path: "/upsell", featureKey: "upsell" },
