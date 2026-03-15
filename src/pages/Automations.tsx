@@ -74,6 +74,11 @@ const Automations = () => {
   const [followupMessage, setFollowupMessage] = useState("");
   const [savingMessages, setSavingMessages] = useState(false);
 
+  // Course automation template editing
+  const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
+  const [courseTemplates, setCourseTemplates] = useState<Record<string, string>>({});
+  const [savingCourseTemplate, setSavingCourseTemplate] = useState<string | null>(null);
+
   useEffect(() => {
     if (professional) {
       setWelcomeMessage(professional.welcome_message || "");
