@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfessional } from "./useProfessional";
 import { toast } from "@/hooks/use-toast";
+import { triggerCourseAutomation } from "./useCourseAutomations";
 
 export const useCourses = () => {
   const { data: professional } = useProfessional();
@@ -127,12 +128,30 @@ export const useCourseClasses = (courseId?: string) => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data: any, variables: any) => {
       queryClient.invalidateQueries({ queryKey: ["course-classes"] });
       toast({ title: "Turma atualizada!" });
-    },
-    onError: (error: any) => {
-      toast({ title: "Erro ao atualizar turma", description: error.message, variant: "destructive" });
+      // Trigger automation if class was cancelled or rescheduled
+      if (professional?.id && data?.id) {
+        if (variables.status === "cancelled") {
+          triggerCourseAutomation({
+            professionalId: professional.id,
+            triggerType: "course_cancelled",
+            classId: data.id,
+            extraVars: { turma: data.name || "", curso: (data as any)?.courses?.name || "" },
+          });
+        }
+        // If date changed, treat as rescheduled
+        if (variables.class_date && variables.class_date !== data.class_date) {
+          const newDate = new Date(variables.class_date).toLocaleDateString("pt-BR");
+          triggerCourseAutomation({
+            professionalId: professional.id,
+            triggerType: "course_rescheduled",
+            classId: data.id,
+            extraVars: { turma: data.name || "", data: newDate, horario: variables.start_time || data.start_time || "" },
+          });
+        }
+      }
     },
   });
 
@@ -201,13 +220,20 @@ export const useCourseEnrollments = (classId?: string) => {
       }
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["course-enrollments"] });
       queryClient.invalidateQueries({ queryKey: ["course-classes"] });
       toast({ title: "Inscrição realizada!" });
-    },
-    onError: (error: any) => {
-      toast({ title: "Erro na inscrição", description: error.message, variant: "destructive" });
+      // Trigger enrollment confirmation automation
+      if (professional?.id && data?.id) {
+        const course = (data as any)?.courses?.name || "";
+        triggerCourseAutomation({
+          professionalId: professional.id,
+          triggerType: "course_enrollment_confirmed",
+          enrollmentId: data.id,
+          extraVars: { curso: course },
+        });
+      }
     },
   });
 
@@ -222,12 +248,26 @@ export const useCourseEnrollments = (classId?: string) => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data: any, variables: any) => {
       queryClient.invalidateQueries({ queryKey: ["course-enrollments"] });
       toast({ title: "Inscrição atualizada!" });
-    },
-    onError: (error: any) => {
-      toast({ title: "Erro ao atualizar inscrição", description: error.message, variant: "destructive" });
+      // Trigger payment confirmation if payment_status changed to paid
+      if (professional?.id && variables.payment_status === "paid" && data?.id) {
+        triggerCourseAutomation({
+          professionalId: professional.id,
+          triggerType: "course_payment_confirmed",
+          enrollmentId: data.id,
+          extraVars: { valor: String(variables.amount_paid || data.amount_paid || 0) },
+        });
+      }
+      // Trigger enrollment confirmation if status changed to confirmed
+      if (professional?.id && variables.enrollment_status === "confirmed" && data?.id) {
+        triggerCourseAutomation({
+          professionalId: professional.id,
+          triggerType: "course_enrollment_confirmed",
+          enrollmentId: data.id,
+        });
+      }
     },
   });
 

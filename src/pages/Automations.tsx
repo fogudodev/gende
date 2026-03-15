@@ -19,6 +19,20 @@ const triggerLabels: Record<string, string> = {
   post_sale_review: "24h após conclusão",
   maintenance_reminder: "Manutenção próxima",
   reactivation_30d: "30 dias inativo",
+  course_enrollment_confirmed: "Inscrição confirmada",
+  course_payment_confirmed: "Pagamento confirmado",
+  course_reminder_7d: "7 dias antes",
+  course_reminder_1d: "1 dia antes",
+  course_reminder_day: "No dia do curso",
+  course_send_location: "Envio de localização",
+  course_send_link: "Link da aula online",
+  course_rescheduled: "Turma remarcada",
+  course_cancelled: "Turma cancelada",
+  course_waitlist_new_class: "Nova turma (lista de espera)",
+  course_certificate_sent: "Certificado enviado",
+  course_followup: "Follow-up pós-curso",
+  course_feedback_request: "Pedido de feedback",
+  course_next_offer: "Oferta de próximo curso",
 };
 
 const triggerDescriptions: Record<string, string> = {
@@ -29,6 +43,20 @@ const triggerDescriptions: Record<string, string> = {
   post_sale_review: "Pedido de avaliação 24h após o serviço — avaliação vai para o profissional/funcionário que atendeu",
   maintenance_reminder: "Lembrete quando a manutenção do serviço está próxima",
   reactivation_30d: "Enviada para clientes inativos há 30 dias",
+  course_enrollment_confirmed: "Enviada ao aluno quando a inscrição é confirmada",
+  course_payment_confirmed: "Enviada ao aluno quando o pagamento é confirmado",
+  course_reminder_7d: "Lembrete 7 dias antes do início da turma",
+  course_reminder_1d: "Lembrete 1 dia antes do início da turma",
+  course_reminder_day: "Lembrete no dia do curso",
+  course_send_location: "Envia localização para aulas presenciais",
+  course_send_link: "Envia o link de acesso para aulas online",
+  course_rescheduled: "Avisa alunos quando uma turma é remarcada",
+  course_cancelled: "Avisa alunos quando uma turma é cancelada",
+  course_waitlist_new_class: "Avisa quem está na lista de espera sobre nova turma",
+  course_certificate_sent: "Envia certificado de conclusão ao aluno",
+  course_followup: "Follow-up 1 dia após o curso",
+  course_feedback_request: "Solicita avaliação 3 dias após o curso",
+  course_next_offer: "Oferece próximo curso relevante ao aluno",
 };
 
 const Automations = () => {
@@ -215,31 +243,66 @@ const Automations = () => {
       ) : !automations?.length ? (
         <p className="text-center text-muted-foreground py-12">Nenhuma automação configurada</p>
       ) : (
-        <div className="space-y-4">
-          {automations.map((auto, i) => (
-            <motion.div key={auto.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.06 }} className="glass-card rounded-2xl p-5 flex items-center justify-between hover-lift">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                  <Zap size={18} className="text-accent" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">{triggerDescriptions[auto.trigger_type]?.split(" ")[0] || auto.trigger_type}</h3>
-                  <p className="text-sm text-muted-foreground">{triggerDescriptions[auto.trigger_type] || ""}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-8">
-                <div className="text-right">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Clock size={12} />
-                    {triggerLabels[auto.trigger_type] || auto.trigger_type}
+        <div className="space-y-6">
+          {/* Booking Automations */}
+          {(() => {
+            const bookingAutos = automations.filter(a => !a.trigger_type.startsWith("course_"));
+            const courseAutos = automations.filter(a => a.trigger_type.startsWith("course_"));
+            return (
+              <>
+                {bookingAutos.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">📅 Agendamentos</h3>
+                    <div className="space-y-3">
+                      {bookingAutos.map((auto, i) => (
+                        <motion.div key={auto.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.04 }} className="glass-card rounded-2xl p-5 flex items-center justify-between hover-lift">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                              <Zap size={18} className="text-accent" />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-foreground">{triggerLabels[auto.trigger_type] || auto.trigger_type}</h3>
+                              <p className="text-sm text-muted-foreground">{triggerDescriptions[auto.trigger_type] || ""}</p>
+                            </div>
+                          </div>
+                          <button onClick={() => handleToggle(auto.id, auto.is_active)} className="text-muted-foreground hover:text-foreground transition-colors">
+                            {auto.is_active ? <ToggleRight size={28} className="text-success" /> : <ToggleLeft size={28} />}
+                          </button>
+                        </motion.div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-                <button onClick={() => handleToggle(auto.id, auto.is_active)} className="text-muted-foreground hover:text-foreground transition-colors">
-                  {auto.is_active ? <ToggleRight size={28} className="text-success" /> : <ToggleLeft size={28} />}
-                </button>
-              </div>
-            </motion.div>
-          ))}
+                )}
+
+                {courseAutos.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 mt-6">🎓 Cursos</h3>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Variáveis: {"{nome}"}, {"{curso}"}, {"{turma}"}, {"{data}"}, {"{horario}"}, {"{local}"}, {"{link_aula}"}, {"{link}"}, {"{valor}"}, {"{link_certificado}"}
+                    </p>
+                    <div className="space-y-3">
+                      {courseAutos.map((auto, i) => (
+                        <motion.div key={auto.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.04 }} className="glass-card rounded-2xl p-5 flex items-center justify-between hover-lift">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                              <Zap size={18} className="text-primary" />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-foreground">{triggerLabels[auto.trigger_type] || auto.trigger_type}</h3>
+                              <p className="text-sm text-muted-foreground">{triggerDescriptions[auto.trigger_type] || ""}</p>
+                            </div>
+                          </div>
+                          <button onClick={() => handleToggle(auto.id, auto.is_active)} className="text-muted-foreground hover:text-foreground transition-colors">
+                            {auto.is_active ? <ToggleRight size={28} className="text-success" /> : <ToggleLeft size={28} />}
+                          </button>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
       )}
     </DashboardLayout>

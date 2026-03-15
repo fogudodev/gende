@@ -3486,6 +3486,20 @@ export type Database = {
         | "reactivation_30d"
         | "maintenance_reminder"
         | "post_sale_review"
+        | "course_enrollment_confirmed"
+        | "course_payment_confirmed"
+        | "course_reminder_7d"
+        | "course_reminder_1d"
+        | "course_reminder_day"
+        | "course_send_location"
+        | "course_send_link"
+        | "course_rescheduled"
+        | "course_cancelled"
+        | "course_waitlist_new_class"
+        | "course_certificate_sent"
+        | "course_followup"
+        | "course_feedback_request"
+        | "course_next_offer"
       booking_status:
         | "pending"
         | "confirmed"
@@ -3636,6 +3650,20 @@ export const Constants = {
         "reactivation_30d",
         "maintenance_reminder",
         "post_sale_review",
+        "course_enrollment_confirmed",
+        "course_payment_confirmed",
+        "course_reminder_7d",
+        "course_reminder_1d",
+        "course_reminder_day",
+        "course_send_location",
+        "course_send_link",
+        "course_rescheduled",
+        "course_cancelled",
+        "course_waitlist_new_class",
+        "course_certificate_sent",
+        "course_followup",
+        "course_feedback_request",
+        "course_next_offer",
       ],
       booking_status: [
         "pending",
