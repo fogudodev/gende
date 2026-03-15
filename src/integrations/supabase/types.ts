@@ -3431,6 +3431,21 @@ export type Database = {
         }
         Returns: Json
       }
+      enroll_student_in_class: {
+        Args: {
+          p_class_id: string
+          p_course_id: string
+          p_origin?: string
+          p_professional_id: string
+          p_student_city?: string
+          p_student_cpf?: string
+          p_student_email?: string
+          p_student_name: string
+          p_student_notes?: string
+          p_student_phone: string
+        }
+        Returns: Json
+      }
       get_available_slots: {
         Args: {
           p_date: string
