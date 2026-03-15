@@ -120,6 +120,8 @@ const AppContent = () => (
             <Route path="/courses/list" element={<ProtectedRoute><Courses /></ProtectedRoute>} />
             <Route path="/courses/classes" element={<ProtectedRoute><CourseClasses /></ProtectedRoute>} />
             <Route path="/courses/students" element={<ProtectedRoute><CourseStudents /></ProtectedRoute>} />
+            <Route path="/courses/certificates" element={<ProtectedRoute><CourseCertificates /></ProtectedRoute>} />
+            <Route path="/courses/finance" element={<ProtectedRoute><CourseFinance /></ProtectedRoute>} />
 
             {/* Admin Master routes */}
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
