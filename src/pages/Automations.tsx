@@ -108,6 +108,23 @@ const Automations = () => {
     } catch { toast.error("Erro ao alterar automação"); }
   };
 
+  const handleSaveCourseTemplate = async (automationId: string) => {
+    setSavingCourseTemplate(automationId);
+    const { error } = await supabase
+      .from("whatsapp_automations")
+      .update({ message_template: courseTemplates[automationId]?.trim() || "" })
+      .eq("id", automationId);
+
+    if (error) {
+      toast.error("Erro ao salvar mensagem");
+    } else {
+      toast.success("Mensagem do curso salva!");
+      qc.invalidateQueries({ queryKey: ["whatsapp-automations"] });
+      setEditingCourseId(null);
+    }
+    setSavingCourseTemplate(null);
+  };
+
   const handleSaveMessages = async () => {
     if (!professional) return;
     setSavingMessages(true);
