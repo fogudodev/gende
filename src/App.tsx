@@ -113,6 +113,10 @@ const AppContent = () => (
             <Route path="/instagram-automation" element={<ProtectedRoute><InstagramAutomation /></ProtectedRoute>} />
             <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
             <Route path="/instagram-callback" element={<InstagramCallback />} />
+            <Route path="/courses" element={<ProtectedRoute><CourseDashboard /></ProtectedRoute>} />
+            <Route path="/courses/list" element={<ProtectedRoute><Courses /></ProtectedRoute>} />
+            <Route path="/courses/classes" element={<ProtectedRoute><CourseClasses /></ProtectedRoute>} />
+            <Route path="/courses/students" element={<ProtectedRoute><CourseStudents /></ProtectedRoute>} />
 
             {/* Admin Master routes */}
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
