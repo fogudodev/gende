@@ -38,6 +38,7 @@ import {
   Instagram,
   Gift,
   GraduationCap,
+  Award,
   type LucideIcon,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
