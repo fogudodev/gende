@@ -243,31 +243,66 @@ const Automations = () => {
       ) : !automations?.length ? (
         <p className="text-center text-muted-foreground py-12">Nenhuma automação configurada</p>
       ) : (
-        <div className="space-y-4">
-          {automations.map((auto, i) => (
-            <motion.div key={auto.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.06 }} className="glass-card rounded-2xl p-5 flex items-center justify-between hover-lift">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                  <Zap size={18} className="text-accent" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">{triggerDescriptions[auto.trigger_type]?.split(" ")[0] || auto.trigger_type}</h3>
-                  <p className="text-sm text-muted-foreground">{triggerDescriptions[auto.trigger_type] || ""}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-8">
-                <div className="text-right">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Clock size={12} />
-                    {triggerLabels[auto.trigger_type] || auto.trigger_type}
+        <div className="space-y-6">
+          {/* Booking Automations */}
+          {(() => {
+            const bookingAutos = automations.filter(a => !a.trigger_type.startsWith("course_"));
+            const courseAutos = automations.filter(a => a.trigger_type.startsWith("course_"));
+            return (
+              <>
+                {bookingAutos.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">📅 Agendamentos</h3>
+                    <div className="space-y-3">
+                      {bookingAutos.map((auto, i) => (
+                        <motion.div key={auto.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.04 }} className="glass-card rounded-2xl p-5 flex items-center justify-between hover-lift">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                              <Zap size={18} className="text-accent" />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-foreground">{triggerLabels[auto.trigger_type] || auto.trigger_type}</h3>
+                              <p className="text-sm text-muted-foreground">{triggerDescriptions[auto.trigger_type] || ""}</p>
+                            </div>
+                          </div>
+                          <button onClick={() => handleToggle(auto.id, auto.is_active)} className="text-muted-foreground hover:text-foreground transition-colors">
+                            {auto.is_active ? <ToggleRight size={28} className="text-success" /> : <ToggleLeft size={28} />}
+                          </button>
+                        </motion.div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-                <button onClick={() => handleToggle(auto.id, auto.is_active)} className="text-muted-foreground hover:text-foreground transition-colors">
-                  {auto.is_active ? <ToggleRight size={28} className="text-success" /> : <ToggleLeft size={28} />}
-                </button>
-              </div>
-            </motion.div>
-          ))}
+                )}
+
+                {courseAutos.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 mt-6">🎓 Cursos</h3>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Variáveis: {"{nome}"}, {"{curso}"}, {"{turma}"}, {"{data}"}, {"{horario}"}, {"{local}"}, {"{link_aula}"}, {"{link}"}, {"{valor}"}, {"{link_certificado}"}
+                    </p>
+                    <div className="space-y-3">
+                      {courseAutos.map((auto, i) => (
+                        <motion.div key={auto.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.04 }} className="glass-card rounded-2xl p-5 flex items-center justify-between hover-lift">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                              <Zap size={18} className="text-primary" />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-foreground">{triggerLabels[auto.trigger_type] || auto.trigger_type}</h3>
+                              <p className="text-sm text-muted-foreground">{triggerDescriptions[auto.trigger_type] || ""}</p>
+                            </div>
+                          </div>
+                          <button onClick={() => handleToggle(auto.id, auto.is_active)} className="text-muted-foreground hover:text-foreground transition-colors">
+                            {auto.is_active ? <ToggleRight size={28} className="text-success" /> : <ToggleLeft size={28} />}
+                          </button>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
       )}
     </DashboardLayout>
