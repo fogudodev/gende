@@ -88,6 +88,17 @@ const Automations = () => {
     }
   }, [professional]);
 
+  // Initialize course templates from automations
+  useEffect(() => {
+    if (automations) {
+      const templates: Record<string, string> = {};
+      automations
+        .filter(a => a.trigger_type.startsWith("course_"))
+        .forEach(a => { templates[a.id] = a.message_template || ""; });
+      setCourseTemplates(templates);
+    }
+  }, [automations]);
+
   const isLoading = loadingInstance || loadingAuto;
 
   const handleToggle = async (id: string, currentState: boolean) => {
