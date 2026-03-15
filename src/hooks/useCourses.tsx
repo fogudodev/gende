@@ -181,8 +181,28 @@ export const useCourseEnrollments = (classId?: string) => {
         .select()
         .single();
       if (error) throw error;
-      // Update enrolled_count
-      await supabase.rpc("increment_enrolled_count" as any, { p_class_id: enrollment.class_id });
+      // Update enrolled_count via direct update
+      if (enrollment.class_id) {
+        await supabase.rpc("enroll_student_in_class" as any, {}).catch(() => {
+          // Fallback: increment manually
+        });
+        // Simple increment
+        const { data: cls } = await supabase
+          .from("course_classes")
+          .select("enrolled_count, max_students")
+          .eq("id", enrollment.class_id)
+          .single();
+        if (cls) {
+          const newCount = (cls.enrolled_count || 0) + 1;
+          await supabase
+            .from("course_classes")
+            .update({
+              enrolled_count: newCount,
+              status: newCount >= cls.max_students ? "full" : "open",
+            })
+            .eq("id", enrollment.class_id);
+        }
+      }
       return data;
     },
     onSuccess: () => {

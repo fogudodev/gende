@@ -49,7 +49,7 @@ const CourseDashboard = () => {
     });
     const lowOccupancy = classList.filter((c: any) => {
       const occupancy = c.max_students > 0 ? (c.enrolled_count / c.max_students) * 100 : 0;
-      return occupancy < 30 && c.status === "open";
+      return occupancy > 0 && occupancy < 30 && c.status === "open";
     });
 
     // Revenue by course

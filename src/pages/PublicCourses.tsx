@@ -73,52 +73,36 @@ const PublicCourses = () => {
     if (!form.student_name.trim() || !form.student_phone.trim() || !selectedClass) return;
     setSubmitting(true);
 
-    // Check if class is full
-    if (selectedClass.enrolled_count >= selectedClass.max_students) {
-      // Add to waitlist instead
-      const { error } = await supabase.from("course_waitlist").insert({
-        professional_id: professional.id,
-        class_id: selectedClass.id,
-        name: form.student_name,
-        phone: form.student_phone,
-        email: form.student_email,
-      });
-      if (error) {
-        toast.error("Erro ao entrar na lista de espera");
-      } else {
-        toast.success("Você entrou na lista de espera!");
-        setSuccess(true);
-      }
-      setSubmitting(false);
-      return;
-    }
-
-    const { error } = await supabase.from("course_enrollments").insert({
-      professional_id: professional.id,
-      course_id: selectedCourse.id,
-      class_id: selectedClass.id,
-      student_name: form.student_name,
-      student_phone: form.student_phone,
-      student_email: form.student_email,
-      student_cpf: form.student_cpf,
-      student_city: form.student_city,
-      student_notes: form.student_notes,
-      enrollment_status: "pending",
-      payment_status: "pending",
-      amount_paid: 0,
-      origin: "public_page",
+    // Use atomic RPC to prevent overbooking
+    const { data: result, error } = await supabase.rpc("enroll_student_in_class" as any, {
+      p_professional_id: professional.id,
+      p_course_id: selectedCourse.id,
+      p_class_id: selectedClass.id,
+      p_student_name: form.student_name,
+      p_student_phone: form.student_phone,
+      p_student_email: form.student_email || null,
+      p_student_cpf: form.student_cpf || null,
+      p_student_city: form.student_city || null,
+      p_student_notes: form.student_notes || null,
+      p_origin: "public_page",
     });
 
     if (error) {
-      toast.error("Erro ao realizar inscrição");
+      toast.error("Erro ao processar inscrição");
+    } else if (result && !result.success) {
+      toast.error(result.error || "Erro ao processar inscrição");
+    } else if (result?.waitlist) {
+      toast.success("Você entrou na lista de espera!");
+      setSuccess(true);
     } else {
-      // Update enrolled_count
-      await supabase
-        .from("course_classes")
-        .update({ enrolled_count: selectedClass.enrolled_count + 1 })
-        .eq("id", selectedClass.id);
       toast.success("Inscrição realizada com sucesso!");
       setSuccess(true);
+      // Update local class state
+      setClasses(prev => prev.map(c =>
+        c.id === selectedClass.id
+          ? { ...c, enrolled_count: c.enrolled_count + 1, status: c.enrolled_count + 1 >= c.max_students ? "full" : c.status }
+          : c
+      ));
     }
     setSubmitting(false);
   };
