@@ -68,34 +68,16 @@ const Automations = () => {
   const toggleAutomation = useToggleAutomation();
   const qc = useQueryClient();
 
-  const [welcomeMessage, setWelcomeMessage] = useState("");
-  const [reminderMessage, setReminderMessage] = useState("");
-  const [confirmationMessage, setConfirmationMessage] = useState("");
-  const [followupMessage, setFollowupMessage] = useState("");
-  const [savingMessages, setSavingMessages] = useState(false);
+  // Unified template editing for all automations
+  const [editingAutoId, setEditingAutoId] = useState<string | null>(null);
+  const [autoTemplates, setAutoTemplates] = useState<Record<string, string>>({});
+  const [savingTemplateId, setSavingTemplateId] = useState<string | null>(null);
 
-  // Course automation template editing
-  const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
-  const [courseTemplates, setCourseTemplates] = useState<Record<string, string>>({});
-  const [savingCourseTemplate, setSavingCourseTemplate] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (professional) {
-      setWelcomeMessage(professional.welcome_message || "");
-      setReminderMessage(professional.reminder_message || "");
-      setConfirmationMessage(professional.confirmation_message || "");
-      setFollowupMessage(professional.followup_message || "");
-    }
-  }, [professional]);
-
-  // Initialize course templates from automations
   useEffect(() => {
     if (automations) {
       const templates: Record<string, string> = {};
-      automations
-        .filter(a => a.trigger_type.startsWith("course_"))
-        .forEach(a => { templates[a.id] = a.message_template || ""; });
-      setCourseTemplates(templates);
+      automations.forEach(a => { templates[a.id] = a.message_template || ""; });
+      setAutoTemplates(templates);
     }
   }, [automations]);
 
@@ -108,43 +90,21 @@ const Automations = () => {
     } catch { toast.error("Erro ao alterar automação"); }
   };
 
-  const handleSaveCourseTemplate = async (automationId: string) => {
-    setSavingCourseTemplate(automationId);
+  const handleSaveTemplate = async (automationId: string) => {
+    setSavingTemplateId(automationId);
     const { error } = await supabase
       .from("whatsapp_automations")
-      .update({ message_template: courseTemplates[automationId]?.trim() || "" })
+      .update({ message_template: autoTemplates[automationId]?.trim() || "" })
       .eq("id", automationId);
 
     if (error) {
       toast.error("Erro ao salvar mensagem");
     } else {
-      toast.success("Mensagem do curso salva!");
+      toast.success("Mensagem salva!");
       qc.invalidateQueries({ queryKey: ["whatsapp-automations"] });
-      setEditingCourseId(null);
+      setEditingAutoId(null);
     }
-    setSavingCourseTemplate(null);
-  };
-
-  const handleSaveMessages = async () => {
-    if (!professional) return;
-    setSavingMessages(true);
-    const { error } = await supabase
-      .from("professionals")
-      .update({
-        welcome_message: welcomeMessage.trim(),
-        reminder_message: reminderMessage.trim(),
-        confirmation_message: confirmationMessage.trim(),
-        followup_message: followupMessage.trim(),
-      })
-      .eq("id", professional.id);
-
-    if (error) {
-      toast.error("Erro ao salvar mensagens");
-    } else {
-      toast.success("Mensagens de automação salvas!");
-      qc.invalidateQueries({ queryKey: ["professional"] });
-    }
-    setSavingMessages(false);
+    setSavingTemplateId(null);
   };
 
   const totalSent = (logs || []).filter(l => l.status === "sent" || l.status === "delivered").length;
