@@ -1,16 +1,35 @@
 import { useMemo } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useCourses, useCourseClasses, useCourseEnrollments } from "@/hooks/useCourses";
-import { GraduationCap, Calendar, Users, DollarSign, TrendingUp, AlertTriangle, Zap } from "lucide-react";
+import { useProfessional } from "@/hooks/useProfessional";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { GraduationCap, Calendar, Users, DollarSign, TrendingUp, AlertTriangle, Zap, Sparkles, Lightbulb, Target, Copy, MessageCircle, Clock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/hooks/use-toast";
 
 const CourseDashboard = () => {
   const { courses } = useCourses();
   const { classes } = useCourseClasses();
   const { enrollments } = useCourseEnrollments();
+  const { data: professional } = useProfessional();
+
+  const waitlistCount = useQuery({
+    queryKey: ["course-waitlist-count", professional?.id],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("course_waitlist")
+        .select("*", { count: "exact", head: true })
+        .eq("professional_id", professional!.id);
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!professional?.id,
+  });
 
   const stats = useMemo(() => {
     const courseList = courses.data || [];
@@ -194,6 +213,109 @@ const CourseDashboard = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* AI Insights & Recommendations */}
+        {(() => {
+          const insights: { icon: any; text: string; color: string; action?: string; actionText?: string }[] = [];
+          const classList = classes.data || [];
+          const enrollList = enrollments.data || [];
+          const wlCount = waitlistCount.data || 0;
+
+          // Revenue forecast
+          const openClasses = classList.filter((c: any) => c.status === "open");
+          const forecastRevenue = openClasses.reduce((sum: number, cls: any) => {
+            const remaining = cls.max_students - cls.enrolled_count;
+            const course = (courses.data || []).find((c: any) => c.id === cls.course_id);
+            return sum + (remaining * Number(course?.price || 0));
+          }, 0);
+
+          if (forecastRevenue > 0) {
+            insights.push({
+              icon: Target,
+              text: `Previsão de faturamento potencial: R$ ${forecastRevenue.toFixed(2).replace(".", ",")} se todas as vagas abertas forem preenchidas.`,
+              color: "text-primary bg-primary/10",
+            });
+          }
+
+          // Waitlist suggestion
+          if (wlCount >= 5) {
+            insights.push({
+              icon: Lightbulb,
+              text: `Você tem ${wlCount} pessoas na lista de espera. Considere abrir novas turmas para capturar essa demanda!`,
+              color: "text-warning bg-warning/10",
+            });
+          }
+
+          // Low conversion alert
+          const publicEnrolls = enrollList.filter((e: any) => e.origin === "public_page").length;
+          const pendingPublic = enrollList.filter((e: any) => e.origin === "public_page" && e.payment_status === "pending").length;
+          if (publicEnrolls > 3 && pendingPublic > publicEnrolls * 0.5) {
+            insights.push({
+              icon: AlertTriangle,
+              text: `${pendingPublic} de ${publicEnrolls} inscrições da página pública estão com pagamento pendente. Considere enviar lembretes!`,
+              color: "text-destructive bg-destructive/10",
+            });
+          }
+
+          // Promo suggestion for low occupancy
+          const lowOccClasses = classList.filter((c: any) => {
+            const occ = c.max_students > 0 ? (c.enrolled_count / c.max_students) * 100 : 0;
+            return occ < 30 && c.status === "open";
+          });
+          if (lowOccClasses.length > 0) {
+            const promoMsg = `🔥 VAGAS ABERTAS!\n\n${lowOccClasses.map((c: any) => {
+              const course = (courses.data || []).find((cr: any) => cr.id === c.course_id);
+              return `📚 ${course?.name || c.name}\n📅 ${c.class_date}\n💰 R$ ${Number(course?.price || 0).toFixed(2).replace(".", ",")}`;
+            }).join("\n\n")}\n\n✅ Vagas limitadas! Garanta a sua!`;
+
+            insights.push({
+              icon: MessageCircle,
+              text: `${lowOccClasses.length} turma${lowOccClasses.length > 1 ? "s" : ""} com baixa ocupação. Use a mensagem promocional pronta para divulgar!`,
+              color: "text-info bg-info/10",
+              action: promoMsg,
+              actionText: "Copiar texto de divulgação",
+            });
+          }
+
+          if (insights.length === 0) return null;
+
+          return (
+            <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Sparkles size={16} className="text-primary" />
+                  Recomendações Inteligentes
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {insights.map((ins, i) => {
+                  const Icon = ins.icon;
+                  return (
+                    <div key={i} className={`flex items-start gap-3 p-3 rounded-xl ${ins.color}`}>
+                      <Icon size={16} className="mt-0.5 shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm">{ins.text}</p>
+                        {ins.action && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="mt-1 gap-1 h-7 text-xs"
+                            onClick={() => {
+                              navigator.clipboard.writeText(ins.action!);
+                              toast({ title: "Texto copiado!" });
+                            }}
+                          >
+                            <Copy size={12} /> {ins.actionText}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          );
+        })()}
       </div>
     </DashboardLayout>
   );

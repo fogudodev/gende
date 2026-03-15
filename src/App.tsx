@@ -50,6 +50,8 @@ import CourseStudents from "./pages/CourseStudents";
 import CourseDashboard from "./pages/CourseDashboard";
 import CourseCertificates from "./pages/CourseCertificates";
 import CourseFinance from "./pages/CourseFinance";
+import CourseWaitlist from "./pages/CourseWaitlist";
+import StudentArea from "./pages/StudentArea";
 import PublicCourses from "./pages/PublicCourses";
 
 // Admin pages
@@ -122,6 +124,7 @@ const AppContent = () => (
             <Route path="/courses/students" element={<ProtectedRoute><CourseStudents /></ProtectedRoute>} />
             <Route path="/courses/certificates" element={<ProtectedRoute><CourseCertificates /></ProtectedRoute>} />
             <Route path="/courses/finance" element={<ProtectedRoute><CourseFinance /></ProtectedRoute>} />
+            <Route path="/courses/waitlist" element={<ProtectedRoute><CourseWaitlist /></ProtectedRoute>} />
 
             {/* Admin Master routes */}
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
@@ -145,6 +148,7 @@ const AppContent = () => (
             {/* Public routes */}
             <Route path="/politica-de-privacidade" element={<PrivacyPolicy />} />
             <Route path="/termos-de-uso" element={<TermsOfUse />} />
+            <Route path="/area-do-aluno" element={<StudentArea />} />
             <Route path="/cursos/:slug" element={<PublicCourses />} />
             <Route path="/:slug" element={<PublicBooking />} />
             <Route path="*" element={<NotFound />} />
