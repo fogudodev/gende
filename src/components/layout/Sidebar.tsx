@@ -38,6 +38,7 @@ import {
   Instagram,
   Gift,
   GraduationCap,
+  Award,
   type LucideIcon,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
@@ -105,6 +106,8 @@ const coursesGroup: NavGroup = {
     { icon: BookOpen, label: "Cursos", path: "/courses/list", featureKey: "dashboard" },
     { icon: CalendarDays, label: "Turmas", path: "/courses/classes", featureKey: "dashboard" },
     { icon: Users, label: "Alunos", path: "/courses/students", featureKey: "dashboard" },
+    { icon: Award, label: "Certificados", path: "/courses/certificates", featureKey: "dashboard" },
+    { icon: CreditCard, label: "Financeiro", path: "/courses/finance", featureKey: "dashboard" },
   ],
 };
 
@@ -208,6 +211,8 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
     "/courses/list": "courses",
     "/courses/classes": "courses",
     "/courses/students": "courses",
+    "/courses/certificates": "courses",
+    "/courses/finance": "courses",
   };
 
   const isPathDisabled = (path: string): boolean => {

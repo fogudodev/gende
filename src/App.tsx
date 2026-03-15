@@ -48,6 +48,9 @@ import Courses from "./pages/Courses";
 import CourseClasses from "./pages/CourseClasses";
 import CourseStudents from "./pages/CourseStudents";
 import CourseDashboard from "./pages/CourseDashboard";
+import CourseCertificates from "./pages/CourseCertificates";
+import CourseFinance from "./pages/CourseFinance";
+import PublicCourses from "./pages/PublicCourses";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -117,6 +120,8 @@ const AppContent = () => (
             <Route path="/courses/list" element={<ProtectedRoute><Courses /></ProtectedRoute>} />
             <Route path="/courses/classes" element={<ProtectedRoute><CourseClasses /></ProtectedRoute>} />
             <Route path="/courses/students" element={<ProtectedRoute><CourseStudents /></ProtectedRoute>} />
+            <Route path="/courses/certificates" element={<ProtectedRoute><CourseCertificates /></ProtectedRoute>} />
+            <Route path="/courses/finance" element={<ProtectedRoute><CourseFinance /></ProtectedRoute>} />
 
             {/* Admin Master routes */}
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
@@ -140,6 +145,7 @@ const AppContent = () => (
             {/* Public routes */}
             <Route path="/politica-de-privacidade" element={<PrivacyPolicy />} />
             <Route path="/termos-de-uso" element={<TermsOfUse />} />
+            <Route path="/cursos/:slug" element={<PublicCourses />} />
             <Route path="/:slug" element={<PublicBooking />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
