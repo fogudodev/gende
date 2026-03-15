@@ -19,6 +19,20 @@ const triggerLabels: Record<string, string> = {
   post_sale_review: "24h após conclusão",
   maintenance_reminder: "Manutenção próxima",
   reactivation_30d: "30 dias inativo",
+  course_enrollment_confirmed: "Inscrição confirmada",
+  course_payment_confirmed: "Pagamento confirmado",
+  course_reminder_7d: "7 dias antes",
+  course_reminder_1d: "1 dia antes",
+  course_reminder_day: "No dia do curso",
+  course_send_location: "Envio de localização",
+  course_send_link: "Link da aula online",
+  course_rescheduled: "Turma remarcada",
+  course_cancelled: "Turma cancelada",
+  course_waitlist_new_class: "Nova turma (lista de espera)",
+  course_certificate_sent: "Certificado enviado",
+  course_followup: "Follow-up pós-curso",
+  course_feedback_request: "Pedido de feedback",
+  course_next_offer: "Oferta de próximo curso",
 };
 
 const triggerDescriptions: Record<string, string> = {
@@ -29,6 +43,20 @@ const triggerDescriptions: Record<string, string> = {
   post_sale_review: "Pedido de avaliação 24h após o serviço — avaliação vai para o profissional/funcionário que atendeu",
   maintenance_reminder: "Lembrete quando a manutenção do serviço está próxima",
   reactivation_30d: "Enviada para clientes inativos há 30 dias",
+  course_enrollment_confirmed: "Enviada ao aluno quando a inscrição é confirmada",
+  course_payment_confirmed: "Enviada ao aluno quando o pagamento é confirmado",
+  course_reminder_7d: "Lembrete 7 dias antes do início da turma",
+  course_reminder_1d: "Lembrete 1 dia antes do início da turma",
+  course_reminder_day: "Lembrete no dia do curso",
+  course_send_location: "Envia localização para aulas presenciais",
+  course_send_link: "Envia o link de acesso para aulas online",
+  course_rescheduled: "Avisa alunos quando uma turma é remarcada",
+  course_cancelled: "Avisa alunos quando uma turma é cancelada",
+  course_waitlist_new_class: "Avisa quem está na lista de espera sobre nova turma",
+  course_certificate_sent: "Envia certificado de conclusão ao aluno",
+  course_followup: "Follow-up 1 dia após o curso",
+  course_feedback_request: "Solicita avaliação 3 dias após o curso",
+  course_next_offer: "Oferece próximo curso relevante ao aluno",
 };
 
 const Automations = () => {
