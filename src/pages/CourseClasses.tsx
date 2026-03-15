@@ -82,7 +82,7 @@ const CourseClasses = () => {
 
   const handleClone = (cls: any) => {
     const { id, professional_id, created_at, updated_at, enrolled_count, courses: _, ...rest } = cls;
-    createClass.mutate({ ...rest, name: `${rest.name} (cópia)`, enrolled_count: 0, status: "open" });
+    createClass.mutate({ ...rest, name: `${rest.name} (cópia)`, status: "open" });
   };
 
   const filtered = (classes.data || []).filter((c: any) => {
