@@ -44,6 +44,10 @@ import InstagramAutomation from "./pages/InstagramAutomation";
 import InstagramCallback from "./pages/InstagramCallback";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfUse from "./pages/TermsOfUse";
+import Courses from "./pages/Courses";
+import CourseClasses from "./pages/CourseClasses";
+import CourseStudents from "./pages/CourseStudents";
+import CourseDashboard from "./pages/CourseDashboard";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
