@@ -181,12 +181,8 @@ export const useCourseEnrollments = (classId?: string) => {
         .select()
         .single();
       if (error) throw error;
-      // Update enrolled_count via direct update
+      // Update enrolled_count
       if (enrollment.class_id) {
-        await supabase.rpc("enroll_student_in_class" as any, {}).catch(() => {
-          // Fallback: increment manually
-        });
-        // Simple increment
         const { data: cls } = await supabase
           .from("course_classes")
           .select("enrolled_count, max_students")
