@@ -64,7 +64,7 @@ const CourseDashboard = () => {
   }
 
   return (
-    <DashboardLayout>
+    <DashboardLayout title="Dashboard de Cursos">
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2">
