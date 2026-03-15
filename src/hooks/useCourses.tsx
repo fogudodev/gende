@@ -202,13 +202,20 @@ export const useCourseEnrollments = (classId?: string) => {
       }
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["course-enrollments"] });
       queryClient.invalidateQueries({ queryKey: ["course-classes"] });
       toast({ title: "Inscrição realizada!" });
-    },
-    onError: (error: any) => {
-      toast({ title: "Erro na inscrição", description: error.message, variant: "destructive" });
+      // Trigger enrollment confirmation automation
+      if (professional?.id && data?.id) {
+        const course = (data as any)?.courses?.name || "";
+        triggerCourseAutomation({
+          professionalId: professional.id,
+          triggerType: "course_enrollment_confirmed",
+          enrollmentId: data.id,
+          extraVars: { curso: course },
+        });
+      }
     },
   });
 
