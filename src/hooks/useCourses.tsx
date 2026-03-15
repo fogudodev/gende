@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfessional } from "./useProfessional";
 import { toast } from "@/hooks/use-toast";
+import { triggerCourseAutomation } from "./useCourseAutomations";
 
 export const useCourses = () => {
   const { data: professional } = useProfessional();
