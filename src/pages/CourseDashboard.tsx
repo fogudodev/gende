@@ -260,7 +260,7 @@ const CourseDashboard = () => {
           // Promo suggestion for low occupancy
           const lowOccClasses = classList.filter((c: any) => {
             const occ = c.max_students > 0 ? (c.enrolled_count / c.max_students) * 100 : 0;
-            return occ < 30 && c.status === "open";
+            return occ > 0 && occ < 30 && c.status === "open";
           });
           if (lowOccClasses.length > 0) {
             const promoMsg = `🔥 VAGAS ABERTAS!\n\n${lowOccClasses.map((c: any) => {
