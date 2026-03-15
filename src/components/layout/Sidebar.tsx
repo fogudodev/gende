@@ -211,6 +211,8 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
     "/courses/list": "courses",
     "/courses/classes": "courses",
     "/courses/students": "courses",
+    "/courses/certificates": "courses",
+    "/courses/finance": "courses",
   };
 
   const isPathDisabled = (path: string): boolean => {

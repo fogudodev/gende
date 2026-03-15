@@ -48,6 +48,9 @@ import Courses from "./pages/Courses";
 import CourseClasses from "./pages/CourseClasses";
 import CourseStudents from "./pages/CourseStudents";
 import CourseDashboard from "./pages/CourseDashboard";
+import CourseCertificates from "./pages/CourseCertificates";
+import CourseFinance from "./pages/CourseFinance";
+import PublicCourses from "./pages/PublicCourses";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
