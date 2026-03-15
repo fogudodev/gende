@@ -68,34 +68,16 @@ const Automations = () => {
   const toggleAutomation = useToggleAutomation();
   const qc = useQueryClient();
 
-  const [welcomeMessage, setWelcomeMessage] = useState("");
-  const [reminderMessage, setReminderMessage] = useState("");
-  const [confirmationMessage, setConfirmationMessage] = useState("");
-  const [followupMessage, setFollowupMessage] = useState("");
-  const [savingMessages, setSavingMessages] = useState(false);
+  // Unified template editing for all automations
+  const [editingAutoId, setEditingAutoId] = useState<string | null>(null);
+  const [autoTemplates, setAutoTemplates] = useState<Record<string, string>>({});
+  const [savingTemplateId, setSavingTemplateId] = useState<string | null>(null);
 
-  // Course automation template editing
-  const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
-  const [courseTemplates, setCourseTemplates] = useState<Record<string, string>>({});
-  const [savingCourseTemplate, setSavingCourseTemplate] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (professional) {
-      setWelcomeMessage(professional.welcome_message || "");
-      setReminderMessage(professional.reminder_message || "");
-      setConfirmationMessage(professional.confirmation_message || "");
-      setFollowupMessage(professional.followup_message || "");
-    }
-  }, [professional]);
-
-  // Initialize course templates from automations
   useEffect(() => {
     if (automations) {
       const templates: Record<string, string> = {};
-      automations
-        .filter(a => a.trigger_type.startsWith("course_"))
-        .forEach(a => { templates[a.id] = a.message_template || ""; });
-      setCourseTemplates(templates);
+      automations.forEach(a => { templates[a.id] = a.message_template || ""; });
+      setAutoTemplates(templates);
     }
   }, [automations]);
 
@@ -108,43 +90,21 @@ const Automations = () => {
     } catch { toast.error("Erro ao alterar automação"); }
   };
 
-  const handleSaveCourseTemplate = async (automationId: string) => {
-    setSavingCourseTemplate(automationId);
+  const handleSaveTemplate = async (automationId: string) => {
+    setSavingTemplateId(automationId);
     const { error } = await supabase
       .from("whatsapp_automations")
-      .update({ message_template: courseTemplates[automationId]?.trim() || "" })
+      .update({ message_template: autoTemplates[automationId]?.trim() || "" })
       .eq("id", automationId);
 
     if (error) {
       toast.error("Erro ao salvar mensagem");
     } else {
-      toast.success("Mensagem do curso salva!");
+      toast.success("Mensagem salva!");
       qc.invalidateQueries({ queryKey: ["whatsapp-automations"] });
-      setEditingCourseId(null);
+      setEditingAutoId(null);
     }
-    setSavingCourseTemplate(null);
-  };
-
-  const handleSaveMessages = async () => {
-    if (!professional) return;
-    setSavingMessages(true);
-    const { error } = await supabase
-      .from("professionals")
-      .update({
-        welcome_message: welcomeMessage.trim(),
-        reminder_message: reminderMessage.trim(),
-        confirmation_message: confirmationMessage.trim(),
-        followup_message: followupMessage.trim(),
-      })
-      .eq("id", professional.id);
-
-    if (error) {
-      toast.error("Erro ao salvar mensagens");
-    } else {
-      toast.success("Mensagens de automação salvas!");
-      qc.invalidateQueries({ queryKey: ["professional"] });
-    }
-    setSavingMessages(false);
+    setSavingTemplateId(null);
   };
 
   const totalSent = (logs || []).filter(l => l.status === "sent" || l.status === "delivered").length;
@@ -195,77 +155,6 @@ const Automations = () => {
         ))}
       </div>
 
-      {/* Automation Messages */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="glass-card rounded-2xl p-6 mb-8">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-            <Sparkles size={18} className="text-accent" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-foreground">Mensagens Personalizadas</h3>
-            <p className="text-xs text-muted-foreground">
-              Use: {"{nome}"}, {"{servico}"}, {"{data}"}, {"{horario}"}
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <Label className="text-sm mb-1.5">Mensagem de Boas-vindas</Label>
-            <textarea
-              value={welcomeMessage}
-              onChange={(e) => setWelcomeMessage(e.target.value)}
-              placeholder="Olá {nome}! Seja bem-vindo(a)..."
-              maxLength={500}
-              rows={3}
-              className="w-full px-3 py-2 rounded-xl bg-muted/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none"
-            />
-          </div>
-          <div>
-            <Label className="text-sm mb-1.5">Mensagem de Lembrete</Label>
-            <textarea
-              value={reminderMessage}
-              onChange={(e) => setReminderMessage(e.target.value)}
-              placeholder="Olá {nome}! Lembrete: você tem um agendamento..."
-              maxLength={500}
-              rows={3}
-              className="w-full px-3 py-2 rounded-xl bg-muted/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none"
-            />
-          </div>
-          <div>
-            <Label className="text-sm mb-1.5">Mensagem de Confirmação</Label>
-            <textarea
-              value={confirmationMessage}
-              onChange={(e) => setConfirmationMessage(e.target.value)}
-              placeholder="Olá {nome}! Seu agendamento para {servico} foi confirmado..."
-              maxLength={500}
-              rows={3}
-              className="w-full px-3 py-2 rounded-xl bg-muted/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none"
-            />
-          </div>
-          <div>
-            <Label className="text-sm mb-1.5">Mensagem de Follow-up (clientes que não finalizaram)</Label>
-            <textarea
-              value={followupMessage}
-              onChange={(e) => setFollowupMessage(e.target.value)}
-              placeholder="Olá {nome}! Notamos que você não finalizou seu agendamento..."
-              maxLength={500}
-              rows={3}
-              className="w-full px-3 py-2 rounded-xl bg-muted/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none"
-            />
-          </div>
-
-          <Button
-            onClick={handleSaveMessages}
-            disabled={savingMessages}
-            className="w-full h-10 rounded-xl bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
-          >
-            {savingMessages ? <Loader2 size={16} className="animate-spin mr-2" /> : <Save size={16} className="mr-2" />}
-            Salvar Mensagens
-          </Button>
-        </div>
-      </motion.div>
-
       {/* Conversations */}
       <div className="mb-8">
         <ConversationsList />
@@ -278,97 +167,93 @@ const Automations = () => {
         <p className="text-center text-muted-foreground py-12">Nenhuma automação configurada</p>
       ) : (
         <div className="space-y-6">
-          {/* Booking Automations */}
           {(() => {
             const bookingAutos = automations.filter(a => !a.trigger_type.startsWith("course_"));
             const courseAutos = automations.filter(a => a.trigger_type.startsWith("course_"));
+
+            const renderAutoCard = (auto: typeof automations[0], i: number, isCourse: boolean) => {
+              const isEditing = editingAutoId === auto.id;
+              const colorClass = isCourse ? "bg-primary/10" : "bg-accent/10";
+              const iconColor = isCourse ? "text-primary" : "text-accent";
+              const btnColor = isCourse
+                ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                : "bg-accent hover:bg-accent/90 text-accent-foreground";
+
+              return (
+                <motion.div key={auto.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.04 }} className="glass-card rounded-2xl p-5 hover-lift">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      <div className={`w-10 h-10 rounded-xl ${colorClass} flex items-center justify-center shrink-0`}>
+                        <Zap size={18} className={iconColor} />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-foreground">{triggerLabels[auto.trigger_type] || auto.trigger_type}</h3>
+                        <p className="text-sm text-muted-foreground truncate">{triggerDescriptions[auto.trigger_type] || ""}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => setEditingAutoId(isEditing ? null : auto.id)}
+                        className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                        title="Editar mensagem"
+                      >
+                        {isEditing ? <ChevronUp size={20} /> : <Edit3 size={18} />}
+                      </button>
+                      <button onClick={() => handleToggle(auto.id, auto.is_active)} className="text-muted-foreground hover:text-foreground transition-colors">
+                        {auto.is_active ? <ToggleRight size={28} className="text-success" /> : <ToggleLeft size={28} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {isEditing && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-4 space-y-3">
+                      <Textarea
+                        value={autoTemplates[auto.id] || ""}
+                        onChange={(e) => setAutoTemplates(prev => ({ ...prev, [auto.id]: e.target.value }))}
+                        placeholder={`Mensagem para: ${triggerLabels[auto.trigger_type]}`}
+                        maxLength={1000}
+                        rows={4}
+                        className="rounded-xl bg-muted/50 border-border text-sm resize-none"
+                      />
+                      <div className="flex justify-end">
+                        <Button
+                          size="sm"
+                          onClick={() => handleSaveTemplate(auto.id)}
+                          disabled={savingTemplateId === auto.id}
+                          className={`rounded-xl ${btnColor}`}
+                        >
+                          {savingTemplateId === auto.id ? <Loader2 size={14} className="animate-spin mr-1.5" /> : <Save size={14} className="mr-1.5" />}
+                          Salvar
+                        </Button>
+                      </div>
+                    </motion.div>
+                  )}
+                </motion.div>
+              );
+            };
+
             return (
               <>
                 {bookingAutos.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">📅 Agendamentos</h3>
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">📅 Agendamentos</h3>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Variáveis: {"{nome}"}, {"{servico}"}, {"{data}"}, {"{horario}"}, {"{link}"}
+                    </p>
                     <div className="space-y-3">
-                      {bookingAutos.map((auto, i) => (
-                        <motion.div key={auto.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.04 }} className="glass-card rounded-2xl p-5 flex items-center justify-between hover-lift">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                              <Zap size={18} className="text-accent" />
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-foreground">{triggerLabels[auto.trigger_type] || auto.trigger_type}</h3>
-                              <p className="text-sm text-muted-foreground">{triggerDescriptions[auto.trigger_type] || ""}</p>
-                            </div>
-                          </div>
-                          <button onClick={() => handleToggle(auto.id, auto.is_active)} className="text-muted-foreground hover:text-foreground transition-colors">
-                            {auto.is_active ? <ToggleRight size={28} className="text-success" /> : <ToggleLeft size={28} />}
-                          </button>
-                        </motion.div>
-                      ))}
+                      {bookingAutos.map((auto, i) => renderAutoCard(auto, i, false))}
                     </div>
                   </div>
                 )}
 
                 {courseAutos.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 mt-6">🎓 Cursos — Mensagens Personalizadas</h3>
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2 mt-6">🎓 Cursos</h3>
                     <p className="text-xs text-muted-foreground mb-3">
                       Variáveis: {"{nome}"}, {"{curso}"}, {"{turma}"}, {"{data}"}, {"{horario}"}, {"{local}"}, {"{link_aula}"}, {"{link}"}, {"{valor}"}, {"{link_certificado}"}
                     </p>
                     <div className="space-y-3">
-                      {courseAutos.map((auto, i) => {
-                        const isEditing = editingCourseId === auto.id;
-                        return (
-                          <motion.div key={auto.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.04 }} className="glass-card rounded-2xl p-5 hover-lift">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-4 flex-1 min-w-0">
-                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                                  <Zap size={18} className="text-primary" />
-                                </div>
-                                <div className="min-w-0">
-                                  <h3 className="font-semibold text-foreground">{triggerLabels[auto.trigger_type] || auto.trigger_type}</h3>
-                                  <p className="text-sm text-muted-foreground truncate">{triggerDescriptions[auto.trigger_type] || ""}</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2 shrink-0">
-                                <button
-                                  onClick={() => setEditingCourseId(isEditing ? null : auto.id)}
-                                  className="text-muted-foreground hover:text-foreground transition-colors p-1"
-                                  title="Editar mensagem"
-                                >
-                                  {isEditing ? <ChevronUp size={20} /> : <Edit3 size={18} />}
-                                </button>
-                                <button onClick={() => handleToggle(auto.id, auto.is_active)} className="text-muted-foreground hover:text-foreground transition-colors">
-                                  {auto.is_active ? <ToggleRight size={28} className="text-success" /> : <ToggleLeft size={28} />}
-                                </button>
-                              </div>
-                            </div>
-
-                            {isEditing && (
-                              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-4 space-y-3">
-                                <Textarea
-                                  value={courseTemplates[auto.id] || ""}
-                                  onChange={(e) => setCourseTemplates(prev => ({ ...prev, [auto.id]: e.target.value }))}
-                                  placeholder={`Mensagem para: ${triggerLabels[auto.trigger_type]}`}
-                                  maxLength={1000}
-                                  rows={4}
-                                  className="rounded-xl bg-muted/50 border-border text-sm resize-none"
-                                />
-                                <div className="flex justify-end">
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handleSaveCourseTemplate(auto.id)}
-                                    disabled={savingCourseTemplate === auto.id}
-                                    className="rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground"
-                                  >
-                                    {savingCourseTemplate === auto.id ? <Loader2 size={14} className="animate-spin mr-1.5" /> : <Save size={14} className="mr-1.5" />}
-                                    Salvar
-                                  </Button>
-                                </div>
-                              </motion.div>
-                            )}
-                          </motion.div>
-                        );
-                      })}
+                      {courseAutos.map((auto, i) => renderAutoCard(auto, i, true))}
                     </div>
                   </div>
                 )}
