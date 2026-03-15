@@ -128,12 +128,30 @@ export const useCourseClasses = (courseId?: string) => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data: any, variables: any) => {
       queryClient.invalidateQueries({ queryKey: ["course-classes"] });
       toast({ title: "Turma atualizada!" });
-    },
-    onError: (error: any) => {
-      toast({ title: "Erro ao atualizar turma", description: error.message, variant: "destructive" });
+      // Trigger automation if class was cancelled or rescheduled
+      if (professional?.id && data?.id) {
+        if (variables.status === "cancelled") {
+          triggerCourseAutomation({
+            professionalId: professional.id,
+            triggerType: "course_cancelled",
+            classId: data.id,
+            extraVars: { turma: data.name || "", curso: (data as any)?.courses?.name || "" },
+          });
+        }
+        // If date changed, treat as rescheduled
+        if (variables.class_date && variables.class_date !== data.class_date) {
+          const newDate = new Date(variables.class_date).toLocaleDateString("pt-BR");
+          triggerCourseAutomation({
+            professionalId: professional.id,
+            triggerType: "course_rescheduled",
+            classId: data.id,
+            extraVars: { turma: data.name || "", data: newDate, horario: variables.start_time || data.start_time || "" },
+          });
+        }
+      }
     },
   });
 
