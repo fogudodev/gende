@@ -124,6 +124,7 @@ const AppContent = () => (
             <Route path="/courses/students" element={<ProtectedRoute><CourseStudents /></ProtectedRoute>} />
             <Route path="/courses/certificates" element={<ProtectedRoute><CourseCertificates /></ProtectedRoute>} />
             <Route path="/courses/finance" element={<ProtectedRoute><CourseFinance /></ProtectedRoute>} />
+            <Route path="/courses/waitlist" element={<ProtectedRoute><CourseWaitlist /></ProtectedRoute>} />
 
             {/* Admin Master routes */}
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
