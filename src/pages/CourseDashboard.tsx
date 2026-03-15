@@ -52,7 +52,7 @@ const CourseDashboard = () => {
 
   if (isLoading) {
     return (
-      <DashboardLayout>
+      <DashboardLayout title="Dashboard de Cursos">
         <div className="space-y-6">
           <h1 className="text-2xl font-bold flex items-center gap-2"><GraduationCap className="text-primary" /> Dashboard de Cursos</h1>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
