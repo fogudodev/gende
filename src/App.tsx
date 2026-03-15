@@ -145,6 +145,7 @@ const AppContent = () => (
             {/* Public routes */}
             <Route path="/politica-de-privacidade" element={<PrivacyPolicy />} />
             <Route path="/termos-de-uso" element={<TermsOfUse />} />
+            <Route path="/cursos/:slug" element={<PublicCourses />} />
             <Route path="/:slug" element={<PublicBooking />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
