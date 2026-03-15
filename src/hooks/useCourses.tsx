@@ -230,12 +230,26 @@ export const useCourseEnrollments = (classId?: string) => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data: any, variables: any) => {
       queryClient.invalidateQueries({ queryKey: ["course-enrollments"] });
       toast({ title: "Inscrição atualizada!" });
-    },
-    onError: (error: any) => {
-      toast({ title: "Erro ao atualizar inscrição", description: error.message, variant: "destructive" });
+      // Trigger payment confirmation if payment_status changed to paid
+      if (professional?.id && variables.payment_status === "paid" && data?.id) {
+        triggerCourseAutomation({
+          professionalId: professional.id,
+          triggerType: "course_payment_confirmed",
+          enrollmentId: data.id,
+          extraVars: { valor: String(variables.amount_paid || data.amount_paid || 0) },
+        });
+      }
+      // Trigger enrollment confirmation if status changed to confirmed
+      if (professional?.id && variables.enrollment_status === "confirmed" && data?.id) {
+        triggerCourseAutomation({
+          professionalId: professional.id,
+          triggerType: "course_enrollment_confirmed",
+          enrollmentId: data.id,
+        });
+      }
     },
   });
 
