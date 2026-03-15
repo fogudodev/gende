@@ -1,11 +1,16 @@
 import { useMemo } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useCourses, useCourseClasses, useCourseEnrollments } from "@/hooks/useCourses";
-import { GraduationCap, Calendar, Users, DollarSign, TrendingUp, AlertTriangle, Zap } from "lucide-react";
+import { useProfessional } from "@/hooks/useProfessional";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { GraduationCap, Calendar, Users, DollarSign, TrendingUp, AlertTriangle, Zap, Sparkles, Lightbulb, Target, Copy, MessageCircle, Clock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/hooks/use-toast";
 
 const CourseDashboard = () => {
   const { courses } = useCourses();
