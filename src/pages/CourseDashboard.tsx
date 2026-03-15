@@ -16,6 +16,20 @@ const CourseDashboard = () => {
   const { courses } = useCourses();
   const { classes } = useCourseClasses();
   const { enrollments } = useCourseEnrollments();
+  const { data: professional } = useProfessional();
+
+  const waitlistCount = useQuery({
+    queryKey: ["course-waitlist-count", professional?.id],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("course_waitlist")
+        .select("*", { count: "exact", head: true })
+        .eq("professional_id", professional!.id);
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!professional?.id,
+  });
 
   const stats = useMemo(() => {
     const courseList = courses.data || [];
