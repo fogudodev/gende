@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion } from "framer-motion";
-import { MessageCircle, Zap, Clock, CheckCircle2, Send, ToggleLeft, ToggleRight, Loader2, Sparkles, Save } from "lucide-react";
+import { MessageCircle, Zap, Clock, CheckCircle2, Send, ToggleLeft, ToggleRight, Loader2, Sparkles, Save, ChevronDown, ChevronUp, Edit3 } from "lucide-react";
 import { useWhatsAppInstance, useWhatsAppAutomations, useToggleAutomation, useWhatsAppLogs } from "@/hooks/useWhatsApp";
 import { useProfessional } from "@/hooks/useProfessional";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import ConversationsList from "@/components/automations/ConversationsList";
 
 const triggerLabels: Record<string, string> = {
