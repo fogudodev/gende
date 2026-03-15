@@ -1056,6 +1056,488 @@ export type Database = {
           },
         ]
       }
+      course_attendance: {
+        Row: {
+          class_id: string
+          created_at: string
+          enrollment_id: string
+          id: string
+          notes: string | null
+          professional_id: string
+          status: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          enrollment_id: string
+          id?: string
+          notes?: string | null
+          professional_id: string
+          status?: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          enrollment_id?: string
+          id?: string
+          notes?: string | null
+          professional_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_attendance_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "course_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_attendance_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "course_enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_attendance_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          professional_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          professional_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          professional_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_categories_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_certificates: {
+        Row: {
+          certificate_url: string | null
+          created_at: string
+          enrollment_id: string
+          id: string
+          issued_at: string | null
+          professional_id: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          certificate_url?: string | null
+          created_at?: string
+          enrollment_id: string
+          id?: string
+          issued_at?: string | null
+          professional_id: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          certificate_url?: string | null
+          created_at?: string
+          enrollment_id?: string
+          id?: string
+          issued_at?: string | null
+          professional_id?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_certificates_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "course_enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_certificates_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_classes: {
+        Row: {
+          class_date: string
+          course_id: string
+          created_at: string
+          end_time: string
+          enrolled_count: number
+          id: string
+          instructor_name: string | null
+          location: string | null
+          max_students: number
+          modality: string
+          name: string
+          notes: string | null
+          online_link: string | null
+          professional_id: string
+          start_time: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          class_date: string
+          course_id: string
+          created_at?: string
+          end_time: string
+          enrolled_count?: number
+          id?: string
+          instructor_name?: string | null
+          location?: string | null
+          max_students?: number
+          modality?: string
+          name: string
+          notes?: string | null
+          online_link?: string | null
+          professional_id: string
+          start_time: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          class_date?: string
+          course_id?: string
+          created_at?: string
+          end_time?: string
+          enrolled_count?: number
+          id?: string
+          instructor_name?: string | null
+          location?: string | null
+          max_students?: number
+          modality?: string
+          name?: string
+          notes?: string | null
+          online_link?: string | null
+          professional_id?: string
+          start_time?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_classes_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_classes_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_enrollments: {
+        Row: {
+          amount_paid: number
+          class_id: string
+          client_id: string | null
+          course_id: string
+          created_at: string
+          enrolled_at: string
+          enrollment_status: string
+          id: string
+          origin: string
+          payment_method: string | null
+          payment_status: string
+          professional_id: string
+          student_city: string | null
+          student_cpf: string | null
+          student_email: string | null
+          student_name: string
+          student_notes: string | null
+          student_phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_paid?: number
+          class_id: string
+          client_id?: string | null
+          course_id: string
+          created_at?: string
+          enrolled_at?: string
+          enrollment_status?: string
+          id?: string
+          origin?: string
+          payment_method?: string | null
+          payment_status?: string
+          professional_id: string
+          student_city?: string | null
+          student_cpf?: string | null
+          student_email?: string | null
+          student_name: string
+          student_notes?: string | null
+          student_phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_paid?: number
+          class_id?: string
+          client_id?: string | null
+          course_id?: string
+          created_at?: string
+          enrolled_at?: string
+          enrollment_status?: string
+          id?: string
+          origin?: string
+          payment_method?: string | null
+          payment_status?: string
+          professional_id?: string
+          student_city?: string | null
+          student_cpf?: string | null
+          student_email?: string | null
+          student_name?: string
+          student_notes?: string | null
+          student_phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_enrollments_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "course_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_enrollments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_enrollments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_enrollments_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_materials: {
+        Row: {
+          course_id: string
+          created_at: string
+          file_url: string | null
+          id: string
+          material_type: string
+          name: string
+          professional_id: string
+          sort_order: number
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          material_type?: string
+          name: string
+          professional_id: string
+          sort_order?: number
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          material_type?: string
+          name?: string
+          professional_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_materials_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_materials_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_waitlist: {
+        Row: {
+          class_id: string
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notified: boolean
+          phone: string | null
+          professional_id: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notified?: boolean
+          phone?: string | null
+          professional_id: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notified?: boolean
+          phone?: string | null
+          professional_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_waitlist_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "course_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_waitlist_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courses: {
+        Row: {
+          category_id: string | null
+          cover_image_url: string | null
+          created_at: string
+          full_description: string | null
+          has_certificate: boolean
+          id: string
+          installments: number
+          materials_included: string | null
+          max_students: number
+          modality: string
+          name: string
+          prerequisites: string | null
+          price: number
+          professional_id: string
+          short_description: string | null
+          slug: string | null
+          status: string
+          syllabus: string | null
+          updated_at: string
+          workload_hours: number
+        }
+        Insert: {
+          category_id?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          full_description?: string | null
+          has_certificate?: boolean
+          id?: string
+          installments?: number
+          materials_included?: string | null
+          max_students?: number
+          modality?: string
+          name: string
+          prerequisites?: string | null
+          price?: number
+          professional_id: string
+          short_description?: string | null
+          slug?: string | null
+          status?: string
+          syllabus?: string | null
+          updated_at?: string
+          workload_hours?: number
+        }
+        Update: {
+          category_id?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          full_description?: string | null
+          has_certificate?: boolean
+          id?: string
+          installments?: number
+          materials_included?: string | null
+          max_students?: number
+          modality?: string
+          name?: string
+          prerequisites?: string | null
+          price?: number
+          professional_id?: string
+          short_description?: string | null
+          slug?: string | null
+          status?: string
+          syllabus?: string | null
+          updated_at?: string
+          workload_hours?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "course_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courses_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_message_usage: {
         Row: {
           campaigns_sent: number

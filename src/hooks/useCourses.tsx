@@ -1,0 +1,219 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useProfessional } from "./useProfessional";
+import { toast } from "@/hooks/use-toast";
+
+export const useCourses = () => {
+  const { data: professional } = useProfessional();
+  const queryClient = useQueryClient();
+
+  const courses = useQuery({
+    queryKey: ["courses", professional?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("courses")
+        .select("*, course_categories(name)")
+        .eq("professional_id", professional!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!professional?.id,
+  });
+
+  const createCourse = useMutation({
+    mutationFn: async (course: any) => {
+      const { data, error } = await supabase
+        .from("courses")
+        .insert({ ...course, professional_id: professional!.id })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
+      toast({ title: "Curso criado com sucesso!" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Erro ao criar curso", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateCourse = useMutation({
+    mutationFn: async ({ id, ...updates }: any) => {
+      const { data, error } = await supabase
+        .from("courses")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
+      toast({ title: "Curso atualizado!" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Erro ao atualizar curso", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteCourse = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("courses").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
+      toast({ title: "Curso removido!" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Erro ao remover curso", description: error.message, variant: "destructive" });
+    },
+  });
+
+  return { courses, createCourse, updateCourse, deleteCourse };
+};
+
+export const useCourseClasses = (courseId?: string) => {
+  const { data: professional } = useProfessional();
+  const queryClient = useQueryClient();
+
+  const classes = useQuery({
+    queryKey: ["course-classes", professional?.id, courseId],
+    queryFn: async () => {
+      let query = supabase
+        .from("course_classes")
+        .select("*, courses(name)")
+        .eq("professional_id", professional!.id)
+        .order("class_date", { ascending: true });
+      if (courseId) query = query.eq("course_id", courseId);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!professional?.id,
+  });
+
+  const createClass = useMutation({
+    mutationFn: async (cls: any) => {
+      const { data, error } = await supabase
+        .from("course_classes")
+        .insert({ ...cls, professional_id: professional!.id })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["course-classes"] });
+      toast({ title: "Turma criada com sucesso!" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Erro ao criar turma", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateClass = useMutation({
+    mutationFn: async ({ id, ...updates }: any) => {
+      const { data, error } = await supabase
+        .from("course_classes")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["course-classes"] });
+      toast({ title: "Turma atualizada!" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Erro ao atualizar turma", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteClass = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("course_classes").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["course-classes"] });
+      toast({ title: "Turma removida!" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Erro ao remover turma", description: error.message, variant: "destructive" });
+    },
+  });
+
+  return { classes, createClass, updateClass, deleteClass };
+};
+
+export const useCourseEnrollments = (classId?: string) => {
+  const { data: professional } = useProfessional();
+  const queryClient = useQueryClient();
+
+  const enrollments = useQuery({
+    queryKey: ["course-enrollments", professional?.id, classId],
+    queryFn: async () => {
+      let query = supabase
+        .from("course_enrollments")
+        .select("*, courses(name), course_classes(name, class_date)")
+        .eq("professional_id", professional!.id)
+        .order("enrolled_at", { ascending: false });
+      if (classId) query = query.eq("class_id", classId);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!professional?.id,
+  });
+
+  const createEnrollment = useMutation({
+    mutationFn: async (enrollment: any) => {
+      const { data, error } = await supabase
+        .from("course_enrollments")
+        .insert({ ...enrollment, professional_id: professional!.id })
+        .select()
+        .single();
+      if (error) throw error;
+      // Update enrolled_count
+      await supabase.rpc("increment_enrolled_count" as any, { p_class_id: enrollment.class_id });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["course-enrollments"] });
+      queryClient.invalidateQueries({ queryKey: ["course-classes"] });
+      toast({ title: "Inscrição realizada!" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Erro na inscrição", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateEnrollment = useMutation({
+    mutationFn: async ({ id, ...updates }: any) => {
+      const { data, error } = await supabase
+        .from("course_enrollments")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["course-enrollments"] });
+      toast({ title: "Inscrição atualizada!" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Erro ao atualizar inscrição", description: error.message, variant: "destructive" });
+    },
+  });
+
+  return { enrollments, createEnrollment, updateEnrollment };
+};

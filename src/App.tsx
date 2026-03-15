@@ -44,6 +44,10 @@ import InstagramAutomation from "./pages/InstagramAutomation";
 import InstagramCallback from "./pages/InstagramCallback";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfUse from "./pages/TermsOfUse";
+import Courses from "./pages/Courses";
+import CourseClasses from "./pages/CourseClasses";
+import CourseStudents from "./pages/CourseStudents";
+import CourseDashboard from "./pages/CourseDashboard";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -109,6 +113,10 @@ const AppContent = () => (
             <Route path="/instagram-automation" element={<ProtectedRoute><InstagramAutomation /></ProtectedRoute>} />
             <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
             <Route path="/instagram-callback" element={<InstagramCallback />} />
+            <Route path="/courses" element={<ProtectedRoute><CourseDashboard /></ProtectedRoute>} />
+            <Route path="/courses/list" element={<ProtectedRoute><Courses /></ProtectedRoute>} />
+            <Route path="/courses/classes" element={<ProtectedRoute><CourseClasses /></ProtectedRoute>} />
+            <Route path="/courses/students" element={<ProtectedRoute><CourseStudents /></ProtectedRoute>} />
 
             {/* Admin Master routes */}
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />

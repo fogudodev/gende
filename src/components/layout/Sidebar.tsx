@@ -37,6 +37,7 @@ import {
   Sparkles,
   Instagram,
   Gift,
+  GraduationCap,
   type LucideIcon,
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
@@ -91,6 +92,19 @@ const communicationGroup: NavGroup = {
     { icon: Wallet, label: "Chat Pagamento", path: "/payment-chat", featureKey: "payment-chat" },
     { icon: Headphones, label: "Chat Suporte", path: "/support-chat", featureKey: "support-chat" },
     { icon: null as any, label: "Assistente IA", path: "/ai-assistant", featureKey: "ai-assistant", customIcon: "ai-assistant" },
+  ],
+};
+
+const coursesGroup: NavGroup = {
+  type: "group",
+  icon: GraduationCap,
+  label: "Cursos",
+  featureKey: "dashboard",
+  children: [
+    { icon: GraduationCap, label: "Dashboard", path: "/courses", featureKey: "dashboard" },
+    { icon: BookOpen, label: "Cursos", path: "/courses/list", featureKey: "dashboard" },
+    { icon: CalendarDays, label: "Turmas", path: "/courses/classes", featureKey: "dashboard" },
+    { icon: Users, label: "Alunos", path: "/courses/students", featureKey: "dashboard" },
   ],
 };
 
@@ -190,6 +204,10 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
     "/upsell/config": "upsell_inteligente",
     "/instagram-automation": "instagram_dm",
     "/rewards": "gende_rewards",
+    "/courses": "courses",
+    "/courses/list": "courses",
+    "/courses/classes": "courses",
+    "/courses/students": "courses",
   };
 
   const isPathDisabled = (path: string): boolean => {
@@ -229,6 +247,14 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
     // Only add groups that still have children
     if (filteredWhatsapp.children.length > 0) entries.push(filteredWhatsapp);
     if (filteredComm.children.length > 0) entries.push(filteredComm);
+
+    // Courses group
+    const filteredCourses: NavGroup = {
+      ...coursesGroup,
+      children: filterItems(coursesGroup.children),
+    };
+    if (filteredCourses.children.length > 0) entries.push(filteredCourses);
+
     entries.push(...filteredAfterGroupItems);
     return entries;
   };
