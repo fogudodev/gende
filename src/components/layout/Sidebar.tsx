@@ -247,6 +247,14 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
     // Only add groups that still have children
     if (filteredWhatsapp.children.length > 0) entries.push(filteredWhatsapp);
     if (filteredComm.children.length > 0) entries.push(filteredComm);
+
+    // Courses group
+    const filteredCourses: NavGroup = {
+      ...coursesGroup,
+      children: filterItems(coursesGroup.children),
+    };
+    if (filteredCourses.children.length > 0) entries.push(filteredCourses);
+
     entries.push(...filteredAfterGroupItems);
     return entries;
   };
