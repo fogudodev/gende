@@ -50,6 +50,8 @@ import CourseStudents from "./pages/CourseStudents";
 import CourseDashboard from "./pages/CourseDashboard";
 import CourseCertificates from "./pages/CourseCertificates";
 import CourseFinance from "./pages/CourseFinance";
+import CourseWaitlist from "./pages/CourseWaitlist";
+import StudentArea from "./pages/StudentArea";
 import PublicCourses from "./pages/PublicCourses";
 
 // Admin pages
