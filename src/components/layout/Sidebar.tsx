@@ -105,6 +105,8 @@ const coursesGroup: NavGroup = {
     { icon: BookOpen, label: "Cursos", path: "/courses/list", featureKey: "dashboard" },
     { icon: CalendarDays, label: "Turmas", path: "/courses/classes", featureKey: "dashboard" },
     { icon: Users, label: "Alunos", path: "/courses/students", featureKey: "dashboard" },
+    { icon: Award, label: "Certificados", path: "/courses/certificates", featureKey: "dashboard" },
+    { icon: CreditCard, label: "Financeiro", path: "/courses/finance", featureKey: "dashboard" },
   ],
 };
 
