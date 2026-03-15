@@ -310,27 +310,65 @@ const Automations = () => {
 
                 {courseAutos.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 mt-6">🎓 Cursos</h3>
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 mt-6">🎓 Cursos — Mensagens Personalizadas</h3>
                     <p className="text-xs text-muted-foreground mb-3">
                       Variáveis: {"{nome}"}, {"{curso}"}, {"{turma}"}, {"{data}"}, {"{horario}"}, {"{local}"}, {"{link_aula}"}, {"{link}"}, {"{valor}"}, {"{link_certificado}"}
                     </p>
                     <div className="space-y-3">
-                      {courseAutos.map((auto, i) => (
-                        <motion.div key={auto.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.04 }} className="glass-card rounded-2xl p-5 flex items-center justify-between hover-lift">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                              <Zap size={18} className="text-primary" />
+                      {courseAutos.map((auto, i) => {
+                        const isEditing = editingCourseId === auto.id;
+                        return (
+                          <motion.div key={auto.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.04 }} className="glass-card rounded-2xl p-5 hover-lift">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4 flex-1 min-w-0">
+                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                                  <Zap size={18} className="text-primary" />
+                                </div>
+                                <div className="min-w-0">
+                                  <h3 className="font-semibold text-foreground">{triggerLabels[auto.trigger_type] || auto.trigger_type}</h3>
+                                  <p className="text-sm text-muted-foreground truncate">{triggerDescriptions[auto.trigger_type] || ""}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                  onClick={() => setEditingCourseId(isEditing ? null : auto.id)}
+                                  className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                                  title="Editar mensagem"
+                                >
+                                  {isEditing ? <ChevronUp size={20} /> : <Edit3 size={18} />}
+                                </button>
+                                <button onClick={() => handleToggle(auto.id, auto.is_active)} className="text-muted-foreground hover:text-foreground transition-colors">
+                                  {auto.is_active ? <ToggleRight size={28} className="text-success" /> : <ToggleLeft size={28} />}
+                                </button>
+                              </div>
                             </div>
-                            <div>
-                              <h3 className="font-semibold text-foreground">{triggerLabels[auto.trigger_type] || auto.trigger_type}</h3>
-                              <p className="text-sm text-muted-foreground">{triggerDescriptions[auto.trigger_type] || ""}</p>
-                            </div>
-                          </div>
-                          <button onClick={() => handleToggle(auto.id, auto.is_active)} className="text-muted-foreground hover:text-foreground transition-colors">
-                            {auto.is_active ? <ToggleRight size={28} className="text-success" /> : <ToggleLeft size={28} />}
-                          </button>
-                        </motion.div>
-                      ))}
+
+                            {isEditing && (
+                              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-4 space-y-3">
+                                <Textarea
+                                  value={courseTemplates[auto.id] || ""}
+                                  onChange={(e) => setCourseTemplates(prev => ({ ...prev, [auto.id]: e.target.value }))}
+                                  placeholder={`Mensagem para: ${triggerLabels[auto.trigger_type]}`}
+                                  maxLength={1000}
+                                  rows={4}
+                                  className="rounded-xl bg-muted/50 border-border text-sm resize-none"
+                                />
+                                <div className="flex justify-end">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleSaveCourseTemplate(auto.id)}
+                                    disabled={savingCourseTemplate === auto.id}
+                                    className="rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground"
+                                  >
+                                    {savingCourseTemplate === auto.id ? <Loader2 size={14} className="animate-spin mr-1.5" /> : <Save size={14} className="mr-1.5" />}
+                                    Salvar
+                                  </Button>
+                                </div>
+                              </motion.div>
+                            )}
+                          </motion.div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
