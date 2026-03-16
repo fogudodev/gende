@@ -605,6 +605,35 @@ const allSections: InstructionSection[] = [
       "Acompanhe o painel de 'Clientes em Risco' regularmente para prevenir perdas.",
     ],
   },
+  {
+    id: "courses",
+    title: "Gende Cursos",
+    icon: calendarIcon,
+    plans: ["enterprise"],
+    steps: [
+      "O módulo Gende Cursos permite que você crie, gerencie e venda cursos e treinamentos diretamente pelo sistema.",
+      "Acesse o menu \"Cursos\" na barra lateral. Você verá um submenu com: Dashboard, Cursos, Turmas, Alunos, Lista de Espera, Certificados e Financeiro.",
+      "CRIAR UM CURSO: Vá em Cursos > Cursos e clique em \"+ Novo Curso\". Preencha nome, descrição, preço, carga horária, modalidade (presencial/online/híbrido) e número de vagas.",
+      "Você pode adicionar uma imagem de capa, ementa, pré-requisitos e materiais inclusos. Cada curso recebe um slug único para a página pública.",
+      "CRIAR UMA TURMA: Após criar o curso, vá em Turmas e clique em \"+ Nova Turma\". Selecione o curso, defina data, horários, local ou link online, e o instrutor responsável.",
+      "INSCREVER ALUNOS: Na aba Alunos, clique em \"+ Nova Inscrição\". Preencha os dados do aluno (nome, telefone, e-mail, CPF) e selecione a turma. O sistema controla automaticamente as vagas.",
+      "Se a turma estiver lotada, o aluno é adicionado automaticamente à Lista de Espera e notificado quando uma vaga abrir.",
+      "INSCRIÇÃO PÚBLICA: Compartilhe o link /cursos/slug do curso para que alunos se inscrevam online. A inscrição pública preenche os dados e já direciona para a turma disponível.",
+      "PAGAMENTOS: Na ficha do aluno, atualize o status de pagamento (pendente/pago) e o método de pagamento. O financeiro dos cursos é separado do financeiro de agendamentos.",
+      "CERTIFICADOS: Após a conclusão do curso, acesse a aba Certificados para emitir certificados individuais ou em lote.",
+      "AUTOMAÇÕES: O sistema envia automaticamente mensagens por WhatsApp em diversas etapas: confirmação de inscrição, confirmação de pagamento, lembretes (7 dias, 1 dia, no dia), envio de localização/link, avisos de turma remarcada/cancelada, certificado, follow-up e pedido de feedback.",
+      "Personalize todas as mensagens de automação na página Automações > seção Cursos.",
+      "DASHBOARD DE CURSOS: Veja métricas de inscrições, receita, ocupação de turmas e alunos por período.",
+    ],
+    tips: [
+      "Use slugs curtos e descritivos para facilitar o compartilhamento dos links dos cursos.",
+      "Configure todas as automações de WhatsApp antes de abrir as inscrições — os alunos recebem confirmação automaticamente.",
+      "Mantenha os materiais atualizados na Área do Aluno para aumentar a satisfação pós-curso.",
+      "Emita certificados rapidamente após o curso — alunos costumam compartilhar nas redes sociais, gerando marketing gratuito.",
+      "Use a Lista de Espera inteligente: quando um aluno cancela, o próximo da fila é notificado automaticamente.",
+      "Acompanhe o financeiro dos cursos separadamente para ter clareza sobre a rentabilidade de cada treinamento.",
+    ],
+  },
 ];
 
 const Instructions = () => {
