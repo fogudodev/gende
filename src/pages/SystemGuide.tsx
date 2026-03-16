@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -204,6 +205,26 @@ const FunctionDetail = ({ func, onClose }: { func: GuideFunction; onClose: () =>
   );
 };
 
+const CATEGORY_TO_FLAG: Record<string, string> = {
+  "agenda": "bookings",
+  "clientes": "clients",
+  "servicos": "services",
+  "equipe": "team",
+  "financeiro": "finance",
+  "estoque": "products",
+  "whatsapp": "whatsapp_automations",
+  "automacao": "whatsapp_automations",
+  "relatorios": "reports",
+  "pagina-online": "public_page",
+  "ia": "ai_assistant",
+  "campanhas": "campaigns",
+  "avaliacoes": "reviews",
+  "cupons": "coupons",
+  "instagram-dm": "instagram_dm",
+  "gende-rewards": "gende_rewards",
+  "cursos": "courses",
+};
+
 // ─── Main Page ───
 const SystemGuide = () => {
   const [search, setSearch] = useState("");
@@ -212,6 +233,26 @@ const SystemGuide = () => {
   const [activeSection, setActiveSection] = useState<"home" | "quickstart" | "tutorials" | "faq" | "category">("home");
   const [showScrollTop, setShowScrollTop] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  const { data: globalFlags } = useFeatureFlags();
+
+  const globalFlagMap = useMemo(() => {
+    const map = new Map<string, boolean>();
+    (globalFlags || []).forEach((f) => map.set(f.key, f.enabled));
+    return map;
+  }, [globalFlags]);
+
+  const isCategoryDisabled = (catId: string): boolean => {
+    const flagKey = CATEGORY_TO_FLAG[catId];
+    if (!flagKey) return false;
+    if (globalFlagMap.has(flagKey)) return !globalFlagMap.get(flagKey)!;
+    return false;
+  };
+
+  // Filter categories based on feature flags
+  const enabledCategories = useMemo(() => {
+    return categories.filter((cat) => !isCategoryDisabled(cat.id));
+  }, [globalFlagMap]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -224,9 +265,9 @@ const SystemGuide = () => {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   const filteredCategories = useMemo(() => {
-    if (!search.trim()) return categories;
+    if (!search.trim()) return enabledCategories;
     const q = search.toLowerCase();
-    return categories
+    return enabledCategories
       .map((cat) => ({
         ...cat,
         functions: cat.functions.filter(
@@ -237,7 +278,7 @@ const SystemGuide = () => {
         ),
       }))
       .filter((cat) => cat.functions.length > 0 || cat.title.toLowerCase().includes(q));
-  }, [search]);
+  }, [search, enabledCategories]);
 
   const filteredFAQs = useMemo(() => {
     if (!search.trim()) return faqs;
@@ -267,7 +308,7 @@ const SystemGuide = () => {
     scrollToTop();
   };
 
-  const currentCategory = categories.find((c) => c.id === activeCategory);
+  const currentCategory = enabledCategories.find((c) => c.id === activeCategory);
 
   return (
     <div className="min-h-screen bg-background">
