@@ -44,6 +44,7 @@ import {
 import logo from "@/assets/logo-circle.png";
 import aiAssistantIcon from "@/assets/icon-ai-assistant.png";
 import gridDashboardIcon from "@/assets/icon-grid-dashboard.svg";
+import dollarFinanceIcon from "@/assets/icon-dollar-finance.svg";
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
 
@@ -114,7 +115,7 @@ const coursesGroup: NavGroup = {
 };
 
 const afterGroupItems: NavItem[] = [
-  { icon: CreditCard, label: "Financeiro", path: "/finance", featureKey: "finance" },
+  { icon: CreditCard, label: "Financeiro", path: "/finance", featureKey: "finance", customIcon: "dollar-finance" },
   { icon: Sparkles, label: "Upsell Inteligente", path: "/upsell", featureKey: "upsell" },
   { icon: Gift, label: "Gende Rewards", path: "/rewards", featureKey: "rewards" },
   { icon: Globe, label: "Página Pública", path: "/public-page", featureKey: "public-page" },
@@ -146,7 +147,7 @@ const mobileNavItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/", customIcon: "grid-dashboard" },
   { icon: CalendarDays, label: "Agenda", path: "/bookings" },
   { icon: Users, label: "Clientes", path: "/clients" },
-  { icon: CreditCard, label: "Financeiro", path: "/finance" },
+  { icon: CreditCard, label: "Financeiro", path: "/finance", customIcon: "dollar-finance" },
 ];
 
 const receptionMobileNavItems = [
@@ -291,6 +292,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
   const customIconMap: Record<string, string> = {
     "ai-assistant": aiAssistantIcon,
     "grid-dashboard": gridDashboardIcon,
+    "dollar-finance": dollarFinanceIcon,
   };
 
   const renderIcon = (item: NavItem, size: number, className: string) => {
