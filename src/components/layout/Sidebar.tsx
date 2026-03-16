@@ -292,6 +292,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
   const customIconMap: Record<string, string> = {
     "ai-assistant": aiAssistantIcon,
     "grid-dashboard": gridDashboardIcon,
+    "dollar-finance": dollarFinanceIcon,
   };
 
   const renderIcon = (item: NavItem, size: number, className: string) => {
