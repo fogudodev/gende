@@ -2,6 +2,7 @@ import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useProfessional } from "@/hooks/useProfessional";
+import { useMyFeatureGate } from "@/hooks/useMyFeatureGate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
