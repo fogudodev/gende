@@ -308,7 +308,7 @@ const SystemGuide = () => {
     scrollToTop();
   };
 
-  const currentCategory = categories.find((c) => c.id === activeCategory);
+  const currentCategory = enabledCategories.find((c) => c.id === activeCategory);
 
   return (
     <div className="min-h-screen bg-background">
