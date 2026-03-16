@@ -460,8 +460,6 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
             </Link>
           );
         })}
-          );
-        })}
       </nav>
 
       {/* Mobile drawer */}
