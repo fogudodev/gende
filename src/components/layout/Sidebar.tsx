@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 import aiAssistantIcon from "@/assets/icon-ai-assistant.png";
+import gridDashboardIcon from "@/assets/icon-grid-dashboard.svg";
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
 
