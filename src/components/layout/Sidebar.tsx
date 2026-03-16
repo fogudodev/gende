@@ -298,6 +298,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
     "grid-dashboard": gridDashboardIcon,
     "dollar-finance": dollarFinanceIcon,
     "chat-communication": chatCommunicationIcon,
+    "robot-automations": robotAutomationsIcon,
   };
 
   const renderIcon = (item: NavItem, size: number, className: string) => {
