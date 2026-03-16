@@ -147,7 +147,7 @@ const mobileNavItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/", customIcon: "grid-dashboard" },
   { icon: CalendarDays, label: "Agenda", path: "/bookings" },
   { icon: Users, label: "Clientes", path: "/clients" },
-  { icon: CreditCard, label: "Financeiro", path: "/finance" },
+  { icon: CreditCard, label: "Financeiro", path: "/finance", customIcon: "dollar-finance" },
 ];
 
 const receptionMobileNavItems = [
