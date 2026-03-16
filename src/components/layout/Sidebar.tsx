@@ -115,7 +115,7 @@ const coursesGroup: NavGroup = {
 };
 
 const afterGroupItems: NavItem[] = [
-  { icon: CreditCard, label: "Financeiro", path: "/finance", featureKey: "finance" },
+  { icon: CreditCard, label: "Financeiro", path: "/finance", featureKey: "finance", customIcon: "dollar-finance" },
   { icon: Sparkles, label: "Upsell Inteligente", path: "/upsell", featureKey: "upsell" },
   { icon: Gift, label: "Gende Rewards", path: "/rewards", featureKey: "rewards" },
   { icon: Globe, label: "Página Pública", path: "/public-page", featureKey: "public-page" },
