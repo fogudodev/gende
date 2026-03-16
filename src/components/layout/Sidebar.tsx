@@ -46,6 +46,7 @@ import aiAssistantIcon from "@/assets/icon-ai-assistant.png";
 import gridDashboardIcon from "@/assets/icon-grid-dashboard.svg";
 import dollarFinanceIcon from "@/assets/icon-dollar-finance.svg";
 import chatCommunicationIcon from "@/assets/icon-chat-communication.svg";
+import robotAutomationsIcon from "@/assets/icon-robot-automations.svg";
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
 
@@ -82,7 +83,7 @@ const whatsappGroup: NavGroup = {
   label: "WhatsApp",
   featureKey: "automations",
   children: [
-    { icon: Zap, label: "Automações", path: "/automations", featureKey: "automations" },
+    { icon: Zap, label: "Automações", path: "/automations", featureKey: "automations", customIcon: "robot-automations" },
     { icon: Megaphone, label: "Campanhas", path: "/campaigns", featureKey: "campaigns" },
     { icon: Instagram, label: "Instagram DM", path: "/instagram-automation", featureKey: "automations" },
   ],
@@ -297,6 +298,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
     "grid-dashboard": gridDashboardIcon,
     "dollar-finance": dollarFinanceIcon,
     "chat-communication": chatCommunicationIcon,
+    "robot-automations": robotAutomationsIcon,
   };
 
   const renderIcon = (item: NavItem, size: number, className: string) => {
