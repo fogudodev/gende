@@ -45,6 +45,7 @@ import logo from "@/assets/logo-circle.png";
 import aiAssistantIcon from "@/assets/icon-ai-assistant.png";
 import gridDashboardIcon from "@/assets/icon-grid-dashboard.svg";
 import dollarFinanceIcon from "@/assets/icon-dollar-finance.svg";
+import chatCommunicationIcon from "@/assets/icon-chat-communication.svg";
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
 
@@ -62,6 +63,7 @@ interface NavGroup {
   label: string;
   featureKey: FeatureKey;
   children: NavItem[];
+  customIcon?: string;
 }
 
 type NavEntry = NavItem & { type?: "item" } | NavGroup;
@@ -91,6 +93,7 @@ const communicationGroup: NavGroup = {
   icon: MessageSquare,
   label: "Comunicação",
   featureKey: "dashboard",
+  customIcon: "chat-communication",
   children: [
     { icon: Wallet, label: "Chat Pagamento", path: "/payment-chat", featureKey: "payment-chat" },
     { icon: Headphones, label: "Chat Suporte", path: "/support-chat", featureKey: "support-chat" },
@@ -293,6 +296,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
     "ai-assistant": aiAssistantIcon,
     "grid-dashboard": gridDashboardIcon,
     "dollar-finance": dollarFinanceIcon,
+    "chat-communication": chatCommunicationIcon,
   };
 
   const renderIcon = (item: NavItem, size: number, className: string) => {
@@ -369,6 +373,14 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
     const isOpen = openGroups[group.label] ?? groupActive;
     const locked = isLocked(group.featureKey);
     const GroupIcon = group.icon;
+    const groupCustomSrc = group.customIcon ? customIconMap[group.customIcon] : null;
+
+    const renderGroupIcon = (size: number, className: string) => {
+      if (groupCustomSrc) {
+        return <span aria-hidden className={`flex-shrink-0 ${className}`} style={{ width: size + 2, height: size + 2, backgroundColor: "currentColor", WebkitMaskImage: `url(${groupCustomSrc})`, maskImage: `url(${groupCustomSrc})`, WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "center", maskPosition: "center", WebkitMaskSize: "contain", maskSize: "contain" }} />;
+      }
+      return <GroupIcon size={size} className={className} />;
+    };
 
     if (locked && !opts.mobile && !expanded) {
       return (
@@ -377,7 +389,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
           onClick={() => handleLockedClick(group.label, group.featureKey)}
           className="flex items-center gap-3 px-3 py-1.5 rounded-lg w-full text-sidebar-foreground/30 cursor-pointer hover:bg-sidebar-accent/20 transition-all duration-200 overflow-hidden"
         >
-          <GroupIcon size={18} className="text-sidebar-foreground/25" />
+          {renderGroupIcon(18, "text-sidebar-foreground/25")}
         </button>
       );
     }
@@ -396,14 +408,12 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
                 : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
           }`}
         >
-          <GroupIcon
-            size={18}
-            className={
-              groupActive
-                ? opts.mobile ? "text-accent" : "text-sidebar-primary"
-                : opts.mobile ? "text-muted-foreground" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground"
-            }
-          />
+          {renderGroupIcon(
+            18,
+            groupActive
+              ? opts.mobile ? "text-accent" : "text-sidebar-primary"
+              : opts.mobile ? "text-muted-foreground" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground"
+          )}
           {(opts.mobile || expanded) && (
             <>
               <span className="text-sm font-medium">{group.label}</span>
