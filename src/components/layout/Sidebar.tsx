@@ -296,6 +296,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
     "ai-assistant": aiAssistantIcon,
     "grid-dashboard": gridDashboardIcon,
     "dollar-finance": dollarFinanceIcon,
+    "chat-communication": chatCommunicationIcon,
   };
 
   const renderIcon = (item: NavItem, size: number, className: string) => {
