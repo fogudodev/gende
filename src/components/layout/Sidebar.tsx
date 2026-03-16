@@ -288,9 +288,15 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
     return `flex-shrink-0 ${isActive ? "text-sidebar-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground"}`;
   };
 
+  const customIconMap: Record<string, string> = {
+    "ai-assistant": aiAssistantIcon,
+    "grid-dashboard": gridDashboardIcon,
+  };
+
   const renderIcon = (item: NavItem, size: number, className: string) => {
-    if (item.customIcon === "ai-assistant") {
-      return <span aria-hidden className={`flex-shrink-0 ${className}`} style={{ width: size + 2, height: size + 2, backgroundColor: "currentColor", WebkitMaskImage: `url(${aiAssistantIcon})`, maskImage: `url(${aiAssistantIcon})`, WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "center", maskPosition: "center", WebkitMaskSize: "contain", maskSize: "contain" }} />;
+    if (item.customIcon && customIconMap[item.customIcon]) {
+      const iconSrc = customIconMap[item.customIcon];
+      return <span aria-hidden className={`flex-shrink-0 ${className}`} style={{ width: size + 2, height: size + 2, backgroundColor: "currentColor", WebkitMaskImage: `url(${iconSrc})`, maskImage: `url(${iconSrc})`, WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "center", maskPosition: "center", WebkitMaskSize: "contain", maskSize: "contain" }} />;
     }
     const Icon = item.icon;
     return <Icon size={size} className={className} />;
