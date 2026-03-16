@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 import aiAssistantIcon from "@/assets/icon-ai-assistant.png";
+import gridDashboardIcon from "@/assets/icon-grid-dashboard.svg";
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
 
@@ -65,7 +66,7 @@ interface NavGroup {
 type NavEntry = NavItem & { type?: "item" } | NavGroup;
 
 const standaloneItems: NavItem[] = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/", featureKey: "dashboard" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/", featureKey: "dashboard", customIcon: "grid-dashboard" },
   { icon: CalendarDays, label: "Agendamentos", path: "/bookings", featureKey: "bookings" },
   { icon: Clock, label: "Lista de Espera", path: "/waitlist", featureKey: "bookings" },
   { icon: Scissors, label: "Serviços", path: "/services", featureKey: "services" },
@@ -142,7 +143,7 @@ const receptionNavItems: NavItem[] = [
 ];
 
 const mobileNavItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/", customIcon: "grid-dashboard" },
   { icon: CalendarDays, label: "Agenda", path: "/bookings" },
   { icon: Users, label: "Clientes", path: "/clients" },
   { icon: CreditCard, label: "Financeiro", path: "/finance" },
@@ -287,9 +288,15 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
     return `flex-shrink-0 ${isActive ? "text-sidebar-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground"}`;
   };
 
+  const customIconMap: Record<string, string> = {
+    "ai-assistant": aiAssistantIcon,
+    "grid-dashboard": gridDashboardIcon,
+  };
+
   const renderIcon = (item: NavItem, size: number, className: string) => {
-    if (item.customIcon === "ai-assistant") {
-      return <span aria-hidden className={`flex-shrink-0 ${className}`} style={{ width: size + 2, height: size + 2, backgroundColor: "currentColor", WebkitMaskImage: `url(${aiAssistantIcon})`, maskImage: `url(${aiAssistantIcon})`, WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "center", maskPosition: "center", WebkitMaskSize: "contain", maskSize: "contain" }} />;
+    if (item.customIcon && customIconMap[item.customIcon]) {
+      const iconSrc = customIconMap[item.customIcon];
+      return <span aria-hidden className={`flex-shrink-0 ${className}`} style={{ width: size + 2, height: size + 2, backgroundColor: "currentColor", WebkitMaskImage: `url(${iconSrc})`, maskImage: `url(${iconSrc})`, WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "center", maskPosition: "center", WebkitMaskSize: "contain", maskSize: "contain" }} />;
     }
     const Icon = item.icon;
     return <Icon size={size} className={className} />;
@@ -435,6 +442,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
         {(isReception ? receptionMobileNavItems : mobileNavItems).map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
+          const cIcon = (item as any).customIcon;
           return (
             <Link
               key={item.path}
@@ -443,7 +451,11 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
                 isActive ? "text-accent" : "text-muted-foreground"
               }`}
             >
-              <Icon size={20} />
+              {cIcon && customIconMap[cIcon] ? (
+                <span aria-hidden style={{ width: 22, height: 22, backgroundColor: "currentColor", WebkitMaskImage: `url(${customIconMap[cIcon]})`, maskImage: `url(${customIconMap[cIcon]})`, WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "center", maskPosition: "center", WebkitMaskSize: "contain", maskSize: "contain" }} />
+              ) : (
+                <Icon size={20} />
+              )}
               <span className="text-[10px] font-medium">{item.label}</span>
             </Link>
           );
