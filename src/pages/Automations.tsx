@@ -140,13 +140,17 @@ const Automations = () => {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
         {[
-          { label: "Mensagens Enviadas", value: String(totalSent), icon: Send },
-          { label: "Taxa de Entrega", value: `${deliveryRate}%`, icon: CheckCircle2 },
-          { label: "Total de Logs", value: String((logs || []).length), icon: MessageCircle },
+          { label: "Mensagens Enviadas", value: String(totalSent), icon: Send, customIcon: false },
+          { label: "Taxa de Entrega", value: `${deliveryRate}%`, icon: CheckCircle2, customIcon: false },
+          { label: "Total de Logs", value: String((logs || []).length), icon: null, customIcon: true },
         ].map((stat, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.05 }} className="glass-card rounded-2xl p-5 flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-              <stat.icon size={18} className="text-accent" />
+              {stat.customIcon ? (
+                <span aria-hidden style={{ width: 18, height: 18, backgroundColor: "currentColor", WebkitMaskImage: `url(${sitemapIcon})`, maskImage: `url(${sitemapIcon})`, WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "center", maskPosition: "center", WebkitMaskSize: "contain", maskSize: "contain" }} className="text-accent" />
+              ) : (
+                stat.icon && <stat.icon size={18} className="text-accent" />
+              )}
             </div>
             <div>
               <p className="text-2xl font-bold text-foreground">{stat.value}</p>
