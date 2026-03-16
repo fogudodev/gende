@@ -33,6 +33,13 @@ const ROUTE_TO_FEATURE: Record<string, FeatureKey> = {
   "/cash-register": "cash-register",
   "/instagram-automation": "automations",
   "/rewards": "rewards",
+  "/courses": "courses",
+  "/courses/list": "courses",
+  "/courses/classes": "courses",
+  "/courses/students": "courses",
+  "/courses/waitlist": "courses",
+  "/courses/certificates": "courses",
+  "/courses/finance": "courses",
 };
 
 const ROUTE_TO_LABEL: Record<string, string> = {
