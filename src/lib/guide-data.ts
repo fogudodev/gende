@@ -4,7 +4,7 @@ import {
   Bot, HelpCircle, Rocket, Clock, Bell, Star, Shield, Palette,
   CreditCard, TrendingUp, FileText, Send, Target, Wallet,
   BookOpen, CheckCircle, AlertTriangle, Lightbulb, Info, Instagram,
-  Gift
+  Gift, GraduationCap
 } from "lucide-react";
 
 export type GuideCategory = {
