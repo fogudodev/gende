@@ -63,6 +63,7 @@ interface NavGroup {
   label: string;
   featureKey: FeatureKey;
   children: NavItem[];
+  customIcon?: string;
 }
 
 type NavEntry = NavItem & { type?: "item" } | NavGroup;
