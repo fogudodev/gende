@@ -637,13 +637,45 @@ const allSections: InstructionSection[] = [
   },
 ];
 
+const SECTION_TO_FLAG: Record<string, string> = {
+  "bookings": "bookings",
+  "waitlist": "bookings",
+  "services": "services",
+  "clients": "clients",
+  "automations": "whatsapp_automations",
+  "campaigns": "campaigns",
+  "communication": "payment_chat",
+  "support-chat": "support_chat",
+  "ai-assistant": "ai_assistant",
+  "upsell": "upsell_inteligente",
+  "finance": "finance",
+  "cash-register": "cash_register",
+  "public-page": "public_page",
+  "products": "products",
+  "service-packages": "service_packages",
+  "coupons": "coupons",
+  "reports": "reports",
+  "reviews": "reviews",
+  "team": "team",
+  "commission-report": "commission_report",
+  "team-performance": "team_performance",
+  "instagram-dm": "instagram_dm",
+  "gende-rewards": "gende_rewards",
+  "courses": "courses",
+};
+
 const Instructions = () => {
   const { currentPlan } = useFeatureAccess();
   const { data: professional } = useProfessional();
+  const { isFeatureDisabledForMe } = useMyFeatureGate();
   const [search, setSearch] = useState("");
   const isSalon = professional?.account_type === "salon";
 
   const filteredSections = allSections.filter((section) => {
+    // Check feature flag
+    const flagKey = SECTION_TO_FLAG[section.id];
+    if (flagKey && isFeatureDisabledForMe(flagKey)) return false;
+
     const planMatch =
       section.plans.includes("all") ||
       section.plans.includes(currentPlan as PlanId);
