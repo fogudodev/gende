@@ -66,7 +66,7 @@ interface NavGroup {
 type NavEntry = NavItem & { type?: "item" } | NavGroup;
 
 const standaloneItems: NavItem[] = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/", featureKey: "dashboard" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/", featureKey: "dashboard", customIcon: "grid-dashboard" },
   { icon: CalendarDays, label: "Agendamentos", path: "/bookings", featureKey: "bookings" },
   { icon: Clock, label: "Lista de Espera", path: "/waitlist", featureKey: "bookings" },
   { icon: Scissors, label: "Serviços", path: "/services", featureKey: "services" },
