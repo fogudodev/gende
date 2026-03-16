@@ -93,6 +93,7 @@ const communicationGroup: NavGroup = {
   icon: MessageSquare,
   label: "Comunicação",
   featureKey: "dashboard",
+  customIcon: "chat-communication",
   children: [
     { icon: Wallet, label: "Chat Pagamento", path: "/payment-chat", featureKey: "payment-chat" },
     { icon: Headphones, label: "Chat Suporte", path: "/support-chat", featureKey: "support-chat" },
