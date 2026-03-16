@@ -47,7 +47,9 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
           className="p-2 rounded-lg hover:bg-secondary/50 transition-colors md:hidden"
           aria-label="Abrir menu"
         >
-          <Menu size={20} className="text-foreground" />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-foreground">
+            <path d="M5 17H13M5 12H19M11 7H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </button>
         <div className="min-w-0">
           <h1 className="text-sm sm:text-base md:text-lg font-bold text-foreground font-display whitespace-nowrap truncate max-w-[120px] sm:max-w-[200px] md:max-w-[240px] lg:max-w-none">{title}</h1>
