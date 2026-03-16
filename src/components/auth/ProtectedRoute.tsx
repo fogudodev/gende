@@ -60,6 +60,13 @@ const ROUTE_TO_LABEL: Record<string, string> = {
   "/cash-register": "Caixa",
   "/instagram-automation": "Instagram DM",
   "/rewards": "Gende Rewards",
+  "/courses": "Gende Cursos",
+  "/courses/list": "Gende Cursos",
+  "/courses/classes": "Gende Cursos",
+  "/courses/students": "Gende Cursos",
+  "/courses/waitlist": "Gende Cursos",
+  "/courses/certificates": "Gende Cursos",
+  "/courses/finance": "Gende Cursos",
 };
 
 // Routes accessible by reception employees

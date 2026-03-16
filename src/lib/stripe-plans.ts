@@ -180,6 +180,7 @@ export const PLAN_FEATURES: Record<PlanId | "none", FeatureKey[]> = {
     "cash-register",
     "upsell",
     "rewards",
+    "courses",
   ],
 };
 
