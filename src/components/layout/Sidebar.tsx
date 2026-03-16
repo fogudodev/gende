@@ -442,6 +442,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
         {(isReception ? receptionMobileNavItems : mobileNavItems).map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
+          const cIcon = (item as any).customIcon;
           return (
             <Link
               key={item.path}
@@ -450,9 +451,15 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
                 isActive ? "text-accent" : "text-muted-foreground"
               }`}
             >
-              <Icon size={20} />
+              {cIcon && customIconMap[cIcon] ? (
+                <span aria-hidden style={{ width: 22, height: 22, backgroundColor: "currentColor", WebkitMaskImage: `url(${customIconMap[cIcon]})`, maskImage: `url(${customIconMap[cIcon]})`, WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "center", maskPosition: "center", WebkitMaskSize: "contain", maskSize: "contain" }} />
+              ) : (
+                <Icon size={20} />
+              )}
               <span className="text-[10px] font-medium">{item.label}</span>
             </Link>
+          );
+        })}
           );
         })}
       </nav>
