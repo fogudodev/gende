@@ -5,6 +5,7 @@ import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfDay, endOfDay, format, isAfter } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
   CalendarPlus,
   Users,
@@ -71,7 +72,7 @@ const MobileDayOverview = () => {
         className="glass-card rounded-2xl p-4"
       >
         <p className="text-sm text-muted-foreground">
-          {format(now, "EEEE, d 'de' MMMM")}
+          {format(now, "EEEE, d 'de' MMMM", { locale: ptBR })}
         </p>
         <h2 className="text-lg font-bold text-foreground font-display mt-0.5">
           Olá, {professional?.business_name || professional?.name?.split(" ")[0] || ""}! 👋
