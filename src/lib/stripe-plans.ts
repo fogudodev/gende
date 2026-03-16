@@ -129,7 +129,8 @@ export type FeatureKey =
   | "ai-assistant"
   | "cash-register"
   | "upsell"
-  | "rewards";
+  | "rewards"
+  | "courses";
 
 export const PLAN_FEATURES: Record<PlanId | "none", FeatureKey[]> = {
   none: [
@@ -179,6 +180,7 @@ export const PLAN_FEATURES: Record<PlanId | "none", FeatureKey[]> = {
     "cash-register",
     "upsell",
     "rewards",
+    "courses",
   ],
 };
 

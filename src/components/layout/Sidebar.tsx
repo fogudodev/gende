@@ -100,15 +100,15 @@ const coursesGroup: NavGroup = {
   type: "group",
   icon: GraduationCap,
   label: "Cursos",
-  featureKey: "dashboard",
+  featureKey: "courses",
   children: [
-    { icon: GraduationCap, label: "Dashboard", path: "/courses", featureKey: "dashboard" },
-    { icon: BookOpen, label: "Cursos", path: "/courses/list", featureKey: "dashboard" },
-    { icon: CalendarDays, label: "Turmas", path: "/courses/classes", featureKey: "dashboard" },
-    { icon: Users, label: "Alunos", path: "/courses/students", featureKey: "dashboard" },
-    { icon: Clock, label: "Lista de Espera", path: "/courses/waitlist", featureKey: "dashboard" },
-    { icon: Award, label: "Certificados", path: "/courses/certificates", featureKey: "dashboard" },
-    { icon: CreditCard, label: "Financeiro", path: "/courses/finance", featureKey: "dashboard" },
+    { icon: GraduationCap, label: "Dashboard", path: "/courses", featureKey: "courses" },
+    { icon: BookOpen, label: "Cursos", path: "/courses/list", featureKey: "courses" },
+    { icon: CalendarDays, label: "Turmas", path: "/courses/classes", featureKey: "courses" },
+    { icon: Users, label: "Alunos", path: "/courses/students", featureKey: "courses" },
+    { icon: Clock, label: "Lista de Espera", path: "/courses/waitlist", featureKey: "courses" },
+    { icon: Award, label: "Certificados", path: "/courses/certificates", featureKey: "courses" },
+    { icon: CreditCard, label: "Financeiro", path: "/courses/finance", featureKey: "courses" },
   ],
 };
 
