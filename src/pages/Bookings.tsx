@@ -962,7 +962,7 @@ const WeekView = ({ days, bookings, blockedTimes, onDayClick, onBookingClick, on
                       <Ban size={11} className="text-destructive shrink-0" />
                       <span className="text-destructive font-medium truncate">{bt.reason || "Ausência"}</span>
                       <span className="text-muted-foreground text-[10px] ml-auto shrink-0">
-                        {format(new Date(bt.start_time), "HH:mm")}-{format(new Date(bt.end_time), "HH:mm")}
+                        {safeFormat(bt.start_time, "HH:mm")}-{safeFormat(bt.end_time, "HH:mm")}
                       </span>
                     </div>
                   ))}
