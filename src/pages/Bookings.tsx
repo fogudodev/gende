@@ -38,6 +38,17 @@ import { useOpenCashRegister } from "@/hooks/useCashRegister";
 
 type ViewMode = "day" | "week" | "month";
 
+// Safe date formatter to prevent "Invalid time value" crashes
+const safeFormat = (date: Date | string | null | undefined, formatStr: string, options?: any): string => {
+  try {
+    const d = date instanceof Date ? date : new Date(date as string);
+    if (isNaN(d.getTime())) return "—";
+    return format(d, formatStr, options);
+  } catch {
+    return "—";
+  }
+};
+
 const statusColors: Record<string, string> = {
   confirmed: "border-l-green-500 bg-green-500/10",
   pending: "border-l-yellow-500 bg-yellow-500/10",
