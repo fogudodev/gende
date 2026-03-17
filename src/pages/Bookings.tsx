@@ -1090,7 +1090,7 @@ const MonthView = ({ grid, bookings, blockedTimes, selectedDate, onDayClick }: {
                 <div className="space-y-0.5">
                   {dayBookings.slice(0, dayBlocked.length > 0 ? 1 : 2).map(b => (
                     <div key={b.id} className={`text-[9px] px-1 py-0.5 rounded border-l-2 truncate ${statusColors[b.status]}`}>
-                      <span className="font-medium">{format(new Date(b.start_time), "HH:mm")}</span>
+                      <span className="font-medium">{safeFormat(b.start_time, "HH:mm")}</span>
                       <span className="hidden sm:inline text-muted-foreground"> {b.client_name || ""}</span>
                     </div>
                   ))}
