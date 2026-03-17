@@ -880,8 +880,8 @@ const DayView = ({ bookings, blockedTimes, selectedDate, onSlotClick, onBookingC
           const endMin = bEnd.getHours() * 60 + bEnd.getMinutes();
           const topPx = ((startMin - startHour * 60) / 60) * HOUR_HEIGHT + 2;
           const heightPx = ((endMin - startMin) / 60) * HOUR_HEIGHT - 4;
-          const startTime = format(bStart, "HH:mm");
-          const endTime = format(bEnd, "HH:mm");
+          const startTime = safeFormat(bStart, "HH:mm");
+          const endTime = safeFormat(bEnd, "HH:mm");
 
           return (
             <motion.div
