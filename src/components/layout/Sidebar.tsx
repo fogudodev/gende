@@ -43,10 +43,10 @@ import {
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 import aiAssistantIcon from "@/assets/icon-ai-assistant.png";
-import gridDashboardIcon from "@/assets/icon-grid-dashboard.svg";
-import dollarFinanceIcon from "@/assets/icon-dollar-finance.svg";
-import chatCommunicationIcon from "@/assets/icon-chat-communication.svg";
-import robotAutomationsIcon from "@/assets/icon-robot-automations.svg";
+import gridDashboardIcon from "@/assets/icon-grid-dashboard.svg?url";
+import dollarFinanceIcon from "@/assets/icon-dollar-finance.svg?url";
+import chatCommunicationIcon from "@/assets/icon-chat-communication.svg?url";
+import robotAutomationsIcon from "@/assets/icon-robot-automations.svg?url";
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
 
@@ -301,10 +301,19 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
     "robot-automations": robotAutomationsIcon,
   };
 
+  const getMaskedIconStyle = (iconSrc: string, size: number) => ({
+    width: size + 2,
+    height: size + 2,
+    display: "inline-block",
+    backgroundColor: "currentColor",
+    WebkitMask: `url("${iconSrc}") center / contain no-repeat`,
+    mask: `url("${iconSrc}") center / contain no-repeat`,
+  });
+
   const renderIcon = (item: NavItem, size: number, className: string) => {
     if (item.customIcon && customIconMap[item.customIcon]) {
       const iconSrc = customIconMap[item.customIcon];
-      return <span aria-hidden className={`flex-shrink-0 ${className}`} style={{ width: size + 2, height: size + 2, backgroundColor: "currentColor", WebkitMaskImage: `url(${iconSrc})`, maskImage: `url(${iconSrc})`, WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "center", maskPosition: "center", WebkitMaskSize: "contain", maskSize: "contain" }} />;
+      return <span aria-hidden className={`flex-shrink-0 ${className}`} style={getMaskedIconStyle(iconSrc, size)} />;
     }
     const Icon = item.icon;
     return <Icon size={size} className={className} />;
@@ -379,7 +388,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
 
     const renderGroupIcon = (size: number, className: string) => {
       if (groupCustomSrc) {
-        return <span aria-hidden className={`flex-shrink-0 ${className}`} style={{ width: size + 2, height: size + 2, backgroundColor: "currentColor", WebkitMaskImage: `url(${groupCustomSrc})`, maskImage: `url(${groupCustomSrc})`, WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "center", maskPosition: "center", WebkitMaskSize: "contain", maskSize: "contain" }} />;
+        return <span aria-hidden className={`flex-shrink-0 ${className}`} style={getMaskedIconStyle(groupCustomSrc, size)} />;
       }
       return <GroupIcon size={size} className={className} />;
     };
@@ -466,7 +475,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
               }`}
             >
               {cIcon && customIconMap[cIcon] ? (
-                <span aria-hidden style={{ width: 22, height: 22, backgroundColor: "currentColor", WebkitMaskImage: `url(${customIconMap[cIcon]})`, maskImage: `url(${customIconMap[cIcon]})`, WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "center", maskPosition: "center", WebkitMaskSize: "contain", maskSize: "contain" }} />
+                <span aria-hidden style={getMaskedIconStyle(customIconMap[cIcon], 20)} />
               ) : (
                 <Icon size={20} />
               )}
