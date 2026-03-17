@@ -388,7 +388,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
 
     const renderGroupIcon = (size: number, className: string) => {
       if (groupCustomSrc) {
-        return <span aria-hidden className={`flex-shrink-0 ${className}`} style={{ width: size + 2, height: size + 2, backgroundColor: "currentColor", WebkitMaskImage: `url(${groupCustomSrc})`, maskImage: `url(${groupCustomSrc})`, WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "center", maskPosition: "center", WebkitMaskSize: "contain", maskSize: "contain" }} />;
+        return <span aria-hidden className={`flex-shrink-0 ${className}`} style={getMaskedIconStyle(groupCustomSrc, size)} />;
       }
       return <GroupIcon size={size} className={className} />;
     };
