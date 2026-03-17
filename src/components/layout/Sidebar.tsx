@@ -43,10 +43,10 @@ import {
 } from "lucide-react";
 import logo from "@/assets/logo-circle.png";
 import aiAssistantIcon from "@/assets/icon-ai-assistant.png";
-import gridDashboardIcon from "@/assets/icon-grid-dashboard.svg";
-import dollarFinanceIcon from "@/assets/icon-dollar-finance.svg";
-import chatCommunicationIcon from "@/assets/icon-chat-communication.svg";
-import robotAutomationsIcon from "@/assets/icon-robot-automations.svg";
+import gridDashboardIcon from "@/assets/icon-grid-dashboard.svg?url";
+import dollarFinanceIcon from "@/assets/icon-dollar-finance.svg?url";
+import chatCommunicationIcon from "@/assets/icon-chat-communication.svg?url";
+import robotAutomationsIcon from "@/assets/icon-robot-automations.svg?url";
 import UpgradeModal from "./UpgradeModal";
 import type { FeatureKey } from "@/lib/stripe-plans";
 
