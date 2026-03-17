@@ -313,7 +313,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
   const renderIcon = (item: NavItem, size: number, className: string) => {
     if (item.customIcon && customIconMap[item.customIcon]) {
       const iconSrc = customIconMap[item.customIcon];
-      return <span aria-hidden className={`flex-shrink-0 ${className}`} style={{ width: size + 2, height: size + 2, backgroundColor: "currentColor", WebkitMaskImage: `url(${iconSrc})`, maskImage: `url(${iconSrc})`, WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "center", maskPosition: "center", WebkitMaskSize: "contain", maskSize: "contain" }} />;
+      return <span aria-hidden className={`flex-shrink-0 ${className}`} style={getMaskedIconStyle(iconSrc, size)} />;
     }
     const Icon = item.icon;
     return <Icon size={size} className={className} />;
