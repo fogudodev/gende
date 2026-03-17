@@ -475,7 +475,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
               }`}
             >
               {cIcon && customIconMap[cIcon] ? (
-                <span aria-hidden style={{ width: 22, height: 22, backgroundColor: "currentColor", WebkitMaskImage: `url(${customIconMap[cIcon]})`, maskImage: `url(${customIconMap[cIcon]})`, WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "center", maskPosition: "center", WebkitMaskSize: "contain", maskSize: "contain" }} />
+                <span aria-hidden style={getMaskedIconStyle(customIconMap[cIcon], 20)} />
               ) : (
                 <Icon size={20} />
               )}
