@@ -93,16 +93,16 @@ const AdminLayout = ({ children, title, subtitle }: AdminLayoutProps) => {
         <div className="fixed inset-0 z-[60] md:hidden">
           <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm animate-overlay-in" onClick={() => setMobileOpen(false)} />
           <div className="absolute left-0 top-0 h-full w-72 bg-card/95 backdrop-blur-xl border-r border-border p-4 flex flex-col animate-slide-in-left shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <Shield size={20} className="text-accent" />
-                <span className="font-bold text-foreground">{isAdmin ? "Admin Master" : "Suporte"}</span>
+            <div className="flex items-center justify-between mb-6 flex-shrink-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <Shield size={20} className="text-accent flex-shrink-0" />
+                <span className="font-bold text-foreground truncate">{isAdmin ? "Admin Master" : "Suporte"}</span>
               </div>
               <button onClick={() => setMobileOpen(false)} className="p-1 text-muted-foreground">
                 <X size={20} />
               </button>
             </div>
-            <nav className="flex-1 space-y-1">
+            <nav className="flex-1 min-h-0 space-y-1 overflow-y-auto pb-4 scrollbar-none">
               {adminNavItems.map((item) => {
                 const isActive = location.pathname === item.path;
                 return (
