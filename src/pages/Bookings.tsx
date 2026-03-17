@@ -1025,7 +1025,7 @@ const WeekView = ({ days, bookings, blockedTimes, onDayClick, onBookingClick, on
                     onClick={() => onBookingClick(b)}
                     className={`text-[10px] p-1.5 rounded-lg border-l-2 cursor-pointer truncate ${statusColors[b.status]}`}
                   >
-                    <span className="font-semibold">{format(new Date(b.start_time), "HH:mm")}</span>
+                    <span className="font-semibold">{safeFormat(b.start_time, "HH:mm")}</span>
                     <span className="text-muted-foreground"> {b.client_name || b.clients?.name || ""}</span>
                   </div>
                 ))}
