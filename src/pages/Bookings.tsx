@@ -38,6 +38,17 @@ import { useOpenCashRegister } from "@/hooks/useCashRegister";
 
 type ViewMode = "day" | "week" | "month";
 
+// Safe date formatter to prevent "Invalid time value" crashes
+const safeFormat = (date: Date | string | null | undefined, formatStr: string, options?: any): string => {
+  try {
+    const d = date instanceof Date ? date : new Date(date as string);
+    if (isNaN(d.getTime())) return "—";
+    return format(d, formatStr, options);
+  } catch {
+    return "—";
+  }
+};
+
 const statusColors: Record<string, string> = {
   confirmed: "border-l-green-500 bg-green-500/10",
   pending: "border-l-yellow-500 bg-yellow-500/10",
@@ -614,7 +625,7 @@ const Bookings = () => {
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Horário</p>
                     <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
                       <Clock size={13} className="text-primary" />
-                      {format(new Date(detailBooking.start_time), "HH:mm")} - {format(new Date(detailBooking.end_time), "HH:mm")}
+                      {safeFormat(detailBooking.start_time, "HH:mm")} - {safeFormat(detailBooking.end_time, "HH:mm")}
                     </p>
                   </div>
                   <div className="glass-card rounded-xl p-3">
@@ -869,8 +880,8 @@ const DayView = ({ bookings, blockedTimes, selectedDate, onSlotClick, onBookingC
           const endMin = bEnd.getHours() * 60 + bEnd.getMinutes();
           const topPx = ((startMin - startHour * 60) / 60) * HOUR_HEIGHT + 2;
           const heightPx = ((endMin - startMin) / 60) * HOUR_HEIGHT - 4;
-          const startTime = format(bStart, "HH:mm");
-          const endTime = format(bEnd, "HH:mm");
+          const startTime = safeFormat(bStart, "HH:mm");
+          const endTime = safeFormat(bEnd, "HH:mm");
 
           return (
             <motion.div
@@ -951,7 +962,7 @@ const WeekView = ({ days, bookings, blockedTimes, onDayClick, onBookingClick, on
                       <Ban size={11} className="text-destructive shrink-0" />
                       <span className="text-destructive font-medium truncate">{bt.reason || "Ausência"}</span>
                       <span className="text-muted-foreground text-[10px] ml-auto shrink-0">
-                        {format(new Date(bt.start_time), "HH:mm")}-{format(new Date(bt.end_time), "HH:mm")}
+                        {safeFormat(bt.start_time, "HH:mm")}-{safeFormat(bt.end_time, "HH:mm")}
                       </span>
                     </div>
                   ))}
@@ -965,7 +976,7 @@ const WeekView = ({ days, bookings, blockedTimes, onDayClick, onBookingClick, on
                       onClick={() => onBookingClick(b)}
                       className={`text-xs p-2 rounded-lg border-l-2 cursor-pointer ${statusColors[b.status]}`}
                     >
-                      <span className="font-medium text-foreground">{format(new Date(b.start_time), "HH:mm")}</span>
+                      <span className="font-medium text-foreground">{safeFormat(b.start_time, "HH:mm")}</span>
                       <span className="text-muted-foreground"> — {b.client_name || b.clients?.name || "—"}</span>
                     </div>
                   ))}
@@ -1014,7 +1025,7 @@ const WeekView = ({ days, bookings, blockedTimes, onDayClick, onBookingClick, on
                     onClick={() => onBookingClick(b)}
                     className={`text-[10px] p-1.5 rounded-lg border-l-2 cursor-pointer truncate ${statusColors[b.status]}`}
                   >
-                    <span className="font-semibold">{format(new Date(b.start_time), "HH:mm")}</span>
+                    <span className="font-semibold">{safeFormat(b.start_time, "HH:mm")}</span>
                     <span className="text-muted-foreground"> {b.client_name || b.clients?.name || ""}</span>
                   </div>
                 ))}
@@ -1079,7 +1090,7 @@ const MonthView = ({ grid, bookings, blockedTimes, selectedDate, onDayClick }: {
                 <div className="space-y-0.5">
                   {dayBookings.slice(0, dayBlocked.length > 0 ? 1 : 2).map(b => (
                     <div key={b.id} className={`text-[9px] px-1 py-0.5 rounded border-l-2 truncate ${statusColors[b.status]}`}>
-                      <span className="font-medium">{format(new Date(b.start_time), "HH:mm")}</span>
+                      <span className="font-medium">{safeFormat(b.start_time, "HH:mm")}</span>
                       <span className="hidden sm:inline text-muted-foreground"> {b.client_name || ""}</span>
                     </div>
                   ))}
