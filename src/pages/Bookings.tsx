@@ -625,7 +625,7 @@ const Bookings = () => {
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Horário</p>
                     <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
                       <Clock size={13} className="text-primary" />
-                      {format(new Date(detailBooking.start_time), "HH:mm")} - {format(new Date(detailBooking.end_time), "HH:mm")}
+                      {safeFormat(detailBooking.start_time, "HH:mm")} - {safeFormat(detailBooking.end_time, "HH:mm")}
                     </p>
                   </div>
                   <div className="glass-card rounded-xl p-3">
