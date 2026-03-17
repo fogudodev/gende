@@ -3421,6 +3421,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_mark_no_show: { Args: never; Returns: number }
       create_public_booking: {
         Args: {
           p_client_name: string
