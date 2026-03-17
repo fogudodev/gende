@@ -301,6 +301,15 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
     "robot-automations": robotAutomationsIcon,
   };
 
+  const getMaskedIconStyle = (iconSrc: string, size: number) => ({
+    width: size + 2,
+    height: size + 2,
+    display: "inline-block",
+    backgroundColor: "currentColor",
+    WebkitMask: `url("${iconSrc}") center / contain no-repeat`,
+    mask: `url("${iconSrc}") center / contain no-repeat`,
+  });
+
   const renderIcon = (item: NavItem, size: number, className: string) => {
     if (item.customIcon && customIconMap[item.customIcon]) {
       const iconSrc = customIconMap[item.customIcon];
