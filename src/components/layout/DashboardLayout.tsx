@@ -3,6 +3,7 @@ import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import { useProfessional } from "@/hooks/useProfessional";
 import { applySystemColors } from "@/pages/Settings";
+import { useBookingNotifications } from "@/hooks/useBookingNotifications";
 
 interface DashboardLayoutProps {
   children: ReactNode;
