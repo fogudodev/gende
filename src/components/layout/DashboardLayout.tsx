@@ -25,6 +25,12 @@ const DashboardLayout = ({ children, title, subtitle }: DashboardLayoutProps) =>
     }
   }, [professional]);
 
+  // Listen for new bookings and notify
+  useBookingNotifications({
+    professionalId: professional?.id,
+    enabled: !!professional?.id,
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <Sidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
