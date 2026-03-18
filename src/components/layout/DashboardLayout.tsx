@@ -3,6 +3,7 @@ import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import { useProfessional } from "@/hooks/useProfessional";
 import { applySystemColors } from "@/pages/Settings";
+import { useBookingNotifications } from "@/hooks/useBookingNotifications";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -23,6 +24,12 @@ const DashboardLayout = ({ children, title, subtitle }: DashboardLayoutProps) =>
       );
     }
   }, [professional]);
+
+  // Listen for new bookings and notify
+  useBookingNotifications({
+    professionalId: professional?.id,
+    enabled: !!professional?.id,
+  });
 
   return (
     <div className="min-h-screen bg-background">
