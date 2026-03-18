@@ -2,6 +2,7 @@ import { ReactNode, useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import { useProfessional } from "@/hooks/useProfessional";
+import { useReceptionEmployee } from "@/hooks/useReceptionEmployee";
 import { applySystemColors } from "@/pages/Settings";
 import { useBookingNotifications } from "@/hooks/useBookingNotifications";
 
@@ -14,6 +15,10 @@ interface DashboardLayoutProps {
 const DashboardLayout = ({ children, title, subtitle }: DashboardLayoutProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { data: professional } = useProfessional();
+  const { data: reception } = useReceptionEmployee();
+
+  // Use professional ID or reception's salon ID for notifications
+  const notifyProfId = professional?.id || reception?.salon_id || null;
 
   useEffect(() => {
     if (professional) {
@@ -25,10 +30,10 @@ const DashboardLayout = ({ children, title, subtitle }: DashboardLayoutProps) =>
     }
   }, [professional]);
 
-  // Listen for new bookings and notify
+  // Listen for new bookings and notify (works for both professional and receptionist)
   useBookingNotifications({
-    professionalId: professional?.id,
-    enabled: !!professional?.id,
+    professionalId: notifyProfId,
+    enabled: !!notifyProfId,
   });
 
   return (
