@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useProfessional } from "./useProfessional";
 import { startOfDay, endOfDay, startOfMonth, endOfMonth, subMonths, subDays } from "date-fns";
 
@@ -21,19 +21,19 @@ export const useDashboardStats = () => {
       const yesterdayEnd = endOfDay(subDays(today, 1)).toISOString();
 
       const [todayBookings, monthBookings, lastMonthBookings, yesterdayBookings, totalClients, weekClients] = await Promise.all([
-        supabase.from("bookings").select("price, status").eq("professional_id", pid)
+        api.from("bookings").select("price, status").eq("professional_id", pid)
           .gte("start_time", todayStart).lte("start_time", todayEnd),
-        supabase.from("bookings").select("price, status").eq("professional_id", pid)
+        api.from("bookings").select("price, status").eq("professional_id", pid)
           .gte("start_time", monthStart).lte("start_time", monthEnd)
           .in("status", ["confirmed", "completed"]),
-        supabase.from("bookings").select("price, status").eq("professional_id", pid)
+        api.from("bookings").select("price, status").eq("professional_id", pid)
           .gte("start_time", lastMonthStart).lte("start_time", lastMonthEnd)
           .in("status", ["confirmed", "completed"]),
-        supabase.from("bookings").select("price, status").eq("professional_id", pid)
+        api.from("bookings").select("price, status").eq("professional_id", pid)
           .gte("start_time", yesterdayStart).lte("start_time", yesterdayEnd)
           .in("status", ["confirmed", "completed"]),
-        supabase.from("clients").select("id", { count: "exact", head: true }).eq("professional_id", pid),
-        supabase.from("clients").select("id", { count: "exact", head: true }).eq("professional_id", pid)
+        api.from("clients").select("id", { count: "exact", head: true }).eq("professional_id", pid),
+        api.from("clients").select("id", { count: "exact", head: true }).eq("professional_id", pid)
           .gte("created_at", subDays(today, 7).toISOString()),
       ]);
 

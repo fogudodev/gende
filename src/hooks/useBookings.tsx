@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useProfessional } from "./useProfessional";
 import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek } from "date-fns";
@@ -12,7 +12,7 @@ export const useBookings = (date?: Date) => {
   return useQuery({
     queryKey: ["bookings", professional?.id, date ? format(date, "yyyy-MM-dd") : "all"],
     queryFn: async () => {
-      let query = supabase
+      let query = api
         .from("bookings")
         .select("*, services(name, category), clients(name, phone, email)")
         .eq("professional_id", professional!.id)
@@ -40,7 +40,7 @@ export const useBookingsWeek = (date: Date) => {
   return useQuery({
     queryKey: ["bookings-week", professional?.id, format(weekStart, "yyyy-MM-dd")],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("bookings")
         .select("*, services(name, category), clients(name, phone, email)")
         .eq("professional_id", professional!.id)
@@ -62,7 +62,7 @@ export const useBookingsMonth = (date: Date) => {
   return useQuery({
     queryKey: ["bookings-month", professional?.id, format(monthStart, "yyyy-MM")],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("bookings")
         .select("*, services(name, category), clients(name, phone, email)")
         .eq("professional_id", professional!.id)
@@ -161,7 +161,7 @@ export const useCreateBooking = () => {
 
   return useMutation({
     mutationFn: async (booking: Omit<TablesInsert<"bookings">, "professional_id">) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("bookings")
         .insert({ ...booking, professional_id: professional!.id })
         .select()
@@ -181,7 +181,7 @@ export const useCreateBooking = () => {
         });
 
         // Sync to Google Calendar (fire and forget)
-        supabase.functions.invoke("google-calendar-sync", {
+        api.functions.invoke("google-calendar-sync", {
           body: {
             action: "create_event",
             professional_id: professional.id,
@@ -206,7 +206,7 @@ export const useUpdateBooking = () => {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: TablesUpdate<"bookings"> & { id: string }) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("bookings")
         .update(updates)
         .eq("id", id)
@@ -222,7 +222,7 @@ export const useUpdateBooking = () => {
 
       // If booking was cancelled, trigger waitlist processing
       if (data && data.status === "cancelled") {
-        supabase.functions.invoke("waitlist-process", {
+        api.functions.invoke("waitlist-process", {
           body: {
             action: "process-cancellation",
             professionalId: data.professional_id,
@@ -236,7 +236,7 @@ export const useUpdateBooking = () => {
 
         // Delete from Google Calendar if linked
         if ((data as any).google_calendar_event_id) {
-          supabase.functions.invoke("google-calendar-sync", {
+          api.functions.invoke("google-calendar-sync", {
             body: {
               action: "delete_event",
               professional_id: data.professional_id,
@@ -256,14 +256,14 @@ export const useDeleteBooking = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       // Before deleting, fetch the booking to check for Google Calendar event
-      const { data: booking } = await supabase.from("bookings").select("professional_id, google_calendar_event_id").eq("id", id).single();
+      const { data: booking } = await api.from("bookings").select("professional_id, google_calendar_event_id").eq("id", id).single();
 
-      const { error } = await supabase.from("bookings").delete().eq("id", id);
+      const { error } = await api.from("bookings").delete().eq("id", id);
       if (error) throw error;
 
       // Delete from Google Calendar if linked
       if (booking && (booking as any).google_calendar_event_id) {
-        supabase.functions.invoke("google-calendar-sync", {
+        api.functions.invoke("google-calendar-sync", {
           body: {
             action: "delete_event",
             professional_id: booking.professional_id,

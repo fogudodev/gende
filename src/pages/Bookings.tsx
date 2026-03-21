@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { motion } from "framer-motion";
 import {
@@ -116,7 +116,7 @@ const Bookings = () => {
     if (detailBooking?.id) {
       setPaymentMethod("");
       setPaymentAmount("");
-      supabase
+      api
         .from("payments")
         .select("id, amount, status, payment_method, created_at")
         .eq("booking_id", detailBooking.id)
@@ -150,7 +150,7 @@ const Bookings = () => {
     }
     setPaymentLoading(true);
     try {
-      const { error } = await supabase.from("payments").insert({
+      const { error } = await api.from("payments").insert({
         professional_id: professional.id,
         booking_id: detailBooking.id,
         amount,
@@ -159,7 +159,7 @@ const Bookings = () => {
       });
       if (error) throw error;
       toast.success("Pagamento registrado!");
-      const { data } = await supabase
+      const { data } = await api
         .from("payments")
         .select("id, amount, status, payment_method, created_at")
         .eq("booking_id", detailBooking.id);
@@ -261,7 +261,7 @@ const Bookings = () => {
   const handleStatusChange = async (id: string, status: string) => {
     // Block completing without payment
     if (status === "completed") {
-      const { data: payments } = await supabase
+      const { data: payments } = await api
         .from("payments")
         .select("id, amount, status")
         .eq("booking_id", id)
@@ -788,7 +788,7 @@ const BookingPaymentBar = ({ bookingId, price }: { bookingId: string; price: num
   const [paid, setPaid] = useState(0);
   useEffect(() => {
     if (price <= 0) return;
-    supabase
+    api
       .from("payments")
       .select("amount, status")
       .eq("booking_id", bookingId)

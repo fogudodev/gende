@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useChatNotifications } from "@/hooks/useChatNotifications";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
@@ -34,7 +34,7 @@ const SupportChat = () => {
   const { data: messages, isLoading } = useQuery({
     queryKey: ["support-chat", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("chat_messages")
         .select("*")
         .eq("professional_id", professional!.id)
@@ -49,7 +49,7 @@ const SupportChat = () => {
 
   useEffect(() => {
     if (!professional?.id) return;
-    const channel = supabase
+    const channel = api
       .channel("support-chat")
       .on(
         "postgres_changes",
@@ -64,7 +64,7 @@ const SupportChat = () => {
         }
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => { api.removeChannel(channel); };
   }, [professional?.id, qc]);
 
   useEffect(() => {
@@ -73,7 +73,7 @@ const SupportChat = () => {
 
   const sendMessage = useMutation({
     mutationFn: async (params: { message?: string; attachment_url?: string }) => {
-      const { error } = await supabase.from("chat_messages").insert({
+      const { error } = await api.from("chat_messages").insert({
         professional_id: professional!.id,
         sender_role: "user",
         sender_name: professional!.name,
@@ -104,12 +104,12 @@ const SupportChat = () => {
       const ext = file.name.split(".").pop();
       const path = `${professional.id}/suporte/${Date.now()}.${ext}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await api.storage
         .from("professionals")
         .upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage.from("professionals").getPublicUrl(path);
+      const { data: urlData } = api.storage.from("professionals").getPublicUrl(path);
 
       await sendMessage.mutateAsync({
         message: "📎 Arquivo enviado",

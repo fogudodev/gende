@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Loader2, Star } from "lucide-react";
@@ -218,7 +218,7 @@ const PublicBooking = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (!slug) return;
-      const { data: prof, error } = await supabase
+      const { data: prof, error } = await api
         .from("professionals")
         .select("id, name, business_name, bio, avatar_url, logo_url, cover_url, primary_color, bg_color, text_color, component_color, slug, account_type, welcome_title, welcome_description, welcome_message, confirmation_message, booking_advance_weeks")
         .eq("slug", slug)
@@ -228,16 +228,16 @@ const PublicBooking = () => {
       setProfessional(prof);
 
       const [svcRes, empRes, payRes, empSvcRes, reviewRes, subRes] = await Promise.all([
-        supabase.from("services").select("*").eq("professional_id", prof.id).eq("active", true).order("sort_order", { ascending: true }),
+        api.from("services").select("*").eq("professional_id", prof.id).eq("active", true).order("sort_order", { ascending: true }),
         prof.account_type === "salon"
-          ? supabase.from("salon_employees").select("id, name, specialty, avatar_url").eq("salon_id", prof.id).eq("is_active", true).order("name")
+          ? api.from("salon_employees").select("id, name, specialty, avatar_url").eq("salon_id", prof.id).eq("is_active", true).order("name")
           : Promise.resolve({ data: [] }),
-        supabase.from("payment_config").select("pix_key, pix_key_type, pix_beneficiary_name, signal_enabled, signal_type, signal_value, accept_pix").eq("professional_id", prof.id).maybeSingle(),
+        api.from("payment_config").select("pix_key, pix_key_type, pix_beneficiary_name, signal_enabled, signal_type, signal_value, accept_pix").eq("professional_id", prof.id).maybeSingle(),
         prof.account_type === "salon"
-          ? supabase.from("employee_services").select("employee_id, service_id")
+          ? api.from("employee_services").select("employee_id, service_id")
           : Promise.resolve({ data: [] }),
-        supabase.from("reviews").select("rating").eq("professional_id", prof.id).eq("is_public", true),
-        supabase.from("subscriptions").select("plan_id").eq("professional_id", prof.id).eq("status", "active").maybeSingle(),
+        api.from("reviews").select("rating").eq("professional_id", prof.id).eq("is_public", true),
+        api.from("subscriptions").select("plan_id").eq("professional_id", prof.id).eq("status", "active").maybeSingle(),
       ]);
       setServices(svcRes.data || []);
       setEmployees(empRes.data || []);
@@ -257,8 +257,8 @@ const PublicBooking = () => {
       if (prof.account_type === "salon" && empRes.data && empRes.data.length > 0) {
         const empIds = empRes.data.map((e: any) => e.id);
         const [bookingsRes, empReviewsRes] = await Promise.all([
-          supabase.from("bookings").select("employee_id").eq("professional_id", prof.id).eq("status", "completed").in("employee_id", empIds),
-          supabase.from("reviews").select("employee_id, rating").eq("professional_id", prof.id).eq("is_public", true).in("employee_id", empIds),
+          api.from("bookings").select("employee_id").eq("professional_id", prof.id).eq("status", "completed").in("employee_id", empIds),
+          api.from("reviews").select("employee_id, rating").eq("professional_id", prof.id).eq("is_public", true).in("employee_id", empIds),
         ]);
         const statsMap: Record<string, EmployeeStats> = {};
         empIds.forEach((id: string) => {
@@ -270,7 +270,7 @@ const PublicBooking = () => {
         setEmployeeStatsMap(statsMap);
       }
       // Check waitlist feature flag
-      const { data: waitlistFlag } = await supabase
+      const { data: waitlistFlag } = await api
         .from("feature_flags" as any)
         .select("enabled")
         .eq("key", "waitlist")
@@ -291,7 +291,7 @@ const PublicBooking = () => {
       setConfirmed(true);
       setStep(confirmStep);
       (async () => {
-        const { data: booking } = await supabase.from("bookings").select("client_name, client_phone, employee_id").eq("id", reviewBookingId).single();
+        const { data: booking } = await api.from("bookings").select("client_name, client_phone, employee_id").eq("id", reviewBookingId).single();
         if (booking) {
           setClientName(booking.client_name || "Cliente");
           setClientPhone(booking.client_phone || "");
@@ -311,7 +311,7 @@ const PublicBooking = () => {
       setLoadingSlots(true);
       setSelectedSlot(null);
       setSelectedTime("");
-      const { data } = await supabase.rpc("get_available_slots", {
+      const { data } = await api.rpc("get_available_slots", {
         p_professional_id: professional.id,
         p_service_id: selectedService.id,
         p_date: format(selectedDate, "yyyy-MM-dd"),
@@ -335,7 +335,7 @@ const PublicBooking = () => {
     if (phoneClean.length < 10) { toast.error("Informe um telefone válido com DDD"); return; }
 
     setSubmitting(true);
-    const { data, error } = await supabase.rpc("create_public_booking", {
+    const { data, error } = await api.rpc("create_public_booking", {
       p_professional_id: professional.id,
       p_service_id: selectedService.id,
       p_start_time: selectedSlot.start_time,
@@ -347,7 +347,7 @@ const PublicBooking = () => {
     if (result?.success && result.booking_id) {
       // Atomically set employee_id before exposing booking_id to client state
       if (isSalon && selectedEmployee) {
-        const { error: empError } = await supabase.from("bookings").update({ employee_id: selectedEmployee.id }).eq("id", result.booking_id);
+        const { error: empError } = await api.from("bookings").update({ employee_id: selectedEmployee.id }).eq("id", result.booking_id);
         if (empError) {
           console.error("Failed to assign employee:", empError);
         }
@@ -401,7 +401,7 @@ const PublicBooking = () => {
   const handleSubmitReview = async () => {
     if (!professional || reviewSubmitted) return;
     setSubmittingReview(true);
-    const { error } = await supabase.from("platform_reviews").insert({
+    const { error } = await api.from("platform_reviews").insert({
       professional_id: professional.id,
       booking_id: bookingId,
       client_name: clientName.trim(),
@@ -1003,7 +1003,7 @@ function WaitlistForm({ professionalId, serviceId, serviceName, selectedDate, ac
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    const { error } = await supabase.from("waitlist" as any).insert({
+    const { error } = await api.from("waitlist" as any).insert({
       professional_id: professionalId,
       service_id: serviceId,
       client_name: clientName,

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useNavigate } from "react-router-dom";
 import { LogOut, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
@@ -32,8 +32,8 @@ const ImpersonationBanner = () => {
   const handleReturn = async () => {
     setReturning(true);
     try {
-      await supabase.auth.signOut();
-      const { error } = await supabase.auth.signInWithPassword({
+      await api.auth.signOut();
+      const { error } = await api.auth.signInWithPassword({
         email: impersonationData.adminEmail,
         password: impersonationData.adminPassword,
       });

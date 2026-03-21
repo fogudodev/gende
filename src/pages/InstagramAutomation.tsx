@@ -15,7 +15,7 @@ import {
   useInstagramStats,
 } from "@/hooks/useInstagram";
 import { useProfessional } from "@/hooks/useProfessional";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import {
   Instagram,
   Loader2,
@@ -77,7 +77,7 @@ const InstagramAutomation = () => {
 
   const handleToggleAutoReply = async (enabled: boolean) => {
     if (!account) return;
-    await supabase
+    await api
       .from("instagram_accounts" as any)
       .update({ auto_reply_enabled: enabled } as any)
       .eq("id", account.id);
@@ -86,7 +86,7 @@ const InstagramAutomation = () => {
 
   const handleToggleCommentReply = async (enabled: boolean) => {
     if (!account) return;
-    await supabase
+    await api
       .from("instagram_accounts" as any)
       .update({ auto_comment_reply_enabled: enabled } as any)
       .eq("id", account.id);

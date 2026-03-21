@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Users, CalendarDays, Building2, DollarSign, Crown, Loader2, TrendingUp, MessageSquare, Key } from "lucide-react";
 import { useAllWhatsAppInstances } from "@/hooks/useAdmin";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -27,7 +27,7 @@ const AdminDashboard = () => {
   const { data: authCodes } = useQuery({
     queryKey: ["admin-auth-codes"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("admin_auth_codes")
         .select("*")
         .order("created_at", { ascending: false })
@@ -41,7 +41,7 @@ const AdminDashboard = () => {
   const createCode = useMutation({
     mutationFn: async () => {
       const code = generateCode();
-      const { error } = await supabase
+      const { error } = await api
         .from("admin_auth_codes")
         .insert({ code });
       if (error) throw error;

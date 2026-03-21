@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useProfessional } from "./useProfessional";
 
 export type EmployeeWorkingHour = {
@@ -16,7 +16,7 @@ export const useEmployeeWorkingHours = (employeeId: string | undefined) => {
   return useQuery({
     queryKey: ["employee-working-hours", employeeId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("employee_working_hours" as any)
         .select("*")
         .eq("employee_id", employeeId!)
@@ -35,13 +35,13 @@ export const useUpsertEmployeeWorkingHours = () => {
   return useMutation({
     mutationFn: async ({ employeeId, hours }: { employeeId: string; hours: Omit<EmployeeWorkingHour, "id" | "employee_id" | "professional_id">[] }) => {
       // Delete existing
-      await supabase
+      await api
         .from("employee_working_hours" as any)
         .delete()
         .eq("employee_id", employeeId);
 
       if (hours.length > 0) {
-        const { error } = await supabase
+        const { error } = await api
           .from("employee_working_hours" as any)
           .insert(hours.map((h) => ({
             ...h,

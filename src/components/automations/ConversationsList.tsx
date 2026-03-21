@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { MessageCircle, Clock, CheckCircle2, XCircle, Send, Loader2, ChevronDown, ChevronUp, User, Trash2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,7 @@ export const useConversations = (filter: string = "all") => {
   return useQuery({
     queryKey: ["whatsapp-conversations", professional?.id, filter],
     queryFn: async () => {
-      let query = supabase
+      let query = api
         .from("whatsapp_conversations")
         .select("*")
         .eq("professional_id", professional!.id)
@@ -75,7 +75,7 @@ const ConversationsList = () => {
     setSendingFollowUp(conv.id);
 
     try {
-      const { error: fErr } = await supabase.functions.invoke("whatsapp-webhook", {
+      const { error: fErr } = await api.functions.invoke("whatsapp-webhook", {
         body: {
           action: "send-follow-up",
           conversationId: conv.id,
@@ -97,7 +97,7 @@ const ConversationsList = () => {
     setConfirmDeleteId(null);
     setDeletingId(convId);
     try {
-      const { error } = await supabase
+      const { error } = await api
         .from("whatsapp_conversations")
         .delete()
         .eq("id", convId);

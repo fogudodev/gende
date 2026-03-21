@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useAuth } from "./useAuth";
 
 export const useProfessional = () => {
@@ -8,7 +8,7 @@ export const useProfessional = () => {
   return useQuery({
     queryKey: ["professional", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("professionals")
         .select("*")
         .eq("user_id", user!.id)

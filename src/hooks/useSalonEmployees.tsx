@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useProfessional } from "./useProfessional";
 import { toast } from "sonner";
 
@@ -25,7 +25,7 @@ export const useSalonEmployees = () => {
   const query = useQuery({
     queryKey: ["salon-employees", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("salon_employees")
         .select("*")
         .eq("salon_id", professional!.id)
@@ -45,7 +45,7 @@ export const useCreateSalonEmployee = () => {
 
   return useMutation({
     mutationFn: async (employee: { name: string; email?: string; phone?: string; specialty?: string; commission_percentage?: number; is_active?: boolean; has_login?: boolean }) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("salon_employees")
         .insert({ ...employee, salon_id: professional!.id })
         .select()
@@ -68,7 +68,7 @@ export const useUpdateSalonEmployee = () => {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<SalonEmployee> & { id: string }) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("salon_employees")
         .update(updates)
         .eq("id", id)
@@ -92,7 +92,7 @@ export const useDeleteSalonEmployee = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("salon_employees")
         .delete()
         .eq("id", id);

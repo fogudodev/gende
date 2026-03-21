@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useProfessional } from "./useProfessional";
 import { toast } from "sonner";
 
@@ -25,7 +25,7 @@ export const useCoupons = () => {
   return useQuery({
     queryKey: ["coupons", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("coupons")
         .select("*")
         .eq("professional_id", professional!.id)
@@ -42,7 +42,7 @@ export const useCreateCoupon = () => {
   const { data: professional } = useProfessional();
   return useMutation({
     mutationFn: async (coupon: { code: string; description?: string; discount_type?: string; discount_value?: number; max_uses?: number | null; is_active?: boolean; valid_until?: string | null; min_amount?: number }) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("coupons")
         .insert({ ...coupon, professional_id: professional!.id })
         .select()
@@ -59,7 +59,7 @@ export const useUpdateCoupon = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Coupon> & { id: string }) => {
-      const { data, error } = await supabase.from("coupons").update(updates).eq("id", id).select().single();
+      const { data, error } = await api.from("coupons").update(updates).eq("id", id).select().single();
       if (error) throw error;
       return data;
     },
@@ -72,7 +72,7 @@ export const useDeleteCoupon = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("coupons").delete().eq("id", id);
+      const { error } = await api.from("coupons").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["coupons"] }); toast.success("Cupom removido!"); },

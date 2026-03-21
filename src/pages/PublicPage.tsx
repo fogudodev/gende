@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -93,7 +93,7 @@ const PublicPage = () => {
     setSlugError("");
     setSuggestions([]);
 
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from("professionals")
       .select("id")
       .eq("slug", value)
@@ -135,16 +135,16 @@ const PublicPage = () => {
       }
 
       const path = `${professional.id}/${type}.${ext}`;
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await api.storage
         .from("professionals")
         .upload(path, file, { upsert: true, contentType: file.type });
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage.from("professionals").getPublicUrl(path);
+      const { data: urlData } = api.storage.from("professionals").getPublicUrl(path);
       const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
 
       const field = isLogo ? "logo_url" : "cover_url";
-      await supabase.from("professionals").update({ [field]: publicUrl }).eq("id", professional.id);
+      await api.from("professionals").update({ [field]: publicUrl }).eq("id", professional.id);
 
       isLogo ? setLogoUrl(publicUrl) : setCoverUrl(publicUrl);
       qc.invalidateQueries({ queryKey: ["professional"] });
@@ -159,7 +159,7 @@ const PublicPage = () => {
   const removeImage = async (type: "logo" | "cover") => {
     if (!professional) return;
     const field = type === "logo" ? "logo_url" : "cover_url";
-    await supabase.from("professionals").update({ [field]: null }).eq("id", professional.id);
+    await api.from("professionals").update({ [field]: null }).eq("id", professional.id);
     type === "logo" ? setLogoUrl("") : setCoverUrl("");
     qc.invalidateQueries({ queryKey: ["professional"] });
     toast.success("Imagem removida");
@@ -171,7 +171,7 @@ const PublicPage = () => {
     // Validate slug
     if (slug) {
       setCheckingSlug(true);
-      const { data } = await supabase
+      const { data } = await api
         .from("professionals")
         .select("id")
         .eq("slug", slug)
@@ -189,7 +189,7 @@ const PublicPage = () => {
     }
 
     setSaving(true);
-    const { error } = await supabase
+    const { error } = await api
       .from("professionals")
       .update({
         slug: slug || null,

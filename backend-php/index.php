@@ -454,7 +454,7 @@ $router->get('/dashboard/stats', function () {
 });
 
 // ============================================
-// ADMIN ROUTES
+// ADMIN ROUTES (basic)
 // ============================================
 $router->get('/admin/professionals', function () {
     Core\Auth::requireAdmin();
@@ -480,7 +480,7 @@ $router->get('/admin/users', function () {
 });
 
 // ============================================
-// WHATSAPP SEND (Evolution API)
+// WHATSAPP SEND (basic - Evolution API)
 // ============================================
 $router->post('/whatsapp/send', function () {
     $user = Core\Auth::requireAuth();
@@ -490,7 +490,6 @@ $router->post('/whatsapp/send', function () {
     $profId = Core\Auth::getProfessionalId($user['sub']);
     $db = Core\Database::getInstance();
 
-    // Get instance
     $stmt = $db->prepare("SELECT instance_name FROM whatsapp_instances WHERE professional_id = ? AND status = 'connected' LIMIT 1");
     $stmt->execute([$profId]);
     $instance = $stmt->fetch();
@@ -503,7 +502,6 @@ $router->post('/whatsapp/send', function () {
     $phone = $data['phone'] ?? '';
     $message = $data['message'] ?? '';
 
-    // Try Evolution API first
     $ch = curl_init("{$config['evolution_api_url']}/message/sendText/{$instance['instance_name']}");
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
@@ -520,29 +518,139 @@ $router->post('/whatsapp/send', function () {
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    $provider = 'evolution';
     $success = $httpCode >= 200 && $httpCode < 300;
 
-    // Fallback to Meta Cloud API if Evolution fails
-    if (!$success && $config['meta_app_id']) {
-        $provider = 'meta_cloud';
-        // Meta Cloud API fallback would go here
-        // Requires WHATSAPP_PHONE_NUMBER_ID and META_ACCESS_TOKEN
-    }
-
-    // Log
     $stmt = $db->prepare('INSERT INTO whatsapp_logs (id, professional_id, phone, message_type, status, metadata) VALUES (?, ?, ?, ?, ?, ?)');
     $stmt->execute([
         Core\Database::uuid(), $profId, $phone, 'manual',
         $success ? 'sent' : 'failed',
-        json_encode(['provider' => $provider, 'http_code' => $httpCode])
+        json_encode(['provider' => 'evolution', 'http_code' => $httpCode])
     ]);
 
     if ($success) {
-        Core\Response::success(['provider' => $provider]);
+        Core\Response::success(['provider' => 'evolution']);
     } else {
         Core\Response::error('Failed to send message', 502);
     }
+});
+
+// ============================================
+// INTEGRATION ROUTES (from Api/ classes)
+// ============================================
+
+// --- WhatsApp Advanced ---
+$router->post('/whatsapp/webhook', function () {
+    (new Api\WhatsAppWebhook())->handle();
+});
+$router->get('/whatsapp/webhook', function () {
+    (new Api\WhatsAppWebhook())->verify();
+});
+$router->post('/whatsapp/bot-reply', function () {
+    $user = Core\Auth::requireAuth();
+    $profId = Core\Auth::getProfessionalId($user['sub']);
+    (new Api\WhatsApp())->botReply($profId, Core\Request::json());
+});
+$router->post('/whatsapp/send-template', function () {
+    $user = Core\Auth::requireAuth();
+    $profId = Core\Auth::getProfessionalId($user['sub']);
+    (new Api\WhatsApp())->sendTemplate($profId, Core\Request::json());
+});
+
+// --- AI Assistant ---
+$router->post('/ai-assistant', function () {
+    $user = Core\Auth::requireAuth();
+    $profId = Core\Auth::getProfessionalId($user['sub']);
+    (new Api\AIAssistant())->chat($profId, Core\Request::json());
+});
+
+// --- Upsell ---
+$router->post('/upsell-suggest', function () {
+    $user = Core\Auth::requireAuth();
+    $profId = Core\Auth::getProfessionalId($user['sub']);
+    (new Api\Upsell())->suggest($profId, Core\Request::json());
+});
+
+// --- Stripe ---
+$router->post('/create-checkout', function () {
+    $user = Core\Auth::requireAuth();
+    (new Api\Stripe())->createCheckout($user, Core\Request::json());
+});
+$router->post('/customer-portal', function () {
+    $user = Core\Auth::requireAuth();
+    (new Api\Stripe())->customerPortal($user);
+});
+$router->get('/check-subscription', function () {
+    $user = Core\Auth::requireAuth();
+    (new Api\Stripe())->checkSubscription($user);
+});
+$router->post('/purchase-addon', function () {
+    $user = Core\Auth::requireAuth();
+    (new Api\Stripe())->purchaseAddon($user, Core\Request::json());
+});
+$router->post('/stripe/webhook', function () {
+    (new Api\Stripe())->webhook();
+});
+
+// --- Google Calendar ---
+$router->post('/google-calendar/auth', function () {
+    $user = Core\Auth::requireAuth();
+    $profId = Core\Auth::getProfessionalId($user['sub']);
+    (new Api\GoogleCalendar())->auth($profId);
+});
+$router->get('/google-calendar/callback', function () {
+    (new Api\GoogleCalendar())->callback();
+});
+$router->post('/google-calendar/sync', function () {
+    $user = Core\Auth::requireAuth();
+    $profId = Core\Auth::getProfessionalId($user['sub']);
+    (new Api\GoogleCalendar())->sync($profId);
+});
+
+// --- Instagram ---
+$router->get('/instagram/oauth', function () {
+    $user = Core\Auth::requireAuth();
+    $profId = Core\Auth::getProfessionalId($user['sub']);
+    (new Api\Instagram())->oauth($profId);
+});
+$router->get('/instagram/callback', function () {
+    (new Api\Instagram())->callback();
+});
+$router->post('/instagram/webhook', function () {
+    (new Api\Instagram())->webhook();
+});
+$router->get('/instagram/webhook', function () {
+    (new Api\Instagram())->verifyWebhook();
+});
+
+// --- Admin Advanced ---
+$router->post('/admin/create-professional', function () {
+    Core\Auth::requireAdmin();
+    (new Api\Admin())->createProfessional(Core\Request::json());
+});
+$router->post('/admin/delete-user', function () {
+    Core\Auth::requireAdmin();
+    (new Api\Admin())->deleteUser(Core\Request::json());
+});
+$router->post('/admin/impersonate', function () {
+    Core\Auth::requireAdmin();
+    (new Api\Admin())->impersonate(Core\Request::json());
+});
+
+// --- Cron-like endpoints (call from crontab) ---
+$router->post('/cron/send-reminders', function () {
+    (new Api\Reminders())->sendAll();
+});
+$router->post('/cron/send-campaigns', function () {
+    (new Api\Campaigns())->processScheduled();
+});
+$router->post('/cron/waitlist-process', function () {
+    (new Api\WaitlistProcess())->processAll();
+});
+$router->post('/cron/course-reminders', function () {
+    (new Api\CourseReminders())->sendAll();
+});
+$router->post('/cron/conversation-timeout', function () {
+    (new Api\ConversationTimeout())->processAll();
 });
 
 // Dispatch

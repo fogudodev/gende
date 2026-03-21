@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { STRIPE_PLANS, type PlanId } from "@/lib/stripe-plans";
 import { Crown, CheckCircle2, Loader2, Zap } from "lucide-react";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 
 interface UpgradeModalProps {
@@ -20,7 +20,7 @@ const UpgradeModal = ({ open, onOpenChange, requiredPlan, featureName }: Upgrade
     const priceId = billing === "annual" ? plan.priceIdAnnual : plan.priceId;
     setLoading(priceId);
     try {
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
+      const { data, error } = await api.functions.invoke("create-checkout", {
         body: { priceId },
       });
       if (error) throw error;

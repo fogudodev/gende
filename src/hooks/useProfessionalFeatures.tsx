@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 
 export type ProfessionalFeatureOverride = {
@@ -13,7 +13,7 @@ export const useAllProfessionalFeatures = () => {
   return useQuery({
     queryKey: ["professional-feature-overrides"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("professional_feature_overrides" as any)
         .select("*");
       if (error) throw error;
@@ -34,7 +34,7 @@ export const useToggleProfessionalFeature = () => {
       featureKey: string;
       enabled: boolean;
     }) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("professional_feature_overrides" as any)
         .upsert(
           {

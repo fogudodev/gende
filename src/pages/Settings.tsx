@@ -29,7 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useSubscription } from "@/hooks/useSubscription";
 import { useWhatsAppInstance, useWhatsAppAutomations, useToggleAutomation } from "@/hooks/useWhatsApp";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { STRIPE_PLANS, SETTINGS_SECTIONS } from "@/lib/stripe-plans";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
@@ -205,12 +205,12 @@ const SystemAppearanceSection = () => {
         toast.error("Máximo 5MB."); return;
       }
       const path = `${user.id}/logo.${ext}`;
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await api.storage
         .from("professionals").upload(path, file, { upsert: true, contentType: file.type });
       if (uploadError) throw uploadError;
-      const { data: urlData } = supabase.storage.from("professionals").getPublicUrl(path);
+      const { data: urlData } = api.storage.from("professionals").getPublicUrl(path);
       const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-      await supabase.from("professionals").update({ logo_url: publicUrl }).eq("id", professional.id);
+      await api.from("professionals").update({ logo_url: publicUrl }).eq("id", professional.id);
       setLogoUrl(publicUrl);
       qc.invalidateQueries({ queryKey: ["professional"] });
       toast.success("Logo atualizada!");
@@ -226,7 +226,7 @@ const SystemAppearanceSection = () => {
     if (!professional) return;
     setRemovingLogo(true);
     try {
-      await supabase.from("professionals").update({ logo_url: null }).eq("id", professional.id);
+      await api.from("professionals").update({ logo_url: null }).eq("id", professional.id);
       setLogoUrl("");
       qc.invalidateQueries({ queryKey: ["professional"] });
       toast.success("Logo removida");
@@ -241,7 +241,7 @@ const SystemAppearanceSection = () => {
     if (!professional) return;
     setSaving(true);
 
-    const { error } = await supabase
+    const { error } = await api
       .from("professionals")
       .update({
         business_name: businessName.trim(),
@@ -429,7 +429,7 @@ const WorkingHoursSection = () => {
 
   const saveAdvanceWeeks = async (weeks: number) => {
     if (!professional || weeks < 1 || weeks > 52) return;
-    const { error } = await supabase
+    const { error } = await api
       .from("professionals")
       .update({ booking_advance_weeks: weeks })
       .eq("id", professional.id);
@@ -863,7 +863,7 @@ const SubscriptionSection = () => {
   const handleCheckout = async (priceId: string) => {
     setLoadingCheckout(priceId);
     try {
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
+      const { data, error } = await api.functions.invoke("create-checkout", {
         body: { priceId },
       });
       if (error) throw error;
@@ -877,7 +877,7 @@ const SubscriptionSection = () => {
   const handlePortal = async () => {
     setLoadingPortal(true);
     try {
-      const { data, error } = await supabase.functions.invoke("customer-portal");
+      const { data, error } = await api.functions.invoke("customer-portal");
       if (error) throw error;
       if (data?.url) window.open(data.url, "_blank");
     } catch {
@@ -997,12 +997,12 @@ const WhatsAppSection = () => {
     setConnecting(true);
     try {
       const instanceName = `gende_${professional.id.slice(0, 8)}`;
-      const { data, error } = await supabase.functions.invoke("whatsapp", {
+      const { data, error } = await api.functions.invoke("whatsapp", {
         body: { action: "create-instance", instanceName, professionalId: professional.id },
       });
       if (error) throw error;
 
-      const { data: qrData } = await supabase.functions.invoke("whatsapp", {
+      const { data: qrData } = await api.functions.invoke("whatsapp", {
         body: { action: "get-qrcode", instanceName },
       });
       if (qrData?.base64) {
@@ -1021,7 +1021,7 @@ const WhatsAppSection = () => {
     if (!instance?.instance_name || !professional) return;
     setCheckingStatus(true);
     try {
-      const { data } = await supabase.functions.invoke("whatsapp", {
+      const { data } = await api.functions.invoke("whatsapp", {
         body: { action: "check-status", instanceName: instance.instance_name, professionalId: professional.id },
       });
       if (data?.instance?.state === "open") {
@@ -1152,7 +1152,7 @@ const SecuritySection = () => {
     }
 
     setSaving(true);
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    const { error } = await api.auth.updateUser({ password: newPassword });
     if (error) {
       toast.error(error.message);
     } else {

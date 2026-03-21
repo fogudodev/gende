@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useProfessional } from "./useProfessional";
 
 export type WaitlistOffer = {
@@ -25,7 +25,7 @@ export const useWaitlistOffers = (limit = 100) => {
   return useQuery({
     queryKey: ["waitlist-offers", professional?.id, limit],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("waitlist_offers" as any)
         .select("*")
         .eq("professional_id", professional!.id)

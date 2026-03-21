@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useCashRegisters } from "@/hooks/useCashRegister";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -56,7 +56,7 @@ const CashRegisterReport = ({ professionalId }: Props) => {
   const { data: selectedTransactions } = useQuery({
     queryKey: ["cash-transactions-report", selectedRegisterId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("cash_transactions")
         .select("*")
         .eq("cash_register_id", selectedRegisterId!)

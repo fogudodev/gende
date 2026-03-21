@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { useNotificationSound } from "@/hooks/useNotificationSound";
 import { format } from "date-fns";
@@ -32,7 +32,7 @@ export const useBookingNotifications = ({
   useEffect(() => {
     if (!enabled || !professionalId) return;
 
-    const channel = supabase
+    const channel = api
       .channel(`booking-notify-${professionalId}`)
       .on(
         "postgres_changes",
@@ -84,7 +84,7 @@ export const useBookingNotifications = ({
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      api.removeChannel(channel);
     };
   }, [professionalId, enabled, playNotificationSound]);
 };

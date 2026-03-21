@@ -1,7 +1,7 @@
 import { useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { useAllBookings, useAllProfessionals } from "@/hooks/useAdmin";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -24,7 +24,7 @@ const AdminBookings = () => {
     );
 
   const updateStatus = async (id: string, status: string) => {
-    const { error } = await supabase.from("bookings").update({ status: status as any }).eq("id", id);
+    const { error } = await api.from("bookings").update({ status: status as any }).eq("id", id);
     if (!error) {
       qc.invalidateQueries({ queryKey: ["admin-bookings"] });
       toast.success("Status atualizado");
@@ -33,7 +33,7 @@ const AdminBookings = () => {
 
   const deleteBooking = async (id: string) => {
     if (!confirm("Remover este agendamento?")) return;
-    const { error } = await supabase.from("bookings").delete().eq("id", id);
+    const { error } = await api.from("bookings").delete().eq("id", id);
     if (!error) {
       qc.invalidateQueries({ queryKey: ["admin-bookings"] });
       toast.success("Agendamento removido");

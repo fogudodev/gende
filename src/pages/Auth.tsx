@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 
 type AuthMode = "login" | "signup";
 
@@ -91,7 +91,7 @@ const Auth = () => {
     setLoading(false);
 
     // Send notification to admin WhatsApp (fire and forget)
-    supabase.functions.invoke("notify-signup", {
+    api.functions.invoke("notify-signup", {
       body: { name, businessName, email, phone },
     }).catch((err) => console.error("Notify signup error:", err));
   };

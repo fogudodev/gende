@@ -2,7 +2,7 @@ import { useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { useAllWhatsAppLogs } from "@/hooks/useAdmin";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { Loader2, MessageSquare, Calendar, Zap, Search, Filter, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -18,7 +18,7 @@ const useAdminBookingLogs = (limit = 200) => {
   return useQuery({
     queryKey: ["admin-booking-logs", limit],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("bookings")
         .select("id, status, client_name, client_phone, start_time, created_at, updated_at, google_calendar_event_id, professionals(name, business_name), services(name)")
         .order("updated_at", { ascending: false })
@@ -33,7 +33,7 @@ const useAdminGoogleCalendarLogs = () => {
   return useQuery({
     queryKey: ["admin-gcal-tokens"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("google_calendar_tokens")
         .select("*, professionals:professional_id(name, business_name)")
         .order("updated_at", { ascending: false });

@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCourses, useCourseEnrollments } from "@/hooks/useCourses";
 import { useProfessional } from "@/hooks/useProfessional";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { Award, Search, Download, Send, CheckCircle, Clock, FileText, Loader2 } from "lucide-react";
@@ -38,7 +38,7 @@ const CourseCertificates = () => {
   const certificates = useQuery({
     queryKey: ["course-certificates", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("course_certificates")
         .select("*, course_enrollments(student_name, student_email, student_phone, course_id, class_id, courses(name), course_classes(name, class_date))")
         .eq("professional_id", professional!.id)
@@ -65,7 +65,7 @@ const CourseCertificates = () => {
         status: "issued",
         issued_at: new Date().toISOString(),
       }));
-      const { error } = await supabase.from("course_certificates").insert(inserts);
+      const { error } = await api.from("course_certificates").insert(inserts);
       if (error) throw error;
     },
     onSuccess: () => {

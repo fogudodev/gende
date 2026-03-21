@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useProfessional } from "./useProfessional";
 
 export const useCampaigns = () => {
@@ -8,7 +8,7 @@ export const useCampaigns = () => {
   return useQuery({
     queryKey: ["campaigns", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("campaigns")
         .select("*")
         .eq("professional_id", professional!.id)
@@ -25,7 +25,7 @@ export const useCampaignLimits = () => {
   return useQuery({
     queryKey: ["campaign-limits", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("send-campaign", {
+      const { data, error } = await api.functions.invoke("send-campaign", {
         body: { action: "get-limits", professionalId: professional!.id },
       });
       if (error) throw error;
@@ -39,7 +39,7 @@ export const useSendCampaign = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (params: { professionalId: string; name: string; message: string; clientIds?: string[] }) => {
-      const { data, error } = await supabase.functions.invoke("send-campaign", {
+      const { data, error } = await api.functions.invoke("send-campaign", {
         body: { action: "create-campaign", ...params },
       });
       if (error) throw error;
@@ -58,7 +58,7 @@ export const useAddonPurchases = () => {
   return useQuery({
     queryKey: ["addon-purchases", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("addon_purchases")
         .select("*")
         .eq("professional_id", professional!.id)
@@ -74,7 +74,7 @@ export const useCampaignContacts = (campaignId: string | null) => {
   return useQuery({
     queryKey: ["campaign-contacts", campaignId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("campaign_contacts")
         .select("*")
         .eq("campaign_id", campaignId!)
@@ -90,7 +90,7 @@ export const usePlanLimits = () => {
   return useQuery({
     queryKey: ["plan-limits-all"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("plan_limits")
         .select("*")
         .order("plan_id");
@@ -105,7 +105,7 @@ export const useUpdatePlanLimits = () => {
   return useMutation({
     mutationFn: async (params: { id: string; daily_reminders: number; daily_campaigns: number; campaign_max_contacts: number; campaign_min_interval_hours: number }) => {
       const { id, ...updates } = params;
-      const { error } = await supabase
+      const { error } = await api
         .from("plan_limits")
         .update(updates)
         .eq("id", id);

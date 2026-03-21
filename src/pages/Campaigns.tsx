@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { getPackagesByType, type AddonType } from "@/lib/addon-packages";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -107,7 +107,7 @@ const Campaigns = () => {
       setVerifying(true);
       window.history.replaceState({}, "", window.location.pathname);
       try {
-        const { data, error } = await supabase.functions.invoke("purchase-addon", {
+        const { data, error } = await api.functions.invoke("purchase-addon", {
           body: { action: "verify-payment", sessionId, professionalId: professional.id },
         });
         if (error) throw error;
@@ -132,7 +132,7 @@ const Campaigns = () => {
     if (!professional) return;
     setBuyingAddon(priceId);
     try {
-      const { data, error } = await supabase.functions.invoke("purchase-addon", {
+      const { data, error } = await api.functions.invoke("purchase-addon", {
         body: { action: "create-checkout", priceId, professionalId: professional.id },
       });
       if (error) throw error;

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useAuth } from "./useAuth";
 
 export interface ReceptionEmployee {
@@ -18,7 +18,7 @@ export const useReceptionEmployee = () => {
   return useQuery({
     queryKey: ["reception-employee", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("salon_employees")
         .select("*")
         .eq("user_id", user!.id)

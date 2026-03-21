@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useQuery } from "@tanstack/react-query";
 import { useProfessionalLimits, useUpsertProfessionalLimits, useDeleteProfessionalLimits } from "@/hooks/useProfessionalLimits";
 import { toast } from "sonner";
@@ -23,7 +23,7 @@ const AdminProfessionalLimits = () => {
   const { data: professionals, isLoading: loadingPros } = useQuery({
     queryKey: ["admin-professionals-list"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("professionals")
         .select("id, name, email, business_name, account_type")
         .order("name");

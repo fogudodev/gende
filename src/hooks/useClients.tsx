@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useProfessional } from "./useProfessional";
 import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
@@ -9,7 +9,7 @@ export const useClients = () => {
   return useQuery({
     queryKey: ["clients", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("clients")
         .select("*")
         .eq("professional_id", professional!.id)
@@ -27,7 +27,7 @@ export const useCreateClient = () => {
 
   return useMutation({
     mutationFn: async (client: Omit<TablesInsert<"clients">, "professional_id">) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("clients")
         .insert({ ...client, professional_id: professional!.id })
         .select()
@@ -44,7 +44,7 @@ export const useUpdateClient = () => {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: TablesUpdate<"clients"> & { id: string }) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("clients")
         .update(updates)
         .eq("id", id)
@@ -62,7 +62,7 @@ export const useDeleteClient = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("clients").delete().eq("id", id);
+      const { error } = await api.from("clients").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["clients"] }),

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useProfessional } from "./useProfessional";
 import { toast } from "sonner";
 
@@ -19,7 +19,7 @@ export const useExpenses = (startDate?: string, endDate?: string) => {
   return useQuery({
     queryKey: ["expenses", professional?.id, startDate, endDate],
     queryFn: async () => {
-      let query = supabase
+      let query = api
         .from("expenses")
         .select("*")
         .eq("professional_id", professional!.id)
@@ -39,7 +39,7 @@ export const useCreateExpense = () => {
   const { data: professional } = useProfessional();
   return useMutation({
     mutationFn: async (expense: Omit<Expense, "id" | "professional_id" | "created_at"> & { updated_at?: string }) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("expenses")
         .insert({ ...expense, professional_id: professional!.id })
         .select()
@@ -56,7 +56,7 @@ export const useDeleteExpense = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("expenses").delete().eq("id", id);
+      const { error } = await api.from("expenses").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["expenses"] }); toast.success("Despesa removida!"); },

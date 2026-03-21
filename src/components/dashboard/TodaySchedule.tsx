@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Clock } from "lucide-react";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { startOfDay, endOfDay, format } from "date-fns";
 
 const statusStyles: Record<string, string> = {
@@ -28,7 +28,7 @@ const TodaySchedule = () => {
     queryKey: ["today-schedule", professional?.id],
     queryFn: async () => {
       const now = new Date();
-      const { data } = await supabase
+      const { data } = await api
         .from("bookings")
         .select("id, start_time, client_name, status, services(name)")
         .eq("professional_id", professional!.id)

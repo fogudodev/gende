@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 
 const InstagramCallback = () => {
@@ -24,7 +24,7 @@ const InstagramCallback = () => {
       try {
         const {
           data: { session },
-        } = await supabase.auth.getSession();
+        } = await api.auth.getSession();
 
         if (!session?.access_token) {
           if (window.opener && !window.opener.closed) {
@@ -41,7 +41,7 @@ const InstagramCallback = () => {
         }
 
         const redirectUri = `${window.location.origin}/instagram-callback`;
-        const { data, error } = await supabase.functions.invoke("instagram-oauth", {
+        const { data, error } = await api.functions.invoke("instagram-oauth", {
           body: { action: "exchange_code", code, redirect_uri: redirectUri },
           headers: {
             Authorization: `Bearer ${session.access_token}`,

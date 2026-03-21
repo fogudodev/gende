@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useProfessional } from "./useProfessional";
 import type { TablesUpdate } from "@/integrations/supabase/types";
 
@@ -9,7 +9,7 @@ export const useWhatsAppInstance = () => {
   return useQuery({
     queryKey: ["whatsapp-instance", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("whatsapp_instances")
         .select("*")
         .eq("professional_id", professional!.id)
@@ -27,7 +27,7 @@ export const useWhatsAppAutomations = () => {
   return useQuery({
     queryKey: ["whatsapp-automations", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("whatsapp_automations")
         .select("*")
         .eq("professional_id", professional!.id);
@@ -43,7 +43,7 @@ export const useToggleAutomation = () => {
 
   return useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("whatsapp_automations")
         .update({ is_active })
         .eq("id", id);
@@ -59,7 +59,7 @@ export const useWhatsAppLogs = (limit = 50) => {
   return useQuery({
     queryKey: ["whatsapp-logs", professional?.id, limit],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("whatsapp_logs")
         .select("*")
         .eq("professional_id", professional!.id)
@@ -82,7 +82,7 @@ export const triggerWhatsAppAutomation = async (
   triggerType: string
 ) => {
   try {
-    const { data, error } = await supabase.functions.invoke("whatsapp", {
+    const { data, error } = await api.functions.invoke("whatsapp", {
       body: {
         action: "trigger-automation",
         professionalId,

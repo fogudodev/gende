@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useProfessional } from "./useProfessional";
 import { toast } from "sonner";
 
@@ -22,7 +22,7 @@ export const useProducts = () => {
   return useQuery({
     queryKey: ["products", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("products")
         .select("*")
         .eq("professional_id", professional!.id)
@@ -39,7 +39,7 @@ export const useCreateProduct = () => {
   const { data: professional } = useProfessional();
   return useMutation({
     mutationFn: async (product: { name: string; description?: string; price?: number; cost_price?: number; stock_quantity?: number; is_active?: boolean; category?: string }) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("products")
         .insert({ ...product, professional_id: professional!.id })
         .select()
@@ -56,7 +56,7 @@ export const useUpdateProduct = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Product> & { id: string }) => {
-      const { data, error } = await supabase.from("products").update(updates).eq("id", id).select().single();
+      const { data, error } = await api.from("products").update(updates).eq("id", id).select().single();
       if (error) throw error;
       return data;
     },
@@ -69,7 +69,7 @@ export const useDeleteProduct = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("products").delete().eq("id", id);
+      const { error } = await api.from("products").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["products"] }); toast.success("Produto removido!"); },

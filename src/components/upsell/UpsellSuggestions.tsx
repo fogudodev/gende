@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { Sparkles, Plus, Check } from "lucide-react";
 
 type Service = {
@@ -48,7 +48,7 @@ const UpsellSuggestions = ({
       setLoading(true);
 
       // First try: manual rules from DB
-      const { data: rules } = await supabase
+      const { data: rules } = await api
         .from("upsell_rules" as any)
         .select("id, recommended_service_id, promo_message, promo_price, priority")
         .eq("professional_id", professionalId)
@@ -91,7 +91,7 @@ const UpsellSuggestions = ({
 
       // Fallback: AI-based suggestions via edge function
       try {
-        const { data, error } = await supabase.functions.invoke("upsell-suggest", {
+        const { data, error } = await api.functions.invoke("upsell-suggest", {
           body: { professionalId, sourceServiceId },
         });
 
@@ -117,7 +117,7 @@ const UpsellSuggestions = ({
 
     const trackSuggestionEvents = async (items: Suggestion[]) => {
       for (const item of items) {
-        await supabase.from("upsell_events" as any).insert({
+        await api.from("upsell_events" as any).insert({
           professional_id: professionalId,
           source_service_id: sourceServiceId,
           recommended_service_id: item.id,

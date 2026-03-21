@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useProfessional } from "./useProfessional";
 import { toast } from "sonner";
 
@@ -39,7 +39,7 @@ export const useServicePackages = () => {
   return useQuery({
     queryKey: ["service-packages", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("service_packages" as any)
         .select("*")
         .eq("professional_id", professional!.id)
@@ -56,7 +56,7 @@ export const useClientPackages = () => {
   return useQuery({
     queryKey: ["client-packages", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("client_packages" as any)
         .select("*")
         .eq("professional_id", professional!.id)
@@ -73,7 +73,7 @@ export const useCreateServicePackage = () => {
   const { data: professional } = useProfessional();
   return useMutation({
     mutationFn: async (pkg: Omit<ServicePackage, "id" | "professional_id" | "created_at" | "updated_at">) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("service_packages" as any)
         .insert({ ...pkg, professional_id: professional!.id } as any);
       if (error) throw error;
@@ -90,7 +90,7 @@ export const useUpdateServicePackage = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<ServicePackage> & { id: string }) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("service_packages" as any)
         .update({ ...updates, updated_at: new Date().toISOString() } as any)
         .eq("id", id);
@@ -108,7 +108,7 @@ export const useDeleteServicePackage = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("service_packages" as any)
         .delete()
         .eq("id", id);
@@ -127,7 +127,7 @@ export const useCreateClientPackage = () => {
   const { data: professional } = useProfessional();
   return useMutation({
     mutationFn: async (cp: Omit<ClientPackage, "id" | "professional_id" | "created_at" | "updated_at">) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("client_packages" as any)
         .insert({ ...cp, professional_id: professional!.id } as any);
       if (error) throw error;
@@ -144,7 +144,7 @@ export const useUpdateClientPackage = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<ClientPackage> & { id: string }) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("client_packages" as any)
         .update({ ...updates, updated_at: new Date().toISOString() } as any)
         .eq("id", id);

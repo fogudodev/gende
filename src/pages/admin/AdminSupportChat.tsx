@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useAllProfessionals } from "@/hooks/useAdmin";
 import { useChatNotifications } from "@/hooks/useChatNotifications";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -31,7 +31,7 @@ const AdminSupportChat = () => {
   const { data: conversations } = useQuery({
     queryKey: ["admin-support-conversations"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("chat_messages")
         .select("professional_id, created_at")
         .eq("chat_type", "support")
@@ -50,7 +50,7 @@ const AdminSupportChat = () => {
   const { data: messages, isLoading: loadingMessages } = useQuery({
     queryKey: ["admin-support-chat", selectedProfId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("chat_messages")
         .select("*")
         .eq("professional_id", selectedProfId!)
@@ -69,7 +69,7 @@ const AdminSupportChat = () => {
 
   const sendMessage = useMutation({
     mutationFn: async (params: { message?: string; attachment_url?: string }) => {
-      const { error } = await supabase.from("chat_messages").insert({
+      const { error } = await api.from("chat_messages").insert({
         professional_id: selectedProfId!,
         sender_role: "support",
         sender_name: "Admin",
@@ -98,9 +98,9 @@ const AdminSupportChat = () => {
     try {
       const ext = file.name.split(".").pop();
       const path = `admin/suporte/${selectedProfId}/${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from("professionals").upload(path, file, { upsert: true });
+      const { error: uploadError } = await api.storage.from("professionals").upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
-      const { data: urlData } = supabase.storage.from("professionals").getPublicUrl(path);
+      const { data: urlData } = api.storage.from("professionals").getPublicUrl(path);
       await sendMessage.mutateAsync({ message: "📎 Arquivo enviado", attachment_url: urlData.publicUrl });
     } catch { toast.error("Erro ao enviar arquivo"); }
     setUploading(false);

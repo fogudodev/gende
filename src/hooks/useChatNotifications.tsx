@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { useNotificationSound } from "@/hooks/useNotificationSound";
 
@@ -55,7 +55,7 @@ export const useChatNotifications = ({
     };
     if (filter) channelConfig.filter = filter;
 
-    const channel = supabase
+    const channel = api
       .channel(channelName)
       .on("postgres_changes", channelConfig, (payload: any) => {
         const newMsg = payload.new;
@@ -105,7 +105,7 @@ export const useChatNotifications = ({
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      api.removeChannel(channel);
     };
   }, [viewerRole, professionalId, chatType, enabled]);
 };

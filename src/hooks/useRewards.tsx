@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useProfessional } from "./useProfessional";
 import { toast } from "sonner";
 
@@ -118,7 +118,7 @@ export const useLoyaltyConfig = () => {
   return useQuery({
     queryKey: ["loyalty-config", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("loyalty_config" as any)
         .select("*")
         .eq("professional_id", professional!.id)
@@ -135,7 +135,7 @@ export const useSaveLoyaltyConfig = () => {
   const { data: professional } = useProfessional();
   return useMutation({
     mutationFn: async (config: Partial<LoyaltyConfig>) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("loyalty_config" as any)
         .upsert(
           { ...config, professional_id: professional!.id, updated_at: new Date().toISOString() } as any,
@@ -156,7 +156,7 @@ export const useCashbackRules = () => {
   return useQuery({
     queryKey: ["cashback-rules", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("cashback_rules" as any)
         .select("*")
         .eq("professional_id", professional!.id)
@@ -173,7 +173,7 @@ export const useCreateCashbackRule = () => {
   const { data: professional } = useProfessional();
   return useMutation({
     mutationFn: async (rule: Partial<CashbackRule>) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("cashback_rules" as any)
         .insert({ ...rule, professional_id: professional!.id } as any);
       if (error) throw error;
@@ -190,7 +190,7 @@ export const useToggleCashbackRule = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("cashback_rules" as any)
         .update({ is_active } as any)
         .eq("id", id);
@@ -206,7 +206,7 @@ export const useDeleteCashbackRule = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("cashback_rules" as any)
         .delete()
         .eq("id", id);
@@ -225,7 +225,7 @@ export const useClientCashbacks = () => {
   return useQuery({
     queryKey: ["client-cashbacks", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("client_cashback" as any)
         .select("*")
         .eq("professional_id", professional!.id)
@@ -242,7 +242,7 @@ export const useCashbackTransactions = () => {
   return useQuery({
     queryKey: ["cashback-transactions", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("cashback_transactions" as any)
         .select("*")
         .eq("professional_id", professional!.id)
@@ -260,7 +260,7 @@ export const useLoyaltyLevels = () => {
   return useQuery({
     queryKey: ["loyalty-levels", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("loyalty_levels" as any)
         .select("*")
         .eq("professional_id", professional!.id)
@@ -277,7 +277,7 @@ export const useCreateLoyaltyLevel = () => {
   const { data: professional } = useProfessional();
   return useMutation({
     mutationFn: async (level: Partial<LoyaltyLevel>) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("loyalty_levels" as any)
         .insert({ ...level, professional_id: professional!.id } as any);
       if (error) throw error;
@@ -294,7 +294,7 @@ export const useDeleteLoyaltyLevel = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("loyalty_levels" as any)
         .delete()
         .eq("id", id);
@@ -313,7 +313,7 @@ export const useClientLoyalties = () => {
   return useQuery({
     queryKey: ["client-loyalties", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("client_loyalty" as any)
         .select("*")
         .eq("professional_id", professional!.id)
@@ -330,7 +330,7 @@ export const useClientReferrals = () => {
   return useQuery({
     queryKey: ["client-referrals", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("client_referrals" as any)
         .select("*")
         .eq("professional_id", professional!.id)
@@ -347,7 +347,7 @@ export const useLoyaltyChallenges = () => {
   return useQuery({
     queryKey: ["loyalty-challenges", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("loyalty_challenges" as any)
         .select("*")
         .eq("professional_id", professional!.id)
@@ -364,7 +364,7 @@ export const useCreateChallenge = () => {
   const { data: professional } = useProfessional();
   return useMutation({
     mutationFn: async (challenge: Partial<LoyaltyChallenge>) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("loyalty_challenges" as any)
         .insert({ ...challenge, professional_id: professional!.id } as any);
       if (error) throw error;
@@ -381,7 +381,7 @@ export const useToggleChallenge = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("loyalty_challenges" as any)
         .update({ is_active } as any)
         .eq("id", id);
@@ -397,7 +397,7 @@ export const useDeleteChallenge = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("loyalty_challenges" as any)
         .delete()
         .eq("id", id);
@@ -416,7 +416,7 @@ export const useChallengeProgress = () => {
   return useQuery({
     queryKey: ["challenge-progress", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("challenge_progress" as any)
         .select("*")
         .eq("professional_id", professional!.id);

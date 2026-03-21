@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { CalendarIcon, Loader2, CheckCircle2, XCircle, RefreshCw, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { toast } from "sonner";
@@ -28,10 +28,10 @@ export const GoogleCalendarSection = () => {
     if (!professional) return;
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await api.auth.getSession();
       if (!session) return;
 
-      const { data, error } = await supabase.functions.invoke("google-calendar-auth", {
+      const { data, error } = await api.functions.invoke("google-calendar-auth", {
         body: { action: "status" },
       });
 
@@ -52,7 +52,7 @@ export const GoogleCalendarSection = () => {
   const handleConnect = async () => {
     setConnecting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("google-calendar-auth", {
+      const { data, error } = await api.functions.invoke("google-calendar-auth", {
         body: { action: "get_auth_url" },
       });
       if (error) throw error;
@@ -74,7 +74,7 @@ export const GoogleCalendarSection = () => {
   const handleDisconnect = async () => {
     setDisconnecting(true);
     try {
-      const { error } = await supabase.functions.invoke("google-calendar-auth", {
+      const { error } = await api.functions.invoke("google-calendar-auth", {
         body: { action: "disconnect" },
       });
       if (error) throw error;
@@ -91,7 +91,7 @@ export const GoogleCalendarSection = () => {
     if (!professional) return;
     setImporting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("google-calendar-sync", {
+      const { data, error } = await api.functions.invoke("google-calendar-sync", {
         body: { action: "import_events", professional_id: professional.id },
       });
       if (error) throw error;

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -37,21 +37,21 @@ export const useUnreadMessages = () => {
       const supportLastSeen = getLastSeen("support");
 
       const [{ count: paymentCount }, { count: supportCount }, { data: recentPayment }, { data: recentSupport }] = await Promise.all([
-        supabase
+        api
           .from("chat_messages")
           .select("*", { count: "exact", head: true })
           .eq("professional_id", professional.id)
           .eq("chat_type", "payment")
           .neq("sender_role", "user")
           .gt("created_at", paymentLastSeen),
-        supabase
+        api
           .from("chat_messages")
           .select("*", { count: "exact", head: true })
           .eq("professional_id", professional.id)
           .eq("chat_type", "support")
           .neq("sender_role", "user")
           .gt("created_at", supportLastSeen),
-        supabase
+        api
           .from("chat_messages")
           .select("id, message, sender_name, chat_type, created_at, attachment_url")
           .eq("professional_id", professional.id)
@@ -60,7 +60,7 @@ export const useUnreadMessages = () => {
           .gt("created_at", paymentLastSeen)
           .order("created_at", { ascending: false })
           .limit(5),
-        supabase
+        api
           .from("chat_messages")
           .select("id, message, sender_name, chat_type, created_at, attachment_url")
           .eq("professional_id", professional.id)
@@ -106,7 +106,7 @@ export const useUnreadMessages = () => {
 
   useEffect(() => {
     if (!professional?.id) return;
-    const channel = supabase
+    const channel = api
       .channel("unread-counter")
       .on(
         "postgres_changes",
@@ -123,7 +123,7 @@ export const useUnreadMessages = () => {
         }
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => { api.removeChannel(channel); };
   }, [professional?.id, qc]);
 
   return { unreadCount, unreadPayment, unreadSupport, recentMessages, markAsSeen, markAllAsSeen };

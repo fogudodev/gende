@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 
 export type FeatureFlag = {
@@ -17,7 +17,7 @@ export const useFeatureFlags = () => {
   return useQuery({
     queryKey: ["feature-flags"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("feature_flags" as any)
         .select("*")
         .order("category", { ascending: true });
@@ -37,7 +37,7 @@ export const useToggleFeatureFlag = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, enabled }: { id: string; enabled: boolean }) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("feature_flags" as any)
         .update({ enabled, updated_at: new Date().toISOString() } as any)
         .eq("id", id);

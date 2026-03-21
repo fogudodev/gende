@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useProfessional } from "./useProfessional";
 import { toast } from "sonner";
 
@@ -19,7 +19,7 @@ export const useWaitlistSettings = () => {
   return useQuery({
     queryKey: ["waitlist-settings", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("waitlist_settings" as any)
         .select("*")
         .eq("professional_id", professional!.id)
@@ -37,7 +37,7 @@ export const useUpsertWaitlistSettings = () => {
 
   return useMutation({
     mutationFn: async (settings: Partial<WaitlistSettings>) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("waitlist_settings" as any)
         .upsert({
           professional_id: professional!.id,

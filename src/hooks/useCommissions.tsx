@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useProfessional } from "./useProfessional";
 import { toast } from "sonner";
 
@@ -21,7 +21,7 @@ export const useCommissions = (employeeId?: string, status?: string) => {
   return useQuery({
     queryKey: ["commissions", professional?.id, employeeId, status],
     queryFn: async () => {
-      let query = supabase
+      let query = api
         .from("commissions")
         .select("*")
         .eq("professional_id", professional!.id)
@@ -41,7 +41,7 @@ export const useCreateCommission = () => {
   const { data: professional } = useProfessional();
   return useMutation({
     mutationFn: async (commission: Omit<Commission, "id" | "professional_id" | "created_at" | "paid_at">) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("commissions")
         .insert({ ...commission, professional_id: professional!.id })
         .select()
@@ -49,7 +49,7 @@ export const useCreateCommission = () => {
       if (error) throw error;
 
       // Send WhatsApp notification (fire-and-forget)
-      supabase.functions.invoke("whatsapp", {
+      api.functions.invoke("whatsapp", {
         body: {
           action: "notify-commission",
           professionalId: professional!.id,
@@ -73,13 +73,13 @@ export const usePayCommission = () => {
   return useMutation({
     mutationFn: async (ids: string[]) => {
       // Get commissions to calculate totals per employee
-      const { data: comms, error: fetchErr } = await supabase
+      const { data: comms, error: fetchErr } = await api
         .from("commissions")
         .select("employee_id, commission_amount")
         .in("id", ids);
       if (fetchErr) throw fetchErr;
 
-      const { error } = await supabase
+      const { error } = await api
         .from("commissions")
         .update({ status: "paid", paid_at: new Date().toISOString() })
         .in("id", ids);
@@ -94,7 +94,7 @@ export const usePayCommission = () => {
 
         // Send payment notifications (fire-and-forget, one per employee)
         for (const [empId, total] of Object.entries(empTotals)) {
-          supabase.functions.invoke("whatsapp", {
+          api.functions.invoke("whatsapp", {
             body: {
               action: "notify-commission-paid",
               professionalId: professional.id,

@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useCourses, useCourseClasses } from "@/hooks/useCourses";
 import { useProfessional } from "@/hooks/useProfessional";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { Clock, Search, Users, Bell, TrendingUp, Lightbulb, UserPlus, Trash2, Loader2, AlertTriangle, Sparkles, Copy, MessageCircle } from "lucide-react";
@@ -28,7 +28,7 @@ const CourseWaitlist = () => {
   const waitlist = useQuery({
     queryKey: ["course-waitlist", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("course_waitlist")
         .select("*, course_classes(name, class_date, course_id, max_students, enrolled_count, courses(name))")
         .eq("professional_id", professional!.id)
@@ -41,7 +41,7 @@ const CourseWaitlist = () => {
 
   const removeFromWaitlist = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("course_waitlist").delete().eq("id", id);
+      const { error } = await api.from("course_waitlist").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -52,7 +52,7 @@ const CourseWaitlist = () => {
 
   const markNotified = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("course_waitlist")
         .update({ notified: true })
         .eq("id", id);

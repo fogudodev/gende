@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +38,7 @@ const PublicCourses = () => {
     const load = async () => {
       setLoading(true);
       // Find professional by slug
-      const { data: prof } = await supabase
+      const { data: prof } = await api
         .from("professionals")
         .select("*")
         .eq("slug", slug)
@@ -47,7 +47,7 @@ const PublicCourses = () => {
       setProfessional(prof);
 
       // Load active courses
-      const { data: courseData } = await supabase
+      const { data: courseData } = await api
         .from("courses")
         .select("*")
         .eq("professional_id", prof.id)
@@ -56,7 +56,7 @@ const PublicCourses = () => {
       setCourses(courseData || []);
 
       // Load open classes
-      const { data: classData } = await supabase
+      const { data: classData } = await api
         .from("course_classes")
         .select("*")
         .eq("professional_id", prof.id)
@@ -74,7 +74,7 @@ const PublicCourses = () => {
     setSubmitting(true);
 
     // Use atomic RPC to prevent overbooking
-    const { data: result, error } = await supabase.rpc("enroll_student_in_class" as any, {
+    const { data: result, error } = await api.rpc("enroll_student_in_class" as any, {
       p_professional_id: professional.id,
       p_course_id: selectedCourse.id,
       p_class_id: selectedClass.id,

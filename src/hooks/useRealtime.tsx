@@ -13,7 +13,7 @@
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { isPhpBackend } from "@/lib/backend-config";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { phpRealtime } from "@/lib/php-realtime";
 
 interface RealtimeOptions {
@@ -62,7 +62,7 @@ export function useRealtime(
       };
     } else {
       // Supabase Realtime
-      const channel = supabase
+      const channel = api
         .channel(`${table}-changes`)
         .on(
           "postgres_changes" as any,
@@ -72,7 +72,7 @@ export function useRealtime(
         .subscribe();
 
       return () => {
-        supabase.removeChannel(channel);
+        api.removeChannel(channel);
       };
     }
   }, [table, event, schema, queryClient, invalidateKeys]);

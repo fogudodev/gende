@@ -14,7 +14,7 @@ import {
   useAllPayments, useAllWhatsAppInstances,
 } from "@/hooks/useAdmin";
 import { usePlanLimits, useUpdatePlanLimits } from "@/hooks/useCampaigns";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -139,7 +139,7 @@ const ProfessionalsSection = () => {
     } else {
       updates.blocked_reason = "";
     }
-    const { error } = await supabase.from("professionals").update(updates).eq("id", profId);
+    const { error } = await api.from("professionals").update(updates).eq("id", profId);
     if (!error) {
       qc.invalidateQueries({ queryKey: ["admin-professionals"] });
       toast.success(currentlyBlocked ? "Profissional desbloqueado" : "Profissional bloqueado");
@@ -148,7 +148,7 @@ const ProfessionalsSection = () => {
   };
 
   const toggleFeature = async (profId: string, feature: string, currentValue: boolean) => {
-    const { error } = await supabase
+    const { error } = await api
       .from("professionals")
       .update({ [feature]: !currentValue } as any)
       .eq("id", profId);
@@ -329,7 +329,7 @@ const BookingsSection = () => {
   );
 
   const updateStatus = async (id: string, status: string) => {
-    const { error } = await supabase.from("bookings").update({ status: status as any }).eq("id", id);
+    const { error } = await api.from("bookings").update({ status: status as any }).eq("id", id);
     if (!error) {
       qc.invalidateQueries({ queryKey: ["admin-bookings"] });
       toast.success("Status atualizado");
@@ -337,7 +337,7 @@ const BookingsSection = () => {
   };
 
   const deleteBooking = async (id: string) => {
-    const { error } = await supabase.from("bookings").delete().eq("id", id);
+    const { error } = await api.from("bookings").delete().eq("id", id);
     if (!error) {
       qc.invalidateQueries({ queryKey: ["admin-bookings"] });
       toast.success("Agendamento removido");

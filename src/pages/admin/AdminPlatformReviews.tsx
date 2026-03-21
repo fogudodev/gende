@@ -1,7 +1,7 @@
 import { useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { Star, Loader2, MessageSquare, Trash2, Search } from "lucide-react";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
@@ -24,7 +24,7 @@ const AdminPlatformReviews = () => {
   const { data: reviews, isLoading } = useQuery({
     queryKey: ["admin-platform-reviews"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("platform_reviews")
         .select("*, professionals:professional_id(name, business_name)")
         .order("created_at", { ascending: false });
@@ -35,7 +35,7 @@ const AdminPlatformReviews = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("platform_reviews").delete().eq("id", id);
+      const { error } = await api.from("platform_reviews").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

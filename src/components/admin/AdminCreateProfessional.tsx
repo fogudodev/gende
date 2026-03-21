@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, User, Building2, ArrowRight, Loader2, Eye, EyeOff, MessageSquare } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,11 +39,11 @@ const AdminCreateProfessional = ({ open, onClose, onCreated }: Props) => {
     setLoading(true);
 
     try {
-      const { data: session } = await supabase.auth.getSession();
+      const { data: session } = await api.auth.getSession();
       const token = session?.session?.access_token;
       if (!token) throw new Error("Não autenticado");
 
-      const res = await supabase.functions.invoke("admin-create-professional", {
+      const res = await api.functions.invoke("admin-create-professional", {
         body: { name, email, phone, password, accountType, businessName },
       });
 

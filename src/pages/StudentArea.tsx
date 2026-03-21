@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,7 +49,7 @@ const StudentArea = () => {
     if (!e.trim() && !p.trim()) return;
     setLoading(true);
 
-    let query = supabase
+    let query = api
       .from("course_enrollments")
       .select("*, courses(name, short_description, modality, workload_hours, has_certificate, cover_image_url, professional_id, syllabus, materials_included), course_classes(name, class_date, start_time, end_time, location, modality, online_link, status)")
       .in("enrollment_status", ["confirmed", "pending"]);
@@ -73,7 +73,7 @@ const StudentArea = () => {
     // Load professional info
     const profId = data[0].courses?.professional_id;
     if (profId) {
-      const { data: prof } = await supabase
+      const { data: prof } = await api
         .from("professionals")
         .select("name, business_name, logo_url, phone, primary_color")
         .eq("id", profId)
@@ -84,7 +84,7 @@ const StudentArea = () => {
     // Load materials for enrolled courses
     const courseIds = [...new Set(data.map((d: any) => d.course_id))];
     if (courseIds.length > 0) {
-      const { data: mats } = await supabase
+      const { data: mats } = await api
         .from("course_materials")
         .select("*")
         .in("course_id", courseIds)
@@ -95,7 +95,7 @@ const StudentArea = () => {
     // Load certificates
     const enrollmentIds = data.map((d: any) => d.id);
     if (enrollmentIds.length > 0) {
-      const { data: certs } = await supabase
+      const { data: certs } = await api
         .from("course_certificates")
         .select("*")
         .in("enrollment_id", enrollmentIds);
