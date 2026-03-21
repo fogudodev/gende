@@ -14,7 +14,7 @@ import {
   useAllPayments, useAllWhatsAppInstances,
 } from "@/hooks/useAdmin";
 import { usePlanLimits, useUpdatePlanLimits } from "@/hooks/useCampaigns";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";

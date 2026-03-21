@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Users, CalendarDays, Building2, DollarSign, Crown, Loader2, TrendingUp, MessageSquare, Key } from "lucide-react";
 import { useAllWhatsAppInstances } from "@/hooks/useAdmin";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";

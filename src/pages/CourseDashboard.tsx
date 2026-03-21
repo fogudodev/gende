@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useCourses, useCourseClasses, useCourseEnrollments } from "@/hooks/useCourses";
 import { useProfessional } from "@/hooks/useProfessional";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useQuery } from "@tanstack/react-query";
 import { GraduationCap, Calendar, Users, DollarSign, TrendingUp, AlertTriangle, Zap, Sparkles, Lightbulb, Target, Copy, MessageCircle, Clock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";

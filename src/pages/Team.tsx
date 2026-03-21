@@ -14,7 +14,7 @@ import { Plus, Pencil, Trash2, UserPlus, Users } from "lucide-react";
 import EmployeeServiceAssignment from "@/components/team/EmployeeServiceAssignment";
 import EmployeeWorkingHours from "@/components/team/EmployeeWorkingHours";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 
 const Team = () => {
   const { data: professional } = useProfessional();

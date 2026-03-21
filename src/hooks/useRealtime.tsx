@@ -13,7 +13,7 @@
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { isPhpBackend } from "@/lib/backend-config";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { phpRealtime } from "@/lib/php-realtime";
 
 interface RealtimeOptions {

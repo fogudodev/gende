@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 
 /**
  * Trigger a course-specific WhatsApp automation.

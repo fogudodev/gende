@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useAllProfessionals } from "@/hooks/useAdmin";
 import { useChatNotifications } from "@/hooks/useChatNotifications";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";

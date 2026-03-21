@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { STRIPE_PLANS, type PlanId } from "@/lib/stripe-plans";
 import { Crown, CheckCircle2, Loader2, Zap, CreditCard, QrCode, Copy, Check, Clock, MessageSquare } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
 import { Progress } from "@/components/ui/progress";

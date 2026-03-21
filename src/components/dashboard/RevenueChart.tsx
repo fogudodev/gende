@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { startOfDay, subDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useMemo } from "react";

@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCourses, useCourseEnrollments } from "@/hooks/useCourses";
 import { useProfessional } from "@/hooks/useProfessional";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { Award, Search, Download, Send, CheckCircle, Clock, FileText, Loader2 } from "lucide-react";

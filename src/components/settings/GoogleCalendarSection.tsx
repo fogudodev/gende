@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { CalendarIcon, Loader2, CheckCircle2, XCircle, RefreshCw, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { toast } from "sonner";

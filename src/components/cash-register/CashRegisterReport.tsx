@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useCashRegisters } from "@/hooks/useCashRegister";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

@@ -15,7 +15,7 @@ import {
   useInstagramStats,
 } from "@/hooks/useInstagram";
 import { useProfessional } from "@/hooks/useProfessional";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import {
   Instagram,
   Loader2,

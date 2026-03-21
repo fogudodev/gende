@@ -1,7 +1,7 @@
 import { useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { Star, Loader2, MessageSquare, Trash2, Search } from "lucide-react";
 import { format } from "date-fns";
 import { motion } from "framer-motion";

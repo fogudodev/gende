@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useQuery } from "@tanstack/react-query";
 import { useProfessionalLimits, useUpsertProfessionalLimits, useDeleteProfessionalLimits } from "@/hooks/useProfessionalLimits";
 import { toast } from "sonner";

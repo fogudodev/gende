@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { motion } from "framer-motion";
 import { Search, MessageSquare, Clock, Send, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";

@@ -5,7 +5,7 @@ import { MessageCircle, Zap, Clock, CheckCircle2, Send, ToggleLeft, ToggleRight,
 import sitemapIcon from "@/assets/icon-sitemap.svg?url";
 import { useWhatsAppInstance, useWhatsAppAutomations, useToggleAutomation, useWhatsAppLogs } from "@/hooks/useWhatsApp";
 import { useProfessional } from "@/hooks/useProfessional";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";

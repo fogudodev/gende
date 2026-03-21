@@ -5,7 +5,7 @@ import { useSalonEmployees } from "@/hooks/useSalonEmployees";
 import { usePaymentConfig } from "@/hooks/usePaymentConfig";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { format } from "date-fns";
 import { Clock, User, Scissors, DollarSign, CreditCard, Banknote, Smartphone, CheckCircle2, FileText } from "lucide-react";
 import jsPDF from "jspdf";

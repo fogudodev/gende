@@ -2,7 +2,7 @@ import { useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { useAllWhatsAppLogs } from "@/hooks/useAdmin";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { Loader2, MessageSquare, Calendar, Zap, Search, Filter, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
