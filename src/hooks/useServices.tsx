@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { useProfessional } from "./useProfessional";
-import type { TablesInsert, TablesUpdate } from "@/integrations/api/types";
+import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
 export const useServices = () => {
   const { data: professional } = useProfessional();

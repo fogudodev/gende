@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { useProfessional } from "./useProfessional";
-import type { Tables, TablesInsert } from "@/integrations/api/types";
+import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 
 export type BlockedTime = Tables<"blocked_times">;
 

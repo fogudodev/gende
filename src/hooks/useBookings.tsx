@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { useProfessional } from "./useProfessional";
-import type { TablesInsert, TablesUpdate } from "@/integrations/api/types";
+import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek } from "date-fns";
 
 const BUFFER_MINUTES = 10;

@@ -22,7 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { api } from "@/lib/api-client";
 import { getPackagesByType, type AddonType } from "@/lib/addon-packages";
-import type { Tables } from "@/integrations/api/types";
+import type { Tables } from "@/integrations/supabase/types";
 
 type Campaign = Tables<"campaigns">;
 type CampaignContact = Tables<"campaign_contacts">;

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { useProfessional } from "./useProfessional";
-import type { TablesUpdate } from "@/integrations/api/types";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 
 export const useWhatsAppInstance = () => {
   const { data: professional } = useProfessional();

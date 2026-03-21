@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import type { Tables } from "@/integrations/api/types";
+import type { Tables } from "@/integrations/supabase/types";
 
 type CashRegister = Tables<"cash_registers">;
 type CashTransaction = Tables<"cash_transactions">;
