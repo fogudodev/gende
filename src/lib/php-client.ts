@@ -511,11 +511,15 @@ export const phpClient = {
     },
   },
 
-  // Channel stub (realtime not available on PHP)
-  channel(_name: string) {
-    return {
-      on: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }),
-      subscribe: () => ({ unsubscribe: () => {} }),
-    };
+  // Realtime channel - delegates to phpRealtime
+  channel(name: string) {
+    // Lazy import to avoid circular deps
+    const { phpRealtime } = require("./php-realtime");
+    return phpRealtime.channel(name);
+  },
+
+  // Remove channel (compat with Supabase)
+  removeChannel(channel: any) {
+    channel?.unsubscribe?.();
   },
 };
