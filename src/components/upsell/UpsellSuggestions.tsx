@@ -48,7 +48,7 @@ const UpsellSuggestions = ({
       setLoading(true);
 
       // First try: manual rules from DB
-      const { data: rules } = await supabase
+      const { data: rules } = await api
         .from("upsell_rules" as any)
         .select("id, recommended_service_id, promo_message, promo_price, priority")
         .eq("professional_id", professionalId)

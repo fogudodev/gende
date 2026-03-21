@@ -34,7 +34,7 @@ export const useUpsellRules = (professionalId?: string) => {
   return useQuery({
     queryKey: ["upsell-rules", professionalId],
     queryFn: async () => {
-      let query = supabase
+      let query = api
         .from("upsell_rules" as any)
         .select("*")
         .order("priority", { ascending: true });
@@ -53,7 +53,7 @@ export const useUpsellRulesForService = (professionalId: string, sourceServiceId
   return useQuery({
     queryKey: ["upsell-rules", professionalId, sourceServiceId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("upsell_rules" as any)
         .select("*")
         .eq("professional_id", professionalId)
@@ -72,7 +72,7 @@ export const useUpsertUpsellRule = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (rule: Partial<UpsellRule> & { professional_id: string; source_service_id: string; recommended_service_id: string }) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("upsell_rules" as any)
         .upsert(rule as any, { onConflict: "professional_id,source_service_id,recommended_service_id" });
       if (error) throw error;
@@ -89,7 +89,7 @@ export const useDeleteUpsellRule = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("upsell_rules" as any)
         .delete()
         .eq("id", id);
@@ -107,7 +107,7 @@ export const useUpsellEvents = (professionalId?: string) => {
   return useQuery({
     queryKey: ["upsell-events", professionalId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("upsell_events" as any)
         .select("*")
         .eq("professional_id", professionalId!)
@@ -133,7 +133,7 @@ export const useTrackUpsellEvent = () => {
       status: string;
       upsell_revenue?: number;
     }) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("upsell_events" as any)
         .insert(event as any);
       if (error) throw error;

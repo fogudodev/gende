@@ -34,7 +34,7 @@ const PaymentChat = () => {
   const { data: messages, isLoading } = useQuery({
     queryKey: ["payment-chat", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("chat_messages")
         .select("*")
         .eq("professional_id", professional!.id)
@@ -50,7 +50,7 @@ const PaymentChat = () => {
   // Realtime subscription
   useEffect(() => {
     if (!professional?.id) return;
-    const channel = supabase
+    const channel = api
       .channel("payment-chat")
       .on(
         "postgres_changes",

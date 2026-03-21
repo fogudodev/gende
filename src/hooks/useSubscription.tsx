@@ -8,7 +8,7 @@ export const useSubscription = () => {
   return useQuery({
     queryKey: ["subscription", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("subscriptions")
         .select("*")
         .eq("professional_id", professional!.id)

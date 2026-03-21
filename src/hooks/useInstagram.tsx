@@ -10,7 +10,7 @@ export const useInstagramAccount = () => {
   return useQuery({
     queryKey: ["instagram-account", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("instagram_accounts" as any)
         .select("*")
         .eq("professional_id", professional!.id)
@@ -29,7 +29,7 @@ export const useInstagramMessages = (limit = 50) => {
   return useQuery({
     queryKey: ["instagram-messages", professional?.id, limit],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("instagram_messages" as any)
         .select("*")
         .eq("professional_id", professional!.id)
@@ -49,7 +49,7 @@ export const useInstagramKeywords = () => {
   const query = useQuery({
     queryKey: ["instagram-keywords", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("instagram_keywords" as any)
         .select("*")
         .eq("professional_id", professional!.id)
@@ -66,7 +66,7 @@ export const useInstagramKeywords = () => {
       response_type: string;
       custom_response?: string;
     }) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("instagram_keywords" as any)
         .insert({
           professional_id: professional!.id,
@@ -85,7 +85,7 @@ export const useInstagramKeywords = () => {
 
   const deleteKeyword = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("instagram_keywords" as any)
         .delete()
         .eq("id", id);
@@ -100,7 +100,7 @@ export const useInstagramKeywords = () => {
 
   const toggleKeyword = useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("instagram_keywords" as any)
         .update({ is_active } as any)
         .eq("id", id);
@@ -190,7 +190,7 @@ export const useInstagramStats = () => {
   return useQuery({
     queryKey: ["instagram-stats", professional?.id],
     queryFn: async () => {
-      const { data: messages, error } = await supabase
+      const { data: messages, error } = await api
         .from("instagram_messages" as any)
         .select("direction, message_type, booking_id, created_at")
         .eq("professional_id", professional!.id);

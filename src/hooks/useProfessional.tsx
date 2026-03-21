@@ -8,7 +8,7 @@ export const useProfessional = () => {
   return useQuery({
     queryKey: ["professional", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("professionals")
         .select("*")
         .eq("user_id", user!.id)

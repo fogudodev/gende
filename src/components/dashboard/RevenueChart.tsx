@@ -14,7 +14,7 @@ const RevenueChart = () => {
     queryKey: ["revenue-chart", professional?.id],
     queryFn: async () => {
       const start = startOfDay(subDays(new Date(), 6)).toISOString();
-      const { data } = await supabase
+      const { data } = await api
         .from("bookings")
         .select("price, start_time, status")
         .eq("professional_id", professional!.id)
@@ -29,7 +29,7 @@ const RevenueChart = () => {
     queryKey: ["revenue-chart-expenses", professional?.id],
     queryFn: async () => {
       const start = subDays(new Date(), 6).toISOString().split("T")[0];
-      const { data } = await supabase
+      const { data } = await api
         .from("expenses")
         .select("amount, expense_date")
         .eq("professional_id", professional!.id)

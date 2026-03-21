@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { useProfessional } from "./useProfessional";
-import type { Tables, TablesInsert } from "@/integrations/supabase/types";
+import type { Tables, TablesInsert } from "@/integrations/api/types";
 
 export type BlockedTime = Tables<"blocked_times">;
 
@@ -11,7 +11,7 @@ export const useBlockedTimes = () => {
   return useQuery({
     queryKey: ["blocked-times", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("blocked_times")
         .select("*")
         .eq("professional_id", professional!.id)
@@ -29,7 +29,7 @@ export const useCreateBlockedTime = () => {
 
   return useMutation({
     mutationFn: async (blocked: Omit<TablesInsert<"blocked_times">, "professional_id">) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("blocked_times")
         .insert({ ...blocked, professional_id: professional!.id })
         .select()

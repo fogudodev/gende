@@ -28,7 +28,7 @@ const TodaySchedule = () => {
     queryKey: ["today-schedule", professional?.id],
     queryFn: async () => {
       const now = new Date();
-      const { data } = await supabase
+      const { data } = await api
         .from("bookings")
         .select("id, start_time, client_name, status, services(name)")
         .eq("professional_id", professional!.id)

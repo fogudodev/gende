@@ -93,7 +93,7 @@ const Automations = () => {
 
   const handleSaveTemplate = async (automationId: string) => {
     setSavingTemplateId(automationId);
-    const { error } = await supabase
+    const { error } = await api
       .from("whatsapp_automations")
       .update({ message_template: autoTemplates[automationId]?.trim() || "" })
       .eq("id", automationId);

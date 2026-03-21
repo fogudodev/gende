@@ -38,7 +38,7 @@ const CourseCertificates = () => {
   const certificates = useQuery({
     queryKey: ["course-certificates", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("course_certificates")
         .select("*, course_enrollments(student_name, student_email, student_phone, course_id, class_id, courses(name), course_classes(name, class_date))")
         .eq("professional_id", professional!.id)

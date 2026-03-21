@@ -28,7 +28,7 @@ const CourseWaitlist = () => {
   const waitlist = useQuery({
     queryKey: ["course-waitlist", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("course_waitlist")
         .select("*, course_classes(name, class_date, course_id, max_students, enrolled_count, courses(name))")
         .eq("professional_id", professional!.id)
@@ -52,7 +52,7 @@ const CourseWaitlist = () => {
 
   const markNotified = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("course_waitlist")
         .update({ notified: true })
         .eq("id", id);

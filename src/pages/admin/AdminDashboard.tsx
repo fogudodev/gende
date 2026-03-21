@@ -27,7 +27,7 @@ const AdminDashboard = () => {
   const { data: authCodes } = useQuery({
     queryKey: ["admin-auth-codes"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("admin_auth_codes")
         .select("*")
         .order("created_at", { ascending: false })
@@ -41,7 +41,7 @@ const AdminDashboard = () => {
   const createCode = useMutation({
     mutationFn: async () => {
       const code = generateCode();
-      const { error } = await supabase
+      const { error } = await api
         .from("admin_auth_codes")
         .insert({ code });
       if (error) throw error;

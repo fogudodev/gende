@@ -38,7 +38,7 @@ export const useConversations = (filter: string = "all") => {
   return useQuery({
     queryKey: ["whatsapp-conversations", professional?.id, filter],
     queryFn: async () => {
-      let query = supabase
+      let query = api
         .from("whatsapp_conversations")
         .select("*")
         .eq("professional_id", professional!.id)
@@ -97,7 +97,7 @@ const ConversationsList = () => {
     setConfirmDeleteId(null);
     setDeletingId(convId);
     try {
-      const { error } = await supabase
+      const { error } = await api
         .from("whatsapp_conversations")
         .delete()
         .eq("id", convId);

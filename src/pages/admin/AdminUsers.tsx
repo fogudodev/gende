@@ -53,7 +53,7 @@ const AdminUsers = () => {
   };
 
   const toggleFeature = async (profId: string, feature: string, currentValue: boolean) => {
-    const { error } = await supabase
+    const { error } = await api
       .from("professionals")
       .update({ [feature]: !currentValue } as any)
       .eq("id", profId);

@@ -35,7 +35,7 @@ export const useAllProfessionals = () => {
   return useQuery({
     queryKey: ["admin-professionals"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("professionals")
         .select("*, subscriptions(*)")
         .order("created_at", { ascending: false });
@@ -49,7 +49,7 @@ export const useAllBookings = () => {
   return useQuery({
     queryKey: ["admin-bookings"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("bookings")
         .select("*, professionals(name, business_name), services(name)")
         .order("start_time", { ascending: false })
@@ -64,7 +64,7 @@ export const useAllPayments = () => {
   return useQuery({
     queryKey: ["admin-payments"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("payments")
         .select("*, professionals(name, business_name)")
         .order("created_at", { ascending: false })
@@ -106,7 +106,7 @@ export const useAllWhatsAppInstances = () => {
   return useQuery({
     queryKey: ["admin-whatsapp"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("whatsapp_instances")
         .select("*, professionals(name, business_name)")
         .order("created_at", { ascending: false });
@@ -120,7 +120,7 @@ export const useAllWhatsAppLogs = (limit = 200) => {
   return useQuery({
     queryKey: ["admin-whatsapp-logs", limit],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("whatsapp_logs")
         .select("*, professionals(name, business_name)")
         .order("created_at", { ascending: false })
@@ -146,7 +146,7 @@ export const useRemoveSupportRole = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (userId: string) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("user_roles")
         .delete()
         .eq("user_id", userId)

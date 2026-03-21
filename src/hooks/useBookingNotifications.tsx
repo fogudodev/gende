@@ -32,7 +32,7 @@ export const useBookingNotifications = ({
   useEffect(() => {
     if (!enabled || !professionalId) return;
 
-    const channel = supabase
+    const channel = api
       .channel(`booking-notify-${professionalId}`)
       .on(
         "postgres_changes",

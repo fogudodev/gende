@@ -11,7 +11,7 @@ export const useCourses = () => {
   const courses = useQuery({
     queryKey: ["courses", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("courses")
         .select("*, course_categories(name)")
         .eq("professional_id", professional!.id)
@@ -24,7 +24,7 @@ export const useCourses = () => {
 
   const createCourse = useMutation({
     mutationFn: async (course: any) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("courses")
         .insert({ ...course, professional_id: professional!.id })
         .select()
@@ -43,7 +43,7 @@ export const useCourses = () => {
 
   const updateCourse = useMutation({
     mutationFn: async ({ id, ...updates }: any) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("courses")
         .update(updates)
         .eq("id", id)
@@ -85,7 +85,7 @@ export const useCourseClasses = (courseId?: string) => {
   const classes = useQuery({
     queryKey: ["course-classes", professional?.id, courseId],
     queryFn: async () => {
-      let query = supabase
+      let query = api
         .from("course_classes")
         .select("*, courses(name)")
         .eq("professional_id", professional!.id)
@@ -100,7 +100,7 @@ export const useCourseClasses = (courseId?: string) => {
 
   const createClass = useMutation({
     mutationFn: async (cls: any) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("course_classes")
         .insert({ ...cls, professional_id: professional!.id })
         .select()
@@ -119,7 +119,7 @@ export const useCourseClasses = (courseId?: string) => {
 
   const updateClass = useMutation({
     mutationFn: async ({ id, ...updates }: any) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("course_classes")
         .update(updates)
         .eq("id", id)
@@ -179,7 +179,7 @@ export const useCourseEnrollments = (classId?: string) => {
   const enrollments = useQuery({
     queryKey: ["course-enrollments", professional?.id, classId],
     queryFn: async () => {
-      let query = supabase
+      let query = api
         .from("course_enrollments")
         .select("*, courses(name), course_classes(name, class_date)")
         .eq("professional_id", professional!.id)
@@ -194,7 +194,7 @@ export const useCourseEnrollments = (classId?: string) => {
 
   const createEnrollment = useMutation({
     mutationFn: async (enrollment: any) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("course_enrollments")
         .insert({ ...enrollment, professional_id: professional!.id })
         .select()
@@ -202,14 +202,14 @@ export const useCourseEnrollments = (classId?: string) => {
       if (error) throw error;
       // Update enrolled_count
       if (enrollment.class_id) {
-        const { data: cls } = await supabase
+        const { data: cls } = await api
           .from("course_classes")
           .select("enrolled_count, max_students")
           .eq("id", enrollment.class_id)
           .single();
         if (cls) {
           const newCount = (cls.enrolled_count || 0) + 1;
-          await supabase
+          await api
             .from("course_classes")
             .update({
               enrolled_count: newCount,
@@ -239,7 +239,7 @@ export const useCourseEnrollments = (classId?: string) => {
 
   const updateEnrollment = useMutation({
     mutationFn: async ({ id, ...updates }: any) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("course_enrollments")
         .update(updates)
         .eq("id", id)

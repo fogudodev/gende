@@ -13,7 +13,7 @@ export const useAllProfessionalFeatures = () => {
   return useQuery({
     queryKey: ["professional-feature-overrides"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("professional_feature_overrides" as any)
         .select("*");
       if (error) throw error;
@@ -34,7 +34,7 @@ export const useToggleProfessionalFeature = () => {
       featureKey: string;
       enabled: boolean;
     }) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("professional_feature_overrides" as any)
         .upsert(
           {

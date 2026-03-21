@@ -77,7 +77,7 @@ const InstagramAutomation = () => {
 
   const handleToggleAutoReply = async (enabled: boolean) => {
     if (!account) return;
-    await supabase
+    await api
       .from("instagram_accounts" as any)
       .update({ auto_reply_enabled: enabled } as any)
       .eq("id", account.id);
@@ -86,7 +86,7 @@ const InstagramAutomation = () => {
 
   const handleToggleCommentReply = async (enabled: boolean) => {
     if (!account) return;
-    await supabase
+    await api
       .from("instagram_accounts" as any)
       .update({ auto_comment_reply_enabled: enabled } as any)
       .eq("id", account.id);

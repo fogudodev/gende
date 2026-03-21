@@ -21,7 +21,7 @@ export const useWorkingHours = () => {
   return useQuery({
     queryKey: ["working-hours", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("working_hours")
         .select("*")
         .eq("professional_id", professional!.id)
@@ -40,13 +40,13 @@ export const useUpsertWorkingHours = () => {
   return useMutation({
     mutationFn: async (hours: Omit<WorkingHour, "id" | "professional_id">[]) => {
       // Delete existing and re-insert
-      await supabase
+      await api
         .from("working_hours")
         .delete()
         .eq("professional_id", professional!.id);
 
       if (hours.length > 0) {
-        const { error } = await supabase
+        const { error } = await api
           .from("working_hours")
           .insert(hours.map((h) => ({ ...h, professional_id: professional!.id })));
         if (error) throw error;

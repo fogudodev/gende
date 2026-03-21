@@ -34,7 +34,7 @@ const MobileDayOverview = () => {
     queryKey: ["mobile-today", professional?.id],
     queryFn: async () => {
       const now = new Date();
-      const { data } = await supabase
+      const { data } = await api
         .from("bookings")
         .select("id, start_time, end_time, client_name, status, price, services(name)")
         .eq("professional_id", professional!.id)

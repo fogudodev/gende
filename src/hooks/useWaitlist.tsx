@@ -24,7 +24,7 @@ export const useWaitlist = () => {
   return useQuery({
     queryKey: ["waitlist", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("waitlist" as any)
         .select("*")
         .eq("professional_id", professional!.id)
@@ -42,7 +42,7 @@ export const useUpdateWaitlistStatus = () => {
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const updates: any = { status, updated_at: new Date().toISOString() };
       if (status === "notified") updates.notified_at = new Date().toISOString();
-      const { error } = await supabase
+      const { error } = await api
         .from("waitlist" as any)
         .update(updates)
         .eq("id", id);
@@ -60,7 +60,7 @@ export const useDeleteWaitlistEntry = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await api
         .from("waitlist" as any)
         .delete()
         .eq("id", id);

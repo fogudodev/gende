@@ -18,7 +18,7 @@ const useAdminBookingLogs = (limit = 200) => {
   return useQuery({
     queryKey: ["admin-booking-logs", limit],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("bookings")
         .select("id, status, client_name, client_phone, start_time, created_at, updated_at, google_calendar_event_id, professionals(name, business_name), services(name)")
         .order("updated_at", { ascending: false })
@@ -33,7 +33,7 @@ const useAdminGoogleCalendarLogs = () => {
   return useQuery({
     queryKey: ["admin-gcal-tokens"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("google_calendar_tokens")
         .select("*, professionals:professional_id(name, business_name)")
         .order("updated_at", { ascending: false });

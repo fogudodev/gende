@@ -24,7 +24,7 @@ export const usePaymentConfig = () => {
   return useQuery({
     queryKey: ["payment-config", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("payment_config")
         .select("*")
         .eq("professional_id", professional!.id)
@@ -41,14 +41,14 @@ export const useSavePaymentConfig = () => {
   const { data: professional } = useProfessional();
   return useMutation({
     mutationFn: async (config: Partial<Omit<PaymentConfig, "id" | "professional_id" | "created_at" | "updated_at">>) => {
-      const { data: existing } = await supabase
+      const { data: existing } = await api
         .from("payment_config")
         .select("id")
         .eq("professional_id", professional!.id)
         .maybeSingle();
 
       if (existing) {
-        const { data, error } = await supabase
+        const { data, error } = await api
           .from("payment_config")
           .update(config)
           .eq("id", existing.id)
@@ -57,7 +57,7 @@ export const useSavePaymentConfig = () => {
         if (error) throw error;
         return data;
       } else {
-        const { data, error } = await supabase
+        const { data, error } = await api
           .from("payment_config")
           .insert({ ...config, professional_id: professional!.id })
           .select()

@@ -23,7 +23,7 @@ const AdminProfessionalLimits = () => {
   const { data: professionals, isLoading: loadingPros } = useQuery({
     queryKey: ["admin-professionals-list"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("professionals")
         .select("id, name, email, business_name, account_type")
         .order("name");

@@ -93,7 +93,7 @@ const AdminSubscribers = () => {
         updateData.current_period_end = null;
       }
 
-      const { error } = await supabase
+      const { error } = await api
         .from("subscriptions")
         .update(updateData)
         .eq("professional_id", professionalId);
@@ -135,7 +135,7 @@ const AdminSubscribers = () => {
     setVerifyingCode(true);
     try {
       // Check if code exists and is not used
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("admin_auth_codes")
         .select("*")
         .eq("code", authCode.trim().toUpperCase())
@@ -149,7 +149,7 @@ const AdminSubscribers = () => {
       }
 
       // Mark code as used
-      await supabase
+      await api
         .from("admin_auth_codes")
         .update({ is_used: true, used_at: new Date().toISOString(), used_by: user?.id })
         .eq("id", data.id);

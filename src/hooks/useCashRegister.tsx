@@ -6,7 +6,7 @@ export const useOpenCashRegister = (professionalId: string | undefined) => {
   return useQuery({
     queryKey: ["open-cash-register", professionalId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("cash_registers")
         .select("*")
         .eq("professional_id", professionalId!)
@@ -24,7 +24,7 @@ export const useCashRegisters = (professionalId: string | undefined, limit = 30)
   return useQuery({
     queryKey: ["cash-registers", professionalId, limit],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("cash_registers")
         .select("*")
         .eq("professional_id", professionalId!)
@@ -41,7 +41,7 @@ export const useCashTransactions = (cashRegisterId: string | undefined) => {
   return useQuery({
     queryKey: ["cash-transactions", cashRegisterId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("cash_transactions")
         .select("*")
         .eq("cash_register_id", cashRegisterId!)
@@ -72,7 +72,7 @@ export const useOpenCashRegisterMutation = () => {
         status: "open",
       };
       if (openedBy) insertData.opened_by = openedBy;
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("cash_registers")
         .insert(insertData)
         .select()
@@ -104,7 +104,7 @@ export const useCloseCashRegisterMutation = () => {
       expectedAmount: number;
       notes?: string;
     }) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("cash_registers")
         .update({
           status: "closed",
@@ -142,7 +142,7 @@ export const useAddCashTransaction = () => {
       booking_id?: string;
       created_by?: string;
     }) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("cash_transactions")
         .insert(transaction)
         .select()

@@ -55,7 +55,7 @@ export const useChatNotifications = ({
     };
     if (filter) channelConfig.filter = filter;
 
-    const channel = supabase
+    const channel = api
       .channel(channelName)
       .on("postgres_changes", channelConfig, (payload: any) => {
         const newMsg = payload.new;

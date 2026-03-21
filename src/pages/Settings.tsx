@@ -241,7 +241,7 @@ const SystemAppearanceSection = () => {
     if (!professional) return;
     setSaving(true);
 
-    const { error } = await supabase
+    const { error } = await api
       .from("professionals")
       .update({
         business_name: businessName.trim(),
@@ -429,7 +429,7 @@ const WorkingHoursSection = () => {
 
   const saveAdvanceWeeks = async (weeks: number) => {
     if (!professional || weeks < 1 || weeks > 52) return;
-    const { error } = await supabase
+    const { error } = await api
       .from("professionals")
       .update({ booking_advance_weeks: weeks })
       .eq("id", professional.id);

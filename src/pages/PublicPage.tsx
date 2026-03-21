@@ -93,7 +93,7 @@ const PublicPage = () => {
     setSlugError("");
     setSuggestions([]);
 
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from("professionals")
       .select("id")
       .eq("slug", value)
@@ -171,7 +171,7 @@ const PublicPage = () => {
     // Validate slug
     if (slug) {
       setCheckingSlug(true);
-      const { data } = await supabase
+      const { data } = await api
         .from("professionals")
         .select("id")
         .eq("slug", slug)
@@ -189,7 +189,7 @@ const PublicPage = () => {
     }
 
     setSaving(true);
-    const { error } = await supabase
+    const { error } = await api
       .from("professionals")
       .update({
         slug: slug || null,

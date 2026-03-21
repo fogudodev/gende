@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import type { Tables } from "@/integrations/supabase/types";
+import type { Tables } from "@/integrations/api/types";
 
 type PlatformReview = Tables<"platform_reviews"> & {
   professionals?: { name: string; business_name: string | null };
@@ -24,7 +24,7 @@ const AdminPlatformReviews = () => {
   const { data: reviews, isLoading } = useQuery({
     queryKey: ["admin-platform-reviews"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("platform_reviews")
         .select("*, professionals:professional_id(name, business_name)")
         .order("created_at", { ascending: false });

@@ -38,7 +38,7 @@ const PublicCourses = () => {
     const load = async () => {
       setLoading(true);
       // Find professional by slug
-      const { data: prof } = await supabase
+      const { data: prof } = await api
         .from("professionals")
         .select("*")
         .eq("slug", slug)
@@ -47,7 +47,7 @@ const PublicCourses = () => {
       setProfessional(prof);
 
       // Load active courses
-      const { data: courseData } = await supabase
+      const { data: courseData } = await api
         .from("courses")
         .select("*")
         .eq("professional_id", prof.id)
@@ -56,7 +56,7 @@ const PublicCourses = () => {
       setCourses(courseData || []);
 
       // Load open classes
-      const { data: classData } = await supabase
+      const { data: classData } = await api
         .from("course_classes")
         .select("*")
         .eq("professional_id", prof.id)

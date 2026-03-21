@@ -34,7 +34,7 @@ const SupportChat = () => {
   const { data: messages, isLoading } = useQuery({
     queryKey: ["support-chat", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("chat_messages")
         .select("*")
         .eq("professional_id", professional!.id)
@@ -49,7 +49,7 @@ const SupportChat = () => {
 
   useEffect(() => {
     if (!professional?.id) return;
-    const channel = supabase
+    const channel = api
       .channel("support-chat")
       .on(
         "postgres_changes",

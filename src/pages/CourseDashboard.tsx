@@ -21,7 +21,7 @@ const CourseDashboard = () => {
   const waitlistCount = useQuery({
     queryKey: ["course-waitlist-count", professional?.id],
     queryFn: async () => {
-      const { count, error } = await supabase
+      const { count, error } = await api
         .from("course_waitlist")
         .select("*", { count: "exact", head: true })
         .eq("professional_id", professional!.id);

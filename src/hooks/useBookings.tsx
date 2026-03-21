@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { useProfessional } from "./useProfessional";
-import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
+import type { TablesInsert, TablesUpdate } from "@/integrations/api/types";
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek } from "date-fns";
 
 const BUFFER_MINUTES = 10;
@@ -12,7 +12,7 @@ export const useBookings = (date?: Date) => {
   return useQuery({
     queryKey: ["bookings", professional?.id, date ? format(date, "yyyy-MM-dd") : "all"],
     queryFn: async () => {
-      let query = supabase
+      let query = api
         .from("bookings")
         .select("*, services(name, category), clients(name, phone, email)")
         .eq("professional_id", professional!.id)
@@ -40,7 +40,7 @@ export const useBookingsWeek = (date: Date) => {
   return useQuery({
     queryKey: ["bookings-week", professional?.id, format(weekStart, "yyyy-MM-dd")],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("bookings")
         .select("*, services(name, category), clients(name, phone, email)")
         .eq("professional_id", professional!.id)
@@ -62,7 +62,7 @@ export const useBookingsMonth = (date: Date) => {
   return useQuery({
     queryKey: ["bookings-month", professional?.id, format(monthStart, "yyyy-MM")],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("bookings")
         .select("*, services(name, category), clients(name, phone, email)")
         .eq("professional_id", professional!.id)
@@ -161,7 +161,7 @@ export const useCreateBooking = () => {
 
   return useMutation({
     mutationFn: async (booking: Omit<TablesInsert<"bookings">, "professional_id">) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("bookings")
         .insert({ ...booking, professional_id: professional!.id })
         .select()
@@ -206,7 +206,7 @@ export const useUpdateBooking = () => {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: TablesUpdate<"bookings"> & { id: string }) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("bookings")
         .update(updates)
         .eq("id", id)

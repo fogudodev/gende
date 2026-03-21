@@ -25,7 +25,7 @@ export const useCoupons = () => {
   return useQuery({
     queryKey: ["coupons", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("coupons")
         .select("*")
         .eq("professional_id", professional!.id)
@@ -42,7 +42,7 @@ export const useCreateCoupon = () => {
   const { data: professional } = useProfessional();
   return useMutation({
     mutationFn: async (coupon: { code: string; description?: string; discount_type?: string; discount_value?: number; max_uses?: number | null; is_active?: boolean; valid_until?: string | null; min_amount?: number }) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("coupons")
         .insert({ ...coupon, professional_id: professional!.id })
         .select()

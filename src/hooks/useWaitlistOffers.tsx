@@ -25,7 +25,7 @@ export const useWaitlistOffers = (limit = 100) => {
   return useQuery({
     queryKey: ["waitlist-offers", professional?.id, limit],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("waitlist_offers" as any)
         .select("*")
         .eq("professional_id", professional!.id)

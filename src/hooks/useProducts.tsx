@@ -22,7 +22,7 @@ export const useProducts = () => {
   return useQuery({
     queryKey: ["products", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("products")
         .select("*")
         .eq("professional_id", professional!.id)
@@ -39,7 +39,7 @@ export const useCreateProduct = () => {
   const { data: professional } = useProfessional();
   return useMutation({
     mutationFn: async (product: { name: string; description?: string; price?: number; cost_price?: number; stock_quantity?: number; is_active?: boolean; category?: string }) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("products")
         .insert({ ...product, professional_id: professional!.id })
         .select()

@@ -31,7 +31,7 @@ const AdminSupportChat = () => {
   const { data: conversations } = useQuery({
     queryKey: ["admin-support-conversations"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("chat_messages")
         .select("professional_id, created_at")
         .eq("chat_type", "support")
@@ -50,7 +50,7 @@ const AdminSupportChat = () => {
   const { data: messages, isLoading: loadingMessages } = useQuery({
     queryKey: ["admin-support-chat", selectedProfId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("chat_messages")
         .select("*")
         .eq("professional_id", selectedProfId!)

@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import type { Tables } from "@/integrations/supabase/types";
+import type { Tables } from "@/integrations/api/types";
 
 type CashRegister = Tables<"cash_registers">;
 type CashTransaction = Tables<"cash_transactions">;
@@ -56,7 +56,7 @@ const CashRegisterReport = ({ professionalId }: Props) => {
   const { data: selectedTransactions } = useQuery({
     queryKey: ["cash-transactions-report", selectedRegisterId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("cash_transactions")
         .select("*")
         .eq("cash_register_id", selectedRegisterId!)

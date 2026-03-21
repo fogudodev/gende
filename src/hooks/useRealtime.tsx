@@ -62,7 +62,7 @@ export function useRealtime(
       };
     } else {
       // Supabase Realtime
-      const channel = supabase
+      const channel = api
         .channel(`${table}-changes`)
         .on(
           "postgres_changes" as any,

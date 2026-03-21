@@ -20,7 +20,7 @@ export const useMyFeatureGate = () => {
   const { data: overrides, isLoading: overridesLoading } = useQuery({
     queryKey: ["my-feature-overrides", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("professional_feature_overrides" as any)
         .select("feature_key, enabled")
         .eq("professional_id", professional!.id);

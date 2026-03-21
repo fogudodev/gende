@@ -218,7 +218,7 @@ const PublicBooking = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (!slug) return;
-      const { data: prof, error } = await supabase
+      const { data: prof, error } = await api
         .from("professionals")
         .select("id, name, business_name, bio, avatar_url, logo_url, cover_url, primary_color, bg_color, text_color, component_color, slug, account_type, welcome_title, welcome_description, welcome_message, confirmation_message, booking_advance_weeks")
         .eq("slug", slug)
@@ -270,7 +270,7 @@ const PublicBooking = () => {
         setEmployeeStatsMap(statsMap);
       }
       // Check waitlist feature flag
-      const { data: waitlistFlag } = await supabase
+      const { data: waitlistFlag } = await api
         .from("feature_flags" as any)
         .select("enabled")
         .eq("key", "waitlist")

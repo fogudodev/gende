@@ -21,7 +21,7 @@ export const useReviews = () => {
   return useQuery({
     queryKey: ["reviews", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("reviews")
         .select("*")
         .eq("professional_id", professional!.id)
@@ -37,7 +37,7 @@ export const usePublicReviews = (professionalId: string) => {
   return useQuery({
     queryKey: ["public-reviews", professionalId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("reviews")
         .select("*")
         .eq("professional_id", professionalId)
@@ -62,7 +62,7 @@ export const useSubmitReview = () => {
       rating: number;
       comment?: string;
     }) => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from("reviews")
         .insert(review)
         .select()

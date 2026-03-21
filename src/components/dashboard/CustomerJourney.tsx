@@ -68,7 +68,7 @@ const CustomerJourney = () => {
     queryKey: ["booking-payments", bookingIds],
     queryFn: async () => {
       if (bookingIds.length === 0) return [];
-      const { data } = await supabase
+      const { data } = await api
         .from("payments")
         .select("*")
         .in("booking_id", bookingIds);
