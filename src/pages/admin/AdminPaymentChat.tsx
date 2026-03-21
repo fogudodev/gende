@@ -67,7 +67,7 @@ const AdminPaymentChat = () => {
 
   const sendMessage = useMutation({
     mutationFn: async (params: { message?: string; attachment_url?: string }) => {
-      const { error } = await supabase.from("chat_messages").insert({
+      const { error } = await api.from("chat_messages").insert({
         professional_id: selectedProfId!,
         sender_role: "support",
         sender_name: "Admin",
@@ -96,9 +96,9 @@ const AdminPaymentChat = () => {
     try {
       const ext = file.name.split(".").pop();
       const path = `admin/pagamento/${selectedProfId}/${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from("professionals").upload(path, file, { upsert: true });
+      const { error: uploadError } = await api.storage.from("professionals").upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
-      const { data: urlData } = supabase.storage.from("professionals").getPublicUrl(path);
+      const { data: urlData } = api.storage.from("professionals").getPublicUrl(path);
       await sendMessage.mutateAsync({ message: "📎 Arquivo enviado", attachment_url: urlData.publicUrl });
     } catch { toast.error("Erro ao enviar arquivo"); }
     setUploading(false);

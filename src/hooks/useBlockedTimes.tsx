@@ -46,7 +46,7 @@ export const useDeleteBlockedTime = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("blocked_times").delete().eq("id", id);
+      const { error } = await api.from("blocked_times").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["blocked-times"] }),

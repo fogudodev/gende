@@ -39,11 +39,11 @@ const AdminCreateProfessional = ({ open, onClose, onCreated }: Props) => {
     setLoading(true);
 
     try {
-      const { data: session } = await supabase.auth.getSession();
+      const { data: session } = await api.auth.getSession();
       const token = session?.session?.access_token;
       if (!token) throw new Error("Não autenticado");
 
-      const res = await supabase.functions.invoke("admin-create-professional", {
+      const res = await api.functions.invoke("admin-create-professional", {
         body: { name, email, phone, password, accountType, businessName },
       });
 

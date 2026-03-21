@@ -91,7 +91,7 @@ const Auth = () => {
     setLoading(false);
 
     // Send notification to admin WhatsApp (fire and forget)
-    supabase.functions.invoke("notify-signup", {
+    api.functions.invoke("notify-signup", {
       body: { name, businessName, email, phone },
     }).catch((err) => console.error("Notify signup error:", err));
   };

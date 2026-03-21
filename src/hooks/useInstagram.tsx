@@ -120,7 +120,7 @@ export const useInstagramConnect = () => {
   const connect = useMutation({
     mutationFn: async () => {
       const redirectUri = `${window.location.origin}/instagram-callback`;
-      const { data, error } = await supabase.functions.invoke("instagram-oauth", {
+      const { data, error } = await api.functions.invoke("instagram-oauth", {
         body: { action: "get_auth_url", redirect_uri: redirectUri },
       });
       if (error) throw error;
@@ -141,7 +141,7 @@ export const useInstagramConnect = () => {
   const exchangeCode = useMutation({
     mutationFn: async (code: string) => {
       const redirectUri = `${window.location.origin}/instagram-callback`;
-      const { data, error } = await supabase.functions.invoke("instagram-oauth", {
+      const { data, error } = await api.functions.invoke("instagram-oauth", {
         body: { action: "exchange_code", code, redirect_uri: redirectUri },
       });
       if (error) throw error;
@@ -168,7 +168,7 @@ export const useInstagramConnect = () => {
 
   const disconnect = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("instagram-oauth", {
+      const { data, error } = await api.functions.invoke("instagram-oauth", {
         body: { action: "disconnect" },
       });
       if (error) throw error;

@@ -65,7 +65,7 @@ const PaymentChat = () => {
         }
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => { api.removeChannel(channel); };
   }, [professional?.id, qc]);
 
   // Auto-scroll
@@ -75,7 +75,7 @@ const PaymentChat = () => {
 
   const sendMessage = useMutation({
     mutationFn: async (params: { message?: string; attachment_url?: string }) => {
-      const { error } = await supabase.from("chat_messages").insert({
+      const { error } = await api.from("chat_messages").insert({
         professional_id: professional!.id,
         sender_role: "user",
         sender_name: professional!.name,
@@ -106,12 +106,12 @@ const PaymentChat = () => {
       const ext = file.name.split(".").pop();
       const path = `${professional.id}/comprovantes/${Date.now()}.${ext}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await api.storage
         .from("professionals")
         .upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage.from("professionals").getPublicUrl(path);
+      const { data: urlData } = api.storage.from("professionals").getPublicUrl(path);
 
       await sendMessage.mutateAsync({
         message: "📎 Comprovante de pagamento enviado",

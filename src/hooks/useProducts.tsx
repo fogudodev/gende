@@ -56,7 +56,7 @@ export const useUpdateProduct = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Product> & { id: string }) => {
-      const { data, error } = await supabase.from("products").update(updates).eq("id", id).select().single();
+      const { data, error } = await api.from("products").update(updates).eq("id", id).select().single();
       if (error) throw error;
       return data;
     },
@@ -69,7 +69,7 @@ export const useDeleteProduct = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("products").delete().eq("id", id);
+      const { error } = await api.from("products").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["products"] }); toast.success("Produto removido!"); },

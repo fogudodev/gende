@@ -150,7 +150,7 @@ const Bookings = () => {
     }
     setPaymentLoading(true);
     try {
-      const { error } = await supabase.from("payments").insert({
+      const { error } = await api.from("payments").insert({
         professional_id: professional.id,
         booking_id: detailBooking.id,
         amount,

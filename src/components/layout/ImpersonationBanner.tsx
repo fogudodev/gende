@@ -32,8 +32,8 @@ const ImpersonationBanner = () => {
   const handleReturn = async () => {
     setReturning(true);
     try {
-      await supabase.auth.signOut();
-      const { error } = await supabase.auth.signInWithPassword({
+      await api.auth.signOut();
+      const { error } = await api.auth.signInWithPassword({
         email: impersonationData.adminEmail,
         password: impersonationData.adminPassword,
       });

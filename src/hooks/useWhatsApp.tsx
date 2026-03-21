@@ -82,7 +82,7 @@ export const triggerWhatsAppAutomation = async (
   triggerType: string
 ) => {
   try {
-    const { data, error } = await supabase.functions.invoke("whatsapp", {
+    const { data, error } = await api.functions.invoke("whatsapp", {
       body: {
         action: "trigger-automation",
         professionalId,

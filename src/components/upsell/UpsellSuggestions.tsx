@@ -91,7 +91,7 @@ const UpsellSuggestions = ({
 
       // Fallback: AI-based suggestions via edge function
       try {
-        const { data, error } = await supabase.functions.invoke("upsell-suggest", {
+        const { data, error } = await api.functions.invoke("upsell-suggest", {
           body: { professionalId, sourceServiceId },
         });
 
@@ -117,7 +117,7 @@ const UpsellSuggestions = ({
 
     const trackSuggestionEvents = async (items: Suggestion[]) => {
       for (const item of items) {
-        await supabase.from("upsell_events" as any).insert({
+        await api.from("upsell_events" as any).insert({
           professional_id: professionalId,
           source_service_id: sourceServiceId,
           recommended_service_id: item.id,

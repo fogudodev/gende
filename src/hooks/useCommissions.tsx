@@ -49,7 +49,7 @@ export const useCreateCommission = () => {
       if (error) throw error;
 
       // Send WhatsApp notification (fire-and-forget)
-      supabase.functions.invoke("whatsapp", {
+      api.functions.invoke("whatsapp", {
         body: {
           action: "notify-commission",
           professionalId: professional!.id,
@@ -94,7 +94,7 @@ export const usePayCommission = () => {
 
         // Send payment notifications (fire-and-forget, one per employee)
         for (const [empId, total] of Object.entries(empTotals)) {
-          supabase.functions.invoke("whatsapp", {
+          api.functions.invoke("whatsapp", {
             body: {
               action: "notify-commission-paid",
               professionalId: professional.id,

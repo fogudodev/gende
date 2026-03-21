@@ -105,7 +105,7 @@ export const useChatNotifications = ({
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      api.removeChannel(channel);
     };
   }, [viewerRole, professionalId, chatType, enabled]);
 };

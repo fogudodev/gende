@@ -9,7 +9,7 @@ export const useIsAdmin = () => {
   return useQuery({
     queryKey: ["is-admin", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("is_admin");
+      const { data, error } = await api.rpc("is_admin");
       if (error) throw error;
       return data as boolean;
     },
@@ -23,7 +23,7 @@ export const useIsSupport = () => {
   return useQuery({
     queryKey: ["is-support", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("is_support");
+      const { data, error } = await api.rpc("is_support");
       if (error) throw error;
       return data as boolean;
     },
@@ -80,11 +80,11 @@ export const useAdminStats = () => {
     queryKey: ["admin-stats"],
     queryFn: async () => {
       const [profRes, bookRes, clientRes, payRes, subRes] = await Promise.all([
-        supabase.from("professionals").select("id", { count: "exact", head: true }),
-        supabase.from("bookings").select("id", { count: "exact", head: true }),
-        supabase.from("clients").select("id", { count: "exact", head: true }),
-        supabase.from("payments").select("amount").eq("status", "completed"),
-        supabase.from("subscriptions").select("plan_id"),
+        api.from("professionals").select("id", { count: "exact", head: true }),
+        api.from("bookings").select("id", { count: "exact", head: true }),
+        api.from("clients").select("id", { count: "exact", head: true }),
+        api.from("payments").select("amount").eq("status", "completed"),
+        api.from("subscriptions").select("plan_id"),
       ]);
 
       const totalRevenue = (payRes.data || []).reduce((sum, p) => sum + Number(p.amount), 0);
@@ -135,7 +135,7 @@ export const useSupportUsers = () => {
   return useQuery({
     queryKey: ["admin-support-users"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_support_users");
+      const { data, error } = await api.rpc("get_support_users");
       if (error) throw error;
       return (data || []) as { user_id: string; name: string; email: string; created_at: string }[];
     },

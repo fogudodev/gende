@@ -25,7 +25,7 @@ export const useCampaignLimits = () => {
   return useQuery({
     queryKey: ["campaign-limits", professional?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("send-campaign", {
+      const { data, error } = await api.functions.invoke("send-campaign", {
         body: { action: "get-limits", professionalId: professional!.id },
       });
       if (error) throw error;
@@ -39,7 +39,7 @@ export const useSendCampaign = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (params: { professionalId: string; name: string; message: string; clientIds?: string[] }) => {
-      const { data, error } = await supabase.functions.invoke("send-campaign", {
+      const { data, error } = await api.functions.invoke("send-campaign", {
         body: { action: "create-campaign", ...params },
       });
       if (error) throw error;

@@ -28,7 +28,7 @@ const AdminWhatsAppPage = () => {
     setSyncing(true);
     try {
       for (const inst of instances) {
-        await supabase.functions.invoke("whatsapp", {
+        await api.functions.invoke("whatsapp", {
           body: { action: "check-status", instanceName: inst.instance_name, professionalId: inst.professional_id },
         });
       }

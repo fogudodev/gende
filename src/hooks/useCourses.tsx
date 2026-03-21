@@ -63,7 +63,7 @@ export const useCourses = () => {
 
   const deleteCourse = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("courses").delete().eq("id", id);
+      const { error } = await api.from("courses").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -157,7 +157,7 @@ export const useCourseClasses = (courseId?: string) => {
 
   const deleteClass = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("course_classes").delete().eq("id", id);
+      const { error } = await api.from("course_classes").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

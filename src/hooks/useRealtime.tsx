@@ -72,7 +72,7 @@ export function useRealtime(
         .subscribe();
 
       return () => {
-        supabase.removeChannel(channel);
+        api.removeChannel(channel);
       };
     }
   }, [table, event, schema, queryClient, invalidateKeys]);

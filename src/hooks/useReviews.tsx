@@ -79,7 +79,7 @@ export const useToggleReviewVisibility = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, is_public }: { id: string; is_public: boolean }) => {
-      const { error } = await supabase.from("reviews").update({ is_public }).eq("id", id);
+      const { error } = await api.from("reviews").update({ is_public }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {

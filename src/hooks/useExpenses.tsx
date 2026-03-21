@@ -56,7 +56,7 @@ export const useDeleteExpense = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("expenses").delete().eq("id", id);
+      const { error } = await api.from("expenses").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["expenses"] }); toast.success("Despesa removida!"); },

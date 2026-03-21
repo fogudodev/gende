@@ -60,7 +60,7 @@ const PlanRenewalModal = ({ open, onOpenChange }: PlanRenewalModalProps) => {
     const priceId = billing === "annual" ? plan.priceIdAnnual : plan.priceId;
     setLoading(priceId);
     try {
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
+      const { data, error } = await api.functions.invoke("create-checkout", {
         body: { priceId },
       });
       if (error) throw error;

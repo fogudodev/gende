@@ -247,7 +247,7 @@ const CustomerJourney = () => {
     try {
       const info = getBookingPaymentInfo(selectedBooking);
       
-      await supabase.from("payments").insert({
+      await api.from("payments").insert({
         professional_id: professional.id,
         booking_id: selectedBooking.id,
         amount: info.remainingAmount,

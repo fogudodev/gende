@@ -181,7 +181,7 @@ export const useCreateBooking = () => {
         });
 
         // Sync to Google Calendar (fire and forget)
-        supabase.functions.invoke("google-calendar-sync", {
+        api.functions.invoke("google-calendar-sync", {
           body: {
             action: "create_event",
             professional_id: professional.id,
@@ -222,7 +222,7 @@ export const useUpdateBooking = () => {
 
       // If booking was cancelled, trigger waitlist processing
       if (data && data.status === "cancelled") {
-        supabase.functions.invoke("waitlist-process", {
+        api.functions.invoke("waitlist-process", {
           body: {
             action: "process-cancellation",
             professionalId: data.professional_id,
@@ -236,7 +236,7 @@ export const useUpdateBooking = () => {
 
         // Delete from Google Calendar if linked
         if ((data as any).google_calendar_event_id) {
-          supabase.functions.invoke("google-calendar-sync", {
+          api.functions.invoke("google-calendar-sync", {
             body: {
               action: "delete_event",
               professional_id: data.professional_id,
@@ -256,14 +256,14 @@ export const useDeleteBooking = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       // Before deleting, fetch the booking to check for Google Calendar event
-      const { data: booking } = await supabase.from("bookings").select("professional_id, google_calendar_event_id").eq("id", id).single();
+      const { data: booking } = await api.from("bookings").select("professional_id, google_calendar_event_id").eq("id", id).single();
 
-      const { error } = await supabase.from("bookings").delete().eq("id", id);
+      const { error } = await api.from("bookings").delete().eq("id", id);
       if (error) throw error;
 
       // Delete from Google Calendar if linked
       if (booking && (booking as any).google_calendar_event_id) {
-        supabase.functions.invoke("google-calendar-sync", {
+        api.functions.invoke("google-calendar-sync", {
           body: {
             action: "delete_event",
             professional_id: booking.professional_id,

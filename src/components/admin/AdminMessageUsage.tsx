@@ -13,10 +13,10 @@ const useAdminMessageUsage = () => {
       const today = new Date().toISOString().split("T")[0];
 
       const [usageRes, profsRes, subsRes, limitsRes] = await Promise.all([
-        supabase.from("daily_message_usage").select("*").eq("usage_date", today),
-        supabase.from("professionals").select("id, name, business_name, email"),
-        supabase.from("subscriptions").select("professional_id, plan_id"),
-        supabase.from("plan_limits").select("*"),
+        api.from("daily_message_usage").select("*").eq("usage_date", today),
+        api.from("professionals").select("id, name, business_name, email"),
+        api.from("subscriptions").select("professional_id, plan_id"),
+        api.from("plan_limits").select("*"),
       ]);
 
       const usageMap = new Map((usageRes.data || []).map(u => [u.professional_id, u]));

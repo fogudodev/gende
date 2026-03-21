@@ -123,7 +123,7 @@ export const useUnreadMessages = () => {
         }
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => { api.removeChannel(channel); };
   }, [professional?.id, qc]);
 
   return { unreadCount, unreadPayment, unreadSupport, recentMessages, markAsSeen, markAllAsSeen };

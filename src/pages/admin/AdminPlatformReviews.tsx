@@ -35,7 +35,7 @@ const AdminPlatformReviews = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("platform_reviews").delete().eq("id", id);
+      const { error } = await api.from("platform_reviews").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

@@ -107,7 +107,7 @@ const Campaigns = () => {
       setVerifying(true);
       window.history.replaceState({}, "", window.location.pathname);
       try {
-        const { data, error } = await supabase.functions.invoke("purchase-addon", {
+        const { data, error } = await api.functions.invoke("purchase-addon", {
           body: { action: "verify-payment", sessionId, professionalId: professional.id },
         });
         if (error) throw error;
@@ -132,7 +132,7 @@ const Campaigns = () => {
     if (!professional) return;
     setBuyingAddon(priceId);
     try {
-      const { data, error } = await supabase.functions.invoke("purchase-addon", {
+      const { data, error } = await api.functions.invoke("purchase-addon", {
         body: { action: "create-checkout", priceId, professionalId: professional.id },
       });
       if (error) throw error;

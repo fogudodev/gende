@@ -74,7 +74,7 @@ const PublicCourses = () => {
     setSubmitting(true);
 
     // Use atomic RPC to prevent overbooking
-    const { data: result, error } = await supabase.rpc("enroll_student_in_class" as any, {
+    const { data: result, error } = await api.rpc("enroll_student_in_class" as any, {
       p_professional_id: professional.id,
       p_course_id: selectedCourse.id,
       p_class_id: selectedClass.id,

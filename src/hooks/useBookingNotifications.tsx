@@ -84,7 +84,7 @@ export const useBookingNotifications = ({
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      api.removeChannel(channel);
     };
   }, [professionalId, enabled, playNotificationSound]);
 };

@@ -34,7 +34,7 @@ const AdminCreateSupport = ({ open, onClose, onCreated }: Props) => {
     setLoading(true);
 
     try {
-      const res = await supabase.functions.invoke("admin-create-professional", {
+      const res = await api.functions.invoke("admin-create-professional", {
         body: { name, email, phone: "", password, accountType: "autonomous", businessName: "", role: "support" },
       });
 

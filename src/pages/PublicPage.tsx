@@ -135,16 +135,16 @@ const PublicPage = () => {
       }
 
       const path = `${professional.id}/${type}.${ext}`;
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await api.storage
         .from("professionals")
         .upload(path, file, { upsert: true, contentType: file.type });
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage.from("professionals").getPublicUrl(path);
+      const { data: urlData } = api.storage.from("professionals").getPublicUrl(path);
       const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
 
       const field = isLogo ? "logo_url" : "cover_url";
-      await supabase.from("professionals").update({ [field]: publicUrl }).eq("id", professional.id);
+      await api.from("professionals").update({ [field]: publicUrl }).eq("id", professional.id);
 
       isLogo ? setLogoUrl(publicUrl) : setCoverUrl(publicUrl);
       qc.invalidateQueries({ queryKey: ["professional"] });
@@ -159,7 +159,7 @@ const PublicPage = () => {
   const removeImage = async (type: "logo" | "cover") => {
     if (!professional) return;
     const field = type === "logo" ? "logo_url" : "cover_url";
-    await supabase.from("professionals").update({ [field]: null }).eq("id", professional.id);
+    await api.from("professionals").update({ [field]: null }).eq("id", professional.id);
     type === "logo" ? setLogoUrl("") : setCoverUrl("");
     qc.invalidateQueries({ queryKey: ["professional"] });
     toast.success("Imagem removida");

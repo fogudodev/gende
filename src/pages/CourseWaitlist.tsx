@@ -41,7 +41,7 @@ const CourseWaitlist = () => {
 
   const removeFromWaitlist = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("course_waitlist").delete().eq("id", id);
+      const { error } = await api.from("course_waitlist").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

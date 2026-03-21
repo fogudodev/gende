@@ -139,7 +139,7 @@ const ProfessionalsSection = () => {
     } else {
       updates.blocked_reason = "";
     }
-    const { error } = await supabase.from("professionals").update(updates).eq("id", profId);
+    const { error } = await api.from("professionals").update(updates).eq("id", profId);
     if (!error) {
       qc.invalidateQueries({ queryKey: ["admin-professionals"] });
       toast.success(currentlyBlocked ? "Profissional desbloqueado" : "Profissional bloqueado");
@@ -329,7 +329,7 @@ const BookingsSection = () => {
   );
 
   const updateStatus = async (id: string, status: string) => {
-    const { error } = await supabase.from("bookings").update({ status: status as any }).eq("id", id);
+    const { error } = await api.from("bookings").update({ status: status as any }).eq("id", id);
     if (!error) {
       qc.invalidateQueries({ queryKey: ["admin-bookings"] });
       toast.success("Status atualizado");
@@ -337,7 +337,7 @@ const BookingsSection = () => {
   };
 
   const deleteBooking = async (id: string) => {
-    const { error } = await supabase.from("bookings").delete().eq("id", id);
+    const { error } = await api.from("bookings").delete().eq("id", id);
     if (!error) {
       qc.invalidateQueries({ queryKey: ["admin-bookings"] });
       toast.success("Agendamento removido");

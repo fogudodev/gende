@@ -21,7 +21,7 @@ export const triggerCourseAutomation = async (params: {
   recipients?: Array<{ name: string; phone: string }>;
 }) => {
   try {
-    const { data, error } = await supabase.functions.invoke("send-course-reminders", {
+    const { data, error } = await api.functions.invoke("send-course-reminders", {
       body: {
         action: "trigger",
         ...params,

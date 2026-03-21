@@ -59,7 +59,7 @@ export const useUpdateCoupon = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Coupon> & { id: string }) => {
-      const { data, error } = await supabase.from("coupons").update(updates).eq("id", id).select().single();
+      const { data, error } = await api.from("coupons").update(updates).eq("id", id).select().single();
       if (error) throw error;
       return data;
     },
@@ -72,7 +72,7 @@ export const useDeleteCoupon = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("coupons").delete().eq("id", id);
+      const { error } = await api.from("coupons").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["coupons"] }); toast.success("Cupom removido!"); },

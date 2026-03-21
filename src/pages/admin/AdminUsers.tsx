@@ -44,7 +44,7 @@ const AdminUsers = () => {
     } else {
       updates.blocked_reason = "";
     }
-    const { error } = await supabase.from("professionals").update(updates).eq("id", profId);
+    const { error } = await api.from("professionals").update(updates).eq("id", profId);
     if (!error) {
       qc.invalidateQueries({ queryKey: ["admin-professionals"] });
       toast.success(currentlyBlocked ? "Profissional desbloqueado" : "Profissional bloqueado");
@@ -67,7 +67,7 @@ const AdminUsers = () => {
     if (!confirm(`⚠️ ATENÇÃO: Isso excluirá permanentemente "${name}" e TODOS os dados associados (agendamentos, clientes, serviços, etc). Esta ação NÃO pode ser desfeita. Continuar?`)) return;
     setDeleting(profId);
     try {
-      const res = await supabase.functions.invoke("admin-delete-user", {
+      const res = await api.functions.invoke("admin-delete-user", {
         body: { professionalId: profId },
       });
       if (res.error) throw new Error(res.error.message);
@@ -86,11 +86,11 @@ const AdminUsers = () => {
     if (!adminPassword) return;
     setImpersonating(userId);
     try {
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      const { data: { user: currentUser } } = await api.auth.getUser();
       if (!currentUser?.email) throw new Error("Não foi possível obter email do admin");
 
       const redirectUrl = window.location.origin + "/";
-      const res = await supabase.functions.invoke("admin-impersonate", {
+      const res = await api.functions.invoke("admin-impersonate", {
         body: { userId, redirectUrl },
       });
       if (res.error) throw new Error(res.error.message);
@@ -102,14 +102,14 @@ const AdminUsers = () => {
         targetName: name,
       }));
 
-      await supabase.auth.signOut();
-      const { error: verifyError } = await supabase.auth.verifyOtp({
+      await api.auth.signOut();
+      const { error: verifyError } = await api.auth.verifyOtp({
         token_hash: res.data.token_hash,
         type: "magiclink",
       });
       if (verifyError) {
         localStorage.removeItem("admin_impersonation");
-        await supabase.auth.signInWithPassword({ email: currentUser.email, password: adminPassword });
+        await api.auth.signInWithPassword({ email: currentUser.email, password: adminPassword });
         throw verifyError;
       }
 

@@ -65,7 +65,7 @@ const CourseCertificates = () => {
         status: "issued",
         issued_at: new Date().toISOString(),
       }));
-      const { error } = await supabase.from("course_certificates").insert(inserts);
+      const { error } = await api.from("course_certificates").insert(inserts);
       if (error) throw error;
     },
     onSuccess: () => {

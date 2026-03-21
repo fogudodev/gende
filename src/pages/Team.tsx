@@ -95,7 +95,7 @@ const Team = () => {
       if (form.role === "reception" && form.email && receptionPassword) {
         setCreatingReception(true);
         try {
-          const { error } = await supabase.functions.invoke("create-reception-user", {
+          const { error } = await api.functions.invoke("create-reception-user", {
             body: {
               name: form.name,
               email: form.email,
@@ -129,7 +129,7 @@ const Team = () => {
 
   const syncEmployeeBilling = async (newActiveCount: number) => {
     try {
-      await supabase.functions.invoke("sync-employee-billing", {
+      await api.functions.invoke("sync-employee-billing", {
         body: { activeEmployeeCount: newActiveCount },
       });
     } catch (err) {
