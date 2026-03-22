@@ -426,4 +426,95 @@ LINK: {$bookingLink}";
 
         Response::success(['success' => $res['ok']]);
     }
+    /**
+     * Handle incoming webhooks from Meta Cloud API
+     * Endpoint: POST /whatsapp/meta-webhook
+     */
+    public function handleMetaWebhook(): void
+    {
+        $body = json_decode(file_get_contents('php://input'), true) ?? [];
+
+        // Meta sends { object: 'whatsapp_business_account', entry: [...] }
+        if (($body['object'] ?? '') !== 'whatsapp_business_account') {
+            Response::success(['success' => true]);
+            return;
+        }
+
+        foreach ($body['entry'] ?? [] as $entry) {
+            foreach ($entry['changes'] ?? [] as $change) {
+                $value = $change['value'] ?? [];
+                $contacts = $value['contacts'] ?? [];
+                $messages = $value['messages'] ?? [];
+                $statuses = $value['statuses'] ?? [];
+                $metaPhoneId = $value['metadata']['phone_number_id'] ?? '';
+
+                // Handle incoming messages
+                foreach ($messages as $msg) {
+                    $from = $msg['from'] ?? '';
+                    $msgType = $msg['type'] ?? 'text';
+                    $text = '';
+
+                    if ($msgType === 'text') {
+                        $text = $msg['text']['body'] ?? '';
+                    } elseif ($msgType === 'interactive') {
+                        $text = $msg['interactive']['button_reply']['title'] ?? $msg['interactive']['list_reply']['title'] ?? '';
+                    } else {
+                        $text = "[{$msgType}]";
+                    }
+
+                    $contactName = '';
+                    foreach ($contacts as $c) {
+                        if (($c['wa_id'] ?? '') === $from) {
+                            $contactName = $c['profile']['name'] ?? '';
+                            break;
+                        }
+                    }
+
+                    // Find which professional owns this Meta phone
+                    $stmt = $this->db->prepare("SELECT wi.professional_id, wi.instance_name FROM whatsapp_instances wi WHERE wi.meta_phone_id = ? LIMIT 1");
+                    $stmt->execute([$metaPhoneId]);
+                    $inst = $stmt->fetch();
+
+                    if (!$inst) continue;
+
+                    // Process as if it were an Evolution API message
+                    $this->processIncoming($inst['professional_id'], $inst['instance_name'], $from, $contactName, $text, 'meta');
+                }
+
+                // Handle status updates (delivered, read, failed)
+                foreach ($statuses as $status) {
+                    $recipientId = $status['recipient_id'] ?? '';
+                    $statusType = $status['status'] ?? ''; // sent, delivered, read, failed
+                    $errors = $status['errors'] ?? [];
+
+                    if ($statusType === 'failed' && !empty($errors)) {
+                        error_log("Meta WhatsApp delivery failed to {$recipientId}: " . json_encode($errors));
+                    }
+                }
+            }
+        }
+
+        Response::success(['success' => true]);
+    }
+
+    /**
+     * Process incoming message (shared between Evolution and Meta)
+     */
+    private function processIncoming(string $professionalId, string $instanceName, string $phone, string $contactName, string $text, string $provider = 'evolution'): void
+    {
+        // This delegates to the main bot logic — find conversation, run AI, etc.
+        // Re-use existing handle() flow by constructing an Evolution-compatible payload
+        $syntheticPayload = [
+            'event' => 'messages.upsert',
+            'instance' => $instanceName,
+            'data' => [
+                'key' => ['fromMe' => false, 'remoteJid' => $phone . '@s.whatsapp.net'],
+                'message' => ['conversation' => $text],
+                'pushName' => $contactName,
+            ],
+            '_provider' => $provider,
+        ];
+
+        $this->handle($syntheticPayload);
+    }
 }

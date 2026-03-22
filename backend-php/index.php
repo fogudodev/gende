@@ -485,7 +485,6 @@ $router->get('/admin/users', function () {
 $router->post('/whatsapp/send', function () {
     $user = Core\Auth::requireAuth();
     $data = Core\Request::json();
-    $config = require __DIR__ . '/config/app.php';
 
     $profId = Core\Auth::getProfessionalId($user['sub']);
     $db = Core\Database::getInstance();
@@ -494,43 +493,45 @@ $router->post('/whatsapp/send', function () {
     $stmt->execute([$profId]);
     $instance = $stmt->fetch();
 
-    if (!$instance) {
-        Core\Response::error('No connected WhatsApp instance');
-        return;
-    }
-
     $phone = $data['phone'] ?? '';
     $message = $data['message'] ?? '';
 
-    $ch = curl_init("{$config['evolution_api_url']}/message/sendText/{$instance['instance_name']}");
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST => true,
-        CURLOPT_HTTPHEADER => [
-            'Content-Type: application/json',
-            "apikey: {$config['evolution_api_key']}",
-        ],
-        CURLOPT_POSTFIELDS => json_encode(['number' => $phone, 'text' => $message]),
-        CURLOPT_TIMEOUT => 10,
-    ]);
+    $wa = new Api\WhatsApp();
+    $res = $wa->sendMessage($instance['instance_name'] ?? '', $phone, $message);
 
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    $success = $httpCode >= 200 && $httpCode < 300;
-
-    $stmt = $db->prepare('INSERT INTO whatsapp_logs (id, professional_id, phone, message_type, status, metadata) VALUES (?, ?, ?, ?, ?, ?)');
+    $stmt = $db->prepare('INSERT INTO whatsapp_logs (id, professional_id, recipient_phone, message_content, status, sent_at, provider) VALUES (?, ?, ?, ?, ?, ?, ?)');
     $stmt->execute([
-        Core\Database::uuid(), $profId, $phone, 'manual',
-        $success ? 'sent' : 'failed',
-        json_encode(['provider' => 'evolution', 'http_code' => $httpCode])
+        Core\Database::uuid(), $profId, Api\WhatsApp::normalizePhone($phone), $message,
+        $res['ok'] ? 'sent' : 'failed',
+        $res['ok'] ? date('c') : null,
+        $res['provider'] ?? 'evolution',
     ]);
 
-    if ($success) {
-        Core\Response::success(['provider' => 'evolution']);
+    if ($res['ok']) {
+        Core\Response::success(['provider' => $res['provider'] ?? 'evolution', 'fallback' => $res['fallback'] ?? false]);
     } else {
         Core\Response::error('Failed to send message', 502);
+    }
+});
+
+// --- WhatsApp: Send Meta Template directly ---
+$router->post('/whatsapp/send-meta-template', function () {
+    $user = Core\Auth::requireAuth();
+    $data = Core\Request::json();
+    $profId = Core\Auth::getProfessionalId($user['sub']);
+
+    $wa = new Api\WhatsApp();
+    $res = $wa->sendMetaTemplate(
+        $data['phone'] ?? '',
+        $data['template_name'] ?? '',
+        $data['language'] ?? 'pt_BR',
+        $data['parameters'] ?? []
+    );
+
+    if ($res['ok']) {
+        Core\Response::success($res['data']);
+    } else {
+        Core\Response::error('Template send failed: ' . json_encode($res['data']), 502);
     }
 });
 
@@ -545,6 +546,24 @@ $router->post('/whatsapp/webhook', function () {
 $router->get('/whatsapp/webhook', function () {
     (new Api\WhatsAppWebhook())->verify();
 });
+
+// --- Meta Cloud API Webhook (separate endpoint) ---
+$router->post('/whatsapp/meta-webhook', function () {
+    (new Api\WhatsAppWebhook())->handleMetaWebhook();
+});
+$router->get('/whatsapp/meta-webhook', function () {
+    $config = require __DIR__ . '/config/app.php';
+    $verifyToken = $config['meta_webhook_verify_token'] ?? '';
+    $mode = $_GET['hub_mode'] ?? $_GET['hub.mode'] ?? '';
+    $token = $_GET['hub_verify_token'] ?? $_GET['hub.verify_token'] ?? '';
+    $challenge = $_GET['hub_challenge'] ?? $_GET['hub.challenge'] ?? '';
+    if ($mode === 'subscribe' && $token === $verifyToken) {
+        echo $challenge;
+        exit;
+    }
+    Core\Response::error('Forbidden', 403);
+});
+
 $router->post('/whatsapp/bot-reply', function () {
     $user = Core\Auth::requireAuth();
     $profId = Core\Auth::getProfessionalId($user['sub']);
