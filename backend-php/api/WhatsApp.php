@@ -15,6 +15,9 @@ class WhatsApp
     private \PDO $db;
     private string $evolutionUrl;
     private string $evolutionKey;
+    private string $metaToken;
+    private string $metaPhoneId;
+    private string $metaApiVersion;
 
     public function __construct()
     {
@@ -22,6 +25,9 @@ class WhatsApp
         $config = require __DIR__ . '/../config/app.php';
         $this->evolutionUrl = $config['evolution_api_url'] ?? '';
         $this->evolutionKey = $config['evolution_api_key'] ?? '';
+        $this->metaToken = $config['meta_whatsapp_token'] ?? '';
+        $this->metaPhoneId = $config['meta_whatsapp_phone_id'] ?? '';
+        $this->metaApiVersion = $config['meta_api_version'] ?? 'v21.0';
     }
 
     public static function normalizePhone(string $phone): string
