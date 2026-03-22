@@ -361,18 +361,21 @@ class WhatsApp
         $finalMessage = self::replaceVars($messageTemplate, $vars);
         $res = $this->sendMessage($inst['instance_name'], $phone, $finalMessage);
 
-        if ($res['status'] === 404) {
+        if ($res['status'] === 404 && ($res['provider'] ?? '') === 'evolution') {
             $stmt = $this->db->prepare("UPDATE whatsapp_instances SET status = 'disconnected' WHERE instance_name = ?");
             $stmt->execute([$inst['instance_name']]);
         }
 
-        // Log
-        $stmt = $this->db->prepare('INSERT INTO whatsapp_logs (id, professional_id, automation_id, booking_id, recipient_phone, message_content, status, sent_at, error_message) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        $provider = $res['provider'] ?? 'evolution';
+
+        // Log with provider tracking
+        $stmt = $this->db->prepare('INSERT INTO whatsapp_logs (id, professional_id, automation_id, booking_id, recipient_phone, message_content, status, sent_at, error_message, provider) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
         $stmt->execute([
             Database::uuid(), $professionalId, $automation['id'], $bookingId, $phone, $finalMessage,
             $res['ok'] ? 'sent' : 'failed',
             $res['ok'] ? date('c') : null,
             $res['ok'] ? null : json_encode($res['data']),
+            $provider,
         ]);
 
         Response::success(['success' => $res['ok'], 'data' => $res['data']]);
