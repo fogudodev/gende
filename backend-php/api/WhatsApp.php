@@ -66,12 +66,124 @@ class WhatsApp
         return ['data' => json_decode($response, true) ?? [], 'status' => $httpCode, 'ok' => $httpCode >= 200 && $httpCode < 300];
     }
 
+    /**
+     * Send message with automatic fallback: Evolution API → Meta Cloud API
+     */
     public function sendMessage(string $instanceName, string $phone, string $message): array
     {
-        return $this->evolutionRequest("/message/sendText/{$instanceName}", 'POST', [
-            'number' => self::normalizePhone($phone),
+        $normalizedPhone = self::normalizePhone($phone);
+
+        // 1) Try Evolution API first
+        $res = $this->evolutionRequest("/message/sendText/{$instanceName}", 'POST', [
+            'number' => $normalizedPhone,
             'text' => $message,
         ]);
+
+        if ($res['ok']) {
+            $res['provider'] = 'evolution';
+            return $res;
+        }
+
+        // 2) Fallback to Meta Cloud API
+        $metaRes = $this->sendViaMeta($normalizedPhone, $message);
+        $metaRes['fallback'] = true;
+        $metaRes['evolution_error'] = $res['data'];
+        return $metaRes;
+    }
+
+    /**
+     * Send a text message via Meta Cloud API (WhatsApp Business)
+     */
+    private function sendViaMeta(string $phone, string $message): array
+    {
+        if (!$this->metaToken || !$this->metaPhoneId) {
+            return ['data' => ['error' => 'Meta Cloud API not configured'], 'status' => 500, 'ok' => false, 'provider' => 'meta'];
+        }
+
+        $url = "https://graph.facebook.com/{$this->metaApiVersion}/{$this->metaPhoneId}/messages";
+
+        $body = [
+            'messaging_product' => 'whatsapp',
+            'recipient_type' => 'individual',
+            'to' => $phone,
+            'type' => 'text',
+            'text' => ['preview_url' => true, 'body' => $message],
+        ];
+
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($body),
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $this->metaToken,
+            ],
+            CURLOPT_TIMEOUT => 15,
+        ]);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $data = json_decode($response, true) ?? [];
+        return [
+            'data' => $data,
+            'status' => $httpCode,
+            'ok' => $httpCode >= 200 && $httpCode < 300,
+            'provider' => 'meta',
+        ];
+    }
+
+    /**
+     * Send a template message via Meta Cloud API (required for first contact / 24h+ window)
+     */
+    public function sendMetaTemplate(string $phone, string $templateName, string $languageCode = 'pt_BR', array $parameters = []): array
+    {
+        if (!$this->metaToken || !$this->metaPhoneId) {
+            return ['data' => ['error' => 'Meta Cloud API not configured'], 'status' => 500, 'ok' => false, 'provider' => 'meta'];
+        }
+
+        $url = "https://graph.facebook.com/{$this->metaApiVersion}/{$this->metaPhoneId}/messages";
+
+        $components = [];
+        if (!empty($parameters)) {
+            $params = array_map(fn($v) => ['type' => 'text', 'text' => (string)$v], $parameters);
+            $components[] = ['type' => 'body', 'parameters' => $params];
+        }
+
+        $body = [
+            'messaging_product' => 'whatsapp',
+            'to' => self::normalizePhone($phone),
+            'type' => 'template',
+            'template' => [
+                'name' => $templateName,
+                'language' => ['code' => $languageCode],
+                'components' => $components,
+            ],
+        ];
+
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($body),
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $this->metaToken,
+            ],
+            CURLOPT_TIMEOUT => 15,
+        ]);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $data = json_decode($response, true) ?? [];
+        return [
+            'data' => $data,
+            'status' => $httpCode,
+            'ok' => $httpCode >= 200 && $httpCode < 300,
+            'provider' => 'meta',
+        ];
     }
 
     public function handleAction(array $data): void
