@@ -3327,6 +3327,7 @@ export type Database = {
           id: string
           message_content: string
           professional_id: string
+          provider: string | null
           recipient_phone: string
           sent_at: string | null
           status: string
@@ -3340,6 +3341,7 @@ export type Database = {
           id?: string
           message_content?: string
           professional_id: string
+          provider?: string | null
           recipient_phone: string
           sent_at?: string | null
           status?: string
@@ -3353,6 +3355,7 @@ export type Database = {
           id?: string
           message_content?: string
           professional_id?: string
+          provider?: string | null
           recipient_phone?: string
           sent_at?: string | null
           status?: string
