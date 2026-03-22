@@ -3279,6 +3279,7 @@ export type Database = {
           id: string
           instance_id: string | null
           instance_name: string
+          meta_phone_id: string | null
           phone_number: string | null
           professional_id: string
           qr_code: string | null
@@ -3290,6 +3291,7 @@ export type Database = {
           id?: string
           instance_id?: string | null
           instance_name?: string
+          meta_phone_id?: string | null
           phone_number?: string | null
           professional_id: string
           qr_code?: string | null
@@ -3301,6 +3303,7 @@ export type Database = {
           id?: string
           instance_id?: string | null
           instance_name?: string
+          meta_phone_id?: string | null
           phone_number?: string | null
           professional_id?: string
           qr_code?: string | null
