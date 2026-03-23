@@ -46,4 +46,7 @@ export const config = {
   },
 
   geminiApiKey: process.env.GEMINI_API_KEY || '',
+
+  // Cron security
+  cronSecret: process.env.CRON_SECRET || '',
 };

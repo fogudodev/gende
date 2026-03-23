@@ -1,11 +1,27 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { db } from '../core/database.js';
+import { config } from '../config.js';
 import { WhatsAppService } from '../services/whatsapp.js';
 
 const router = Router();
 
-// Reminders cron
-router.post('/cron/send-reminders', async (_req: Request, res: Response) => {
+// Cron security middleware - requires X-Cron-Secret header or query param
+function cronAuth(req: Request, res: Response, next: NextFunction) {
+  const secret = (req.headers['x-cron-secret'] as string) || (req.query.secret as string);
+  if (!config.cronSecret) {
+    console.warn('[CRON] CRON_SECRET not set - cron endpoints are unprotected!');
+    return next();
+  }
+  if (secret !== config.cronSecret) {
+    return res.status(403).json({ error: 'Forbidden: invalid cron secret' });
+  }
+  next();
+}
+
+// =============================================
+// BOOKING REMINDERS (24h, 3h, post-sale review)
+// =============================================
+router.post('/cron/send-reminders', cronAuth, async (_req: Request, res: Response) => {
   const wa = new WhatsAppService();
   const now = new Date();
   const results: any[] = [];
@@ -17,11 +33,8 @@ router.post('/cron/send-reminders', async (_req: Request, res: Response) => {
   const psStart = new Date(now.getTime() - 25 * 3600000).toISOString();
   const psEnd = new Date(now.getTime() - 23 * 3600000).toISOString();
 
-  // 24h reminders
   const b24 = await db.query<any>("SELECT b.*, s.name as service_name FROM bookings b LEFT JOIN services s ON s.id = b.service_id WHERE b.status IN ('pending','confirmed') AND b.start_time >= ? AND b.start_time <= ? AND b.client_phone IS NOT NULL", [h24Start, h24End]);
-  // 3h reminders
   const b3 = await db.query<any>("SELECT b.*, s.name as service_name FROM bookings b LEFT JOIN services s ON s.id = b.service_id WHERE b.status IN ('pending','confirmed') AND b.start_time >= ? AND b.start_time <= ? AND b.client_phone IS NOT NULL", [h3Start, h3End]);
-  // Post-sale
   const bps = await db.query<any>("SELECT b.*, s.name as service_name FROM bookings b LEFT JOIN services s ON s.id = b.service_id WHERE b.status = 'completed' AND b.updated_at >= ? AND b.updated_at <= ? AND b.client_phone IS NOT NULL", [psStart, psEnd]);
 
   const allBookings = [
@@ -30,7 +43,6 @@ router.post('/cron/send-reminders', async (_req: Request, res: Response) => {
     ...bps.map(b => ({ ...b, triggerType: 'post_sale_review' })),
   ];
 
-  // Group by professional
   const byProf: Record<string, any[]> = {};
   for (const b of allBookings) {
     (byProf[b.professional_id] ||= []).push(b);
@@ -88,8 +100,10 @@ router.post('/cron/send-reminders', async (_req: Request, res: Response) => {
   res.json({ success: true, processed: results.length, results });
 });
 
-// Campaigns cron
-router.post('/cron/send-campaigns', async (_req: Request, res: Response) => {
+// =============================================
+// CAMPAIGNS
+// =============================================
+router.post('/cron/send-campaigns', cronAuth, async (_req: Request, res: Response) => {
   const wa = new WhatsAppService();
   const campaigns = await db.query<any>("SELECT * FROM campaigns WHERE status = 'scheduled' AND scheduled_at <= NOW()");
 
@@ -122,7 +136,7 @@ router.post('/cron/send-campaigns', async (_req: Request, res: Response) => {
         await db.execute("UPDATE campaign_contacts SET status = 'failed', error_message = ? WHERE id = ?", [JSON.stringify(sendRes.data), contact.id]);
       }
 
-      await new Promise(r => setTimeout(r, 1000)); // 1s delay
+      await new Promise(r => setTimeout(r, 1000));
     }
 
     await db.execute("UPDATE campaigns SET status = 'completed', sent_count = ?, failed_count = ?, completed_at = NOW() WHERE id = ?", [sentCount, failedCount, campaign.id]);
@@ -131,8 +145,10 @@ router.post('/cron/send-campaigns', async (_req: Request, res: Response) => {
   res.json({ success: true, processed: campaigns.length });
 });
 
-// Conversation timeout
-router.post('/cron/conversation-timeout', async (_req: Request, res: Response) => {
+// =============================================
+// CONVERSATION TIMEOUT
+// =============================================
+router.post('/cron/conversation-timeout', cronAuth, async (_req: Request, res: Response) => {
   const wa = new WhatsAppService();
   const thirtyMinAgo = new Date(Date.now() - 30 * 60000).toISOString().replace('T', ' ').slice(0, 19);
 
@@ -160,16 +176,190 @@ router.post('/cron/conversation-timeout', async (_req: Request, res: Response) =
   res.json({ success: true, closed });
 });
 
-// Course reminders
-router.post('/cron/course-reminders', async (_req: Request, res: Response) => {
-  res.json({ success: true, message: 'Course reminders processed' });
-  // Simplified - same logic as PHP version
+// =============================================
+// COURSE REMINDERS (7d, 1d, day-of, followup)
+// =============================================
+router.post('/cron/course-reminders', cronAuth, async (_req: Request, res: Response) => {
+  const wa = new WhatsAppService();
+  const now = new Date();
+  const results: any[] = [];
+
+  // Get all connected instances
+  const instances = await db.query<any>("SELECT professional_id, instance_name, status FROM whatsapp_instances WHERE status = 'connected'");
+
+  for (const inst of instances) {
+    const profId = inst.professional_id;
+
+    // Get active course automations
+    const automations = await db.query<any>(
+      "SELECT * FROM whatsapp_automations WHERE professional_id = ? AND is_active = 1 AND trigger_type IN ('course_reminder_7d','course_reminder_1d','course_reminder_day','course_send_location','course_send_link','course_followup','course_feedback_request')",
+      [profId]
+    );
+    const autoMap: Record<string, any> = {};
+    for (const a of automations) autoMap[a.trigger_type] = a;
+    if (!Object.keys(autoMap).length) continue;
+
+    // Get confirmed enrollments with class info
+    const enrollments = await db.query<any>(
+      "SELECT e.*, c.name as course_name, c.slug as course_slug, cc.name as class_name, cc.class_date, cc.start_time, cc.end_time, cc.location, cc.online_link, cc.modality, cc.status as class_status FROM course_enrollments e LEFT JOIN courses c ON c.id = e.course_id LEFT JOIN course_classes cc ON cc.id = e.class_id WHERE e.professional_id = ? AND e.enrollment_status = 'confirmed'",
+      [profId]
+    );
+
+    for (const enrollment of enrollments) {
+      if (!enrollment.student_phone || enrollment.class_status === 'cancelled') continue;
+
+      const classDate = new Date(`${enrollment.class_date}T${enrollment.start_time || '08:00'}:00-03:00`);
+      const diffMs = classDate.getTime() - now.getTime();
+      const diffDays = diffMs / 86400000;
+
+      // Determine which triggers to fire
+      const triggers: string[] = [];
+      if (diffDays >= 6.5 && diffDays <= 7.5 && autoMap['course_reminder_7d']) triggers.push('course_reminder_7d');
+      if (diffDays >= 0.5 && diffDays <= 1.5 && autoMap['course_reminder_1d']) triggers.push('course_reminder_1d');
+      if (diffDays >= -0.5 && diffDays <= 0.5 && diffDays > 0 && autoMap['course_reminder_day']) triggers.push('course_reminder_day');
+      if (diffDays >= -0.5 && diffDays <= 0.5 && diffDays > 0 && autoMap['course_send_location'] && enrollment.location) triggers.push('course_send_location');
+      if (diffDays >= -0.5 && diffDays <= 0.5 && diffDays > 0 && autoMap['course_send_link'] && enrollment.online_link) triggers.push('course_send_link');
+      if (diffDays >= -1.5 && diffDays <= -0.5 && autoMap['course_followup']) triggers.push('course_followup');
+      if (diffDays >= -3.5 && diffDays <= -2.5 && autoMap['course_feedback_request']) triggers.push('course_feedback_request');
+
+      for (const triggerType of triggers) {
+        const automation = autoMap[triggerType];
+
+        // Check if already sent (using enrollment.id as booking_id for dedup)
+        const alreadySent = await db.queryOne('SELECT id FROM whatsapp_logs WHERE professional_id = ? AND automation_id = ? AND recipient_phone = ? AND booking_id = ? LIMIT 1', [profId, automation.id, enrollment.student_phone, enrollment.id]);
+        if (alreadySent) continue;
+
+        const classDateObj = new Date(enrollment.class_date);
+        const finalMessage = WhatsAppService.replaceVars(automation.message_template, {
+          nome: enrollment.student_name || 'Aluno',
+          curso: enrollment.course_name || '',
+          turma: enrollment.class_name || '',
+          data: classDateObj.toLocaleDateString('pt-BR'),
+          horario: (enrollment.start_time || '').slice(0, 5),
+          local: enrollment.location || '',
+          link_aula: enrollment.online_link || '',
+        });
+
+        const sendRes = await wa.sendMessage(inst.instance_name, enrollment.student_phone, finalMessage);
+
+        await db.execute(
+          'INSERT INTO whatsapp_logs (id, professional_id, automation_id, booking_id, recipient_phone, message_content, status, sent_at, error_message) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [db.uuid(), profId, automation.id, enrollment.id, enrollment.student_phone, finalMessage, sendRes.ok ? 'sent' : 'failed', sendRes.ok ? new Date().toISOString() : null, sendRes.ok ? null : JSON.stringify(sendRes.data)]
+        );
+
+        results.push({ type: triggerType, enrollmentId: enrollment.id, success: sendRes.ok });
+      }
+    }
+  }
+
+  res.json({ success: true, processed: results.length, results });
 });
 
-// Waitlist process
-router.post('/cron/waitlist-process', async (_req: Request, res: Response) => {
-  res.json({ success: true, message: 'Waitlist processed' });
-  // Simplified - same logic as PHP version
+// =============================================
+// WAITLIST PROCESSING
+// =============================================
+router.post('/cron/waitlist-process', cronAuth, async (req: Request, res: Response) => {
+  const { action } = req.body;
+
+  if (action === 'process-cancellation') {
+    const { professionalId, serviceId, startTime, endTime } = req.body;
+
+    const settings = await db.queryOne<any>('SELECT * FROM waitlist_settings WHERE professional_id = ?', [professionalId]);
+    if (settings && !settings.enabled) return res.json({ success: false, reason: 'waitlist_disabled' });
+
+    const maxNotifications = settings?.max_notifications ?? 3;
+    const reservationMinutes = settings?.reservation_minutes ?? 3;
+
+    const slotDate = new Date(startTime);
+    const dateStr = slotDate.toISOString().split('T')[0];
+    const hour = slotDate.getHours();
+    const period = hour < 12 ? 'morning' : (hour < 18 ? 'afternoon' : 'evening');
+
+    // Find matching waitlist entries
+    const entries = await db.query<any>(
+      "SELECT * FROM waitlist_entries WHERE professional_id = ? AND status = 'waiting' AND (service_id = ? OR service_id IS NULL) ORDER BY priority DESC, created_at ASC",
+      [professionalId, serviceId]
+    );
+
+    // Filter compatible by date/period
+    let compatible = entries.filter((e: any) =>
+      e.preferred_date === dateStr && (e.preferred_period === 'any' || e.preferred_period === period)
+    );
+    if (!compatible.length) compatible = entries;
+
+    const toNotify = compatible.slice(0, maxNotifications);
+    if (!toNotify.length) return res.json({ success: false, reason: 'no_candidates' });
+
+    // Send offers
+    const wa = new WhatsAppService();
+    const inst = await db.queryOne<any>("SELECT instance_name, status FROM whatsapp_instances WHERE professional_id = ? LIMIT 1", [professionalId]);
+    if (!inst || inst.status !== 'connected') return res.json({ success: false, reason: 'whatsapp_disconnected' });
+
+    const prof = await db.queryOne<any>('SELECT name, business_name, slug FROM professionals WHERE id = ?', [professionalId]);
+    const service = await db.queryOne<any>('SELECT name, price FROM services WHERE id = ?', [serviceId]);
+
+    const businessName = prof?.business_name || prof?.name || 'Salão';
+    const bookingLink = prof?.slug ? `https://gende.io/${prof.slug}` : '';
+    let sent = 0;
+
+    for (const entry of toNotify) {
+      const reservedUntil = new Date(Date.now() + reservationMinutes * 60000).toISOString().replace('T', ' ').slice(0, 19);
+
+      await db.execute(
+        'INSERT INTO waitlist_offers (id, professional_id, waitlist_entry_id, client_name, client_phone, service_id, slot_start, slot_end, status, reserved_until) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [db.uuid(), professionalId, entry.id, entry.client_name, entry.client_phone, serviceId, startTime, endTime, 'sent', reservedUntil]
+      );
+
+      const message = `✨ *Horário disponível!*\n\nOlá ${entry.client_name}!\n\n📅 *${slotDate.toLocaleDateString('pt-BR')}* às *${slotDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}*\n💇 *${service?.name || 'Serviço'}*\n📍 ${businessName}\n\n${bookingLink ? `📲 Agende: ${bookingLink}\n\n` : ''}⏰ Responda rápido!`;
+
+      const sendRes = await wa.sendMessage(inst.instance_name, entry.client_phone, message);
+      if (sendRes.ok) sent++;
+
+      // Update entry status
+      await db.execute("UPDATE waitlist_entries SET status = 'notified', notified_at = NOW() WHERE id = ?", [entry.id]);
+    }
+
+    return res.json({ success: true, offers_sent: sent });
+  }
+
+  if (action === 'accept-offer') {
+    const { offerId } = req.body;
+
+    const offer = await db.queryOne<any>('SELECT * FROM waitlist_offers WHERE id = ?', [offerId]);
+    if (!offer) return res.json({ success: false, error: 'Oferta não encontrada' });
+    if (offer.status !== 'sent') return res.json({ success: false, error: 'Oferta já respondida' });
+
+    if (offer.reserved_until && new Date(offer.reserved_until).getTime() < Date.now()) {
+      await db.execute("UPDATE waitlist_offers SET status = 'expired' WHERE id = ?", [offerId]);
+      return res.json({ success: false, error: 'Tempo expirado' });
+    }
+
+    // Create booking from offer
+    const service = await db.queryOne<any>('SELECT price, duration_minutes FROM services WHERE id = ?', [offer.service_id]);
+    const bookingId = db.uuid();
+
+    await db.execute(
+      'INSERT INTO bookings (id, professional_id, service_id, client_name, client_phone, start_time, end_time, price, duration_minutes, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [bookingId, offer.professional_id, offer.service_id, offer.client_name, offer.client_phone, offer.slot_start, offer.slot_end, service?.price || 0, service?.duration_minutes || 30, 'confirmed']
+    );
+
+    // Update offer
+    await db.execute("UPDATE waitlist_offers SET status = 'accepted', responded_at = NOW(), created_booking_id = ? WHERE id = ?", [bookingId, offerId]);
+
+    // Mark other offers for the same slot as taken
+    await db.execute("UPDATE waitlist_offers SET status = 'slot_taken' WHERE professional_id = ? AND slot_start = ? AND id != ? AND status = 'sent'", [offer.professional_id, offer.slot_start, offerId]);
+
+    // Update waitlist entry
+    if (offer.waitlist_entry_id) {
+      await db.execute("UPDATE waitlist_entries SET status = 'booked' WHERE id = ?", [offer.waitlist_entry_id]);
+    }
+
+    return res.json({ success: true, booking_id: bookingId });
+  }
+
+  // Auto-expire old offers
+  await db.execute("UPDATE waitlist_offers SET status = 'expired' WHERE status = 'sent' AND reserved_until < NOW()");
+  res.json({ success: true, message: 'Expired offers cleaned' });
 });
 
 export default router;

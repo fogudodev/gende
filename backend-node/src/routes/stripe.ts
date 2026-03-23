@@ -40,7 +40,7 @@ router.post('/create-checkout', authMiddleware, async (req: Request, res: Respon
   const stripe = getStripe();
   const customers = await stripe.customers.list({ email: user.email, limit: 1 });
   const customerId = customers.data[0]?.id;
-  const origin = req.headers.origin || 'https://gende.io';
+  const origin = req.headers.origin || config.frontendUrl;
 
   const session = await stripe.checkout.sessions.create({
     customer: customerId, customer_email: customerId ? undefined : user.email,
@@ -78,7 +78,7 @@ router.post('/customer-portal', authMiddleware, async (req: Request, res: Respon
   const customers = await stripe.customers.list({ email: user.email, limit: 1 });
   if (!customers.data.length) return res.status(400).json({ error: 'No Stripe customer found' });
 
-  const origin = req.headers.origin || 'https://gende.io';
+  const origin = req.headers.origin || config.frontendUrl;
   const session = await stripe.billingPortal.sessions.create({
     customer: customers.data[0].id, return_url: `${origin}/settings`,
   });
@@ -97,7 +97,7 @@ router.post('/purchase-addon', authMiddleware, async (req: Request, res: Respons
 
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     const customerId = customers.data[0]?.id;
-    const origin = req.headers.origin || 'https://gende.io';
+    const origin = req.headers.origin || config.frontendUrl;
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId, customer_email: customerId ? undefined : user.email,
@@ -137,9 +137,151 @@ router.post('/purchase-addon', authMiddleware, async (req: Request, res: Respons
   res.status(400).json({ error: 'Unknown action' });
 });
 
-// Stripe Webhook
+// Sync employee billing
+router.post('/sync-employee-billing', authMiddleware, async (req: Request, res: Response) => {
+  const user = (req as any).user as JwtPayload;
+  const { activeEmployeeCount = 0 } = req.body;
+  const extraEmployees = Math.max(0, activeEmployeeCount - 5);
+
+  const stripe = getStripe();
+  const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+  if (!customers.data.length) {
+    return res.json({ success: true, skipped: true, extra_employees: extraEmployees });
+  }
+
+  const subs = await stripe.subscriptions.list({ customer: customers.data[0].id, status: 'active', limit: 1 });
+  if (!subs.data.length) return res.status(400).json({ error: 'No active subscription found' });
+
+  const sub = subs.data[0];
+  let existingItem: Stripe.SubscriptionItem | null = null;
+  for (const item of sub.items.data) {
+    if ((item.price.product as string) === 'prod_U3KrydRhlXjRr4') { existingItem = item; break; }
+  }
+
+  if (extraEmployees > 0) {
+    if (existingItem) {
+      await stripe.subscriptionItems.update(existingItem.id, { quantity: extraEmployees });
+    } else {
+      await stripe.subscriptionItems.create({ subscription: sub.id, price: 'price_1T5EBbFjVGP9lWs0mTpdPlol', quantity: extraEmployees });
+    }
+  } else if (existingItem) {
+    await stripe.subscriptionItems.del(existingItem.id, { proration_behavior: 'create_prorations' });
+  }
+
+  res.json({ success: true, extra_employees: extraEmployees });
+});
+
+// Stripe Webhook - receives raw body (configured in index.ts)
 router.post('/stripe/webhook', async (req: Request, res: Response) => {
-  // Stripe webhooks need raw body - handled in main index
+  const stripe = getStripe();
+  const sig = req.headers['stripe-signature'] as string;
+
+  if (!config.stripe.webhookSecret) {
+    console.error('[Stripe Webhook] STRIPE_WEBHOOK_SECRET not configured');
+    return res.status(500).json({ error: 'Webhook secret not configured' });
+  }
+
+  let event: Stripe.Event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, config.stripe.webhookSecret);
+  } catch (err: any) {
+    console.error('[Stripe Webhook] Signature verification failed:', err.message);
+    return res.status(400).json({ error: 'Invalid signature' });
+  }
+
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        if (session.mode === 'subscription' && session.subscription) {
+          const sub = await stripe.subscriptions.retrieve(session.subscription as string);
+          const productId = sub.items.data[0]?.price?.product as string;
+          const plan = PRODUCT_TO_PLAN[productId] || 'essencial';
+          const email = session.customer_email || session.customer_details?.email;
+
+          if (email) {
+            const user = await db.queryOne<any>('SELECT id FROM users WHERE email = ?', [email]);
+            if (user) {
+              const prof = await db.queryOne<any>('SELECT id FROM professionals WHERE user_id = ?', [user.id]);
+              if (prof) {
+                const existing = await db.queryOne('SELECT id FROM subscriptions WHERE professional_id = ?', [prof.id]);
+                if (existing) {
+                  await db.execute(
+                    "UPDATE subscriptions SET plan_id = ?, status = 'active', stripe_subscription_id = ?, stripe_customer_id = ?, current_period_start = ?, current_period_end = ?, updated_at = NOW() WHERE professional_id = ?",
+                    [plan, sub.id, session.customer as string, new Date(sub.current_period_start * 1000), new Date(sub.current_period_end * 1000), prof.id]
+                  );
+                } else {
+                  await db.execute(
+                    "INSERT INTO subscriptions (id, professional_id, plan_id, status, stripe_subscription_id, stripe_customer_id, current_period_start, current_period_end) VALUES (?, ?, ?, 'active', ?, ?, ?, ?)",
+                    [db.uuid(), prof.id, plan, sub.id, session.customer as string, new Date(sub.current_period_start * 1000), new Date(sub.current_period_end * 1000)]
+                  );
+                }
+                console.log(`[Stripe] Subscription activated: ${email} -> ${plan}`);
+              }
+            }
+          }
+        }
+        break;
+      }
+
+      case 'invoice.paid': {
+        const invoice = event.data.object as Stripe.Invoice;
+        if (invoice.subscription) {
+          const sub = await stripe.subscriptions.retrieve(invoice.subscription as string);
+          const productId = sub.items.data[0]?.price?.product as string;
+          const plan = PRODUCT_TO_PLAN[productId] || 'essencial';
+
+          await db.execute(
+            "UPDATE subscriptions SET status = 'active', plan_id = ?, current_period_start = ?, current_period_end = ?, updated_at = NOW() WHERE stripe_subscription_id = ?",
+            [plan, new Date(sub.current_period_start * 1000), new Date(sub.current_period_end * 1000), sub.id]
+          );
+          console.log(`[Stripe] Invoice paid, subscription renewed: ${sub.id}`);
+        }
+        break;
+      }
+
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as Stripe.Invoice;
+        if (invoice.subscription) {
+          await db.execute(
+            "UPDATE subscriptions SET status = 'past_due', updated_at = NOW() WHERE stripe_subscription_id = ?",
+            [invoice.subscription as string]
+          );
+          console.log(`[Stripe] Payment failed: ${invoice.subscription}`);
+        }
+        break;
+      }
+
+      case 'customer.subscription.updated': {
+        const sub = event.data.object as Stripe.Subscription;
+        const productId = sub.items.data[0]?.price?.product as string;
+        const plan = PRODUCT_TO_PLAN[productId] || 'essencial';
+
+        await db.execute(
+          "UPDATE subscriptions SET plan_id = ?, status = ?, cancel_at_period_end = ?, current_period_start = ?, current_period_end = ?, updated_at = NOW() WHERE stripe_subscription_id = ?",
+          [plan, sub.status === 'active' ? 'active' : sub.status, sub.cancel_at_period_end ? 1 : 0, new Date(sub.current_period_start * 1000), new Date(sub.current_period_end * 1000), sub.id]
+        );
+        console.log(`[Stripe] Subscription updated: ${sub.id} -> ${plan} (${sub.status})`);
+        break;
+      }
+
+      case 'customer.subscription.deleted': {
+        const sub = event.data.object as Stripe.Subscription;
+        await db.execute(
+          "UPDATE subscriptions SET status = 'cancelled', cancel_at_period_end = 0, updated_at = NOW() WHERE stripe_subscription_id = ?",
+          [sub.id]
+        );
+        console.log(`[Stripe] Subscription cancelled: ${sub.id}`);
+        break;
+      }
+
+      default:
+        console.log(`[Stripe] Unhandled event: ${event.type}`);
+    }
+  } catch (err: any) {
+    console.error(`[Stripe Webhook] Error processing ${event.type}:`, err.message);
+  }
+
   res.json({ received: true });
 });
 
