@@ -554,14 +554,20 @@ $router->post('/whatsapp/meta-webhook', function () {
 $router->get('/whatsapp/meta-webhook', function () {
     $config = require __DIR__ . '/config/app.php';
     $verifyToken = $config['meta_webhook_verify_token'] ?? '';
-    $mode = $_GET['hub_mode'] ?? $_GET['hub.mode'] ?? '';
-    $token = $_GET['hub_verify_token'] ?? $_GET['hub.verify_token'] ?? '';
-    $challenge = $_GET['hub_challenge'] ?? $_GET['hub.challenge'] ?? '';
+    // PHP converts dots in query params to underscores automatically
+    $mode = $_GET['hub_mode'] ?? '';
+    $token = $_GET['hub_verify_token'] ?? '';
+    $challenge = $_GET['hub_challenge'] ?? '';
     if ($mode === 'subscribe' && $token === $verifyToken) {
+        // Must return ONLY the challenge as plain text, no JSON
+        header('Content-Type: text/plain');
+        http_response_code(200);
         echo $challenge;
         exit;
     }
-    Core\Response::error('Forbidden', 403);
+    http_response_code(403);
+    echo 'Forbidden';
+    exit;
 });
 
 $router->post('/whatsapp/bot-reply', function () {
