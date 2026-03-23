@@ -49,6 +49,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $router = new Core\Router();
 
 // ============================================
+// HEALTH CHECK
+// ============================================
+$router->get('/health', function () {
+    Core\Response::json([
+        'status' => 'ok',
+        'version' => '1.0.0',
+        'php' => PHP_VERSION,
+        'timestamp' => date('c'),
+    ]);
+});
+
+// ============================================
 // AUTH ROUTES
 // ============================================
 $router->post('/auth/signup', function () {
