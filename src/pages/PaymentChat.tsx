@@ -42,7 +42,7 @@ const PaymentChat = () => {
         .eq("chat_type", "payment")
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return data;
+      return (data || []).filter((msg: any) => msg.chat_type === "payment");
     },
     enabled: !!professional?.id,
     refetchInterval: 5000,
@@ -61,7 +61,8 @@ const PaymentChat = () => {
           table: "chat_messages",
           filter: `professional_id=eq.${professional.id}`,
         },
-        () => {
+        (payload: any) => {
+          if (payload?.new?.chat_type !== "payment") return;
           qc.invalidateQueries({ queryKey: ["payment-chat", professional.id] });
         }
       )
