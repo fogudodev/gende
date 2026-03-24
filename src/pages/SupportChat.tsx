@@ -42,7 +42,7 @@ const SupportChat = () => {
         .eq("chat_type", "support")
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return data;
+      return (data || []).filter((msg: any) => msg.chat_type === "support");
     },
     enabled: !!professional?.id,
     refetchInterval: 5000,
@@ -60,7 +60,8 @@ const SupportChat = () => {
           table: "chat_messages",
           filter: `professional_id=eq.${professional.id}`,
         },
-        () => {
+        (payload: any) => {
+          if (payload?.new?.chat_type !== "support") return;
           qc.invalidateQueries({ queryKey: ["support-chat", professional.id] });
         }
       )
