@@ -115,10 +115,19 @@ export class WhatsAppService {
       instanceName, integration: 'WHATSAPP-BAILEYS', qrcode: true,
     });
 
-    await db.execute(
-      'INSERT INTO whatsapp_instances (id, professional_id, instance_name, instance_id, status, qr_code) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE instance_name = VALUES(instance_name), status = VALUES(status), qr_code = VALUES(qr_code)',
-      [db.uuid(), professionalId, instanceName, res.data?.instance?.instanceName || instanceName, 'connecting', res.data?.qrcode?.base64 || '']
-    );
+    // Check if instance already exists for this professional
+    const existing = await db.queryOne<any>('SELECT id FROM whatsapp_instances WHERE professional_id = ? LIMIT 1', [professionalId]);
+    if (existing) {
+      await db.execute(
+        'UPDATE whatsapp_instances SET instance_name = ?, status = ?, qr_code = ?, updated_at = NOW() WHERE id = ?',
+        [instanceName, 'connecting', res.data?.qrcode?.base64 || '', existing.id]
+      );
+    } else {
+      await db.execute(
+        'INSERT INTO whatsapp_instances (id, professional_id, instance_name, status, qr_code) VALUES (?, ?, ?, ?, ?)',
+        [db.uuid(), professionalId, instanceName, 'connecting', res.data?.qrcode?.base64 || '']
+      );
+    }
 
     // Auto-configure webhook
     const webhookUrl = `${config.appUrl}/whatsapp/webhook`;
@@ -206,8 +215,8 @@ export class WhatsAppService {
         const sendRes = await this.sendMessage(inst.instance_name, phone, finalMessage);
 
         await db.execute(
-          'INSERT INTO whatsapp_logs (id, professional_id, automation_id, booking_id, recipient_phone, message_content, status, sent_at, error_message, provider) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [db.uuid(), professionalId, automation.id, enrollmentId || null, phone, finalMessage, sendRes.ok ? 'sent' : 'failed', sendRes.ok ? new Date().toISOString() : null, sendRes.ok ? null : JSON.stringify(sendRes.data), sendRes.provider]
+          'INSERT INTO whatsapp_logs (id, professional_id, phone, message_type, status, metadata) VALUES (?, ?, ?, ?, ?, ?)',
+          [db.uuid(), professionalId, phone, triggerType, sendRes.ok ? 'sent' : 'failed', JSON.stringify({ message: finalMessage, automation_id: automation.id, enrollment_id: enrollmentId, provider: sendRes.provider, error: sendRes.ok ? null : sendRes.data })]
         );
 
         results.push({ phone, success: sendRes.ok });
@@ -260,8 +269,8 @@ export class WhatsAppService {
     }
 
     await db.execute(
-      'INSERT INTO whatsapp_logs (id, professional_id, automation_id, booking_id, recipient_phone, message_content, status, sent_at, error_message, provider) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [db.uuid(), professionalId, automation.id, bookingId, phone, finalMessage, sendRes.ok ? 'sent' : 'failed', sendRes.ok ? new Date().toISOString() : null, sendRes.ok ? null : JSON.stringify(sendRes.data), sendRes.provider]
+      'INSERT INTO whatsapp_logs (id, professional_id, phone, message_type, status, metadata) VALUES (?, ?, ?, ?, ?, ?)',
+      [db.uuid(), professionalId, phone, triggerType, sendRes.ok ? 'sent' : 'failed', JSON.stringify({ message: finalMessage, automation_id: automation.id, booking_id: bookingId, provider: sendRes.provider, error: sendRes.ok ? null : sendRes.data })]
     );
 
     return { success: sendRes.ok, data: sendRes.data };

@@ -17,8 +17,8 @@ router.post('/whatsapp/send', authMiddleware, async (req: Request, res: Response
   const sendRes = await wa.sendMessage(inst?.instance_name || '', phone, message);
 
   await db.execute(
-    'INSERT INTO whatsapp_logs (id, professional_id, recipient_phone, message_content, status, sent_at, provider) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [db.uuid(), profId, WhatsAppService.normalizePhone(phone), message, sendRes.ok ? 'sent' : 'failed', sendRes.ok ? new Date().toISOString() : null, sendRes.provider]
+    'INSERT INTO whatsapp_logs (id, professional_id, phone, message_type, status, metadata) VALUES (?, ?, ?, ?, ?, ?)',
+    [db.uuid(), profId, WhatsAppService.normalizePhone(phone), 'manual_send', sendRes.ok ? 'sent' : 'failed', JSON.stringify({ message, provider: sendRes.provider })]
   );
 
   if (sendRes.ok) res.json({ provider: sendRes.provider, fallback: sendRes.fallback || false });
@@ -80,8 +80,8 @@ router.post('/whatsapp/notify-commission', authMiddleware, async (req: Request, 
 
   const sendRes = await wa.sendMessage(inst.instance_name, employee.phone, msg);
   await db.execute(
-    'INSERT INTO whatsapp_logs (id, professional_id, recipient_phone, message_content, status, sent_at) VALUES (?, ?, ?, ?, ?, ?)',
-    [db.uuid(), professionalId, WhatsAppService.normalizePhone(employee.phone), msg, sendRes.ok ? 'sent' : 'failed', sendRes.ok ? new Date().toISOString() : null]
+    'INSERT INTO whatsapp_logs (id, professional_id, phone, message_type, status, metadata) VALUES (?, ?, ?, ?, ?, ?)',
+    [db.uuid(), professionalId, WhatsAppService.normalizePhone(employee.phone), 'commission_notify', sendRes.ok ? 'sent' : 'failed', JSON.stringify({ message: msg, provider: 'evolution' })]
   );
 
   res.json({ success: sendRes.ok });
