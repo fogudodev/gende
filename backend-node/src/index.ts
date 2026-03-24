@@ -226,6 +226,11 @@ for (const [route, table] of Object.entries(crudMap)) {
   app.use(createCrudRoutes(route, table));
 }
 
+// Tables without professional_id column — skip prof scoping
+app.use(createCrudRoutes('employee-services', 'employee_services', ''));
+app.use(createCrudRoutes('campaign-contacts', 'campaign_contacts', ''));
+app.use(createCrudRoutes('salon-employees', 'salon_employees', ''));
+
 // 404
 app.use((_req, res) => res.status(404).json({ error: 'Route not found' }));
 
