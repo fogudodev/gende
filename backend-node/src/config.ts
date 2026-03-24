@@ -49,7 +49,7 @@ export const config = {
   geminiApiKey: process.env.GEMINI_API_KEY || '',
 
   // Admin notifications
-  adminPhone: process.env.ADMIN_PHONE || '',
+  adminPhone: process.env.ADMIN_PHONE || '5521966651238',
 
   // Cron security
   cronSecret: process.env.CRON_SECRET || '',
