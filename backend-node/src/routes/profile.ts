@@ -4,6 +4,31 @@ import { authMiddleware, getProfessionalId, JwtPayload } from '../core/auth.js';
 
 const router = Router();
 
+// Check if current user is a reception employee
+router.get('/salon-employees', authMiddleware, async (req: Request, res: Response) => {
+  const user = (req as any).user as JwtPayload;
+  const userId = (req.query['eq[user_id]'] as string) || user.sub;
+  const role = req.query['eq[role]'] as string;
+  
+  let where = 'user_id = ?';
+  const params: any[] = [userId];
+  
+  if (role) {
+    where += ' AND role = ?';
+    params.push(role);
+  }
+  
+  // Parse limit
+  if (req.query.limit) {
+    const limit = parseInt(String(req.query.limit), 10);
+    const rows = await db.query(`SELECT * FROM salon_employees WHERE ${where} LIMIT ?`, [...params, limit]);
+    return res.json(rows);
+  }
+  
+  const rows = await db.query(`SELECT * FROM salon_employees WHERE ${where}`, params);
+  res.json(rows);
+});
+
 router.get('/profile', authMiddleware, async (req: Request, res: Response) => {
   const user = (req as any).user as JwtPayload;
 
