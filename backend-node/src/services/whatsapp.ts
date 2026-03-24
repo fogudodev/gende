@@ -115,10 +115,19 @@ export class WhatsAppService {
       instanceName, integration: 'WHATSAPP-BAILEYS', qrcode: true,
     });
 
-    await db.execute(
-      'INSERT INTO whatsapp_instances (id, professional_id, instance_name, instance_id, status, qr_code) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE instance_name = VALUES(instance_name), status = VALUES(status), qr_code = VALUES(qr_code)',
-      [db.uuid(), professionalId, instanceName, res.data?.instance?.instanceName || instanceName, 'connecting', res.data?.qrcode?.base64 || '']
-    );
+    // Check if instance already exists for this professional
+    const existing = await db.queryOne<any>('SELECT id FROM whatsapp_instances WHERE professional_id = ? LIMIT 1', [professionalId]);
+    if (existing) {
+      await db.execute(
+        'UPDATE whatsapp_instances SET instance_name = ?, status = ?, qr_code = ?, updated_at = NOW() WHERE id = ?',
+        [instanceName, 'connecting', res.data?.qrcode?.base64 || '', existing.id]
+      );
+    } else {
+      await db.execute(
+        'INSERT INTO whatsapp_instances (id, professional_id, instance_name, status, qr_code) VALUES (?, ?, ?, ?, ?)',
+        [db.uuid(), professionalId, instanceName, 'connecting', res.data?.qrcode?.base64 || '']
+      );
+    }
 
     // Auto-configure webhook
     const webhookUrl = `${config.appUrl}/whatsapp/webhook`;
