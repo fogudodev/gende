@@ -44,9 +44,17 @@ class WebSocketManager {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private pingTimer: ReturnType<typeof setInterval> | null = null;
   private pendingSubscribes: string[] = [];
+  private reconnectAttempts = 0;
+  private stopped = false;
 
   connect(): void {
     if (this.ws?.readyState === WebSocket.OPEN) return;
+    if (this.stopped) return;
+    if (this.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+      console.warn("⚠️ WebSocket: max reconnect attempts reached, giving up");
+      this.stopped = true;
+      return;
+    }
 
     try {
       this.ws = new WebSocket(WS_URL);
@@ -54,6 +62,7 @@ class WebSocketManager {
       this.ws.onopen = () => {
         console.log("🔌 WebSocket connected");
         this.connected = true;
+        this.reconnectAttempts = 0;
         this.authenticate();
         this.startPing();
       };
@@ -64,18 +73,16 @@ class WebSocketManager {
       };
 
       this.ws.onclose = () => {
-        console.log("🔌 WebSocket disconnected");
         this.connected = false;
         this.authenticated = false;
         this.stopPing();
         this.scheduleReconnect();
       };
 
-      this.ws.onerror = (err) => {
-        console.error("❌ WebSocket error:", err);
+      this.ws.onerror = () => {
+        // silenced - onclose will handle reconnect
       };
-    } catch (err) {
-      console.error("❌ WebSocket connection failed:", err);
+    } catch {
       this.scheduleReconnect();
     }
   }
