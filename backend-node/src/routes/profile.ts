@@ -121,7 +121,14 @@ router.put('/profile/:id', authMiddleware, async (req: Request, res: Response) =
   // Allow owner: check if this professional belongs to the current user
   if (!isPrivileged) {
     const ownerCheck = await db.queryOne<any>('SELECT id FROM professionals WHERE id = ? AND user_id = ?', [req.params.id, user.sub]);
-    if (!ownerCheck) return res.status(403).json({ error: 'Forbidden' });
+    if (!ownerCheck) {
+      const emailOwnerCheck = await db.queryOne<any>('SELECT id FROM professionals WHERE id = ? AND email = ?', [req.params.id, user.email]);
+      const employeeLinkCheck = await db.queryOne<any>('SELECT id FROM salon_employees WHERE salon_id = ? AND user_id = ? LIMIT 1', [req.params.id, user.sub]);
+
+      if (!emailOwnerCheck && !employeeLinkCheck) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+    }
   }
 
   const data = { ...req.body };

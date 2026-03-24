@@ -30,6 +30,8 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useWhatsAppInstance, useWhatsAppAutomations, useToggleAutomation } from "@/hooks/useWhatsApp";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api-client";
+import { isPhpBackend, PHP_API_URL } from "@/lib/backend-config";
+import { getAccessToken } from "@/lib/php-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { STRIPE_PLANS, SETTINGS_SECTIONS } from "@/lib/stripe-plans";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
@@ -51,6 +53,34 @@ const COLOR_PRESETS = [
   "#3498DB", "#1ABC9C", "#2ECC71", "#34495E",
   "#F39C12", "#D35400", "#8E44AD", "#2980B9",
 ];
+
+async function updateProfessionalRecord(professionalId: string, updates: Record<string, unknown>) {
+  if (isPhpBackend()) {
+    const token = getAccessToken();
+    if (!token) return new Error("Sessão expirada");
+
+    try {
+      const response = await fetch(`${PHP_API_URL}/profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updates),
+      });
+
+      const body = await response.json().catch(() => ({} as { error?: string }));
+      if (!response.ok) return new Error(body.error || "Erro ao salvar");
+
+      return null;
+    } catch (err) {
+      return err instanceof Error ? err : new Error("Erro ao salvar");
+    }
+  }
+
+  const { error } = await api.from("professionals").update(updates).eq("id", professionalId);
+  return error as Error | null;
+}
 
 const Settings = () => {
   const [activeSection, setActiveSection] = useState<Section | null>(null);
@@ -210,7 +240,10 @@ const SystemAppearanceSection = () => {
       if (uploadError) throw uploadError;
       const { data: urlData } = api.storage.from("professionals").getPublicUrl(path);
       const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-      await api.from("professionals").update({ logo_url: publicUrl }).eq("id", professional.id);
+
+      const updateError = await updateProfessionalRecord(professional.id, { logo_url: publicUrl });
+      if (updateError) throw updateError;
+
       setLogoUrl(publicUrl);
       qc.invalidateQueries({ queryKey: ["professional"] });
       toast.success("Logo atualizada!");
@@ -226,7 +259,9 @@ const SystemAppearanceSection = () => {
     if (!professional) return;
     setRemovingLogo(true);
     try {
-      await api.from("professionals").update({ logo_url: null }).eq("id", professional.id);
+      const error = await updateProfessionalRecord(professional.id, { logo_url: null });
+      if (error) throw error;
+
       setLogoUrl("");
       qc.invalidateQueries({ queryKey: ["professional"] });
       toast.success("Logo removida");
@@ -241,15 +276,12 @@ const SystemAppearanceSection = () => {
     if (!professional) return;
     setSaving(true);
 
-    const { error } = await api
-      .from("professionals")
-      .update({
-        business_name: businessName.trim(),
-        system_accent_color: accentColor,
-        system_sidebar_color: sidebarColor,
-        system_sidebar_text_color: sidebarTextColor,
-      })
-      .eq("id", professional.id);
+    const error = await updateProfessionalRecord(professional.id, {
+      business_name: businessName.trim(),
+      system_accent_color: accentColor,
+      system_sidebar_color: sidebarColor,
+      system_sidebar_text_color: sidebarTextColor,
+    });
 
     if (error) {
       toast.error("Erro ao salvar");
@@ -429,10 +461,11 @@ const WorkingHoursSection = () => {
 
   const saveAdvanceWeeks = async (weeks: number) => {
     if (!professional || weeks < 1 || weeks > 52) return;
-    const { error } = await api
-      .from("professionals")
-      .update({ booking_advance_weeks: weeks })
-      .eq("id", professional.id);
+
+    const error = await updateProfessionalRecord(professional.id, {
+      booking_advance_weeks: weeks,
+    });
+
     if (error) {
       toast.error("Erro ao salvar");
     } else {
