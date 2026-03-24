@@ -161,6 +161,22 @@ const createProfessionalHandler = async (req: Request, res: Response) => {
 
     await conn.commit();
 
+    // Auto-create Evolution API instance (fire-and-forget)
+    if (!isSupport) {
+      (async () => {
+        try {
+          if (config.evolution.url && config.evolution.key) {
+            const waCreate = new WhatsAppService();
+            const instanceName = `gende_${profId.slice(0, 8)}`;
+            await waCreate.createInstance(instanceName, profId);
+            console.log(`[Admin] Auto-created WhatsApp instance: ${instanceName} for professional ${profId}`);
+          }
+        } catch (autoErr: any) {
+          console.warn('[Admin] Auto-create instance error:', autoErr.message);
+        }
+      })();
+    }
+
     let whatsappSent = false;
     if (phone) {
       const wa = new WhatsAppService();
