@@ -561,9 +561,28 @@ export const phpClient = {
     },
   },
 
-  // Realtime channel - delegates to phpRealtime
+  // Realtime channel - delegates to phpRealtime (lazy to avoid circular dep)
   channel(name: string) {
-    return phpRealtimeRef.channel(name);
+    // Return a proxy object that lazily loads phpRealtime
+    const listeners: Array<{ type: string; options: any; callback: any }> = [];
+    const channelProxy = {
+      on(type: string, options: any, callback: any) {
+        listeners.push({ type, options, callback });
+        return channelProxy;
+      },
+      subscribe() {
+        getPhpRealtime().then((rt) => {
+          let ch = rt.channel(name);
+          listeners.forEach(({ type, options, callback }) => {
+            ch = ch.on(type as any, options, callback);
+          });
+          ch.subscribe();
+        });
+        return { unsubscribe: () => {} };
+      },
+      unsubscribe() {},
+    };
+    return channelProxy;
   },
 
   // Remove channel (compat with Supabase)
