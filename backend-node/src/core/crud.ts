@@ -112,7 +112,7 @@ export function createCrudRoutes(routePath: string, tableName: string, profColum
 
       let query = `SELECT * FROM \`${tableName}\` WHERE id = ?`;
       const params: any[] = [req.params.id];
-      if (!isAdmin) {
+      if (hasScope && !isAdmin) {
         query += ` AND \`${profColumn}\` = ?`;
         params.push(profId);
       }

@@ -312,6 +312,52 @@ const Auth = () => {
                   />
                 </div>
 
+                {/* Account type selection */}
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground text-sm pl-2">Como você trabalha?</Label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => { setAccountType("autonomous"); setEmployeeCount(1); }}
+                      className={`flex-1 rounded-full py-2.5 px-4 text-sm font-medium border transition-all duration-200 ${
+                        accountType === "autonomous"
+                          ? "bg-accent text-accent-foreground border-accent"
+                          : "bg-card border-border text-muted-foreground hover:bg-secondary"
+                      }`}
+                    >
+                      👩‍💼 Trabalho sozinha
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAccountType("salon")}
+                      className={`flex-1 rounded-full py-2.5 px-4 text-sm font-medium border transition-all duration-200 ${
+                        accountType === "salon"
+                          ? "bg-accent text-accent-foreground border-accent"
+                          : "bg-card border-border text-muted-foreground hover:bg-secondary"
+                      }`}
+                    >
+                      💇‍♀️ Salão / Equipe
+                    </button>
+                  </div>
+                </div>
+
+                {accountType === "salon" && (
+                  <div className="space-y-2">
+                    <Label className="text-muted-foreground text-sm pl-2">Quantos profissionais trabalham com você?</Label>
+                    <div className="flex items-center gap-3">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={50}
+                        value={employeeCount}
+                        onChange={(e) => setEmployeeCount(Math.max(1, Math.min(50, Number(e.target.value))))}
+                        className={`${inputClass} w-24 text-center`}
+                      />
+                      <span className="text-sm text-muted-foreground">cadeira(s) / profissional(is)</span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label className="text-muted-foreground text-sm pl-2">Email</Label>
                   <Input

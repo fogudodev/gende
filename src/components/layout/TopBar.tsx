@@ -88,6 +88,19 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
             {currentPlan === "none" ? "Assinar" : currentPlan === "essencial" ? "Essencial" : "Enterprise"}
           </span>
         </button>
+        {trialDaysRemaining !== null && (
+          <div className={`flex items-center gap-1 px-2 md:px-2.5 py-1 rounded-lg text-[10px] md:text-xs font-semibold ${
+            trialDaysRemaining <= 3
+              ? "bg-destructive/10 text-destructive animate-pulse"
+              : trialDaysRemaining <= 7
+                ? "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
+                : "bg-accent/10 text-accent"
+          }`} title={`Trial expira em ${trialDaysRemaining} dias`}>
+            <Clock size={12} />
+            <span className="hidden sm:inline">{trialDaysRemaining}d restantes</span>
+            <span className="sm:hidden">{trialDaysRemaining}d</span>
+          </div>
+        )}
         <button
           onClick={() => navigate("/ai-assistant")}
           className="hidden sm:flex p-2 rounded-lg hover:bg-accent/10 transition-colors"
