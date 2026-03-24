@@ -7,6 +7,7 @@
  */
 
 import { PHP_API_URL } from "./backend-config";
+import { phpRealtime as phpRealtimeRef } from "./php-realtime";
 
 // ============================================
 // Token Management
@@ -402,17 +403,28 @@ const TABLE_ROUTE_MAP: Record<string, string> = {
   course_categories: "course-categories",
   course_classes: "course-classes",
   course_enrollments: "course-enrollments",
+  course_attendance: "course-attendance",
+  course_certificates: "course-certificates",
+  course_materials: "course-materials",
   course_waitlist: "course-waitlist",
   instagram_accounts: "instagram-accounts",
   instagram_messages: "instagram-messages",
   instagram_keywords: "instagram-keywords",
   loyalty_config: "loyalty-config",
+  loyalty_levels: "loyalty-levels",
+  loyalty_challenges: "loyalty-challenges",
   cashback_rules: "cashback-rules",
+  cashback_transactions: "cashback-transactions",
+  client_cashback: "client-cashback",
+  client_loyalty: "client-loyalty",
+  client_referrals: "client-referrals",
+  challenge_progress: "challenge-progress",
   service_packages: "service-packages",
   client_packages: "client-packages",
   waitlist_entries: "waitlist-entries",
   waitlist_settings: "waitlist-settings",
   waitlist_offers: "waitlist-offers",
+  waitlist: "waitlist",
   upsell_rules: "upsell-rules",
   upsell_events: "upsell-events",
   feature_flags: "feature-flags",
@@ -421,6 +433,9 @@ const TABLE_ROUTE_MAP: Record<string, string> = {
   admin_auth_codes: "admin-auth-codes",
   platform_reviews: "platform-reviews",
   user_roles: "user-roles",
+  professional_feature_overrides: "professional-feature-overrides",
+  plan_limits: "plan-limits",
+  google_calendar_tokens: "google-calendar-tokens",
 };
 
 function getRoute(table: string): string {
@@ -540,9 +555,7 @@ export const phpClient = {
 
   // Realtime channel - delegates to phpRealtime
   channel(name: string) {
-    // Lazy import to avoid circular deps
-    const { phpRealtime } = require("./php-realtime");
-    return phpRealtime.channel(name);
+    return phpRealtimeRef.channel(name);
   },
 
   // Remove channel (compat with Supabase)
