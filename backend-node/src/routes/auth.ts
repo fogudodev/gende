@@ -68,8 +68,8 @@ router.post('/auth/signup', async (req: Request, res: Response) => {
 
     await withTimeout(conn.commit());
 
-    const [rolesRows] = await withTimeout(conn.execute('SELECT role FROM user_roles WHERE user_id = ?', [userId]));
-    const roles = (rolesRows as any[]).map(r => r.role);
+    const rolesResult = await withTimeout<any>(conn.execute('SELECT role FROM user_roles WHERE user_id = ?', [userId]));
+    const roles = ((rolesResult?.[0] || []) as any[]).map((r) => r.role);
 
     const token = generateToken(userId, email, roles);
     const refresh = await withTimeout(generateRefreshToken(userId));
