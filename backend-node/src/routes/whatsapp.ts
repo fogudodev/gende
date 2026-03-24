@@ -17,8 +17,8 @@ router.post('/whatsapp/send', authMiddleware, async (req: Request, res: Response
   const sendRes = await wa.sendMessage(inst?.instance_name || '', phone, message);
 
   await db.execute(
-    'INSERT INTO whatsapp_logs (id, professional_id, recipient_phone, message_content, status, sent_at, provider) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [db.uuid(), profId, WhatsAppService.normalizePhone(phone), message, sendRes.ok ? 'sent' : 'failed', sendRes.ok ? new Date().toISOString() : null, sendRes.provider]
+    'INSERT INTO whatsapp_logs (id, professional_id, phone, message_type, status, metadata) VALUES (?, ?, ?, ?, ?, ?)',
+    [db.uuid(), profId, WhatsAppService.normalizePhone(phone), 'manual_send', sendRes.ok ? 'sent' : 'failed', JSON.stringify({ message, provider: sendRes.provider })]
   );
 
   if (sendRes.ok) res.json({ provider: sendRes.provider, fallback: sendRes.fallback || false });
