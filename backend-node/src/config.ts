@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
-dotenv.config();
+// Always prioritize .env values over inherited process env (PM2 stale env safety)
+dotenv.config({ override: true });
 
 export const config = {
   port: parseInt(process.env.PORT || '3001'),
