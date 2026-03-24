@@ -6,6 +6,32 @@ import { WhatsAppService } from '../services/whatsapp.js';
 
 const router = Router();
 
+// ============================================
+// RPC endpoints (called by frontend hooks)
+// ============================================
+router.post('/rpc/is_admin', authMiddleware, async (req: Request, res: Response) => {
+  const user = (req as any).user as JwtPayload;
+  const isAdmin = await hasRole(user.sub, 'admin');
+  res.json(isAdmin);
+});
+
+router.post('/rpc/is_support', authMiddleware, async (req: Request, res: Response) => {
+  const user = (req as any).user as JwtPayload;
+  const isSupport = await hasRole(user.sub, 'support');
+  res.json(isSupport);
+});
+
+router.post('/rpc/get_support_users', authMiddleware, async (req: Request, res: Response) => {
+  const user = (req as any).user as JwtPayload;
+  if (!user.roles?.includes('admin')) return res.status(403).json({ error: 'Forbidden' });
+  
+  const rows = await db.query(
+    `SELECT u.id as user_id, JSON_UNQUOTE(JSON_EXTRACT(u.raw_user_meta_data, '$.name')) as name, u.email, u.created_at 
+     FROM user_roles ur JOIN users u ON u.id = ur.user_id WHERE ur.role = 'support'`
+  );
+  res.json(rows);
+});
+
 router.get('/admin/professionals', authMiddleware, adminMiddleware, async (_req: Request, res: Response) => {
   const rows = await db.query(
     'SELECT p.*, s.plan_id, s.status as sub_status, s.current_period_end FROM professionals p LEFT JOIN subscriptions s ON s.professional_id = p.id ORDER BY p.created_at DESC'
