@@ -15,7 +15,7 @@ import { getAccessToken } from "./php-client";
 const WS_URL = import.meta.env.VITE_WS_URL || "wss://api.gende.io/ws";
 const RECONNECT_DELAY = 3000;
 const PING_INTERVAL = 30000;
-const MAX_RECONNECT_ATTEMPTS = 3;
+const MAX_RECONNECT_ATTEMPTS = 0; // 0 = unlimited reconnect attempts
 
 type EventType = "INSERT" | "UPDATE" | "DELETE" | "*";
 
@@ -45,14 +45,11 @@ class WebSocketManager {
   private pingTimer: ReturnType<typeof setInterval> | null = null;
   private pendingSubscribes: string[] = [];
   private reconnectAttempts = 0;
-  private stopped = false;
 
   connect(): void {
     if (this.ws?.readyState === WebSocket.OPEN) return;
-    if (this.stopped) return;
-    if (this.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+    if (MAX_RECONNECT_ATTEMPTS > 0 && this.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
       console.warn("⚠️ WebSocket: max reconnect attempts reached, giving up");
-      this.stopped = true;
       return;
     }
 
@@ -173,14 +170,15 @@ class WebSocketManager {
   }
 
   private scheduleReconnect(): void {
-    if (this.reconnectTimer || this.stopped) return;
+    if (this.reconnectTimer) return;
     this.reconnectAttempts++;
+    const backoffDelay = Math.min(RECONNECT_DELAY * this.reconnectAttempts, 30000);
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
       if (this.subscriptions.size > 0) {
         this.connect();
       }
-    }, RECONNECT_DELAY * this.reconnectAttempts);
+    }, backoffDelay);
   }
 
   private startPing(): void {
