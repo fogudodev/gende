@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { db } from '../core/database.js';
 import { authMiddleware, adminMiddleware, generateToken, generateRefreshToken, hasRole, JwtPayload } from '../core/auth.js';
 import { WhatsAppService } from '../services/whatsapp.js';
+import { config } from '../config.js';
 
 const router = Router();
 
