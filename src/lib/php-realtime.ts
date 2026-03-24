@@ -46,6 +46,10 @@ class WebSocketManager {
 
   connect(): void {
     if (this.ws?.readyState === WebSocket.OPEN) return;
+    if (!WS_URL || WS_URL.includes("seudominio.com")) {
+      // WebSocket URL not configured — skip silently
+      return;
+    }
 
     try {
       this.ws = new WebSocket(WS_URL);
