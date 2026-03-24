@@ -554,9 +554,7 @@ export const phpClient = {
 
   // Realtime channel - delegates to phpRealtime
   channel(name: string) {
-    // Lazy import to avoid circular deps
-    const { phpRealtime } = require("./php-realtime");
-    return phpRealtime.channel(name);
+    return phpRealtimeRef.channel(name);
   },
 
   // Remove channel (compat with Supabase)
