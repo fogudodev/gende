@@ -113,6 +113,11 @@ CREATE TABLE IF NOT EXISTS `clients` (
   `email` VARCHAR(255) DEFAULT NULL,
   `phone` VARCHAR(50) DEFAULT NULL,
   `notes` TEXT DEFAULT NULL,
+  `last_completed_appointment_at` DATETIME DEFAULT NULL,
+  `avg_return_interval_days` INT DEFAULT 0,
+  `average_ticket` DECIMAL(10,2) DEFAULT 0,
+  `reactivation_score` INT DEFAULT 0,
+  `reactivation_status` VARCHAR(50) DEFAULT 'inactive',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -631,7 +636,69 @@ CREATE TABLE IF NOT EXISTS `plan_limits` (
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==========================================================
+-- INTELLIGENT UPSELL ENGINE (OPPORTUNITIES & SCORING)
+-- ==========================================================
+
+CREATE TABLE IF NOT EXISTS `upsell_opportunities` (
+  `id` varchar(36) NOT NULL,
+  `professional_id` varchar(36) NOT NULL,
+  `client_id` varchar(36) NOT NULL,
+  `suggested_service_id` varchar(36) NOT NULL,
+  `score` int(11) DEFAULT '0',
+  `priority` varchar(20) DEFAULT 'low',
+  `status` varchar(20) DEFAULT 'pending',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`professional_id`) REFERENCES `professionals` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`client_id`) REFERENCES `clients` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`suggested_service_id`) REFERENCES `services` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `upsell_campaigns` (
+  `id` varchar(36) NOT NULL,
+  `professional_id` varchar(36) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `message_template` text,
+  `status` varchar(50) DEFAULT 'draft',
+  `target_audience` varchar(255) DEFAULT 'all',
+  `executed_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`professional_id`) REFERENCES `professionals` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `upsell_campaign_recipients` (
+  `id` varchar(36) NOT NULL,
+  `campaign_id` varchar(36) NOT NULL,
+  `client_id` varchar(36) NOT NULL,
+  `opportunity_id` varchar(36) NOT NULL,
+  `status` varchar(50) DEFAULT 'pending',
+  `sent_at` timestamp NULL DEFAULT NULL,
+  `delivered_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`campaign_id`) REFERENCES `upsell_campaigns` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`client_id`) REFERENCES `clients` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`opportunity_id`) REFERENCES `upsell_opportunities` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `upsell_events` (
+  `id` varchar(36) NOT NULL,
+  `professional_id` varchar(36) NOT NULL,
+  `client_id` varchar(36) NOT NULL,
+  `campaign_id` varchar(36) NOT NULL,
+  `booking_id` varchar(36) NOT NULL,
+  `incremental_revenue` decimal(10,2) DEFAULT '0.00',
+  `event_type` varchar(50) NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`professional_id`) REFERENCES `professionals` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`client_id`) REFERENCES `clients` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`campaign_id`) REFERENCES `upsell_campaigns` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Seed plan_limits
 INSERT IGNORE INTO `plan_limits` (`id`, `plan_id`, `daily_reminders`, `daily_campaigns`, `campaign_max_contacts`, `campaign_min_interval_hours`)
@@ -977,6 +1044,51 @@ CREATE TABLE IF NOT EXISTS `platform_reviews` (
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   FOREIGN KEY (`professional_id`) REFERENCES `professionals`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ============================================
+-- REACTIVATION ENGINE
+-- ============================================
+CREATE TABLE IF NOT EXISTS `reactivation_campaigns` (
+  `id` CHAR(36) NOT NULL DEFAULT (UUID()),
+  `professional_id` CHAR(36) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `segment_filter` JSON DEFAULT NULL,
+  `message_template` TEXT NOT NULL,
+  `send_mode` VARCHAR(50) NOT NULL DEFAULT 'immediate',
+  `send_limit_per_day` INT DEFAULT NULL,
+  `scheduled_at` DATETIME DEFAULT NULL,
+  `status` VARCHAR(50) NOT NULL DEFAULT 'draft',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`professional_id`) REFERENCES `professionals`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `reactivation_campaign_recipients` (
+  `id` CHAR(36) NOT NULL DEFAULT (UUID()),
+  `campaign_id` CHAR(36) NOT NULL,
+  `client_id` CHAR(36) NOT NULL,
+  `message_payload` TEXT NOT NULL,
+  `status` VARCHAR(50) NOT NULL DEFAULT 'pending',
+  `sent_at` DATETIME DEFAULT NULL,
+  `delivered_at` DATETIME DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`campaign_id`) REFERENCES `reactivation_campaigns`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`client_id`) REFERENCES `clients`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `reactivation_events` (
+  `id` CHAR(36) NOT NULL DEFAULT (UUID()),
+  `client_id` CHAR(36) NOT NULL,
+  `campaign_id` CHAR(36) NOT NULL,
+  `event_type` VARCHAR(50) NOT NULL DEFAULT 'message_sent',
+  `value` DECIMAL(10,2) DEFAULT 0,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`client_id`) REFERENCES `clients`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`campaign_id`) REFERENCES `reactivation_campaigns`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 SET FOREIGN_KEY_CHECKS = 1;

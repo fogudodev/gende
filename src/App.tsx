@@ -36,8 +36,9 @@ import ServicePackages from "./pages/ServicePackages";
 import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
 import Instructions from "./pages/Instructions";
-import UpsellConfig from "./pages/UpsellConfig";
 import UpsellDashboard from "./pages/UpsellDashboard";
+import UpsellOpportunities from "./pages/UpsellOpportunities";
+import UpsellCampaignBuilder from "./pages/UpsellCampaignBuilder";
 import Rewards from "./pages/Rewards";
 import SystemGuide from "./pages/SystemGuide";
 import InstagramAutomation from "./pages/InstagramAutomation";
@@ -53,6 +54,8 @@ import CourseFinance from "./pages/CourseFinance";
 import CourseWaitlist from "./pages/CourseWaitlist";
 import StudentArea from "./pages/StudentArea";
 import PublicCourses from "./pages/PublicCourses";
+import ReactivationDashboard from "./pages/ReactivationDashboard";
+import ReactivationCampaignBuilder from "./pages/ReactivationCampaignBuilder";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -113,7 +116,10 @@ const AppContent = () => (
             <Route path="/service-packages" element={<ProtectedRoute><ServicePackages /></ProtectedRoute>} />
             <Route path="/instructions" element={<ProtectedRoute><Instructions /></ProtectedRoute>} />
             <Route path="/upsell" element={<ProtectedRoute><UpsellDashboard /></ProtectedRoute>} />
-            <Route path="/upsell/config" element={<ProtectedRoute><UpsellConfig /></ProtectedRoute>} />
+            <Route path="/upsell/opportunities" element={<ProtectedRoute><UpsellOpportunities /></ProtectedRoute>} />
+            <Route path="/upsell/campaigns/new" element={<ProtectedRoute><UpsellCampaignBuilder /></ProtectedRoute>} />
+            <Route path="/reactivation" element={<ProtectedRoute><ReactivationDashboard /></ProtectedRoute>} />
+            <Route path="/reactivation/campaigns/new" element={<ProtectedRoute><ReactivationCampaignBuilder /></ProtectedRoute>} />
             <Route path="/guia" element={<SystemGuide />} />
             <Route path="/instagram-automation" element={<ProtectedRoute><InstagramAutomation /></ProtectedRoute>} />
             <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />

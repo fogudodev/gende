@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { db } from '../core/database.js';
+import { ReactivationConversionService } from '../services/ReactivationConversionService.js';
+import { UpsellConversionService } from '../services/UpsellConversionService.js';
 
 const router = Router();
 
@@ -77,6 +79,24 @@ router.post('/public/booking', async (req: Request, res: Response) => {
     'INSERT INTO bookings (id, professional_id, client_id, service_id, employee_id, start_time, end_time, status, price, duration_minutes, client_name, client_phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [bookingId, professional_id, clientId, service_id, employee_id || null, startFormatted, endTime, 'pending', service.price, service.duration_minutes, client_name, client_phone]
   );
+
+  // Track Reactivation Conversion
+  ReactivationConversionService.trackBookingConversion(
+    professional_id,
+    clientId,
+    bookingId,
+    Number(service.price || 0)
+  ).catch(err => console.error('[Conversion Tracking Error]', err));
+
+  // Track Upsell Conversion
+  UpsellConversionService.trackUpsellConversion(
+    professional_id,
+    clientId,
+    service_id,
+    bookingId,
+    Number(service.price || 0),
+    startFormatted
+  ).catch(err => console.error('[Upsell Conversion Tracking Error]', err));
 
   res.status(201).json({ booking_id: bookingId, price: service.price });
 });

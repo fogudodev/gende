@@ -1,197 +1,118 @@
-import { useState, useMemo } from "react";
-import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useProfessional } from "@/hooks/useProfessional";
-import { useServices } from "@/hooks/useServices";
-import { useUpsellRules, useUpsertUpsellRule, useDeleteUpsellRule } from "@/hooks/useUpsell";
-import { Loader2, Plus, Trash2, Sparkles, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { useCreateUpsellRule } from "@/lib/api/upsell";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/supabase";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-const UpsellConfig = () => {
-  const { data: professional } = useProfessional();
-  const { data: services, isLoading: servicesLoading } = useServices();
-  const { data: rules, isLoading: rulesLoading } = useUpsellRules(professional?.id);
-  const upsertMutation = useUpsertUpsellRule();
-  const deleteMutation = useDeleteUpsellRule();
+export default function UpsellConfig() {
+  const [triggerServiceId, setTriggerService] = useState("");
+  const [offerServiceId, setOfferService] = useState("");
+  const [discount, setDiscount] = useState("0");
+  const [daysBefore, setDaysBefore] = useState("1");
+  const [message, setMessage] = useState("Oi {nome}! Vi que amanhã você tem o serviço de {servico_agendado} aqui comigo. Que tal aproveitar e agendar junto um(a) {servico_oferta} com {desconto} de desconto? Me avisa que eu já deixo tudo pronto! 💖");
+  
+  const navigate = useNavigate();
+  const createMutation = useCreateUpsellRule();
 
-  const [sourceServiceId, setSourceServiceId] = useState("");
-  const [recommendedServiceId, setRecommendedServiceId] = useState("");
-  const [promoMessage, setPromoMessage] = useState("");
-  const [promoPrice, setPromoPrice] = useState("");
-  const [priority, setPriority] = useState("1");
+  // Load services for the dropdown
+  const { data: services } = useQuery({
+    queryKey: ['servicesCombo'],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${API_URL}/services`, { headers: { Authorization: `Bearer ${session?.access_token}` } });
+      return res.json();
+    }
+  });
 
-  const isLoading = servicesLoading || rulesLoading;
-
-  const serviceMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    (services || []).forEach(s => { map[s.id] = s.name; });
-    return map;
-  }, [services]);
-
-  const handleAdd = () => {
-    if (!sourceServiceId || !recommendedServiceId || !professional) {
-      toast.error("Selecione os serviços");
+  const handleSave = async () => {
+    if (!triggerServiceId || !offerServiceId || !message) {
+      toast.error("Preencha todos os campos obrigatórios.");
       return;
     }
-    if (sourceServiceId === recommendedServiceId) {
-      toast.error("Serviço principal e recomendado devem ser diferentes");
-      return;
-    }
-    upsertMutation.mutate({
-      professional_id: professional.id,
-      source_service_id: sourceServiceId,
-      recommended_service_id: recommendedServiceId,
-      promo_message: promoMessage || null,
-      promo_price: promoPrice ? parseFloat(promoPrice) : null,
-      priority: parseInt(priority) || 1,
-      is_active: true,
-    }, {
-      onSuccess: () => {
-        setSourceServiceId("");
-        setRecommendedServiceId("");
-        setPromoMessage("");
-        setPromoPrice("");
-        setPriority("1");
-      },
-    });
-  };
 
-  const toggleActive = (rule: any) => {
-    upsertMutation.mutate({
-      ...rule,
-      is_active: !rule.is_active,
-    });
+    try {
+      await createMutation.mutateAsync({
+        trigger_service_id: triggerServiceId,
+        offer_service_id: offerServiceId,
+        discount_percentage: Number(discount),
+        days_before_appointment: Number(daysBefore),
+        message_template: message
+      });
+      toast.success("Regra de Upsell criada com sucesso!");
+      navigate("/upsell");
+    } catch(err: any) {
+      toast.error(err.message || "Erro ao salvar");
+    }
   };
 
   return (
-    <DashboardLayout title="Upsell Inteligente" subtitle="Configure sugestões de serviços complementares">
-      {isLoading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-accent" />
-        </div>
-      ) : (
-        <div className="space-y-6 max-w-3xl">
-          {/* Header with icon */}
-          <div className="glass-card rounded-2xl p-5">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                <Sparkles size={20} className="text-accent" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-foreground">Regras de Upsell</h2>
-                <p className="text-xs text-muted-foreground">Defina quais serviços sugerir quando um cliente agendar</p>
-              </div>
-            </div>
+    <div className="container mx-auto p-6 max-w-2xl">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold tracking-tight">Regras de Cross-sell / Upsell</h1>
+        <p className="text-muted-foreground">Vincule serviços para gerar ofertas automáticas na véspera.</p>
+      </div>
 
-            {/* Add form */}
-            <div className="space-y-3 p-4 rounded-xl bg-muted/30 border border-border">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Serviço principal</label>
-                  <Select value={sourceServiceId} onValueChange={setSourceServiceId}>
-                    <SelectTrigger><SelectValue placeholder="Quando agendar..." /></SelectTrigger>
-                    <SelectContent>
-                      {(services || []).filter(s => s.active).map(s => (
-                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Sugerir serviço</label>
-                  <Select value={recommendedServiceId} onValueChange={setRecommendedServiceId}>
-                    <SelectTrigger><SelectValue placeholder="Recomendar..." /></SelectTrigger>
-                    <SelectContent>
-                      {(services || []).filter(s => s.active && s.id !== sourceServiceId).map(s => (
-                        <SelectItem key={s.id} value={s.id}>{s.name} - R$ {Number(s.price).toFixed(2)}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Mensagem promocional (opcional)</label>
-                  <Input value={promoMessage} onChange={e => setPromoMessage(e.target.value)} placeholder="Ex: Promoção especial!" />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Preço promocional (opcional)</label>
-                  <Input type="number" value={promoPrice} onChange={e => setPromoPrice(e.target.value)} placeholder="R$ 0,00" />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Prioridade</label>
-                  <Input type="number" value={priority} onChange={e => setPriority(e.target.value)} min="1" max="10" />
-                </div>
-              </div>
-              <Button onClick={handleAdd} disabled={upsertMutation.isPending} className="w-full sm:w-auto">
-                <Plus size={16} className="mr-2" />
-                Adicionar regra
-              </Button>
+      <Card>
+        <CardHeader>
+          <CardTitle>Nova Combinação</CardTitle>
+          <CardDescription>Crie uma oportunidade lógica. (Ex: Luzes ➡️ Pede Tonalização)</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Serviço Agendado (Gatilho)</label>
+              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background" value={triggerServiceId} onChange={e => setTriggerService(e.target.value)}>
+                <option value="">Selecione...</option>
+                {services?.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-emerald-600">Serviço Ofertado (+ Ticket)</label>
+              <select className="flex h-10 w-full rounded-md border border-input bg-emerald-50 px-3 py-2 text-sm ring-offset-background" value={offerServiceId} onChange={e => setOfferService(e.target.value)}>
+                <option value="">Selecione...</option>
+                {services?.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
             </div>
           </div>
 
-          {/* Rules list */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Desconto Isca (%)</label>
+              <Input type="number" min="0" max="100" value={discount} onChange={e => setDiscount(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Dias Antes (Disparo via WhatsApp)</label>
+              <Input type="number" min="1" max="30" value={daysBefore} onChange={e => setDaysBefore(e.target.value)} />
+            </div>
+          </div>
+
           <div className="space-y-2">
-            {(rules || []).length === 0 ? (
-              <div className="glass-card rounded-2xl p-8 text-center">
-                <Sparkles size={32} className="mx-auto text-muted-foreground mb-3" />
-                <p className="text-sm text-muted-foreground">Nenhuma regra de upsell configurada</p>
-                <p className="text-xs text-muted-foreground mt-1">Adicione regras para começar a sugerir serviços complementares</p>
-              </div>
-            ) : (
-              (rules || []).map(rule => (
-                <div key={rule.id} className="glass-card rounded-xl p-4 flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium text-foreground">{serviceMap[rule.source_service_id] || "—"}</span>
-                      <ArrowRight size={14} className="text-accent" />
-                      <span className="text-sm font-medium text-accent">{serviceMap[rule.recommended_service_id] || "—"}</span>
-                      {rule.promo_price && (
-                        <span className="text-xs bg-accent/10 text-accent px-2 py-0.5 rounded-full">
-                          R$ {Number(rule.promo_price).toFixed(2)}
-                        </span>
-                      )}
-                    </div>
-                    {rule.promo_message && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{rule.promo_message}</p>
-                    )}
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-[11px] text-muted-foreground">
-                        {rule.suggestion_count} sugestões · {rule.conversion_count} conversões
-                        {rule.suggestion_count > 0 && ` · ${Math.round((rule.conversion_count / rule.suggestion_count) * 100)}% taxa`}
-                      </span>
-                    </div>
-                  </div>
-                  <Switch checked={rule.is_active} onCheckedChange={() => toggleActive(rule)} />
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10">
-                        <Trash2 size={16} />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Remover regra?</AlertDialogTitle>
-                        <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => deleteMutation.mutate(rule.id)}>Remover</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              ))
-            )}
+            <label className="text-sm font-medium">Template da Mensagem</label>
+            <Textarea 
+              rows={4}
+              value={message}
+              onChange={e => setMessage(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Tags: <code className="bg-secondary px-1">{'{nome}'}</code>, <code className="bg-secondary px-1">{'{servico_agendado}'}</code>, <code className="bg-secondary px-1">{'{servico_oferta}'}</code>, <code className="bg-secondary px-1">{'{desconto}'}</code>
+            </p>
           </div>
-        </div>
-      )}
-    </DashboardLayout>
-  );
-};
 
-export default UpsellConfig;
+          <div className="flex justify-end pt-4 gap-2">
+            <Button variant="outline" onClick={() => navigate("/upsell")}>Cancelar</Button>
+            <Button onClick={handleSave} disabled={createMutation.isPending}>
+              {createMutation.isPending ? "Salvando..." : "Criar Regra"}
+            </Button>
+          </div>
+
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

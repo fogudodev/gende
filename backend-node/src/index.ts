@@ -15,6 +15,8 @@ import instagramRoutes from './routes/instagram.js';
 import googleCalendarRoutes from './routes/google-calendar.js';
 import aiRoutes from './routes/ai.js';
 import cronRoutes from './routes/cron.js';
+import reactivationRoutes from './routes/reactivation.js';
+import upsellRoutes from './routes/upsell.js';
 import { initWebSocket } from './core/websocket.js';
 
 const app = express();
@@ -178,6 +180,8 @@ app.use(instagramRoutes);
 app.use(googleCalendarRoutes);
 app.use(aiRoutes);
 app.use(cronRoutes);
+app.use(reactivationRoutes);
+app.use(upsellRoutes);
 
 // Generic CRUD routes
 const crudMap: Record<string, string> = {

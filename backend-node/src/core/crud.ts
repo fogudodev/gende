@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { db } from './database.js';
 import { authMiddleware, getProfessionalId, hasRole, JwtPayload } from './auth.js';
+import { ReactivationConversionService } from '../services/ReactivationConversionService.js';
+import { UpsellConversionService } from '../services/UpsellConversionService.js';
 
 export function createCrudRoutes(routePath: string, tableName: string, profColumn = 'professional_id'): Router {
   const router = Router();
@@ -310,6 +312,27 @@ export function createCrudRoutes(routePath: string, tableName: string, profColum
           );
         }
         ids.push(data.id);
+
+        if (tableName === 'bookings') {
+          const inserted = await db.queryOne<any>('SELECT client_id, service_id, start_time, price FROM bookings WHERE id = ?', [data.id]);
+          if (inserted && inserted.client_id) {
+            ReactivationConversionService.trackBookingConversion(
+              data[profColumn] || profId,
+              inserted.client_id,
+              data.id,
+              Number(inserted.price || 0)
+            ).catch(err => console.error('[Conversion Tracking Error]', err));
+
+            UpsellConversionService.trackUpsellConversion(
+              data[profColumn] || profId,
+              inserted.client_id,
+              inserted.service_id,
+              data.id,
+              Number(inserted.price || 0),
+              inserted.start_time || new Date()
+            ).catch(err => console.error('[Upsell Conversion Tracking Error]', err));
+          }
+        }
       }
 
       res.status(201).json(ids.length === 1 ? { id: ids[0] } : { ids });
@@ -343,6 +366,21 @@ export function createCrudRoutes(routePath: string, tableName: string, profColum
       }
 
       const result = await db.execute(query, values);
+
+      if (tableName === 'bookings' && rawData.service_id) {
+        const updated = await db.queryOne<any>('SELECT professional_id, client_id, start_time, price FROM bookings WHERE id = ?', [req.params.id]);
+        if (updated && updated.client_id) {
+          UpsellConversionService.trackUpsellConversion(
+            updated.professional_id,
+            updated.client_id,
+            rawData.service_id,
+            req.params.id,
+            Number(updated.price || 0),
+            updated.start_time
+          ).catch(err => console.error('[Upsell Conversion Tracking Error]', err));
+        }
+      }
+
       res.json({ updated: result.affectedRows > 0 });
     } catch (err: any) {
       console.error(`[CRUD PUT /${routePath}/:id]`, err.message);
