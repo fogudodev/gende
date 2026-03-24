@@ -23,9 +23,19 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
   const [renewalOpen, setRenewalOpen] = useState(false);
   const { currentPlan } = useFeatureAccess();
   const { unreadCount, unreadPayment, unreadSupport, recentMessages, markAllAsSeen } = useUnreadMessages();
+  const { data: subscription } = useSubscription();
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  // Calculate trial remaining days
+  const trialDaysRemaining = (() => {
+    if (!subscription) return null;
+    const endDate = subscription.current_period_end ? new Date(subscription.current_period_end) : null;
+    if (!endDate || subscription.status !== "active") return null;
+    const days = differenceInDays(endDate, new Date());
+    return days >= 0 ? days : null;
+  })();
 
   // Close dropdown on outside click
   useEffect(() => {
