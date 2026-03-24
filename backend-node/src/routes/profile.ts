@@ -113,11 +113,16 @@ router.put('/profile', authMiddleware, async (req: Request, res: Response) => {
   res.json({ success: true });
 });
 
-// Admin/support update profile by professional id (compat with /profile/:id update calls)
+// Update profile by professional id (owner OR admin/support)
 router.put('/profile/:id', authMiddleware, async (req: Request, res: Response) => {
   const user = (req as any).user as JwtPayload;
   const isPrivileged = user.roles?.includes('admin') || user.roles?.includes('support');
-  if (!isPrivileged) return res.status(403).json({ error: 'Forbidden' });
+
+  // Allow owner: check if this professional belongs to the current user
+  if (!isPrivileged) {
+    const ownerCheck = await db.queryOne<any>('SELECT id FROM professionals WHERE id = ? AND user_id = ?', [req.params.id, user.sub]);
+    if (!ownerCheck) return res.status(403).json({ error: 'Forbidden' });
+  }
 
   const data = { ...req.body };
   delete data.id;

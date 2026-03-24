@@ -189,7 +189,6 @@ const crudMap: Record<string, string> = {
   'cash-transactions': 'cash_transactions', 'whatsapp-instances': 'whatsapp_instances',
   'whatsapp-automations': 'whatsapp_automations', 'whatsapp-logs': 'whatsapp_logs',
   conversations: 'whatsapp_conversations', 'message-usage': 'daily_message_usage',
-  'salon-employees': 'salon_employees', 'employee-services': 'employee_services',
   'employee-working-hours': 'employee_working_hours',
   subscriptions: 'subscriptions', courses: 'courses',
   'course-categories': 'course_categories', 'course-classes': 'course_classes',
@@ -213,7 +212,6 @@ const crudMap: Record<string, string> = {
   'platform-reviews': 'platform_reviews',
   'professional-limits': 'professional_limits',
   'addon-purchases': 'addon_purchases',
-  'campaign-contacts': 'campaign_contacts',
   'google-calendar-tokens': 'google_calendar_tokens',
   'admin-auth-codes': 'admin_auth_codes',
   'user-roles': 'user_roles',
@@ -225,6 +223,11 @@ const crudMap: Record<string, string> = {
 for (const [route, table] of Object.entries(crudMap)) {
   app.use(createCrudRoutes(route, table));
 }
+
+// Tables without professional_id column — skip prof scoping
+app.use(createCrudRoutes('employee-services', 'employee_services', ''));
+app.use(createCrudRoutes('campaign-contacts', 'campaign_contacts', ''));
+app.use(createCrudRoutes('salon-employees', 'salon_employees', ''));
 
 // 404
 app.use((_req, res) => res.status(404).json({ error: 'Route not found' }));

@@ -4,6 +4,7 @@ import { authMiddleware, getProfessionalId, hasRole, JwtPayload } from './auth.j
 
 export function createCrudRoutes(routePath: string, tableName: string, profColumn = 'professional_id'): Router {
   const router = Router();
+  const hasScope = !!profColumn; // If profColumn is empty string, skip scoping
 
   // Helper: check if user is admin and resolve profId accordingly
   async function resolveAccess(user: JwtPayload): Promise<{ isAdmin: boolean; profId: string | null }> {
@@ -17,13 +18,13 @@ export function createCrudRoutes(routePath: string, tableName: string, profColum
     try {
       const user = (req as any).user as JwtPayload;
       const { isAdmin, profId } = await resolveAccess(user);
-      if (!isAdmin && !profId) return res.status(404).json({ error: 'Professional not found' });
+      if (hasScope && !isAdmin && !profId) return res.status(404).json({ error: 'Professional not found' });
 
       let where = '1=1';
       const params: any[] = [];
 
-      // Non-admin: scope to professional
-      if (!isAdmin) {
+      // Non-admin: scope to professional (only if table has profColumn)
+      if (hasScope && !isAdmin) {
         where = `\`${profColumn}\` = ?`;
         params.push(profId);
       }
@@ -125,41 +126,89 @@ export function createCrudRoutes(routePath: string, tableName: string, profColum
     }
   });
 
-  // Create
+  // Bulk delete by filter (DELETE /route?eq[column]=value)
+  router.delete(`/${routePath}`, authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user as JwtPayload;
+      const { isAdmin, profId } = await resolveAccess(user);
+
+      let where = '1=1';
+      const params: any[] = [];
+
+      if (hasScope && !isAdmin) {
+        where = `\`${profColumn}\` = ?`;
+        params.push(profId);
+      }
+
+      // Parse eq[column]=value filters
+      let hasFilter = false;
+      for (const [key, val] of Object.entries(req.query)) {
+        const eqMatch = key.match(/^eq\[(.+)\]$/);
+        if (eqMatch && typeof val === 'string') {
+          where += ` AND \`${eqMatch[1]}\` = ?`;
+          params.push(val);
+          hasFilter = true;
+        }
+      }
+      if (req.query.eq && typeof req.query.eq === 'object') {
+        for (const [col, val] of Object.entries(req.query.eq as Record<string, string>)) {
+          where += ` AND \`${col}\` = ?`;
+          params.push(val);
+          hasFilter = true;
+        }
+      }
+
+      if (!hasFilter && !isAdmin) return res.status(400).json({ error: 'Filter required for bulk delete' });
+
+      const result = await db.execute(`DELETE FROM \`${tableName}\` WHERE ${where}`, params);
+      res.json({ deleted: result.affectedRows });
+    } catch (err: any) {
+      console.error(`[CRUD BULK DELETE /${routePath}]`, err.message);
+      res.status(500).json({ error: 'Database error', details: err.message });
+    }
+  });
+
+  // Create (supports single object or array)
   router.post(`/${routePath}`, authMiddleware, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user as JwtPayload;
       const { isAdmin, profId } = await resolveAccess(user);
-      if (!isAdmin && !profId) return res.status(404).json({ error: 'Professional not found' });
+      if (hasScope && !isAdmin && !profId) return res.status(404).json({ error: 'Professional not found' });
 
-      const data = { ...req.body, id: req.body.id || db.uuid() };
-      // Only set profColumn if not admin or if not already provided
-      if (!isAdmin && !data[profColumn]) {
-        data[profColumn] = profId;
+      // Handle array inserts
+      const items = Array.isArray(req.body) ? req.body : [req.body];
+      const ids: string[] = [];
+
+      for (const item of items) {
+        const data = { ...item, id: item.id || db.uuid() };
+        if (hasScope && !isAdmin && !data[profColumn]) {
+          data[profColumn] = profId;
+        }
+
+        const columns = Object.keys(data).map(k => `\`${k}\``).join(', ');
+        const placeholders = Object.keys(data).map(() => '?').join(', ');
+
+        // Check for upsert (onConflict header)
+        const onConflict = req.headers['x-on-conflict'] as string;
+        if (onConflict) {
+          const updateParts = Object.keys(data)
+            .filter(k => !onConflict.split(',').includes(k) && k !== 'id')
+            .map(k => `\`${k}\` = VALUES(\`${k}\`)`);
+          
+          await db.execute(
+            `INSERT INTO \`${tableName}\` (${columns}) VALUES (${placeholders}) ON DUPLICATE KEY UPDATE ${updateParts.join(', ')}`,
+            Object.values(data)
+          );
+        } else {
+          await db.execute(
+            `INSERT INTO \`${tableName}\` (${columns}) VALUES (${placeholders})`,
+            Object.values(data)
+          );
+        }
+        ids.push(data.id);
       }
 
-      const columns = Object.keys(data).map(k => `\`${k}\``).join(', ');
-      const placeholders = Object.keys(data).map(() => '?').join(', ');
-
-      // Check for upsert (onConflict header)
-      const onConflict = req.headers['x-on-conflict'] as string;
-      if (onConflict) {
-        const updateParts = Object.keys(data)
-          .filter(k => !onConflict.split(',').includes(k) && k !== 'id')
-          .map(k => `\`${k}\` = VALUES(\`${k}\`)`);
-        
-        await db.execute(
-          `INSERT INTO \`${tableName}\` (${columns}) VALUES (${placeholders}) ON DUPLICATE KEY UPDATE ${updateParts.join(', ')}`,
-          Object.values(data)
-        );
-      } else {
-        await db.execute(
-          `INSERT INTO \`${tableName}\` (${columns}) VALUES (${placeholders})`,
-          Object.values(data)
-        );
-      }
-
-      res.status(201).json({ id: data.id });
+      res.status(201).json(ids.length === 1 ? { id: ids[0] } : { ids });
     } catch (err: any) {
       console.error(`[CRUD POST /${routePath}]`, err.message);
       res.status(500).json({ error: 'Database error', details: err.message });
@@ -174,7 +223,7 @@ export function createCrudRoutes(routePath: string, tableName: string, profColum
       const data = { ...req.body };
       delete data.id;
       delete data.created_at;
-      if (!isAdmin) delete data[profColumn];
+      if (hasScope && !isAdmin) delete data[profColumn];
 
       if (!Object.keys(data).length) return res.status(400).json({ error: 'No data to update' });
 
@@ -182,7 +231,7 @@ export function createCrudRoutes(routePath: string, tableName: string, profColum
       let query = `UPDATE \`${tableName}\` SET ${sets} WHERE id = ?`;
       const values = [...Object.values(data), req.params.id];
 
-      if (!isAdmin) {
+      if (hasScope && !isAdmin) {
         query += ` AND \`${profColumn}\` = ?`;
         values.push(profId);
       }
@@ -204,7 +253,7 @@ export function createCrudRoutes(routePath: string, tableName: string, profColum
       let query = `DELETE FROM \`${tableName}\` WHERE id = ?`;
       const params: any[] = [req.params.id];
 
-      if (!isAdmin) {
+      if (hasScope && !isAdmin) {
         query += ` AND \`${profColumn}\` = ?`;
         params.push(profId);
       }
