@@ -266,7 +266,6 @@ const deleteUserHandler = async (req: Request, res: Response) => {
       'whatsapp_automations',
       'whatsapp_instances',
       // Campaigns (contacts before campaigns)
-      'campaign_contacts',
       'campaigns',
       // Upsell
       'upsell_events',
@@ -276,7 +275,6 @@ const deleteUserHandler = async (req: Request, res: Response) => {
       'waitlist_entries',
       'waitlist_settings',
       // Employee-related (services/hours before employees)
-      'employee_services',
       'employee_working_hours',
       'commissions',
       // Platform reviews

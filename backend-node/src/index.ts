@@ -17,6 +17,7 @@ import aiRoutes from './routes/ai.js';
 import cronRoutes from './routes/cron.js';
 import reactivationRoutes from './routes/reactivation.js';
 import upsellRoutes from './routes/upsell.js';
+import relationalRoutes from './routes/relational.js';
 import { initWebSocket } from './core/websocket.js';
 
 const app = express();
@@ -182,6 +183,7 @@ app.use(aiRoutes);
 app.use(cronRoutes);
 app.use(reactivationRoutes);
 app.use(upsellRoutes);
+app.use(relationalRoutes);
 
 // Generic CRUD routes
 const crudMap: Record<string, string> = {
@@ -229,9 +231,7 @@ for (const [route, table] of Object.entries(crudMap)) {
 }
 
 // Tables with non-standard professional column
-app.use(createCrudRoutes('employee-services', 'employee_services', ''));
-app.use(createCrudRoutes('campaign-contacts', 'campaign_contacts', ''));
-app.use(createCrudRoutes('salon-employees', 'salon_employees', 'salon_id'));
+// Now handled gracefully by manual relational routes in src/routes/relational.ts
 
 // 404
 app.use((_req, res) => res.status(404).json({ error: 'Route not found' }));

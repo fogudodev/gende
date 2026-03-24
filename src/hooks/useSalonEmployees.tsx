@@ -43,7 +43,6 @@ const buildEmployeeInsertPayload = (employee: EmployeeMutationInput, compatibili
   };
 
   if (!compatibilityMode) {
-    payload.specialty = employee.specialty || null;
     if (employee.has_login !== undefined) payload.has_login = employee.has_login;
     if (employee.role) payload.role = employee.role;
   }
@@ -61,7 +60,6 @@ const buildEmployeeUpdatePayload = (employee: Partial<EmployeeMutationInput>, co
   if (employee.is_active !== undefined) payload.is_active = employee.is_active;
 
   if (!compatibilityMode) {
-    if (employee.specialty !== undefined) payload.specialty = employee.specialty || null;
     if (employee.has_login !== undefined) payload.has_login = employee.has_login;
     if (employee.role !== undefined) payload.role = employee.role;
   }
