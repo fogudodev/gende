@@ -32,7 +32,7 @@ app.use(cors({
       }
     : '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Authorization', 'Content-Type', 'X-Requested-With', 'X-Cron-Secret'],
+  allowedHeaders: ['Authorization', 'Content-Type', 'X-Requested-With', 'X-Cron-Secret', 'X-On-Conflict', 'Prefer'],
 }));
 
 // Stripe webhook needs raw body BEFORE json parsing
