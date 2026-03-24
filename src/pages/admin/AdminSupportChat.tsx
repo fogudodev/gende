@@ -39,7 +39,8 @@ const AdminSupportChat = () => {
       if (error) throw error;
       // Group by professional, get latest message date
       const map = new Map<string, string>();
-      (data as any[]).forEach((m: any) => {
+      const filtered = (data || []).filter((m: any) => m.chat_type === "support");
+      filtered.forEach((m: any) => {
         if (!map.has(m.professional_id)) map.set(m.professional_id, m.created_at);
       });
       return map;
@@ -57,7 +58,7 @@ const AdminSupportChat = () => {
         .eq("chat_type", "support")
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return data;
+      return (data || []).filter((msg: any) => msg.chat_type === "support");
     },
     enabled: !!selectedProfId,
     refetchInterval: 3000,
