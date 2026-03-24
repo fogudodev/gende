@@ -32,6 +32,30 @@ router.post('/rpc/get_support_users', authMiddleware, async (req: Request, res: 
   res.json(rows);
 });
 
+// Feature flags (global table, not scoped by professional_id)
+router.get('/feature-flags', authMiddleware, async (req: Request, res: Response) => {
+  const order = typeof req.query.order === 'string' ? req.query.order : 'category.asc';
+  const [columnRaw, dirRaw] = order.split('.');
+  const allowedColumns = new Set(['category', 'key', 'label', 'created_at', 'updated_at']);
+  const column = allowedColumns.has(columnRaw) ? columnRaw : 'category';
+  const direction = dirRaw === 'desc' ? 'DESC' : 'ASC';
+
+  const rows = await db.query(`SELECT * FROM feature_flags ORDER BY \`${column}\` ${direction}`);
+  res.json(rows);
+});
+
+router.put('/feature-flags/:id', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+  const { enabled, updated_at } = req.body || {};
+
+  const result = await db.execute(
+    'UPDATE feature_flags SET enabled = ?, updated_at = ? WHERE id = ?',
+    [enabled ? 1 : 0, updated_at || new Date().toISOString(), req.params.id]
+  );
+
+  if (result.affectedRows === 0) return res.status(404).json({ error: 'Feature flag not found' });
+  res.json({ success: true });
+});
+
 router.get('/admin/professionals', authMiddleware, adminMiddleware, async (_req: Request, res: Response) => {
   const rows = await db.query(
     'SELECT p.*, s.plan_id, s.status as sub_status, s.current_period_end FROM professionals p LEFT JOIN subscriptions s ON s.professional_id = p.id ORDER BY p.created_at DESC'
