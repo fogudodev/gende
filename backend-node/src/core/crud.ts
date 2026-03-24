@@ -126,18 +126,64 @@ export function createCrudRoutes(routePath: string, tableName: string, profColum
     }
   });
 
-  // Create
+  // Bulk delete by filter (DELETE /route?eq[column]=value)
+  router.delete(`/${routePath}`, authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user as JwtPayload;
+      const { isAdmin, profId } = await resolveAccess(user);
+
+      let where = '1=1';
+      const params: any[] = [];
+
+      if (hasScope && !isAdmin) {
+        where = `\`${profColumn}\` = ?`;
+        params.push(profId);
+      }
+
+      // Parse eq[column]=value filters
+      let hasFilter = false;
+      for (const [key, val] of Object.entries(req.query)) {
+        const eqMatch = key.match(/^eq\[(.+)\]$/);
+        if (eqMatch && typeof val === 'string') {
+          where += ` AND \`${eqMatch[1]}\` = ?`;
+          params.push(val);
+          hasFilter = true;
+        }
+      }
+      if (req.query.eq && typeof req.query.eq === 'object') {
+        for (const [col, val] of Object.entries(req.query.eq as Record<string, string>)) {
+          where += ` AND \`${col}\` = ?`;
+          params.push(val);
+          hasFilter = true;
+        }
+      }
+
+      if (!hasFilter && !isAdmin) return res.status(400).json({ error: 'Filter required for bulk delete' });
+
+      const result = await db.execute(`DELETE FROM \`${tableName}\` WHERE ${where}`, params);
+      res.json({ deleted: result.affectedRows });
+    } catch (err: any) {
+      console.error(`[CRUD BULK DELETE /${routePath}]`, err.message);
+      res.status(500).json({ error: 'Database error', details: err.message });
+    }
+  });
+
+  // Create (supports single object or array)
   router.post(`/${routePath}`, authMiddleware, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user as JwtPayload;
       const { isAdmin, profId } = await resolveAccess(user);
-      if (!isAdmin && !profId) return res.status(404).json({ error: 'Professional not found' });
+      if (hasScope && !isAdmin && !profId) return res.status(404).json({ error: 'Professional not found' });
 
-      const data = { ...req.body, id: req.body.id || db.uuid() };
-      // Only set profColumn if not admin or if not already provided
-      if (!isAdmin && !data[profColumn]) {
-        data[profColumn] = profId;
-      }
+      // Handle array inserts
+      const items = Array.isArray(req.body) ? req.body : [req.body];
+      const ids: string[] = [];
+
+      for (const item of items) {
+        const data = { ...item, id: item.id || db.uuid() };
+        if (hasScope && !isAdmin && !data[profColumn]) {
+          data[profColumn] = profId;
+        }
 
       const columns = Object.keys(data).map(k => `\`${k}\``).join(', ');
       const placeholders = Object.keys(data).map(() => '?').join(', ');
