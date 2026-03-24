@@ -111,17 +111,51 @@ const createProfessionalHandler = async (req: Request, res: Response) => {
         [db.uuid(), profId]
       );
 
-      // Create default automations using correct MySQL column names
+      // Create default automations with schema compatibility (legacy + current)
       try {
+        const [columnRows] = await conn.execute<any[]>(
+          "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'whatsapp_automations'"
+        );
+
+        const columnNames = new Set((columnRows as Array<{ COLUMN_NAME: string }>).map((row) => row.COLUMN_NAME));
+        const triggerColumn = columnNames.has('automation_type')
+          ? 'automation_type'
+          : columnNames.has('trigger_type')
+            ? 'trigger_type'
+            : null;
+        const messageColumn = columnNames.has('custom_message')
+          ? 'custom_message'
+          : columnNames.has('message_template')
+            ? 'message_template'
+            : null;
+        const enabledColumn = columnNames.has('is_enabled')
+          ? 'is_enabled'
+          : columnNames.has('is_active')
+            ? 'is_active'
+            : null;
+
+        if (!triggerColumn || !enabledColumn) {
+          throw new Error('whatsapp_automations schema incompatível para seed de automações');
+        }
+
         const triggers = ['booking_created', 'reminder_24h', 'reminder_3h', 'post_service', 'post_sale_review', 'maintenance_reminder', 'reactivation_30d'];
         for (const trigger of triggers) {
-          await conn.execute(
-            "INSERT INTO whatsapp_automations (id, professional_id, automation_type, custom_message, is_enabled) VALUES (?, ?, ?, '', ?) ON DUPLICATE KEY UPDATE automation_type = VALUES(automation_type)",
-            [db.uuid(), profId, trigger, ['booking_created', 'reminder_24h'].includes(trigger) ? 1 : 0]
-          );
+          const shouldEnable = ['booking_created', 'reminder_24h'].includes(trigger) ? 1 : 0;
+
+          if (messageColumn) {
+            await conn.execute(
+              `INSERT INTO whatsapp_automations (id, professional_id, ${triggerColumn}, ${messageColumn}, ${enabledColumn}) VALUES (?, ?, ?, '', ?) ON DUPLICATE KEY UPDATE ${triggerColumn} = VALUES(${triggerColumn})`,
+              [db.uuid(), profId, trigger, shouldEnable]
+            );
+          } else {
+            await conn.execute(
+              `INSERT INTO whatsapp_automations (id, professional_id, ${triggerColumn}, ${enabledColumn}) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE ${triggerColumn} = VALUES(${triggerColumn})`,
+              [db.uuid(), profId, trigger, shouldEnable]
+            );
+          }
         }
       } catch (autoErr: any) {
-        console.warn('Skipping automations insert:', autoErr.message);
+        console.warn('[admin/create-professional] Skipping automations insert:', autoErr.message);
       }
     }
 
