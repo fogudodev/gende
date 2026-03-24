@@ -2,6 +2,8 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { db } from '../core/database.js';
 import { generateToken, generateRefreshToken, authMiddleware, JwtPayload } from '../core/auth.js';
+import { WhatsAppService } from '../services/whatsapp.js';
+import { config } from '../config.js';
 
 const router = Router();
 
