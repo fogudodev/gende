@@ -48,7 +48,7 @@ export function getAccessToken() {
 async function apiFetch<T = any>(
   path: string,
   options: RequestInit = {}
-): Promise<{ data: T | null; error: Error | null }> {
+): Promise<{ data: T | null; error: Error | null; headers: Headers | null; status: number | null }> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string> || {}),
@@ -58,27 +58,54 @@ async function apiFetch<T = any>(
     headers["Authorization"] = `Bearer ${accessToken}`;
   }
 
+  const fetchWithTimeout = async (url: string, fetchOptions: RequestInit, timeoutMs = 15000) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { ...fetchOptions, signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
   try {
-    let res = await fetch(`${PHP_API_URL}${path}`, { ...options, headers });
+    let res = await fetchWithTimeout(`${PHP_API_URL}${path}`, { ...options, headers });
 
     // Auto-refresh on 401
     if (res.status === 401 && refreshToken) {
       const refreshed = await tryRefreshToken();
       if (refreshed) {
         headers["Authorization"] = `Bearer ${accessToken}`;
-        res = await fetch(`${PHP_API_URL}${path}`, { ...options, headers });
+        res = await fetchWithTimeout(`${PHP_API_URL}${path}`, { ...options, headers });
       }
     }
 
-    const body = await res.json();
-
-    if (!res.ok) {
-      return { data: null, error: new Error(body.error || "Request failed") };
+    let body: any = null;
+    const contentType = res.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      body = await res.json();
+    } else if (res.status !== 204) {
+      body = await res.text();
     }
 
-    return { data: body as T, error: null };
+    if (!res.ok) {
+      return {
+        data: null,
+        error: new Error(body?.error || body?.message || "Request failed"),
+        headers: res.headers,
+        status: res.status,
+      };
+    }
+
+    return { data: body as T, error: null, headers: res.headers, status: res.status };
   } catch (err) {
-    return { data: null, error: err as Error };
+    const isTimeout = err instanceof DOMException && err.name === "AbortError";
+    return {
+      data: null,
+      error: isTimeout ? new Error("Request timeout") : (err as Error),
+      headers: null,
+      status: null,
+    };
   }
 }
 
@@ -201,6 +228,8 @@ class PhpQueryBuilder<T = any> {
   private endpoint: string;
   private filters: QueryFilter[] = [];
   private _select: string = "*";
+  private _count: "exact" | null = null;
+  private _head: boolean = false;
   private _order: { column: string; ascending: boolean } | null = null;
   private _limit: number | null = null;
   private _single: boolean = false;
@@ -209,8 +238,10 @@ class PhpQueryBuilder<T = any> {
     this.endpoint = endpoint;
   }
 
-  select(columns: string = "*") {
+  select(columns: string = "*", options?: { count?: "exact"; head?: boolean }) {
     this._select = columns;
+    this._count = options?.count || null;
+    this._head = !!options?.head;
     return this;
   }
 
@@ -269,6 +300,8 @@ class PhpQueryBuilder<T = any> {
   private buildQueryString(): string {
     const params = new URLSearchParams();
     if (this._select !== "*") params.set("select", this._select);
+    if (this._count) params.set("count", this._count);
+    if (this._head) params.set("head", "true");
     this.filters.forEach((f) => params.set(`${f.op}[${f.column}]`, String(f.value)));
     if (this._order) params.set("order", `${this._order.column}.${this._order.ascending ? "asc" : "desc"}`);
     if (this._limit) params.set("limit", String(this._limit));
@@ -276,21 +309,43 @@ class PhpQueryBuilder<T = any> {
     return qs ? `?${qs}` : "";
   }
 
-  async then(resolve: (result: { data: T | T[] | null; error: Error | null }) => void) {
+  async then(resolve: (result: { data: T | T[] | null; error: Error | null; count?: number | null }) => void) {
     const qs = this.buildQueryString();
-    const { data, error } = await apiFetch<T[]>(`/${this.endpoint}${qs}`);
+    const headers: Record<string, string> = {};
+    if (this._count === "exact") {
+      headers.Prefer = "count=exact";
+    }
+    const { data, error, headers: responseHeaders } = await apiFetch<any>(`/${this.endpoint}${qs}`, {
+      headers,
+    });
 
     if (error) {
-      resolve({ data: null, error });
+      resolve({ data: null, error, count: null });
+      return;
+    }
+
+    let count: number | null = null;
+    const contentRange = responseHeaders?.get("content-range");
+    if (contentRange?.includes("/")) {
+      const parsed = Number(contentRange.split("/")[1]);
+      if (!Number.isNaN(parsed)) count = parsed;
+    }
+    if (count === null && data && typeof data === "object" && !Array.isArray(data) && "count" in data) {
+      const parsed = Number((data as any).count);
+      if (!Number.isNaN(parsed)) count = parsed;
+    }
+
+    if (this._head) {
+      resolve({ data: null, error: null, count });
       return;
     }
 
     if (this._single && Array.isArray(data)) {
-      resolve({ data: (data[0] as T) || null, error: null });
+      resolve({ data: (data[0] as T) || null, error: null, count });
       return;
     }
 
-    resolve({ data: data as T[], error: null });
+    resolve({ data: data as T[], error: null, count });
   }
 }
 
@@ -535,9 +590,9 @@ export const phpClient = {
   from<T = any>(table: string) {
     const route = getRoute(table);
     return {
-      select(columns?: string) {
+      select(columns?: string, options?: { count?: "exact"; head?: boolean }) {
         const qb = new PhpQueryBuilder<T>(route);
-        return qb.select(columns);
+        return qb.select(columns, options);
       },
       insert(payload: any) {
         return new PhpInsertBuilder<T>(route, payload);

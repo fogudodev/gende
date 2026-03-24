@@ -61,9 +61,9 @@ export function createCrudRoutes(routePath: string, tableName: string, profColum
         params.push(profId);
       }
 
-      // Parse eq[column]=value filters from query string
+      // Parse filters from query string
       // Express with qs parser converts eq[col]=val into { eq: { col: val } }
-      // Also support literal keys eq[col] for simple query parsers
+      // Also support literal keys op[col] for simple query parsers
       for (const [key, val] of Object.entries(req.query)) {
         const eqMatch = key.match(/^eq\[(.+)\]$/);
         if (eqMatch && typeof val === 'string') {
@@ -75,6 +75,36 @@ export function createCrudRoutes(routePath: string, tableName: string, profColum
         if (neqMatch && typeof val === 'string') {
           const col = neqMatch[1];
           where += ` AND \`${col}\` != ?`;
+          params.push(val);
+        }
+        const gtMatch = key.match(/^gt\[(.+)\]$/);
+        if (gtMatch && typeof val === 'string') {
+          const col = gtMatch[1];
+          where += ` AND \`${col}\` > ?`;
+          params.push(val);
+        }
+        const gteMatch = key.match(/^gte\[(.+)\]$/);
+        if (gteMatch && typeof val === 'string') {
+          const col = gteMatch[1];
+          where += ` AND \`${col}\` >= ?`;
+          params.push(val);
+        }
+        const ltMatch = key.match(/^lt\[(.+)\]$/);
+        if (ltMatch && typeof val === 'string') {
+          const col = ltMatch[1];
+          where += ` AND \`${col}\` < ?`;
+          params.push(val);
+        }
+        const lteMatch = key.match(/^lte\[(.+)\]$/);
+        if (lteMatch && typeof val === 'string') {
+          const col = lteMatch[1];
+          where += ` AND \`${col}\` <= ?`;
+          params.push(val);
+        }
+        const likeMatch = key.match(/^like\[(.+)\]$/);
+        if (likeMatch && typeof val === 'string') {
+          const col = likeMatch[1];
+          where += ` AND \`${col}\` LIKE ?`;
           params.push(val);
         }
         const inMatch = key.match(/^in\[(.+)\]$/);
@@ -99,6 +129,36 @@ export function createCrudRoutes(routePath: string, tableName: string, profColum
           params.push(val);
         }
       }
+      if (req.query.gt && typeof req.query.gt === 'object') {
+        for (const [col, val] of Object.entries(req.query.gt as Record<string, string>)) {
+          where += ` AND \`${col}\` > ?`;
+          params.push(val);
+        }
+      }
+      if (req.query.gte && typeof req.query.gte === 'object') {
+        for (const [col, val] of Object.entries(req.query.gte as Record<string, string>)) {
+          where += ` AND \`${col}\` >= ?`;
+          params.push(val);
+        }
+      }
+      if (req.query.lt && typeof req.query.lt === 'object') {
+        for (const [col, val] of Object.entries(req.query.lt as Record<string, string>)) {
+          where += ` AND \`${col}\` < ?`;
+          params.push(val);
+        }
+      }
+      if (req.query.lte && typeof req.query.lte === 'object') {
+        for (const [col, val] of Object.entries(req.query.lte as Record<string, string>)) {
+          where += ` AND \`${col}\` <= ?`;
+          params.push(val);
+        }
+      }
+      if (req.query.like && typeof req.query.like === 'object') {
+        for (const [col, val] of Object.entries(req.query.like as Record<string, string>)) {
+          where += ` AND \`${col}\` LIKE ?`;
+          params.push(val);
+        }
+      }
       if (req.query.in && typeof req.query.in === 'object') {
         for (const [col, val] of Object.entries(req.query.in as Record<string, string>)) {
           const values = String(val).replace(/^\(|\)$/g, '').split(',');
@@ -118,10 +178,16 @@ export function createCrudRoutes(routePath: string, tableName: string, profColum
       let limitClause = '';
       if (req.query.limit) limitClause = ` LIMIT ${parseInt(String(req.query.limit), 10)}`;
 
-      // Handle select with count (head request for counting)
-      if (req.query.select === 'id' && req.headers['prefer'] === 'count=exact') {
+      // Handle exact count requests
+      const preferHeader = String(req.headers['prefer'] || '');
+      const wantsExactCount = preferHeader.includes('count=exact') || req.query.count === 'exact';
+      const wantsHeadCount = req.query.head === 'true';
+      if (wantsExactCount && (req.query.select === 'id' || wantsHeadCount)) {
         const [row] = await db.query<any>(`SELECT COUNT(*) as cnt FROM \`${tableName}\` WHERE ${where}`, params);
         res.set('content-range', `0-0/${row.cnt}`);
+        if (wantsHeadCount) {
+          return res.json({ count: row.cnt });
+        }
         return res.json([]);
       }
 

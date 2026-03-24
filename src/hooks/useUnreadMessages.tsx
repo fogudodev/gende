@@ -82,7 +82,7 @@ export const useUnreadMessages = () => {
       };
     },
     enabled: !!professional?.id,
-    refetchInterval: 10000,
+    refetchInterval: 30000,
   });
 
   const unreadPayment = data.payment;
