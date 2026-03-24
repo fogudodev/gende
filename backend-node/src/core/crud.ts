@@ -29,12 +29,48 @@ export function createCrudRoutes(routePath: string, tableName: string, profColum
       }
 
       // Parse eq[column]=value filters from query string
+      // Express with qs parser converts eq[col]=val into { eq: { col: val } }
+      // Also support literal keys eq[col] for simple query parsers
       for (const [key, val] of Object.entries(req.query)) {
         const eqMatch = key.match(/^eq\[(.+)\]$/);
-        if (eqMatch && val !== undefined) {
+        if (eqMatch && typeof val === 'string') {
           const col = eqMatch[1];
           where += ` AND \`${col}\` = ?`;
           params.push(val);
+        }
+        const neqMatch = key.match(/^neq\[(.+)\]$/);
+        if (neqMatch && typeof val === 'string') {
+          const col = neqMatch[1];
+          where += ` AND \`${col}\` != ?`;
+          params.push(val);
+        }
+        const inMatch = key.match(/^in\[(.+)\]$/);
+        if (inMatch && typeof val === 'string') {
+          const col = inMatch[1];
+          const values = val.replace(/^\(|\)$/g, '').split(',');
+          where += ` AND \`${col}\` IN (${values.map(() => '?').join(',')})`;
+          params.push(...values);
+        }
+      }
+
+      // Handle qs-parsed nested objects: eq: { column: value }
+      if (req.query.eq && typeof req.query.eq === 'object') {
+        for (const [col, val] of Object.entries(req.query.eq as Record<string, string>)) {
+          where += ` AND \`${col}\` = ?`;
+          params.push(val);
+        }
+      }
+      if (req.query.neq && typeof req.query.neq === 'object') {
+        for (const [col, val] of Object.entries(req.query.neq as Record<string, string>)) {
+          where += ` AND \`${col}\` != ?`;
+          params.push(val);
+        }
+      }
+      if (req.query.in && typeof req.query.in === 'object') {
+        for (const [col, val] of Object.entries(req.query.in as Record<string, string>)) {
+          const values = String(val).replace(/^\(|\)$/g, '').split(',');
+          where += ` AND \`${col}\` IN (${values.map(() => '?').join(',')})`;
+          params.push(...values);
         }
       }
 
