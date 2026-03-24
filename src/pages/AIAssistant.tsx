@@ -44,7 +44,7 @@ const AIAssistant = () => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ messages: allMessages }),
+      body: JSON.stringify({ messages: allMessages, professionalId: professional?.id }),
     });
 
     if (!resp.ok) {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { api } from "@/lib/api-client";
+import { supabase } from "@/integrations/supabase/client";
 import { useProfessional } from "@/hooks/useProfessional";
 import { useChatNotifications } from "@/hooks/useChatNotifications";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
@@ -104,12 +105,12 @@ const SupportChat = () => {
       const ext = file.name.split(".").pop();
       const path = `${professional.id}/suporte/${Date.now()}.${ext}`;
 
-      const { error: uploadError } = await api.storage
+      const { error: uploadError } = await supabase.storage
         .from("professionals")
         .upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = api.storage.from("professionals").getPublicUrl(path);
+      const { data: urlData } = supabase.storage.from("professionals").getPublicUrl(path);
 
       await sendMessage.mutateAsync({
         message: "📎 Arquivo enviado",

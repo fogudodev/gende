@@ -10,7 +10,21 @@ router.post('/ai-assistant', authMiddleware, async (req: Request, res: Response)
   if (!config.geminiApiKey) return res.status(500).json({ error: 'Chave da IA não configurada' });
 
   const { messages } = req.body;
-  const professional = await db.queryOne<any>('SELECT * FROM professionals WHERE user_id = ?', [user.sub]);
+
+  // Support impersonation: if X-Impersonate-User header is set (admin only), use that user_id
+  let targetUserId = user.sub;
+  if (user.role === 'admin' && req.headers['x-impersonate-user']) {
+    targetUserId = req.headers['x-impersonate-user'] as string;
+  }
+
+  // Also check if there's an impersonated professional_id directly in the body
+  let professional: any = null;
+  if (req.body.professionalId) {
+    professional = await db.queryOne<any>('SELECT * FROM professionals WHERE id = ?', [req.body.professionalId]);
+  }
+  if (!professional) {
+    professional = await db.queryOne<any>('SELECT * FROM professionals WHERE user_id = ?', [targetUserId]);
+  }
   if (!professional) return res.status(404).json({ error: 'Profissional não encontrado' });
 
   const pid = professional.id;
