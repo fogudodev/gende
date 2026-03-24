@@ -5,6 +5,38 @@ import { authMiddleware, getProfessionalId, hasRole, JwtPayload } from './auth.j
 export function createCrudRoutes(routePath: string, tableName: string, profColumn = 'professional_id'): Router {
   const router = Router();
   const hasScope = !!profColumn; // If profColumn is empty string, skip scoping
+  let cachedTableColumns: Set<string> | null = null;
+
+  async function getTableColumns(): Promise<Set<string> | null> {
+    if (cachedTableColumns) return cachedTableColumns;
+
+    try {
+      const rows = await db.query<{ COLUMN_NAME: string }>(
+        'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?',
+        [tableName]
+      );
+      cachedTableColumns = new Set(rows.map((row) => row.COLUMN_NAME));
+      return cachedTableColumns;
+    } catch {
+      return null;
+    }
+  }
+
+  async function sanitizeDataForTable(data: Record<string, any>): Promise<Record<string, any>> {
+    const columns = await getTableColumns();
+
+    if (!columns) {
+      return Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined));
+    }
+
+    const sanitized: Record<string, any> = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== undefined && columns.has(key)) {
+        sanitized[key] = value;
+      }
+    }
+    return sanitized;
+  }
 
   // Helper: check if user is admin and resolve profId accordingly
   async function resolveAccess(user: JwtPayload): Promise<{ isAdmin: boolean; profId: string | null }> {
@@ -180,9 +212,15 @@ export function createCrudRoutes(routePath: string, tableName: string, profColum
       const ids: string[] = [];
 
       for (const item of items) {
-        const data = { ...item, id: item.id || db.uuid() };
+        let data = { ...item, id: item.id || db.uuid() };
         if (hasScope && !isAdmin && !data[profColumn]) {
           data[profColumn] = profId;
+        }
+
+        data = await sanitizeDataForTable(data);
+
+        if (!Object.keys(data).length) {
+          return res.status(400).json({ error: 'No valid fields to insert' });
         }
 
         const columns = Object.keys(data).map(k => `\`${k}\``).join(', ');
@@ -220,10 +258,12 @@ export function createCrudRoutes(routePath: string, tableName: string, profColum
     try {
       const user = (req as any).user as JwtPayload;
       const { isAdmin, profId } = await resolveAccess(user);
-      const data = { ...req.body };
-      delete data.id;
-      delete data.created_at;
-      if (hasScope && !isAdmin) delete data[profColumn];
+      const rawData = { ...req.body };
+      delete rawData.id;
+      delete rawData.created_at;
+      if (hasScope && !isAdmin) delete rawData[profColumn];
+
+      const data = await sanitizeDataForTable(rawData);
 
       if (!Object.keys(data).length) return res.status(400).json({ error: 'No data to update' });
 
