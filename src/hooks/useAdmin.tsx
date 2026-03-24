@@ -146,12 +146,11 @@ export const useRemoveSupportRole = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (userId: string) => {
-      const { error } = await api
-        .from("user_roles")
-        .delete()
-        .eq("user_id", userId)
-        .eq("role", "support");
+      const { data, error } = await api.functions.invoke("admin-remove-support-role", {
+        body: { userId },
+      });
       if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-support-users"] });
