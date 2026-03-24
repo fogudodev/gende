@@ -58,7 +58,7 @@ router.post('/cron/send-reminders', cronAuth, async (_req: Request, res: Respons
 
     const automations = await db.query<any>("SELECT * FROM whatsapp_automations WHERE professional_id = ? AND automation_type IN ('reminder_24h','reminder_3h','post_sale_review') AND is_enabled = 1", [profId]);
     const autoMap: Record<string, any> = {};
-    for (const a of automations) autoMap[a.trigger_type] = a;
+    for (const a of automations) autoMap[a.automation_type] = a;
 
     for (const booking of bookings) {
       const automation = autoMap[booking.triggerType];
