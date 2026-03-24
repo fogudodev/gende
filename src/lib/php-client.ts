@@ -468,15 +468,36 @@ export const phpClient = {
     });
   },
 
-  // Auth namespace
+  // Auth namespace — internal listener registry
+  _authListeners: [] as Array<(event: string, session: any) => void>,
+
+  _notifyAuthListeners(event: string) {
+    phpAuth.getSession().then(({ data }) => {
+      phpClient._authListeners.forEach(cb => cb(event, data));
+    });
+  },
+
   auth: {
-    signUp: ({ email, password, options }: { email: string; password: string; options?: { data?: any; emailRedirectTo?: string } }) =>
-      phpAuth.signUp(email, password, options?.data || {}),
+    signUp: async ({ email, password, options }: { email: string; password: string; options?: { data?: any; emailRedirectTo?: string } }) => {
+      const result = await phpAuth.signUp(email, password, options?.data || {});
+      if (!result.error && result.data) {
+        phpClient._notifyAuthListeners("SIGNED_IN");
+      }
+      return result;
+    },
     
-    signInWithPassword: ({ email, password }: { email: string; password: string }) =>
-      phpAuth.signIn(email, password),
+    signInWithPassword: async ({ email, password }: { email: string; password: string }) => {
+      const result = await phpAuth.signIn(email, password);
+      if (!result.error && result.data) {
+        phpClient._notifyAuthListeners("SIGNED_IN");
+      }
+      return result;
+    },
     
-    signOut: () => phpAuth.signOut(),
+    signOut: async () => {
+      await phpAuth.signOut();
+      phpClient._notifyAuthListeners("SIGNED_OUT");
+    },
     
     getSession: phpAuth.getSession,
 
@@ -486,6 +507,9 @@ export const phpClient = {
     },
 
     onAuthStateChange: (callback: (event: string, session: any) => void) => {
+      // Register listener
+      phpClient._authListeners.push(callback);
+
       // Check on load
       phpAuth.getSession().then(({ data }) => {
         callback(data ? "SIGNED_IN" : "SIGNED_OUT", data);
@@ -504,7 +528,10 @@ export const phpClient = {
       return {
         data: {
           subscription: {
-            unsubscribe: () => window.removeEventListener("storage", handler),
+            unsubscribe: () => {
+              window.removeEventListener("storage", handler);
+              phpClient._authListeners = phpClient._authListeners.filter(cb2 => cb2 !== callback);
+            },
           },
         },
       };
