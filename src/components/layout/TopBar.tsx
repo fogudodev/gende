@@ -1,4 +1,4 @@
-import { Bell, Search, Sun, Moon, Menu, Crown, Headphones, Sparkles, Wallet, CreditCard, MessageSquare, CheckCheck } from "lucide-react";
+import { Bell, Search, Sun, Moon, Menu, Crown, Headphones, Sparkles, Wallet, CreditCard, MessageSquare, CheckCheck, Clock } from "lucide-react";
 import aiAssistantIcon from "@/assets/icon-ai-assistant.png";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
@@ -7,7 +7,8 @@ import { useState, useRef, useEffect } from "react";
 import PlanRenewalModal from "./PlanRenewalModal";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
-import { formatDistanceToNow } from "date-fns";
+import { useSubscription } from "@/hooks/useSubscription";
+import { formatDistanceToNow, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface TopBarProps {
