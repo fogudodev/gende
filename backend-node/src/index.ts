@@ -1,3 +1,4 @@
+import { createServer } from 'http';
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { config } from './config.js';
@@ -14,6 +15,7 @@ import instagramRoutes from './routes/instagram.js';
 import googleCalendarRoutes from './routes/google-calendar.js';
 import aiRoutes from './routes/ai.js';
 import cronRoutes from './routes/cron.js';
+import { initWebSocket } from './core/websocket.js';
 
 const app = express();
 
@@ -155,7 +157,10 @@ setInterval(() => {
 }, 60000);
 
 // Start
-app.listen(config.port, () => {
+const server = createServer(app);
+initWebSocket(server);
+
+server.listen(config.port, () => {
   console.log(`🚀 Gende API running on port ${config.port} (${config.nodeEnv})`);
 });
 
