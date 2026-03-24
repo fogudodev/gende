@@ -22,6 +22,8 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [accountType, setAccountType] = useState<"autonomous" | "salon">("autonomous");
+  const [employeeCount, setEmployeeCount] = useState(1);
   const [mode, setMode] = useState<AuthMode>(() => {
     return searchParams.get("mode") === "signup" ? "signup" : "login";
   });
