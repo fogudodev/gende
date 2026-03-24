@@ -197,7 +197,7 @@ router.post('/cron/course-reminders', cronAuth, async (_req: Request, res: Respo
       [profId]
     );
     const autoMap: Record<string, any> = {};
-    for (const a of automations) autoMap[a.trigger_type] = a;
+    for (const a of automations) autoMap[a.automation_type] = a;
     if (!Object.keys(autoMap).length) continue;
 
     // Get confirmed enrollments with class info
