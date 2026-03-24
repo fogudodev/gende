@@ -1035,17 +1035,24 @@ const WhatsAppSection = () => {
       });
       if (error) throw error;
 
-      const { data: qrData } = await api.functions.invoke("whatsapp", {
-        body: { action: "get-qrcode", instanceName },
-      });
-      if (qrData?.base64) {
-        setQrCode(qrData.base64);
-      } else if (data?.qrcode?.base64) {
-        setQrCode(data.qrcode.base64);
+      // Try to get QR from create response first
+      const qrFromCreate = data?.qrcode?.base64 || data?.data?.qrcode?.base64;
+      if (qrFromCreate) {
+        setQrCode(qrFromCreate);
+      } else {
+        // Fallback: fetch QR separately
+        await new Promise(r => setTimeout(r, 2000));
+        const { data: qrData } = await api.functions.invoke("whatsapp", {
+          body: { action: "get-qrcode", instanceName },
+        });
+        const qr = qrData?.base64 || qrData?.data?.base64;
+        if (qr) setQrCode(qr);
+        else toast.info("QR Code será gerado em instantes. Clique em 'Verificar Status'.");
       }
       refetchInstance();
-    } catch {
-      toast.error("Erro ao conectar instância");
+    } catch (e: any) {
+      console.error("WhatsApp connect error:", e);
+      toast.error("Erro ao conectar instância: " + (e?.message || "tente novamente"));
     }
     setConnecting(false);
   };
