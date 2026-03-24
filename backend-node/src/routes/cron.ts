@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { db } from '../core/database.js';
 import { config } from '../config.js';
 import { WhatsAppService } from '../services/whatsapp.js';
+import { authMiddleware, getProfessionalId, JwtPayload } from '../core/auth.js';
 
 const router = Router();
 
@@ -360,6 +361,220 @@ router.post('/cron/waitlist-process', cronAuth, async (req: Request, res: Respon
   // Auto-expire old offers
   await db.execute("UPDATE waitlist_offers SET status = 'expired' WHERE status = 'sent' AND reserved_until < NOW()");
   res.json({ success: true, message: 'Expired offers cleaned' });
+});
+
+// =============================================
+// SEND CAMPAIGN (authenticated - frontend)
+// =============================================
+router.post('/send-campaign', authMiddleware, async (req: Request, res: Response) => {
+  const user = (req as any).user as JwtPayload;
+  const { action, professionalId, name, message, clientIds } = req.body;
+
+  if (action === 'get-limits') {
+    const profId = professionalId || await getProfessionalId(user.sub);
+    
+    // Get plan limits
+    const sub = await db.queryOne<any>('SELECT plan_id FROM subscriptions WHERE professional_id = ? ORDER BY created_at DESC LIMIT 1', [profId]);
+    const planId = sub?.plan_id || 'free';
+    const planLimits = await db.queryOne<any>('SELECT * FROM plan_limits WHERE plan_id = ?', [planId]);
+    const profLimits = await db.queryOne<any>('SELECT * FROM professional_limits WHERE professional_id = ?', [profId]);
+    
+    // Today's usage
+    const today = new Date().toISOString().split('T')[0];
+    const usage = await db.queryOne<any>('SELECT campaigns_sent FROM daily_message_usage WHERE professional_id = ? AND usage_date = ?', [profId, today]);
+    
+    const dailyLimit = (profLimits?.daily_campaigns ?? planLimits?.daily_campaigns ?? 1) + (profLimits?.extra_campaigns_purchased ?? 0);
+    const maxContacts = (profLimits?.campaign_max_contacts ?? planLimits?.campaign_max_contacts ?? 10) + (profLimits?.extra_contacts_purchased ?? 0);
+    
+    return res.json({
+      daily_campaigns: dailyLimit,
+      campaigns_used_today: usage?.campaigns_sent ?? 0,
+      campaign_max_contacts: maxContacts,
+      campaign_min_interval_hours: profLimits?.campaign_min_interval_hours ?? planLimits?.campaign_min_interval_hours ?? 24,
+    });
+  }
+
+  if (action === 'create-campaign') {
+    const profId = professionalId || await getProfessionalId(user.sub);
+    if (!name || !message) return res.status(400).json({ error: 'Nome e mensagem são obrigatórios' });
+
+    // Get clients
+    let clients;
+    if (clientIds && clientIds.length > 0) {
+      const placeholders = clientIds.map(() => '?').join(',');
+      clients = await db.query<any>(`SELECT id, name, phone FROM clients WHERE professional_id = ? AND id IN (${placeholders})`, [profId, ...clientIds]);
+    } else {
+      clients = await db.query<any>("SELECT id, name, phone FROM clients WHERE professional_id = ? AND phone IS NOT NULL AND phone != ''", [profId]);
+    }
+
+    if (!clients.length) return res.status(400).json({ error: 'Nenhum cliente com telefone encontrado' });
+
+    // Create campaign
+    const campaignId = db.uuid();
+    await db.execute(
+      "INSERT INTO campaigns (id, professional_id, name, message, total_contacts, status, scheduled_at) VALUES (?, ?, ?, ?, ?, 'scheduled', NOW())",
+      [campaignId, profId, name, message, clients.length]
+    );
+
+    // Create contacts
+    for (const client of clients) {
+      await db.execute(
+        "INSERT INTO campaign_contacts (id, campaign_id, client_id, client_name, phone, status) VALUES (?, ?, ?, ?, ?, 'pending')",
+        [db.uuid(), campaignId, client.id, client.name, client.phone]
+      );
+    }
+
+    // Update daily usage
+    const today = new Date().toISOString().split('T')[0];
+    await db.execute(
+      "INSERT INTO daily_message_usage (id, professional_id, usage_date, campaigns_sent) VALUES (?, ?, ?, 1) ON DUPLICATE KEY UPDATE campaigns_sent = campaigns_sent + 1",
+      [db.uuid(), profId, today]
+    );
+
+    return res.json({ success: true, campaignId, totalContacts: clients.length });
+  }
+
+  res.status(400).json({ error: 'Unknown action' });
+});
+
+// =============================================
+// NOTIFY SIGNUP (authenticated or fire-and-forget)
+// =============================================
+router.post('/notify-signup', async (req: Request, res: Response) => {
+  const { name, businessName, email, phone } = req.body;
+  
+  try {
+    const wa = new WhatsAppService();
+    // Find an admin's connected instance
+    const inst = await db.queryOne<any>("SELECT instance_name FROM whatsapp_instances WHERE status = 'connected' LIMIT 1");
+    if (!inst) return res.json({ success: false, reason: 'no_instance' });
+
+    const adminPhone = config.adminPhone || '';
+    if (!adminPhone) return res.json({ success: false, reason: 'no_admin_phone' });
+
+    const msg = `🆕 *Novo cadastro no Gende!*\n\n👤 *Nome:* ${name}\n🏢 *Negócio:* ${businessName || 'N/A'}\n📧 *Email:* ${email}\n📱 *Tel:* ${phone || 'N/A'}\n\n⏰ ${new Date().toLocaleString('pt-BR')}`;
+    await wa.sendMessage(inst.instance_name, adminPhone, msg);
+    
+    res.json({ success: true });
+  } catch {
+    res.json({ success: false });
+  }
+});
+
+// =============================================
+// WAITLIST PROCESS (authenticated - from frontend)
+// =============================================
+router.post('/waitlist-process', authMiddleware, async (req: Request, res: Response) => {
+  const { action } = req.body;
+
+  if (action === 'process-cancellation') {
+    const { professionalId, serviceId, startTime, endTime } = req.body;
+
+    const settings = await db.queryOne<any>('SELECT * FROM waitlist_settings WHERE professional_id = ?', [professionalId]);
+    if (settings && !settings.enabled) return res.json({ success: false, reason: 'waitlist_disabled' });
+
+    const maxNotifications = settings?.max_notifications ?? 3;
+    const reservationMinutes = settings?.reservation_minutes ?? 3;
+
+    const slotDate = new Date(startTime);
+    const dateStr = slotDate.toISOString().split('T')[0];
+    const hour = slotDate.getHours();
+    const period = hour < 12 ? 'morning' : (hour < 18 ? 'afternoon' : 'evening');
+
+    const entries = await db.query<any>(
+      "SELECT * FROM waitlist_entries WHERE professional_id = ? AND status = 'waiting' AND (service_id = ? OR service_id IS NULL) ORDER BY priority DESC, created_at ASC",
+      [professionalId, serviceId]
+    );
+
+    let compatible = entries.filter((e: any) =>
+      e.preferred_date === dateStr && (e.preferred_period === 'any' || e.preferred_period === period)
+    );
+    if (!compatible.length) compatible = entries;
+
+    const toNotify = compatible.slice(0, maxNotifications);
+    if (!toNotify.length) return res.json({ success: false, reason: 'no_candidates' });
+
+    const wa = new WhatsAppService();
+    const inst = await db.queryOne<any>("SELECT instance_name, status FROM whatsapp_instances WHERE professional_id = ? LIMIT 1", [professionalId]);
+    if (!inst || inst.status !== 'connected') return res.json({ success: false, reason: 'whatsapp_disconnected' });
+
+    const prof = await db.queryOne<any>('SELECT name, business_name, slug FROM professionals WHERE id = ?', [professionalId]);
+    const service = await db.queryOne<any>('SELECT name, price FROM services WHERE id = ?', [serviceId]);
+
+    const businessName = prof?.business_name || prof?.name || 'Salão';
+    const bookingLink = prof?.slug ? `https://gende.io/${prof.slug}` : '';
+    let sent = 0;
+
+    for (const entry of toNotify) {
+      const reservedUntil = new Date(Date.now() + reservationMinutes * 60000).toISOString().replace('T', ' ').slice(0, 19);
+
+      await db.execute(
+        'INSERT INTO waitlist_offers (id, professional_id, waitlist_entry_id, client_name, client_phone, service_id, slot_start, slot_end, status, reserved_until) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [db.uuid(), professionalId, entry.id, entry.client_name, entry.client_phone, serviceId, startTime, endTime, 'sent', reservedUntil]
+      );
+
+      const message = `✨ *Horário disponível!*\n\nOlá ${entry.client_name}!\n\n📅 *${slotDate.toLocaleDateString('pt-BR')}* às *${slotDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}*\n💇 *${service?.name || 'Serviço'}*\n📍 ${businessName}\n\n${bookingLink ? `📲 Agende: ${bookingLink}\n\n` : ''}⏰ Responda rápido!`;
+
+      const sendRes = await wa.sendMessage(inst.instance_name, entry.client_phone, message);
+      if (sendRes.ok) sent++;
+
+      await db.execute("UPDATE waitlist_entries SET status = 'notified', notified_at = NOW() WHERE id = ?", [entry.id]);
+    }
+
+    return res.json({ success: true, offers_sent: sent });
+  }
+
+  res.json({ success: true });
+});
+
+// =============================================
+// SEND COURSE REMINDERS (authenticated - event-driven triggers from frontend)
+// =============================================
+router.post('/send-course-reminders', authMiddleware, async (req: Request, res: Response) => {
+  const { action, professionalId, triggerType, enrollmentId, classId, extraVars, recipients } = req.body;
+
+  if (action !== 'trigger') return res.status(400).json({ error: 'Unknown action' });
+
+  try {
+    const wa = new WhatsAppService();
+    const inst = await db.queryOne<any>("SELECT instance_name, status FROM whatsapp_instances WHERE professional_id = ? AND status = 'connected' LIMIT 1", [professionalId]);
+    if (!inst) return res.json({ success: false, reason: 'no_whatsapp' });
+
+    // Get automation template for this trigger type
+    const automation = await db.queryOne<any>(
+      "SELECT * FROM whatsapp_automations WHERE professional_id = ? AND trigger_type = ? AND is_active = 1",
+      [professionalId, triggerType]
+    );
+    if (!automation) return res.json({ success: false, reason: 'no_automation' });
+
+    let sent = 0;
+    const targets = recipients || [];
+
+    // If no explicit recipients, get from enrollment
+    if (!targets.length && enrollmentId) {
+      const enrollment = await db.queryOne<any>('SELECT student_name, student_phone FROM course_enrollments WHERE id = ?', [enrollmentId]);
+      if (enrollment?.student_phone) {
+        targets.push({ name: enrollment.student_name, phone: enrollment.student_phone });
+      }
+    }
+
+    for (const target of targets) {
+      const vars = { nome: target.name || 'Aluno', ...(extraVars || {}) };
+      const finalMessage = WhatsAppService.replaceVars(automation.message_template, vars);
+
+      const sendRes = await wa.sendMessage(inst.instance_name, target.phone, finalMessage);
+      if (sendRes.ok) sent++;
+
+      await db.execute(
+        'INSERT INTO whatsapp_logs (id, professional_id, automation_id, booking_id, recipient_phone, message_content, status, sent_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [db.uuid(), professionalId, automation.id, enrollmentId || null, target.phone, finalMessage, sendRes.ok ? 'sent' : 'failed', sendRes.ok ? new Date().toISOString() : null]
+      );
+    }
+
+    res.json({ success: true, sent });
+  } catch (err: any) {
+    res.json({ success: false, error: err.message });
+  }
 });
 
 export default router;

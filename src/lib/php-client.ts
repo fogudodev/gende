@@ -519,12 +519,57 @@ export const phpClient = {
     };
   },
 
-  // Edge function equivalent
+  // Edge function equivalent — maps Supabase edge function names to Node backend routes
   functions: {
-    async invoke<T = any>(name: string, options?: { body?: any }) {
-      return apiFetch<T>(`/${name}`, {
+    async invoke<T = any>(name: string, options?: { body?: any; headers?: Record<string, string> }) {
+      const FUNCTION_ROUTE_MAP: Record<string, string | ((body: any) => string)> = {
+        "admin-create-professional": "/admin/create-professional",
+        "admin-delete-user": "/admin/delete-user",
+        "admin-impersonate": "/admin/impersonate",
+        "create-reception-user": "/admin/create-reception-user",
+        "google-calendar-auth": "/google-calendar/auth",
+        "google-calendar-sync": "/google-calendar/sync",
+        "google-calendar-callback": "/google-calendar/callback",
+        "instagram-oauth": "/instagram/oauth",
+        "instagram-webhook": "/instagram/webhook",
+        "salon-ai-assistant": "/ai-assistant",
+        "whatsapp": (body: any) => {
+          const action = body?.action;
+          if (action === "create-instance" || action === "get-qrcode" || action === "check-status") return "/whatsapp/instance";
+          if (action === "trigger-automation") return "/whatsapp/trigger-automation";
+          if (action === "notify-commission" || action === "notify-commission-paid") return "/whatsapp/notify-commission";
+          if (action === "send") return "/whatsapp/send";
+          return "/whatsapp/instance";
+        },
+        "whatsapp-webhook": "/whatsapp/webhook",
+        "send-campaign": "/send-campaign",
+        "send-reminders": "/cron/send-reminders",
+        "send-course-reminders": "/send-course-reminders",
+        "conversation-timeout": "/cron/conversation-timeout",
+        "waitlist-process": "/waitlist-process",
+        "notify-signup": "/notify-signup",
+        "check-subscription": "/check-subscription",
+        "create-checkout": "/create-checkout",
+        "customer-portal": "/customer-portal",
+        "purchase-addon": "/purchase-addon",
+        "upsell-suggest": "/upsell-suggest",
+      };
+
+      const body = options?.body;
+      const mapper = FUNCTION_ROUTE_MAP[name];
+      let route: string;
+      if (typeof mapper === "function") {
+        route = mapper(body);
+      } else if (mapper) {
+        route = mapper;
+      } else {
+        route = `/${name}`;
+      }
+
+      return apiFetch<T>(route, {
         method: "POST",
-        body: options?.body ? JSON.stringify(options.body) : undefined,
+        headers: options?.headers,
+        body: body ? JSON.stringify(body) : undefined,
       });
     },
   },
