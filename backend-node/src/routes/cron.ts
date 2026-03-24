@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { db } from '../core/database.js';
 import { config } from '../config.js';
 import { WhatsAppService } from '../services/whatsapp.js';
+import { authMiddleware, getProfessionalId, JwtPayload } from '../core/auth.js';
 
 const router = Router();
 
