@@ -111,17 +111,17 @@ const createProfessionalHandler = async (req: Request, res: Response) => {
         [db.uuid(), profId]
       );
 
-      // Try to create default automations - skip if table schema differs
+      // Create default automations using correct MySQL column names
       try {
         const triggers = ['booking_created', 'reminder_24h', 'reminder_3h', 'post_service', 'post_sale_review', 'maintenance_reminder', 'reactivation_30d'];
         for (const trigger of triggers) {
           await conn.execute(
-            "INSERT INTO whatsapp_automations (id, professional_id, trigger_type, message_template, is_active) VALUES (?, ?, ?, '', ?) ON DUPLICATE KEY UPDATE trigger_type = VALUES(trigger_type)",
+            "INSERT INTO whatsapp_automations (id, professional_id, automation_type, custom_message, is_enabled) VALUES (?, ?, ?, '', ?) ON DUPLICATE KEY UPDATE automation_type = VALUES(automation_type)",
             [db.uuid(), profId, trigger, ['booking_created', 'reminder_24h'].includes(trigger) ? 1 : 0]
           );
         }
       } catch (autoErr: any) {
-        console.warn('Skipping automations insert (table schema may differ):', autoErr.message);
+        console.warn('Skipping automations insert:', autoErr.message);
       }
     }
 
