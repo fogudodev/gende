@@ -7,6 +7,7 @@
  */
 
 import { PHP_API_URL } from "./backend-config";
+import { supabase } from "@/integrations/supabase/client";
 // Lazy import to break circular dependency (php-realtime imports from php-client)
 let _phpRealtime: typeof import("./php-realtime")["phpRealtime"] | null = null;
 async function getPhpRealtime() {
