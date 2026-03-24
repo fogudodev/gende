@@ -105,6 +105,7 @@ const createProfessionalHandler = async (req: Request, res: Response) => {
   if (existing) return res.status(409).json({ error: 'Email já cadastrado' });
 
   const userId = db.uuid();
+  let profId = '';
   const hash = await bcrypt.hash(password, 10);
 
   const conn = await db.getConnection();
@@ -118,7 +119,7 @@ const createProfessionalHandler = async (req: Request, res: Response) => {
     if (isSupport) {
       await conn.execute('INSERT INTO user_roles (id, user_id, role) VALUES (?, ?, ?)', [db.uuid(), userId, 'support']);
     } else {
-      const profId = db.uuid();
+      profId = db.uuid();
       await conn.execute(
         'INSERT INTO professionals (id, user_id, name, email, account_type, business_name, phone) VALUES (?, ?, ?, ?, ?, ?, ?)',
         [profId, userId, name, email, accountType, businessName, phone]

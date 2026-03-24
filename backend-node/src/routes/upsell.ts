@@ -11,6 +11,7 @@ router.get('/upsell/opportunities', authMiddleware, async (req: Request, res: Re
   try {
     const user = (req as any).user as JwtPayload;
     const profId = await getProfessionalId(user.sub);
+    if (!profId) return res.status(403).json({ error: 'Professional not found' });
 
     const rows = await db.query<any>(`
       SELECT o.*, c.name as client_name, c.phone as client_phone, s.name as suggested_service_name, s.price as suggested_price
@@ -32,6 +33,7 @@ router.post('/upsell/opportunities/trigger', authMiddleware, async (req: Request
   try {
     const user = (req as any).user as JwtPayload;
     const profId = await getProfessionalId(user.sub);
+    if (!profId) return res.status(403).json({ error: 'Professional not found' });
     const result = await UpsellOpportunityService.generateOpportunities(profId);
     res.json(result);
   } catch (err: any) {
@@ -44,6 +46,7 @@ router.get('/upsell/campaigns', authMiddleware, async (req: Request, res: Respon
   try {
     const user = (req as any).user as JwtPayload;
     const profId = await getProfessionalId(user.sub);
+    if (!profId) return res.status(403).json({ error: 'Professional not found' });
 
     const rows = await db.query<any>(`
       SELECT * FROM upsell_campaigns WHERE professional_id = ? ORDER BY created_at DESC
@@ -57,6 +60,7 @@ router.post('/upsell/campaigns', authMiddleware, async (req: Request, res: Respo
   try {
     const user = (req as any).user as JwtPayload;
     const profId = await getProfessionalId(user.sub);
+    if (!profId) return res.status(403).json({ error: 'Professional not found' });
     const { name, message_template, opportunityIds } = req.body;
     
     // Create Campaign
@@ -88,6 +92,7 @@ router.post('/upsell/campaigns/:id/execute', authMiddleware, async (req: Request
   try {
     const user = (req as any).user as JwtPayload;
     const profId = await getProfessionalId(user.sub);
+    if (!profId) return res.status(403).json({ error: 'Professional not found' });
     const result = await UpsellExecutionWorker.executeCampaign(profId, req.params.id);
     res.json(result);
   } catch(err: any) { res.status(500).json({ error: err.message }); }
@@ -98,6 +103,7 @@ router.get('/upsell/metrics', authMiddleware, async (req: Request, res: Response
   try {
     const user = (req as any).user as JwtPayload;
     const profId = await getProfessionalId(user.sub);
+    if (!profId) return res.status(403).json({ error: 'Professional not found' });
 
     const [stats] = await db.query<any>(`
       SELECT 

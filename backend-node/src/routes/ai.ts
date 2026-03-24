@@ -13,7 +13,7 @@ router.post('/ai-assistant', authMiddleware, async (req: Request, res: Response)
 
   // Support impersonation: if X-Impersonate-User header is set (admin only), use that user_id
   let targetUserId = user.sub;
-  if (user.role === 'admin' && req.headers['x-impersonate-user']) {
+  if (user.roles?.includes('admin') && req.headers['x-impersonate-user']) {
     targetUserId = req.headers['x-impersonate-user'] as string;
   }
 
