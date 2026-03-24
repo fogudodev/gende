@@ -6,9 +6,17 @@ const router = Router();
 
 router.get('/profile', authMiddleware, async (req: Request, res: Response) => {
   const user = (req as any).user as JwtPayload;
-  const prof = await db.queryOne('SELECT * FROM professionals WHERE user_id = ?', [user.sub]);
-  if (!prof) return res.status(404).json({ error: 'Professional not found' });
-  res.json(prof);
+
+  // Support query builder format: eq[user_id]=xxx&limit=1
+  const userId = (req.query['eq[user_id]'] as string) || user.sub;
+
+  const prof = await db.queryOne('SELECT * FROM professionals WHERE user_id = ?', [userId]);
+  if (!prof) {
+    // Return empty array for query-builder compatibility (no 404)
+    return res.json([]);
+  }
+  // If limit=1 was passed (single/maybeSingle), return array with one item
+  res.json([prof]);
 });
 
 router.put('/profile', authMiddleware, async (req: Request, res: Response) => {
