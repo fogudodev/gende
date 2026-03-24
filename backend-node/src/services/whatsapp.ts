@@ -241,7 +241,7 @@ export class WhatsAppService {
       ...(extraVars || {}),
     };
 
-    let messageTemplate = automation.message_template;
+    let messageTemplate = automation.custom_message || '';
     if (triggerType === 'booking_created' && prof.confirmation_message) {
       messageTemplate = prof.confirmation_message;
       if (bookingLink) messageTemplate += `\n\n📅 Agende novamente: ${bookingLink}`;
