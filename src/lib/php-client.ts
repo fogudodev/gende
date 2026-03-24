@@ -554,6 +554,9 @@ export const phpClient = {
     };
   },
 
+  // Delegate storage to Supabase client (storage is always Supabase)
+  storage: supabase.storage,
+
   // Edge function equivalent — maps Supabase edge function names to Node backend routes
   functions: {
     async invoke<T = any>(name: string, options?: { body?: any; headers?: Record<string, string> }) {
