@@ -87,8 +87,10 @@ app.use(express.json({ limit: '10mb' }));
 // Legacy function-name route compatibility (old frontend builds)
 const legacyRouteMap: Record<string, string> = {
   '/admin-create-professional': '/admin/create-professional',
+  '/admin-create-support': '/admin/create-professional',
   '/admin-delete-user': '/admin/delete-user',
   '/admin-impersonate': '/admin/impersonate',
+  '/admin-remove-support-role': '/admin/remove-support-role',
   '/create-reception-user': '/admin/create-reception-user',
   '/google-calendar-auth': '/google-calendar/auth',
   '/google-calendar-sync': '/google-calendar/sync',
@@ -123,7 +125,8 @@ const resolveLegacyRoute = (path: string, body: any): string | null => {
 };
 
 app.use((req: Request, _res: Response, next: NextFunction) => {
-  const [path, queryString = ''] = req.url.split('?');
+  const [rawPath, queryString = ''] = req.url.split('?');
+  const path = rawPath.length > 1 ? rawPath.replace(/\/+$/, '') : rawPath;
   const mappedPath = resolveLegacyRoute(path, (req as any).body);
 
   if (mappedPath) {
