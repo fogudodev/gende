@@ -105,12 +105,12 @@ const SupportChat = () => {
       const ext = file.name.split(".").pop();
       const path = `${professional.id}/suporte/${Date.now()}.${ext}`;
 
-      const { error: uploadError } = await api.storage
+      const { error: uploadError } = await supabase.storage
         .from("professionals")
         .upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = api.storage.from("professionals").getPublicUrl(path);
+      const { data: urlData } = supabase.storage.from("professionals").getPublicUrl(path);
 
       await sendMessage.mutateAsync({
         message: "📎 Arquivo enviado",

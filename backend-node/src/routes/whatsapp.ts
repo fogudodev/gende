@@ -36,7 +36,13 @@ router.post('/whatsapp/send-meta-template', authMiddleware, async (req: Request,
 router.post('/whatsapp/instance', authMiddleware, async (req: Request, res: Response) => {
   const { action, instanceName, professionalId } = req.body;
   try {
+    if (!instanceName && action !== 'create-instance') {
+      return res.status(400).json({ error: 'instanceName é obrigatório' });
+    }
     if (action === 'create-instance') {
+      if (!instanceName || !professionalId) {
+        return res.status(400).json({ error: 'instanceName e professionalId são obrigatórios' });
+      }
       const data = await wa.createInstance(instanceName, professionalId);
       res.json(data);
     } else if (action === 'get-qrcode') {
@@ -49,7 +55,8 @@ router.post('/whatsapp/instance', authMiddleware, async (req: Request, res: Resp
       res.status(400).json({ error: `Unknown action: ${action}` });
     }
   } catch (e: any) {
-    res.status(500).json({ error: e.message });
+    console.error('[WhatsApp Instance Error]', action, e.message, e.stack);
+    res.status(500).json({ error: e.message || 'Erro interno ao processar instância WhatsApp' });
   }
 });
 

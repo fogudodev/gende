@@ -173,8 +173,8 @@ const Automations = () => {
       ) : (
         <div className="space-y-6">
           {(() => {
-            const bookingAutos = automations.filter(a => !a.trigger_type.startsWith("course_"));
-            const courseAutos = automations.filter(a => a.trigger_type.startsWith("course_"));
+            const bookingAutos = automations.filter(a => a.trigger_type && !a.trigger_type.startsWith("course_"));
+            const courseAutos = automations.filter(a => a.trigger_type && a.trigger_type.startsWith("course_"));
 
             const renderAutoCard = (auto: typeof automations[0], i: number, isCourse: boolean) => {
               const isEditing = editingAutoId === auto.id;
