@@ -527,4 +527,54 @@ router.post('/waitlist-process', authMiddleware, async (req: Request, res: Respo
   res.json({ success: true });
 });
 
+// =============================================
+// SEND COURSE REMINDERS (authenticated - event-driven triggers from frontend)
+// =============================================
+router.post('/send-course-reminders', authMiddleware, async (req: Request, res: Response) => {
+  const { action, professionalId, triggerType, enrollmentId, classId, extraVars, recipients } = req.body;
+
+  if (action !== 'trigger') return res.status(400).json({ error: 'Unknown action' });
+
+  try {
+    const wa = new WhatsAppService();
+    const inst = await db.queryOne<any>("SELECT instance_name, status FROM whatsapp_instances WHERE professional_id = ? AND status = 'connected' LIMIT 1", [professionalId]);
+    if (!inst) return res.json({ success: false, reason: 'no_whatsapp' });
+
+    // Get automation template for this trigger type
+    const automation = await db.queryOne<any>(
+      "SELECT * FROM whatsapp_automations WHERE professional_id = ? AND trigger_type = ? AND is_active = 1",
+      [professionalId, triggerType]
+    );
+    if (!automation) return res.json({ success: false, reason: 'no_automation' });
+
+    let sent = 0;
+    const targets = recipients || [];
+
+    // If no explicit recipients, get from enrollment
+    if (!targets.length && enrollmentId) {
+      const enrollment = await db.queryOne<any>('SELECT student_name, student_phone FROM course_enrollments WHERE id = ?', [enrollmentId]);
+      if (enrollment?.student_phone) {
+        targets.push({ name: enrollment.student_name, phone: enrollment.student_phone });
+      }
+    }
+
+    for (const target of targets) {
+      const vars = { nome: target.name || 'Aluno', ...(extraVars || {}) };
+      const finalMessage = WhatsAppService.replaceVars(automation.message_template, vars);
+
+      const sendRes = await wa.sendMessage(inst.instance_name, target.phone, finalMessage);
+      if (sendRes.ok) sent++;
+
+      await db.execute(
+        'INSERT INTO whatsapp_logs (id, professional_id, automation_id, booking_id, recipient_phone, message_content, status, sent_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [db.uuid(), professionalId, automation.id, enrollmentId || null, target.phone, finalMessage, sendRes.ok ? 'sent' : 'failed', sendRes.ok ? new Date().toISOString() : null]
+      );
+    }
+
+    res.json({ success: true, sent });
+  } catch (err: any) {
+    res.json({ success: false, error: err.message });
+  }
+});
+
 export default router;
