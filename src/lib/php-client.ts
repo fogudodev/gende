@@ -371,6 +371,7 @@ class PhpUpdateBuilder<T = any> {
 class PhpDeleteBuilder {
   private endpoint: string;
   private _id: string | null = null;
+  private _filters: Array<{ column: string; value: string }> = [];
 
   constructor(endpoint: string) {
     this.endpoint = endpoint;
@@ -378,20 +379,32 @@ class PhpDeleteBuilder {
 
   eq(column: string, value: string) {
     if (column === "id") this._id = value;
+    this._filters.push({ column, value });
     return this;
   }
 
   async then(resolve: (result: { data: null; error: Error | null }) => void) {
-    if (!this._id) {
-      resolve({ data: null, error: new Error("ID required for delete") });
+    // If we have an ID, use single-item delete
+    if (this._id) {
+      const { error } = await apiFetch(`/${this.endpoint}/${this._id}`, {
+        method: "DELETE",
+      });
+      resolve({ data: null, error });
       return;
     }
 
-    const { error } = await apiFetch(`/${this.endpoint}/${this._id}`, {
-      method: "DELETE",
-    });
+    // Bulk delete by filter
+    if (this._filters.length > 0) {
+      const params = new URLSearchParams();
+      this._filters.forEach(f => params.set(`eq[${f.column}]`, f.value));
+      const { error } = await apiFetch(`/${this.endpoint}?${params.toString()}`, {
+        method: "DELETE",
+      });
+      resolve({ data: null, error });
+      return;
+    }
 
-    resolve({ data: null, error });
+    resolve({ data: null, error: new Error("ID or filter required for delete") });
   }
 }
 
