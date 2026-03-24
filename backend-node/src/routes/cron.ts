@@ -193,7 +193,7 @@ router.post('/cron/course-reminders', cronAuth, async (_req: Request, res: Respo
 
     // Get active course automations
     const automations = await db.query<any>(
-      "SELECT * FROM whatsapp_automations WHERE professional_id = ? AND is_active = 1 AND trigger_type IN ('course_reminder_7d','course_reminder_1d','course_reminder_day','course_send_location','course_send_link','course_followup','course_feedback_request')",
+      "SELECT * FROM whatsapp_automations WHERE professional_id = ? AND is_enabled = 1 AND automation_type IN ('course_reminder_7d','course_reminder_1d','course_reminder_day','course_send_location','course_send_link','course_followup','course_feedback_request')",
       [profId]
     );
     const autoMap: Record<string, any> = {};
