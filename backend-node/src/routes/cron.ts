@@ -71,7 +71,7 @@ router.post('/cron/send-reminders', cronAuth, async (_req: Request, res: Respons
       const bookingLink = prof.slug ? `https://gende.io/${prof.slug}` : '';
       const reviewLink = prof.slug ? `https://gende.io/${prof.slug}?review=true&booking=${booking.id}` : '';
 
-      let messageTemplate = automation.message_template;
+      let messageTemplate = automation.custom_message || '';
       if (['reminder_24h', 'reminder_3h'].includes(booking.triggerType) && prof.reminder_message) {
         messageTemplate = prof.reminder_message;
       } else if (booking.triggerType === 'post_sale_review' && !messageTemplate?.trim()) {
