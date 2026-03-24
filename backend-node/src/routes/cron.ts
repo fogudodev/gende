@@ -542,7 +542,7 @@ router.post('/send-course-reminders', authMiddleware, async (req: Request, res: 
 
     // Get automation template for this trigger type
     const automation = await db.queryOne<any>(
-      "SELECT * FROM whatsapp_automations WHERE professional_id = ? AND trigger_type = ? AND is_active = 1",
+      "SELECT * FROM whatsapp_automations WHERE professional_id = ? AND automation_type = ? AND is_enabled = 1",
       [professionalId, triggerType]
     );
     if (!automation) return res.json({ success: false, reason: 'no_automation' });
