@@ -7,6 +7,23 @@ import { config } from '../config.js';
 
 const router = Router();
 
+const DB_TIMEOUT_MS = 12000;
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs = DB_TIMEOUT_MS): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error('DB_TIMEOUT')), timeoutMs)),
+  ]);
+}
+
+function adminErrorResponse(res: Response, err: any, fallback: string) {
+  const message = String(err?.message || fallback);
+  const isDbUnavailable = /DB_TIMEOUT|ER_ACCESS_DENIED_ERROR|ECONNREFUSED|ETIMEDOUT|ENOTFOUND|PROTOCOL_CONNECTION_LOST|ECONNRESET/i.test(message);
+  return res.status(isDbUnavailable ? 503 : 500).json({
+    error: isDbUnavailable ? 'Serviço temporariamente indisponível. Tente novamente em instantes.' : fallback,
+  });
+}
+
 // ============================================
 // RPC endpoints (called by frontend hooks)
 // ============================================
@@ -203,102 +220,110 @@ router.post('/admin/create-professional', authMiddleware, adminMiddleware, creat
 router.post('/admin-create-professional', authMiddleware, adminMiddleware, createProfessionalHandler);
 
 const deleteUserHandler = async (req: Request, res: Response) => {
-  const { professionalId } = req.body;
-  if (!professionalId) return res.status(400).json({ error: 'professionalId é obrigatório' });
+  try {
+    const { professionalId } = req.body;
+    if (!professionalId) return res.status(400).json({ error: 'professionalId é obrigatório' });
 
-  const prof = await db.queryOne<any>('SELECT user_id, is_blocked, name FROM professionals WHERE id = ?', [professionalId]);
-  if (!prof) return res.status(404).json({ error: 'Professional not found' });
-  if (!prof.is_blocked) return res.status(400).json({ error: 'Only blocked users can be deleted' });
+    const prof = await withTimeout(db.queryOne<any>('SELECT user_id, is_blocked, name FROM professionals WHERE id = ?', [professionalId]));
+    if (!prof) return res.status(404).json({ error: 'Professional not found' });
+    if (!prof.is_blocked) return res.status(400).json({ error: 'Only blocked users can be deleted' });
 
-  // Complete list of tables with professional_id FK, ordered to respect foreign keys
-  const tables = [
-    // Course-related (attendance refs enrollments, enrollments refs classes, classes refs courses)
-    'course_attendance',
-    'course_certificates',
-    'course_enrollments',
-    'course_materials',
-    'course_waitlist',
-    'course_classes',
-    'courses',
-    'course_categories',
-    // Loyalty & cashback (progress refs challenges, transactions refs clients)
-    'challenge_progress',
-    'loyalty_challenges',
-    'client_loyalty',
-    'loyalty_levels',
-    'loyalty_config',
-    'cashback_transactions',
-    'client_cashback',
-    'cashback_rules',
-    'client_referrals',
-    // Packages
-    'client_packages',
-    'service_packages',
-    // Cash register (transactions refs registers)
-    'cash_transactions',
-    'cash_registers',
-    // Instagram
-    'instagram_messages',
-    'instagram_keywords',
-    'instagram_accounts',
-    // WhatsApp (logs before instances)
-    'whatsapp_logs',
-    'whatsapp_conversations',
-    'whatsapp_automations',
-    'whatsapp_instances',
-    // Campaigns (contacts before campaigns)
-    'campaign_contacts',
-    'campaigns',
-    // Upsell
-    'upsell_events',
-    'upsell_rules',
-    // Waitlist
-    'waitlist_offers',
-    'waitlist_entries',
-    'waitlist_settings',
-    // Employee-related (services/hours before employees)
-    'employee_services',
-    'employee_working_hours',
-    'commissions',
-    // Platform reviews
-    'platform_reviews',
-    // Core tables
-    'bookings',
-    'blocked_times',
-    'working_hours',
-    'reviews',
-    'expenses',
-    'products',
-    'coupons',
-    'clients',
-    'services',
-    'payments',
-    'payment_config',
-    'daily_message_usage',
-    'google_calendar_tokens',
-    'chat_messages',
-    'professional_limits',
-    'addon_purchases',
-    'professional_feature_overrides',
-    'salon_employees',
-    'subscriptions',
-  ];
+    // Complete list of tables with professional_id FK, ordered to respect foreign keys
+    const tables = [
+      // Course-related (attendance refs enrollments, enrollments refs classes, classes refs courses)
+      'course_attendance',
+      'course_certificates',
+      'course_enrollments',
+      'course_materials',
+      'course_waitlist',
+      'course_classes',
+      'courses',
+      'course_categories',
+      // Loyalty & cashback (progress refs challenges, transactions refs clients)
+      'challenge_progress',
+      'loyalty_challenges',
+      'client_loyalty',
+      'loyalty_levels',
+      'loyalty_config',
+      'cashback_transactions',
+      'client_cashback',
+      'cashback_rules',
+      'client_referrals',
+      // Packages
+      'client_packages',
+      'service_packages',
+      // Cash register (transactions refs registers)
+      'cash_transactions',
+      'cash_registers',
+      // Instagram
+      'instagram_messages',
+      'instagram_keywords',
+      'instagram_accounts',
+      // WhatsApp (logs before instances)
+      'whatsapp_logs',
+      'whatsapp_conversations',
+      'whatsapp_automations',
+      'whatsapp_instances',
+      // Campaigns (contacts before campaigns)
+      'campaign_contacts',
+      'campaigns',
+      // Upsell
+      'upsell_events',
+      'upsell_rules',
+      // Waitlist
+      'waitlist_offers',
+      'waitlist_entries',
+      'waitlist_settings',
+      // Employee-related (services/hours before employees)
+      'employee_services',
+      'employee_working_hours',
+      'commissions',
+      // Platform reviews
+      'platform_reviews',
+      // Core tables
+      'bookings',
+      'blocked_times',
+      'working_hours',
+      'reviews',
+      'expenses',
+      'products',
+      'coupons',
+      'clients',
+      'services',
+      'payments',
+      'payment_config',
+      'daily_message_usage',
+      'google_calendar_tokens',
+      'chat_messages',
+      'professional_limits',
+      'addon_purchases',
+      'professional_feature_overrides',
+      'salon_employees',
+      'subscriptions',
+    ];
 
-  for (const table of tables) {
-    try {
-      await db.execute(`DELETE FROM \`${table}\` WHERE professional_id = ?`, [professionalId]);
-    } catch (err: any) {
-      // Table might not exist yet, skip silently
-      if (!err.message?.includes("doesn't exist")) {
-        console.warn(`[delete-user] Error deleting from ${table}:`, err.message);
+    for (const table of tables) {
+      try {
+        await withTimeout(db.execute(`DELETE FROM \`${table}\` WHERE professional_id = ?`, [professionalId]));
+      } catch (err: any) {
+        // Table might not exist yet, skip silently
+        if (!err.message?.includes("doesn't exist")) {
+          console.warn(`[delete-user] Error deleting from ${table}:`, err.message);
+        }
       }
     }
-  }
-  await db.execute('DELETE FROM user_roles WHERE user_id = ?', [prof.user_id]);
-  await db.execute('DELETE FROM professionals WHERE id = ?', [professionalId]);
-  await db.execute('DELETE FROM users WHERE id = ?', [prof.user_id]);
 
-  res.json({ success: true, deletedUser: prof.name });
+    // Remove auth/session artifacts tied to this user before deleting the account row
+    await withTimeout(db.execute('DELETE FROM refresh_tokens WHERE user_id = ?', [prof.user_id]));
+    await withTimeout(db.execute('DELETE FROM user_roles WHERE user_id = ?', [prof.user_id]));
+    await withTimeout(db.execute('DELETE FROM professionals WHERE id = ?', [professionalId]));
+    await withTimeout(db.execute('DELETE FROM users WHERE id = ?', [prof.user_id]));
+
+    return res.json({ success: true, deletedUser: prof.name });
+  } catch (e: any) {
+    console.error('[admin/delete-user] Fatal error:', e?.message || e);
+    return adminErrorResponse(res, e, 'Erro ao excluir usuário permanentemente');
+  }
 };
 
 router.post('/admin/delete-user', authMiddleware, adminMiddleware, deleteUserHandler);

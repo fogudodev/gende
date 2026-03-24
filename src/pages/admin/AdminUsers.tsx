@@ -69,9 +69,15 @@ const AdminUsers = () => {
     if (!confirm(`⚠️ ATENÇÃO: Isso excluirá permanentemente "${name}" e TODOS os dados associados (agendamentos, clientes, serviços, etc). Esta ação NÃO pode ser desfeita. Continuar?`)) return;
     setDeleting(profId);
     try {
-      const res = await api.functions.invoke("admin-delete-user", {
+      const deletePromise = api.functions.invoke("admin-delete-user", {
         body: { professionalId: profId },
       });
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        window.setTimeout(() => reject(new Error("A exclusão demorou demais. Tente novamente.")), 20000);
+      });
+
+      const res = await Promise.race([deletePromise, timeoutPromise]);
+
       if (res.error) throw new Error(res.error.message);
       if (res.data?.error) throw new Error(res.data.error);
       toast.success(`Usuário "${name}" excluído permanentemente`);
