@@ -100,13 +100,13 @@ export const useCreateSalonEmployee = () => {
 
       let { data, error } = await api
         .from("salon_employees")
-        .insert({ ...preferredPayload, salon_id: professional!.id });
+        .insert({ ...preferredPayload, salon_id: professional!.id } as any);
 
       if (error && !compatibilityMode && isLikelySchemaMismatch(error.message)) {
         const fallbackPayload = buildEmployeeInsertPayload(employee, true);
         const retry = await api
           .from("salon_employees")
-          .insert({ ...fallbackPayload, salon_id: professional!.id });
+          .insert({ ...fallbackPayload, salon_id: professional!.id } as any);
         data = retry.data;
         error = retry.error;
       }
