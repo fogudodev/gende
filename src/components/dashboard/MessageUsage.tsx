@@ -20,7 +20,9 @@ const MessageUsage = () => {
 
   if (!data) return null;
 
-  const { limits, usage, planId } = data;
+  const limits = data.limits || { daily_reminders: 0, daily_campaigns: 0, campaign_max_contacts: 0, campaign_min_interval_hours: 6 };
+  const usage = data.usage || { reminders_sent: 0, campaigns_sent: 0 };
+  const planId = data.planId || "free";
   const planLabels: Record<string, string> = { free: "Free", starter: "Starter", pro: "Pro" };
 
   const items = [
