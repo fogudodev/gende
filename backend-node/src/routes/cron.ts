@@ -560,7 +560,7 @@ router.post('/send-course-reminders', authMiddleware, async (req: Request, res: 
 
     for (const target of targets) {
       const vars = { nome: target.name || 'Aluno', ...(extraVars || {}) };
-      const finalMessage = WhatsAppService.replaceVars(automation.message_template, vars);
+      const finalMessage = WhatsAppService.replaceVars(automation.custom_message || '', vars);
 
       const sendRes = await wa.sendMessage(inst.instance_name, target.phone, finalMessage);
       if (sendRes.ok) sent++;
