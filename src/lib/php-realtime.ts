@@ -15,6 +15,7 @@ import { getAccessToken } from "./php-client";
 const WS_URL = import.meta.env.VITE_WS_URL || "wss://api.gende.io/ws";
 const RECONNECT_DELAY = 3000;
 const PING_INTERVAL = 30000;
+const MAX_RECONNECT_ATTEMPTS = 3;
 
 type EventType = "INSERT" | "UPDATE" | "DELETE" | "*";
 
@@ -43,9 +44,17 @@ class WebSocketManager {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private pingTimer: ReturnType<typeof setInterval> | null = null;
   private pendingSubscribes: string[] = [];
+  private reconnectAttempts = 0;
+  private stopped = false;
 
   connect(): void {
     if (this.ws?.readyState === WebSocket.OPEN) return;
+    if (this.stopped) return;
+    if (this.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+      console.warn("⚠️ WebSocket: max reconnect attempts reached, giving up");
+      this.stopped = true;
+      return;
+    }
 
     try {
       this.ws = new WebSocket(WS_URL);
@@ -53,6 +62,7 @@ class WebSocketManager {
       this.ws.onopen = () => {
         console.log("🔌 WebSocket connected");
         this.connected = true;
+        this.reconnectAttempts = 0;
         this.authenticate();
         this.startPing();
       };
@@ -63,18 +73,16 @@ class WebSocketManager {
       };
 
       this.ws.onclose = () => {
-        console.log("🔌 WebSocket disconnected");
         this.connected = false;
         this.authenticated = false;
         this.stopPing();
         this.scheduleReconnect();
       };
 
-      this.ws.onerror = (err) => {
-        console.error("❌ WebSocket error:", err);
+      this.ws.onerror = () => {
+        // silenced - onclose will handle reconnect
       };
-    } catch (err) {
-      console.error("❌ WebSocket connection failed:", err);
+    } catch {
       this.scheduleReconnect();
     }
   }
@@ -165,14 +173,14 @@ class WebSocketManager {
   }
 
   private scheduleReconnect(): void {
-    if (this.reconnectTimer) return;
+    if (this.reconnectTimer || this.stopped) return;
+    this.reconnectAttempts++;
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
       if (this.subscriptions.size > 0) {
-        console.log("🔄 Reconnecting WebSocket...");
         this.connect();
       }
-    }, RECONNECT_DELAY);
+    }, RECONNECT_DELAY * this.reconnectAttempts);
   }
 
   private startPing(): void {
