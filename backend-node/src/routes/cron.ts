@@ -56,7 +56,7 @@ router.post('/cron/send-reminders', cronAuth, async (_req: Request, res: Respons
     const inst = await db.queryOne<any>("SELECT instance_name, status FROM whatsapp_instances WHERE professional_id = ? LIMIT 1", [profId]);
     if (!inst || inst.status !== 'connected') continue;
 
-    const automations = await db.query<any>("SELECT * FROM whatsapp_automations WHERE professional_id = ? AND trigger_type IN ('reminder_24h','reminder_3h','post_sale_review') AND is_active = 1", [profId]);
+    const automations = await db.query<any>("SELECT * FROM whatsapp_automations WHERE professional_id = ? AND automation_type IN ('reminder_24h','reminder_3h','post_sale_review') AND is_enabled = 1", [profId]);
     const autoMap: Record<string, any> = {};
     for (const a of automations) autoMap[a.trigger_type] = a;
 
