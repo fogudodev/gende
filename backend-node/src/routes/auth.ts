@@ -76,6 +76,62 @@ router.post('/auth/signup', async (req: Request, res: Response) => {
     const token = generateToken(userId, email, roles);
     const refresh = await withTimeout(generateRefreshToken(userId));
 
+    // Auto-create WhatsApp instance and default automations (fire-and-forget)
+    (async () => {
+      try {
+        // Create default automations
+        const triggers = ['booking_created', 'reminder_24h', 'reminder_3h', 'post_service', 'post_sale_review', 'maintenance_reminder', 'reactivation_30d'];
+        const [columnRows] = await db.getConnection().then(async (c) => {
+          const result = await c.execute<any[]>(
+            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'whatsapp_automations'"
+          );
+          c.release();
+          return result;
+        });
+        const columnNames = new Set((columnRows as Array<{ COLUMN_NAME: string }>).map((row) => row.COLUMN_NAME));
+        const triggerColumn = columnNames.has('automation_type') ? 'automation_type' : columnNames.has('trigger_type') ? 'trigger_type' : null;
+        const messageColumn = columnNames.has('custom_message') ? 'custom_message' : columnNames.has('message_template') ? 'message_template' : null;
+        const enabledColumn = columnNames.has('is_enabled') ? 'is_enabled' : columnNames.has('is_active') ? 'is_active' : null;
+
+        if (triggerColumn && enabledColumn) {
+          for (const trigger of triggers) {
+            const shouldEnable = ['booking_created', 'reminder_24h'].includes(trigger) ? 1 : 0;
+            if (messageColumn) {
+              await db.execute(
+                `INSERT INTO whatsapp_automations (id, professional_id, ${triggerColumn}, ${messageColumn}, ${enabledColumn}) VALUES (?, ?, ?, '', ?) ON DUPLICATE KEY UPDATE ${triggerColumn} = VALUES(${triggerColumn})`,
+                [db.uuid(), profId, trigger, shouldEnable]
+              );
+            } else {
+              await db.execute(
+                `INSERT INTO whatsapp_automations (id, professional_id, ${triggerColumn}, ${enabledColumn}) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE ${triggerColumn} = VALUES(${triggerColumn})`,
+                [db.uuid(), profId, trigger, shouldEnable]
+              );
+            }
+          }
+        }
+
+        // Auto-create Evolution API instance
+        if (config.evolution.url && config.evolution.key) {
+          const wa = new WhatsAppService();
+          const instanceName = `gende_${profId.slice(0, 8)}`;
+          await wa.createInstance(instanceName, profId);
+          console.log(`[Signup] Auto-created WhatsApp instance: ${instanceName} for professional ${profId}`);
+        }
+
+        // Notify admin about new signup
+        if (config.evolution.url && config.evolution.key) {
+          const wa = new WhatsAppService();
+          const adminInst = await db.queryOne<any>("SELECT instance_name FROM whatsapp_instances WHERE status = 'connected' LIMIT 1");
+          if (adminInst) {
+            const msg = `🆕 *Novo cadastro no Gende!*\n\n👤 *Nome:* ${name}\n🏪 *Studio/Salão:* ${business_name}\n📧 *Email:* ${email}\n📱 *WhatsApp:* ${phone}\n\n📅 *Data:* ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}\n\n_Entre em contato para ajudar na configuração!_`;
+            await wa.sendMessage(adminInst.instance_name, config.adminPhone, msg);
+          }
+        }
+      } catch (autoErr: any) {
+        console.warn('[Signup] Auto-setup error (non-blocking):', autoErr.message);
+      }
+    })();
+
     return res.status(201).json({
       access_token: token,
       refresh_token: refresh,
