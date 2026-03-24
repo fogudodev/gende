@@ -4,6 +4,7 @@ import { authMiddleware, getProfessionalId, hasRole, JwtPayload } from './auth.j
 
 export function createCrudRoutes(routePath: string, tableName: string, profColumn = 'professional_id'): Router {
   const router = Router();
+  const hasScope = !!profColumn; // If profColumn is empty string, skip scoping
 
   // Helper: check if user is admin and resolve profId accordingly
   async function resolveAccess(user: JwtPayload): Promise<{ isAdmin: boolean; profId: string | null }> {
@@ -17,13 +18,13 @@ export function createCrudRoutes(routePath: string, tableName: string, profColum
     try {
       const user = (req as any).user as JwtPayload;
       const { isAdmin, profId } = await resolveAccess(user);
-      if (!isAdmin && !profId) return res.status(404).json({ error: 'Professional not found' });
+      if (hasScope && !isAdmin && !profId) return res.status(404).json({ error: 'Professional not found' });
 
       let where = '1=1';
       const params: any[] = [];
 
-      // Non-admin: scope to professional
-      if (!isAdmin) {
+      // Non-admin: scope to professional (only if table has profColumn)
+      if (hasScope && !isAdmin) {
         where = `\`${profColumn}\` = ?`;
         params.push(profId);
       }
