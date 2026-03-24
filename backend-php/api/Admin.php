@@ -118,10 +118,32 @@ class Admin
         if (!$prof['is_blocked']) { Response::error('Only blocked users can be deleted'); return; }
 
         $userId = $prof['user_id'];
-        $tables = ['whatsapp_logs', 'whatsapp_automations', 'whatsapp_instances', 'campaign_contacts', 'campaigns', 'commissions', 'bookings', 'blocked_times', 'working_hours', 'reviews', 'expenses', 'products', 'coupons', 'clients', 'services', 'payments', 'payment_config', 'daily_message_usage', 'google_calendar_tokens', 'chat_messages', 'professional_limits', 'salon_employees', 'subscriptions'];
+        $tables = [
+            'course_attendance', 'course_certificates', 'course_enrollments', 'course_materials',
+            'course_waitlist', 'course_classes', 'courses', 'course_categories',
+            'challenge_progress', 'loyalty_challenges', 'client_loyalty', 'loyalty_levels', 'loyalty_config',
+            'cashback_transactions', 'client_cashback', 'cashback_rules', 'client_referrals',
+            'client_packages', 'service_packages',
+            'cash_transactions', 'cash_registers',
+            'instagram_messages', 'instagram_keywords', 'instagram_accounts',
+            'whatsapp_logs', 'whatsapp_conversations', 'whatsapp_automations', 'whatsapp_instances',
+            'campaign_contacts', 'campaigns',
+            'upsell_events', 'upsell_rules',
+            'waitlist_offers', 'waitlist_entries', 'waitlist_settings',
+            'employee_services', 'employee_working_hours', 'commissions',
+            'platform_reviews',
+            'bookings', 'blocked_times', 'working_hours', 'reviews', 'expenses', 'products', 'coupons',
+            'clients', 'services', 'payments', 'payment_config', 'daily_message_usage',
+            'google_calendar_tokens', 'chat_messages', 'professional_limits', 'addon_purchases',
+            'professional_feature_overrides', 'salon_employees', 'subscriptions',
+        ];
 
         foreach ($tables as $table) {
-            $this->db->prepare("DELETE FROM {$table} WHERE professional_id = ?")->execute([$profId]);
+            try {
+                $this->db->prepare("DELETE FROM `{$table}` WHERE professional_id = ?")->execute([$profId]);
+            } catch (\Throwable $e) {
+                error_log("[delete-user] Skipping {$table}: " . $e->getMessage());
+            }
         }
         $this->db->prepare('DELETE FROM user_roles WHERE user_id = ?')->execute([$userId]);
         $this->db->prepare('DELETE FROM professionals WHERE id = ?')->execute([$profId]);
