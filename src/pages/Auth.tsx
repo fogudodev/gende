@@ -92,7 +92,7 @@ const Auth = () => {
       return;
     }
     setLoading(true);
-    const { error } = await signUp(email, password, name, "salon", businessName || undefined, phone || undefined);
+    const { error } = await signUp(email, password, name, accountType, businessName || undefined, phone || undefined);
     if (error) {
       toast.error(error.message);
       setLoading(false);
