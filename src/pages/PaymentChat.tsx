@@ -119,8 +119,9 @@ const PaymentChat = () => {
         attachment_url: urlData.publicUrl,
       });
       toast.success("Comprovante enviado!");
-    } catch {
-      toast.error("Erro ao enviar arquivo");
+    } catch (err: any) {
+      console.error("Upload error:", err);
+      toast.error("Erro ao enviar arquivo: " + (err?.message || "tente novamente"));
     }
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
