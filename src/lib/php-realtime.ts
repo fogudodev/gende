@@ -173,14 +173,14 @@ class WebSocketManager {
   }
 
   private scheduleReconnect(): void {
-    if (this.reconnectTimer) return;
+    if (this.reconnectTimer || this.stopped) return;
+    this.reconnectAttempts++;
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
       if (this.subscriptions.size > 0) {
-        console.log("🔄 Reconnecting WebSocket...");
         this.connect();
       }
-    }, RECONNECT_DELAY);
+    }, RECONNECT_DELAY * this.reconnectAttempts);
   }
 
   private startPing(): void {
