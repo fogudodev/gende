@@ -53,10 +53,32 @@ class Admin
                 $this->db->prepare('INSERT INTO user_roles (id, user_id, role) VALUES (?, ?, ?)')->execute([Database::uuid(), $userId, 'professional']);
                 $this->db->prepare("INSERT INTO subscriptions (id, professional_id, plan_id, status, current_period_start, current_period_end) VALUES (?, ?, 'enterprise', 'active', NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY))")->execute([Database::uuid(), $profId]);
 
-                // Create default automations (MySQL schema)
-                foreach (['booking_created', 'reminder_24h', 'reminder_3h', 'post_service', 'post_sale_review', 'maintenance_reminder', 'reactivation_30d'] as $trigger) {
-                    $this->db->prepare("INSERT INTO whatsapp_automations (id, professional_id, automation_type, custom_message, is_enabled) VALUES (?, ?, ?, '', ?) ON DUPLICATE KEY UPDATE automation_type = VALUES(automation_type)")
-                        ->execute([Database::uuid(), $profId, $trigger, in_array($trigger, ['booking_created', 'reminder_24h']) ? 1 : 0]);
+                // Create default automations with schema compatibility (legacy + current)
+                try {
+                    $colsStmt = $this->db->prepare("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'whatsapp_automations'");
+                    $colsStmt->execute();
+                    $columns = array_column($colsStmt->fetchAll(), 'COLUMN_NAME');
+                    $has = array_flip($columns);
+
+                    $triggerCol = isset($has['automation_type']) ? 'automation_type' : (isset($has['trigger_type']) ? 'trigger_type' : null);
+                    $messageCol = isset($has['custom_message']) ? 'custom_message' : (isset($has['message_template']) ? 'message_template' : null);
+                    $enabledCol = isset($has['is_enabled']) ? 'is_enabled' : (isset($has['is_active']) ? 'is_active' : null);
+
+                    if ($triggerCol && $enabledCol) {
+                        foreach (['booking_created', 'reminder_24h', 'reminder_3h', 'post_service', 'post_sale_review', 'maintenance_reminder', 'reactivation_30d'] as $trigger) {
+                            $isEnabled = in_array($trigger, ['booking_created', 'reminder_24h']) ? 1 : 0;
+
+                            if ($messageCol) {
+                                $sql = "INSERT INTO whatsapp_automations (id, professional_id, {$triggerCol}, {$messageCol}, {$enabledCol}) VALUES (?, ?, ?, '', ?) ON DUPLICATE KEY UPDATE {$triggerCol} = VALUES({$triggerCol})";
+                            } else {
+                                $sql = "INSERT INTO whatsapp_automations (id, professional_id, {$triggerCol}, {$enabledCol}) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE {$triggerCol} = VALUES({$triggerCol})";
+                            }
+
+                            $this->db->prepare($sql)->execute([Database::uuid(), $profId, $trigger, $isEnabled]);
+                        }
+                    }
+                } catch (\Throwable $autoErr) {
+                    error_log('[admin/create-professional] Skipping automations insert: ' . $autoErr->getMessage());
                 }
             }
 
