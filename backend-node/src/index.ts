@@ -106,6 +106,7 @@ const crudMap: Record<string, string> = {
   'cashback-rules': 'cashback_rules', 'cashback-transactions': 'cashback_transactions',
   'client-cashback': 'client_cashback', 'client-loyalty': 'client_loyalty',
   'client-referrals': 'client_referrals',
+  'challenge-progress': 'challenge_progress',
   'service-packages': 'service_packages', 'client-packages': 'client_packages',
   'waitlist-entries': 'waitlist_entries', 'waitlist-settings': 'waitlist_settings',
   'waitlist-offers': 'waitlist_offers',
@@ -119,6 +120,9 @@ const crudMap: Record<string, string> = {
   'google-calendar-tokens': 'google_calendar_tokens',
   'admin-auth-codes': 'admin_auth_codes',
   'user-roles': 'user_roles',
+  'professional-feature-overrides': 'professional_feature_overrides',
+  'plan-limits': 'plan_limits',
+  'waitlist': 'waitlist_entries',
 };
 
 for (const [route, table] of Object.entries(crudMap)) {
