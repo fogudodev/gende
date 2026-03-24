@@ -7,7 +7,15 @@
  */
 
 import { PHP_API_URL } from "./backend-config";
-import { phpRealtime as phpRealtimeRef } from "./php-realtime";
+// Lazy import to break circular dependency (php-realtime imports from php-client)
+let _phpRealtime: typeof import("./php-realtime")["phpRealtime"] | null = null;
+async function getPhpRealtime() {
+  if (!_phpRealtime) {
+    const mod = await import("./php-realtime");
+    _phpRealtime = mod.phpRealtime;
+  }
+  return _phpRealtime;
+}
 
 // ============================================
 // Token Management
