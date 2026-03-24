@@ -5,15 +5,39 @@ import { authMiddleware, getProfessionalId, JwtPayload } from './auth.js';
 export function createCrudRoutes(routePath: string, tableName: string, profColumn = 'professional_id'): Router {
   const router = Router();
 
-  // List
+  // List with optional eq[column]=value filters
   router.get(`/${routePath}`, authMiddleware, async (req: Request, res: Response) => {
     const user = (req as any).user as JwtPayload;
     const profId = await getProfessionalId(user.sub);
     if (!profId) return res.status(404).json({ error: 'Professional not found' });
 
+    let where = `\`${profColumn}\` = ?`;
+    const params: any[] = [profId];
+
+    // Parse eq[column]=value filters from query string
+    for (const [key, val] of Object.entries(req.query)) {
+      const eqMatch = key.match(/^eq\[(.+)\]$/);
+      if (eqMatch && val !== undefined) {
+        const col = eqMatch[1];
+        where += ` AND \`${col}\` = ?`;
+        params.push(val);
+      }
+    }
+
+    // Parse order param (column.asc or column.desc)
+    let orderClause = 'ORDER BY created_at DESC';
+    if (typeof req.query.order === 'string') {
+      const [col, dir] = req.query.order.split('.');
+      if (col) orderClause = `ORDER BY \`${col}\` ${dir === 'asc' ? 'ASC' : 'DESC'}`;
+    }
+
+    // Parse limit
+    let limitClause = '';
+    if (req.query.limit) limitClause = ` LIMIT ${parseInt(String(req.query.limit), 10)}`;
+
     const rows = await db.query(
-      `SELECT * FROM \`${tableName}\` WHERE \`${profColumn}\` = ? ORDER BY created_at DESC`,
-      [profId]
+      `SELECT * FROM \`${tableName}\` WHERE ${where} ${orderClause}${limitClause}`,
+      params
     );
     res.json(rows);
   });
