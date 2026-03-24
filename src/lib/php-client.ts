@@ -149,19 +149,38 @@ export const phpAuth = {
   },
 
   async getSession() {
-    if (!accessToken) return { data: null, error: null };
-    // Decode JWT payload to get user info
+    if (!accessToken) {
+      return { data: { session: null }, error: null };
+    }
+
+    const buildSessionFromToken = (token: string) => {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return {
+        access_token: token,
+        refresh_token: refreshToken,
+        token_type: "bearer",
+        expires_at: payload.exp,
+        expires_in: Math.max(0, payload.exp - Math.floor(Date.now() / 1000)),
+        user: {
+          id: payload.sub,
+          email: payload.email,
+          app_metadata: { roles: payload.roles || [] },
+          user_metadata: {},
+        },
+      };
+    };
+
     try {
       const payload = JSON.parse(atob(accessToken.split(".")[1]));
       if (payload.exp < Date.now() / 1000) {
         const refreshed = await tryRefreshToken();
-        if (!refreshed) return { data: null, error: null };
-        const newPayload = JSON.parse(atob(accessToken!.split(".")[1]));
-        return { data: { user: { id: newPayload.sub, email: newPayload.email } }, error: null };
+        if (!refreshed || !accessToken) return { data: { session: null }, error: null };
+        return { data: { session: buildSessionFromToken(accessToken) }, error: null };
       }
-      return { data: { user: { id: payload.sub, email: payload.email } }, error: null };
+      return { data: { session: buildSessionFromToken(accessToken) }, error: null };
     } catch {
-      return { data: null, error: null };
+      clearTokens();
+      return { data: { session: null }, error: null };
     }
   },
 };
@@ -523,7 +542,8 @@ export const phpClient = {
 
   _notifyAuthListeners(event: string) {
     phpAuth.getSession().then(({ data }) => {
-      phpClient._authListeners.forEach(cb => cb(event, data));
+      const session = data?.session ?? null;
+      phpClient._authListeners.forEach(cb => cb(event, session));
     });
   },
 
@@ -553,7 +573,7 @@ export const phpClient = {
 
     getUser: async () => {
       const session = await phpAuth.getSession();
-      return { data: session.data ? { user: session.data.user } : { user: null }, error: null };
+      return { data: { user: session.data?.session?.user ?? null }, error: null };
     },
 
     onAuthStateChange: (callback: (event: string, session: any) => void) => {
@@ -562,14 +582,16 @@ export const phpClient = {
 
       // Check on load
       phpAuth.getSession().then(({ data }) => {
-        callback(data ? "SIGNED_IN" : "SIGNED_OUT", data);
+        const session = data?.session ?? null;
+        callback(session ? "SIGNED_IN" : "SIGNED_OUT", session);
       });
 
       // Listen for storage changes (cross-tab sync)
       const handler = (e: StorageEvent) => {
         if (e.key === "php_access_token") {
           phpAuth.getSession().then(({ data }) => {
-            callback(data ? "SIGNED_IN" : "SIGNED_OUT", data);
+            const session = data?.session ?? null;
+            callback(session ? "SIGNED_IN" : "SIGNED_OUT", session);
           });
         }
       };
