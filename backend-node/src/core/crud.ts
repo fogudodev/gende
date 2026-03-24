@@ -223,7 +223,7 @@ export function createCrudRoutes(routePath: string, tableName: string, profColum
       const data = { ...req.body };
       delete data.id;
       delete data.created_at;
-      if (!isAdmin) delete data[profColumn];
+      if (hasScope && !isAdmin) delete data[profColumn];
 
       if (!Object.keys(data).length) return res.status(400).json({ error: 'No data to update' });
 
@@ -231,7 +231,7 @@ export function createCrudRoutes(routePath: string, tableName: string, profColum
       let query = `UPDATE \`${tableName}\` SET ${sets} WHERE id = ?`;
       const values = [...Object.values(data), req.params.id];
 
-      if (!isAdmin) {
+      if (hasScope && !isAdmin) {
         query += ` AND \`${profColumn}\` = ?`;
         values.push(profId);
       }
