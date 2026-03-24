@@ -635,6 +635,17 @@ export const phpClient = {
       return { data: { user: session.data?.session?.user ?? null }, error: null };
     },
 
+    updateUser: async ({ password }: { password?: string; data?: any }) => {
+      if (password) {
+        const { data, error } = await apiFetch('/auth/change-password', {
+          method: 'PUT',
+          body: JSON.stringify({ password }),
+        });
+        return { data, error };
+      }
+      return { data: null, error: new Error('No update data provided') };
+    },
+
     onAuthStateChange: (callback: (event: string, session: any) => void) => {
       // Register listener
       phpClient._authListeners.push(callback);

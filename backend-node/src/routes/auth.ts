@@ -211,4 +211,20 @@ router.post('/auth/logout', authMiddleware, async (req: Request, res: Response) 
   }
 });
 
+// Change password
+router.put('/auth/change-password', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user as JwtPayload;
+    const { password } = req.body;
+    if (!password || password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+    const hash = await bcrypt.hash(password, 10);
+    await withTimeout(db.execute('UPDATE users SET password_hash = ?, updated_at = NOW() WHERE id = ?', [hash, user.sub]));
+    return res.json({ success: true });
+  } catch (e: any) {
+    return authErrorResponse(res, e, 'Password change failed');
+  }
+});
+
 export default router;
