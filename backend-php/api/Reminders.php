@@ -72,25 +72,12 @@ class Reminders
             $inst = $stmt->fetch();
             if (!$inst || $inst['status'] !== 'connected') continue;
 
-            $stmt = $this->db->prepare("SELECT * FROM whatsapp_automations WHERE professional_id = ? AND trigger_type IN ('reminder_24h','reminder_3h','post_sale_review','maintenance_reminder') AND is_active = 1");
+            $stmt = $this->db->prepare("SELECT * FROM whatsapp_automations WHERE professional_id = ? AND automation_type IN ('reminder_24h','reminder_3h','post_sale_review','maintenance_reminder') AND is_enabled = 1");
             $stmt->execute([$profId]);
             $automations = [];
-            foreach ($stmt->fetchAll() as $a) { $automations[$a['trigger_type']] = $a; }
-
-            foreach ($bookings as $booking) {
-                $automation = $automations[$booking['triggerType']] ?? null;
-                if (!$automation) continue;
-
-                // Check if already sent
-                $stmt = $this->db->prepare('SELECT id FROM whatsapp_logs WHERE booking_id = ? AND automation_id = ? LIMIT 1');
-                $stmt->execute([$booking['id'], $automation['id']]);
-                if ($stmt->fetch()) continue;
-
-                $startDate = new \DateTime($booking['start_time']);
-                $bookingLink = $prof['slug'] ? "https://gende.io/{$prof['slug']}" : '';
-                $reviewLink = $prof['slug'] ? "https://gende.io/{$prof['slug']}?review=true&booking={$booking['id']}" : '';
-
-                $messageTemplate = $automation['message_template'];
+            foreach ($stmt->fetchAll() as $a) { $automations[$a['automation_type']] = $a; }
+...
+                $messageTemplate = $automation['custom_message'];
                 if (in_array($booking['triggerType'], ['reminder_24h', 'reminder_3h']) && $prof['reminder_message']) {
                     $messageTemplate = $prof['reminder_message'];
                 } elseif ($booking['triggerType'] === 'post_sale_review' && (!$messageTemplate || trim($messageTemplate) === '')) {

@@ -318,35 +318,12 @@ class WhatsApp
         if (!$inst || $inst['status'] !== 'connected') { Response::success(['success' => false, 'error' => 'WhatsApp não conectado']); return; }
 
         // Get automation
-        $stmt = $this->db->prepare('SELECT * FROM whatsapp_automations WHERE professional_id = ? AND trigger_type = ? AND is_active = 1 LIMIT 1');
+        $stmt = $this->db->prepare('SELECT * FROM whatsapp_automations WHERE professional_id = ? AND automation_type = ? AND is_enabled = 1 LIMIT 1');
         $stmt->execute([$professionalId, $triggerType]);
         $automation = $stmt->fetch();
         if (!$automation) { Response::success(['success' => false, 'error' => 'Automação não ativa']); return; }
-
-        // Get booking with service
-        $stmt = $this->db->prepare('SELECT b.*, s.name as service_name FROM bookings b LEFT JOIN services s ON s.id = b.service_id WHERE b.id = ?');
-        $stmt->execute([$bookingId]);
-        $booking = $stmt->fetch();
-        if (!$booking) { Response::success(['success' => false, 'error' => 'Agendamento não encontrado']); return; }
-
-        $phone = self::normalizePhone($booking['client_phone'] ?? '');
-        if (!$phone) { Response::success(['success' => false, 'error' => 'Cliente sem telefone']); return; }
-
-        $slug = $prof['slug'] ?? '';
-        $bookingLink = $slug ? "https://gende.io/{$slug}" : '';
-        $reviewLink = $slug ? "https://gende.io/{$slug}?review=true&booking={$bookingId}" . ($booking['employee_id'] ? "&employee={$booking['employee_id']}" : '') : '';
-
-        $startDate = new \DateTime($booking['start_time']);
-        $vars = [
-            'nome' => $booking['client_name'] ?? 'Cliente',
-            'servico' => $booking['service_name'] ?? 'serviço',
-            'data' => $startDate->format('d/m/Y'),
-            'horario' => $startDate->format('H:i'),
-            'link' => $bookingLink,
-            'link_avaliacao' => $reviewLink,
-        ];
-
-        $messageTemplate = $automation['message_template'];
+...
+        $messageTemplate = $automation['custom_message'];
 
         if ($triggerType === 'booking_created' && $prof['confirmation_message']) {
             $messageTemplate = $prof['confirmation_message'];

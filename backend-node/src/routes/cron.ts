@@ -56,9 +56,9 @@ router.post('/cron/send-reminders', cronAuth, async (_req: Request, res: Respons
     const inst = await db.queryOne<any>("SELECT instance_name, status FROM whatsapp_instances WHERE professional_id = ? LIMIT 1", [profId]);
     if (!inst || inst.status !== 'connected') continue;
 
-    const automations = await db.query<any>("SELECT * FROM whatsapp_automations WHERE professional_id = ? AND trigger_type IN ('reminder_24h','reminder_3h','post_sale_review') AND is_active = 1", [profId]);
+    const automations = await db.query<any>("SELECT * FROM whatsapp_automations WHERE professional_id = ? AND automation_type IN ('reminder_24h','reminder_3h','post_sale_review') AND is_enabled = 1", [profId]);
     const autoMap: Record<string, any> = {};
-    for (const a of automations) autoMap[a.trigger_type] = a;
+    for (const a of automations) autoMap[a.automation_type] = a;
 
     for (const booking of bookings) {
       const automation = autoMap[booking.triggerType];
@@ -71,7 +71,7 @@ router.post('/cron/send-reminders', cronAuth, async (_req: Request, res: Respons
       const bookingLink = prof.slug ? `https://gende.io/${prof.slug}` : '';
       const reviewLink = prof.slug ? `https://gende.io/${prof.slug}?review=true&booking=${booking.id}` : '';
 
-      let messageTemplate = automation.message_template;
+      let messageTemplate = automation.custom_message || '';
       if (['reminder_24h', 'reminder_3h'].includes(booking.triggerType) && prof.reminder_message) {
         messageTemplate = prof.reminder_message;
       } else if (booking.triggerType === 'post_sale_review' && !messageTemplate?.trim()) {
@@ -193,11 +193,11 @@ router.post('/cron/course-reminders', cronAuth, async (_req: Request, res: Respo
 
     // Get active course automations
     const automations = await db.query<any>(
-      "SELECT * FROM whatsapp_automations WHERE professional_id = ? AND is_active = 1 AND trigger_type IN ('course_reminder_7d','course_reminder_1d','course_reminder_day','course_send_location','course_send_link','course_followup','course_feedback_request')",
+      "SELECT * FROM whatsapp_automations WHERE professional_id = ? AND is_enabled = 1 AND automation_type IN ('course_reminder_7d','course_reminder_1d','course_reminder_day','course_send_location','course_send_link','course_followup','course_feedback_request')",
       [profId]
     );
     const autoMap: Record<string, any> = {};
-    for (const a of automations) autoMap[a.trigger_type] = a;
+    for (const a of automations) autoMap[a.automation_type] = a;
     if (!Object.keys(autoMap).length) continue;
 
     // Get confirmed enrollments with class info
@@ -231,7 +231,7 @@ router.post('/cron/course-reminders', cronAuth, async (_req: Request, res: Respo
         if (alreadySent) continue;
 
         const classDateObj = new Date(enrollment.class_date);
-        const finalMessage = WhatsAppService.replaceVars(automation.message_template, {
+        const finalMessage = WhatsAppService.replaceVars(automation.custom_message || '', {
           nome: enrollment.student_name || 'Aluno',
           curso: enrollment.course_name || '',
           turma: enrollment.class_name || '',
@@ -542,7 +542,7 @@ router.post('/send-course-reminders', authMiddleware, async (req: Request, res: 
 
     // Get automation template for this trigger type
     const automation = await db.queryOne<any>(
-      "SELECT * FROM whatsapp_automations WHERE professional_id = ? AND trigger_type = ? AND is_active = 1",
+      "SELECT * FROM whatsapp_automations WHERE professional_id = ? AND automation_type = ? AND is_enabled = 1",
       [professionalId, triggerType]
     );
     if (!automation) return res.json({ success: false, reason: 'no_automation' });
@@ -560,7 +560,7 @@ router.post('/send-course-reminders', authMiddleware, async (req: Request, res: 
 
     for (const target of targets) {
       const vars = { nome: target.name || 'Aluno', ...(extraVars || {}) };
-      const finalMessage = WhatsAppService.replaceVars(automation.message_template, vars);
+      const finalMessage = WhatsAppService.replaceVars(automation.custom_message || '', vars);
 
       const sendRes = await wa.sendMessage(inst.instance_name, target.phone, finalMessage);
       if (sendRes.ok) sent++;

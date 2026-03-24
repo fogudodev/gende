@@ -53,9 +53,9 @@ class Admin
                 $this->db->prepare('INSERT INTO user_roles (id, user_id, role) VALUES (?, ?, ?)')->execute([Database::uuid(), $userId, 'professional']);
                 $this->db->prepare("INSERT INTO subscriptions (id, professional_id, plan_id, status, current_period_start, current_period_end) VALUES (?, ?, 'enterprise', 'active', NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY))")->execute([Database::uuid(), $profId]);
 
-                // Create default automations
+                // Create default automations (MySQL schema)
                 foreach (['booking_created', 'reminder_24h', 'reminder_3h', 'post_service', 'post_sale_review', 'maintenance_reminder', 'reactivation_30d'] as $trigger) {
-                    $this->db->prepare("INSERT INTO whatsapp_automations (id, professional_id, trigger_type, message_template, is_active) VALUES (?, ?, ?, '', ?) ON DUPLICATE KEY UPDATE trigger_type = VALUES(trigger_type)")
+                    $this->db->prepare("INSERT INTO whatsapp_automations (id, professional_id, automation_type, custom_message, is_enabled) VALUES (?, ?, ?, '', ?) ON DUPLICATE KEY UPDATE automation_type = VALUES(automation_type)")
                         ->execute([Database::uuid(), $profId, $trigger, in_array($trigger, ['booking_created', 'reminder_24h']) ? 1 : 0]);
                 }
             }

@@ -151,7 +151,7 @@ export class WhatsAppService {
     const inst = await db.queryOne<any>("SELECT instance_name, status FROM whatsapp_instances WHERE professional_id = ? LIMIT 1", [professionalId]);
     if (!inst || inst.status !== 'connected') return { success: false, error: 'WhatsApp não conectado' };
 
-    const automation = await db.queryOne<any>('SELECT * FROM whatsapp_automations WHERE professional_id = ? AND trigger_type = ? AND is_active = 1 LIMIT 1', [professionalId, triggerType]);
+    const automation = await db.queryOne<any>('SELECT * FROM whatsapp_automations WHERE professional_id = ? AND automation_type = ? AND is_enabled = 1 LIMIT 1', [professionalId, triggerType]);
     if (!automation) return { success: false, error: 'Automação não ativa' };
 
     // =============================================
@@ -202,7 +202,7 @@ export class WhatsAppService {
           ...(extraVars || {}),
         };
 
-        const finalMessage = WhatsAppService.replaceVars(automation.message_template, vars);
+        const finalMessage = WhatsAppService.replaceVars(automation.custom_message || '', vars);
         const sendRes = await this.sendMessage(inst.instance_name, phone, finalMessage);
 
         await db.execute(
@@ -241,7 +241,7 @@ export class WhatsAppService {
       ...(extraVars || {}),
     };
 
-    let messageTemplate = automation.message_template;
+    let messageTemplate = automation.custom_message || '';
     if (triggerType === 'booking_created' && prof.confirmation_message) {
       messageTemplate = prof.confirmation_message;
       if (bookingLink) messageTemplate += `\n\n📅 Agende novamente: ${bookingLink}`;
