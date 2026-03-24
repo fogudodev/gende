@@ -67,7 +67,18 @@ const Auth = () => {
     if (error) {
       toast.error(error.message === "Invalid login credentials" ? "Email ou senha incorretos" : error.message);
     } else {
-      navigate("/");
+      // Check if user is admin/support and redirect accordingly
+      try {
+        const { data: { session } } = await api.auth.getSession();
+        const roles: string[] = (session?.user as any)?.app_metadata?.roles || [];
+        if (roles.includes("admin") || roles.includes("support")) {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
+      } catch {
+        navigate("/");
+      }
     }
     setLoading(false);
   };
