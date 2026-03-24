@@ -189,7 +189,7 @@ const crudMap: Record<string, string> = {
   'cash-transactions': 'cash_transactions', 'whatsapp-instances': 'whatsapp_instances',
   'whatsapp-automations': 'whatsapp_automations', 'whatsapp-logs': 'whatsapp_logs',
   conversations: 'whatsapp_conversations', 'message-usage': 'daily_message_usage',
-  'salon-employees': 'salon_employees', 'employee-services': 'employee_services',
+  'employee-services': 'employee_services',
   'employee-working-hours': 'employee_working_hours',
   subscriptions: 'subscriptions', courses: 'courses',
   'course-categories': 'course_categories', 'course-classes': 'course_classes',
