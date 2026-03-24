@@ -453,6 +453,30 @@ function getRoute(table: string): string {
 // ============================================
 // Supabase-compatible interface
 // ============================================
+class PhpUpsertBuilder<T = any> {
+  private endpoint: string;
+  private payload: any;
+  private onConflictColumns: string;
+
+  constructor(endpoint: string, payload: any, onConflict: string) {
+    this.endpoint = endpoint;
+    this.payload = payload;
+    this.onConflictColumns = onConflict;
+  }
+
+  select() { return this; }
+  single() { return this; }
+
+  async then(resolve: (result: { data: T | null; error: Error | null }) => void) {
+    const { data, error } = await apiFetch<{ id: string }>(`/${this.endpoint}`, {
+      method: "POST",
+      headers: { "X-On-Conflict": this.onConflictColumns } as any,
+      body: JSON.stringify(this.payload),
+    });
+    resolve({ data: data as unknown as T, error });
+  }
+}
+
 export const phpClient = {
   from<T = any>(table: string) {
     const route = getRoute(table);
@@ -463,6 +487,9 @@ export const phpClient = {
       },
       insert(payload: any) {
         return new PhpInsertBuilder<T>(route, payload);
+      },
+      upsert(payload: any, options?: { onConflict?: string }) {
+        return new PhpUpsertBuilder<T>(route, payload, options?.onConflict || "id");
       },
       update(updates: any) {
         return new PhpUpdateBuilder<T>(route, updates);

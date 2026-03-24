@@ -604,6 +604,42 @@ CREATE TABLE IF NOT EXISTS `feature_flags` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ============================================
+-- PROFESSIONAL FEATURE OVERRIDES
+-- ============================================
+CREATE TABLE IF NOT EXISTS `professional_feature_overrides` (
+  `id` CHAR(36) NOT NULL DEFAULT (UUID()),
+  `professional_id` CHAR(36) NOT NULL,
+  `feature_key` VARCHAR(255) NOT NULL,
+  `enabled` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_prof_feature` (`professional_id`, `feature_key`),
+  FOREIGN KEY (`professional_id`) REFERENCES `professionals`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ============================================
+-- PLAN LIMITS
+-- ============================================
+CREATE TABLE IF NOT EXISTS `plan_limits` (
+  `id` CHAR(36) NOT NULL DEFAULT (UUID()),
+  `plan_id` VARCHAR(50) NOT NULL UNIQUE,
+  `daily_reminders` INT NOT NULL DEFAULT 10,
+  `daily_campaigns` INT NOT NULL DEFAULT 1,
+  `campaign_max_contacts` INT NOT NULL DEFAULT 50,
+  `campaign_min_interval_hours` INT NOT NULL DEFAULT 6,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Seed plan_limits
+INSERT IGNORE INTO `plan_limits` (`id`, `plan_id`, `daily_reminders`, `daily_campaigns`, `campaign_max_contacts`, `campaign_min_interval_hours`)
+VALUES
+  (UUID(), 'essencial', 20, 1, 100, 6),
+  (UUID(), 'enterprise', -1, -1, -1, 1);
+
+-- ============================================
 -- ADMIN AUTH CODES
 -- ============================================
 CREATE TABLE IF NOT EXISTS `admin_auth_codes` (

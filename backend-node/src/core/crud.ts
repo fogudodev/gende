@@ -105,10 +105,24 @@ export function createCrudRoutes(routePath: string, tableName: string, profColum
       const columns = Object.keys(data).map(k => `\`${k}\``).join(', ');
       const placeholders = Object.keys(data).map(() => '?').join(', ');
 
-      await db.execute(
-        `INSERT INTO \`${tableName}\` (${columns}) VALUES (${placeholders})`,
-        Object.values(data)
-      );
+      // Check for upsert (onConflict header)
+      const onConflict = req.headers['x-on-conflict'] as string;
+      if (onConflict) {
+        const updateParts = Object.keys(data)
+          .filter(k => !onConflict.split(',').includes(k) && k !== 'id')
+          .map(k => `\`${k}\` = VALUES(\`${k}\`)`);
+        
+        await db.execute(
+          `INSERT INTO \`${tableName}\` (${columns}) VALUES (${placeholders}) ON DUPLICATE KEY UPDATE ${updateParts.join(', ')}`,
+          Object.values(data)
+        );
+      } else {
+        await db.execute(
+          `INSERT INTO \`${tableName}\` (${columns}) VALUES (${placeholders})`,
+          Object.values(data)
+        );
+      }
+
       res.status(201).json({ id: data.id });
     } catch (err: any) {
       console.error(`[CRUD POST /${routePath}]`, err.message);
