@@ -202,7 +202,7 @@ export class WhatsAppService {
           ...(extraVars || {}),
         };
 
-        const finalMessage = WhatsAppService.replaceVars(automation.message_template, vars);
+        const finalMessage = WhatsAppService.replaceVars(automation.custom_message || '', vars);
         const sendRes = await this.sendMessage(inst.instance_name, phone, finalMessage);
 
         await db.execute(
