@@ -7,6 +7,7 @@
  */
 
 import { PHP_API_URL } from "./backend-config";
+import { phpRealtime as phpRealtimeRef } from "./php-realtime";
 
 // ============================================
 // Token Management
