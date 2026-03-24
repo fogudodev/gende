@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { db } from '../core/database.js';
-import { authMiddleware, adminMiddleware, generateToken, generateRefreshToken, getProfessionalId, hasRole, JwtPayload } from '../core/auth.js';
+import { authMiddleware, adminMiddleware, generateToken, generateRefreshToken, hasRole, JwtPayload } from '../core/auth.js';
 import { WhatsAppService } from '../services/whatsapp.js';
 
 const router = Router();
@@ -24,7 +24,7 @@ router.post('/rpc/is_support', authMiddleware, async (req: Request, res: Respons
 router.post('/rpc/get_support_users', authMiddleware, async (req: Request, res: Response) => {
   const user = (req as any).user as JwtPayload;
   if (!user.roles?.includes('admin')) return res.status(403).json({ error: 'Forbidden' });
-  
+
   const rows = await db.query(
     `SELECT u.id as user_id, JSON_UNQUOTE(JSON_EXTRACT(u.raw_user_meta_data, '$.name')) as name, u.email, u.created_at 
      FROM user_roles ur JOIN users u ON u.id = ur.user_id WHERE ur.role = 'support'`
@@ -77,7 +77,7 @@ router.get('/admin/users', authMiddleware, adminMiddleware, async (_req: Request
   res.json(rows);
 });
 
-router.post('/admin/create-professional', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+const createProfessionalHandler = async (req: Request, res: Response) => {
   const { name, email, password, phone, accountType = 'autonomous', businessName = '', role = '' } = req.body;
   const isSupport = role === 'support';
 
@@ -140,9 +140,13 @@ router.post('/admin/create-professional', authMiddleware, adminMiddleware, async
   } finally {
     conn.release();
   }
-});
+};
 
-router.post('/admin/delete-user', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+// Canonical + legacy alias
+router.post('/admin/create-professional', authMiddleware, adminMiddleware, createProfessionalHandler);
+router.post('/admin-create-professional', authMiddleware, adminMiddleware, createProfessionalHandler);
+
+const deleteUserHandler = async (req: Request, res: Response) => {
   const { professionalId } = req.body;
   if (!professionalId) return res.status(400).json({ error: 'professionalId é obrigatório' });
 
@@ -159,9 +163,12 @@ router.post('/admin/delete-user', authMiddleware, adminMiddleware, async (req: R
   await db.execute('DELETE FROM users WHERE id = ?', [prof.user_id]);
 
   res.json({ success: true, deletedUser: prof.name });
-});
+};
 
-router.post('/admin/impersonate', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+router.post('/admin/delete-user', authMiddleware, adminMiddleware, deleteUserHandler);
+router.post('/admin-delete-user', authMiddleware, adminMiddleware, deleteUserHandler);
+
+const impersonateHandler = async (req: Request, res: Response) => {
   const { userId } = req.body;
   if (!userId) return res.status(400).json({ error: 'userId é obrigatório' });
 
@@ -173,9 +180,12 @@ router.post('/admin/impersonate', authMiddleware, adminMiddleware, async (req: R
   const refreshToken = await generateRefreshToken(userId);
 
   res.json({ success: true, access_token: token, refresh_token: refreshToken });
-});
+};
 
-router.post('/admin/create-reception-user', authMiddleware, async (req: Request, res: Response) => {
+router.post('/admin/impersonate', authMiddleware, adminMiddleware, impersonateHandler);
+router.post('/admin-impersonate', authMiddleware, adminMiddleware, impersonateHandler);
+
+const createReceptionUserHandler = async (req: Request, res: Response) => {
   const user = (req as any).user as JwtPayload;
   const { name, email, password, employeeId, salonId } = req.body;
   if (!name || !email || !password || !employeeId || !salonId) return res.status(400).json({ error: 'Missing required fields' });
@@ -192,6 +202,20 @@ router.post('/admin/create-reception-user', authMiddleware, async (req: Request,
   await db.execute("UPDATE salon_employees SET user_id = ?, has_login = 1, role = 'reception' WHERE id = ?", [userId, employeeId]);
 
   res.json({ success: true, userId });
-});
+};
+
+router.post('/admin/create-reception-user', authMiddleware, createReceptionUserHandler);
+router.post('/create-reception-user', authMiddleware, createReceptionUserHandler);
+
+const removeSupportRoleHandler = async (req: Request, res: Response) => {
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ error: 'userId é obrigatório' });
+
+  await db.execute('DELETE FROM user_roles WHERE user_id = ? AND role = ?', [userId, 'support']);
+  res.json({ success: true });
+};
+
+router.post('/admin/remove-support-role', authMiddleware, adminMiddleware, removeSupportRoleHandler);
+router.post('/admin-remove-support-role', authMiddleware, adminMiddleware, removeSupportRoleHandler);
 
 export default router;

@@ -526,6 +526,7 @@ export const phpClient = {
         "admin-create-professional": "/admin/create-professional",
         "admin-delete-user": "/admin/delete-user",
         "admin-impersonate": "/admin/impersonate",
+        "admin-remove-support-role": "/admin/remove-support-role",
         "create-reception-user": "/admin/create-reception-user",
         "google-calendar-auth": "/google-calendar/auth",
         "google-calendar-sync": "/google-calendar/sync",
