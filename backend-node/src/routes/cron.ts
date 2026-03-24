@@ -231,7 +231,7 @@ router.post('/cron/course-reminders', cronAuth, async (_req: Request, res: Respo
         if (alreadySent) continue;
 
         const classDateObj = new Date(enrollment.class_date);
-        const finalMessage = WhatsAppService.replaceVars(automation.message_template, {
+        const finalMessage = WhatsAppService.replaceVars(automation.custom_message || '', {
           nome: enrollment.student_name || 'Aluno',
           curso: enrollment.course_name || '',
           turma: enrollment.class_name || '',
