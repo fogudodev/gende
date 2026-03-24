@@ -117,6 +117,8 @@ const crudMap: Record<string, string> = {
   'addon-purchases': 'addon_purchases',
   'campaign-contacts': 'campaign_contacts',
   'google-calendar-tokens': 'google_calendar_tokens',
+  'admin-auth-codes': 'admin_auth_codes',
+  'user-roles': 'user_roles',
 };
 
 for (const [route, table] of Object.entries(crudMap)) {
