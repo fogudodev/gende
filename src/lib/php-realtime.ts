@@ -15,6 +15,7 @@ import { getAccessToken } from "./php-client";
 const WS_URL = import.meta.env.VITE_WS_URL || "wss://api.gende.io/ws";
 const RECONNECT_DELAY = 3000;
 const PING_INTERVAL = 30000;
+const MAX_RECONNECT_ATTEMPTS = 3;
 
 type EventType = "INSERT" | "UPDATE" | "DELETE" | "*";
 
