@@ -84,6 +84,55 @@ app.use('/stripe/webhook', express.raw({ type: 'application/json' }));
 // JSON parsing for everything else
 app.use(express.json({ limit: '10mb' }));
 
+// Legacy function-name route compatibility (old frontend builds)
+const legacyRouteMap: Record<string, string> = {
+  '/admin-create-professional': '/admin/create-professional',
+  '/admin-delete-user': '/admin/delete-user',
+  '/admin-impersonate': '/admin/impersonate',
+  '/create-reception-user': '/admin/create-reception-user',
+  '/google-calendar-auth': '/google-calendar/auth',
+  '/google-calendar-sync': '/google-calendar/sync',
+  '/google-calendar-callback': '/google-calendar/callback',
+  '/instagram-oauth': '/instagram/oauth',
+  '/instagram-webhook': '/instagram/webhook',
+  '/salon-ai-assistant': '/ai-assistant',
+  '/whatsapp-webhook': '/whatsapp/webhook',
+  '/send-campaign': '/send-campaign',
+  '/send-reminders': '/cron/send-reminders',
+  '/send-course-reminders': '/send-course-reminders',
+  '/conversation-timeout': '/cron/conversation-timeout',
+  '/waitlist-process': '/waitlist-process',
+  '/notify-signup': '/notify-signup',
+  '/check-subscription': '/check-subscription',
+  '/create-checkout': '/create-checkout',
+  '/customer-portal': '/customer-portal',
+  '/purchase-addon': '/purchase-addon',
+  '/upsell-suggest': '/upsell-suggest',
+};
+
+const resolveLegacyRoute = (path: string, body: any): string | null => {
+  if (path === '/whatsapp') {
+    const action = body?.action;
+    if (action === 'trigger-automation') return '/whatsapp/trigger-automation';
+    if (action === 'notify-commission' || action === 'notify-commission-paid') return '/whatsapp/notify-commission';
+    if (action === 'send') return '/whatsapp/send';
+    return '/whatsapp/instance';
+  }
+
+  return legacyRouteMap[path] || null;
+};
+
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  const [path, queryString = ''] = req.url.split('?');
+  const mappedPath = resolveLegacyRoute(path, (req as any).body);
+
+  if (mappedPath) {
+    req.url = queryString ? `${mappedPath}?${queryString}` : mappedPath;
+  }
+
+  next();
+});
+
 // Simple rate limiter for auth routes
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 function rateLimiter(maxRequests: number, windowMs: number) {
