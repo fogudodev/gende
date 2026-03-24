@@ -69,9 +69,7 @@ export const useUpdateSalonEmployee = () => {
       const { data, error } = await api
         .from("salon_employees")
         .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
+        .eq("id", id);
       if (error) throw error;
       return data;
     },
