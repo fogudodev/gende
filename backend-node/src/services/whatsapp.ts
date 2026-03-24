@@ -215,8 +215,8 @@ export class WhatsAppService {
         const sendRes = await this.sendMessage(inst.instance_name, phone, finalMessage);
 
         await db.execute(
-          'INSERT INTO whatsapp_logs (id, professional_id, automation_id, booking_id, recipient_phone, message_content, status, sent_at, error_message, provider) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [db.uuid(), professionalId, automation.id, enrollmentId || null, phone, finalMessage, sendRes.ok ? 'sent' : 'failed', sendRes.ok ? new Date().toISOString() : null, sendRes.ok ? null : JSON.stringify(sendRes.data), sendRes.provider]
+          'INSERT INTO whatsapp_logs (id, professional_id, phone, message_type, status, metadata) VALUES (?, ?, ?, ?, ?, ?)',
+          [db.uuid(), professionalId, phone, triggerType, sendRes.ok ? 'sent' : 'failed', JSON.stringify({ message: finalMessage, automation_id: automation.id, enrollment_id: enrollmentId, provider: sendRes.provider, error: sendRes.ok ? null : sendRes.data })]
         );
 
         results.push({ phone, success: sendRes.ok });
