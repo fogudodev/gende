@@ -44,14 +44,12 @@ export const useCreateSalonEmployee = () => {
   const { data: professional } = useProfessional();
 
   return useMutation({
-    mutationFn: async (employee: { name: string; email?: string; phone?: string; specialty?: string; commission_percentage?: number; is_active?: boolean; has_login?: boolean }) => {
+    mutationFn: async (employee: { name: string; email?: string; phone?: string; specialty?: string; commission_percentage?: number; is_active?: boolean; has_login?: boolean; role?: string }) => {
       const { data, error } = await api
         .from("salon_employees")
-        .insert({ ...employee, salon_id: professional!.id })
-        .select()
-        .single();
+        .insert({ ...employee, salon_id: professional!.id });
       if (error) throw error;
-      return data;
+      return data as any;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salon-employees"] });
