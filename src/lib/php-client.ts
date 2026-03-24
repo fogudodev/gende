@@ -315,7 +315,8 @@ class PhpInsertBuilder<T = any> {
   }
 
   async then(resolve: (result: { data: T | null; error: Error | null }) => void) {
-    const { data, error } = await apiFetch<{ id: string }>(`/${this.endpoint}`, {
+    // Send the payload as-is (supports both single objects and arrays)
+    const { data, error } = await apiFetch<{ id?: string; ids?: string[] }>(`/${this.endpoint}`, {
       method: "POST",
       body: JSON.stringify(this.payload),
     });
