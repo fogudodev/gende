@@ -1,6 +1,6 @@
 import { createServer } from 'http';
 import express, { Request, Response, NextFunction } from 'express';
-import cors from 'cors';
+import cors, { CorsOptions } from 'cors';
 import { config } from './config.js';
 import { createCrudRoutes } from './core/crud.js';
 
@@ -19,21 +19,64 @@ import { initWebSocket } from './core/websocket.js';
 
 const app = express();
 
-// CORS - restrict to known origins in production
-const allowedOrigins = config.nodeEnv === 'production'
-  ? [config.frontendUrl, 'https://gende.io', 'https://app.gende.io', 'https://www.gende.io']
-  : ['*'];
+const normalizeOrigin = (origin?: string): string => {
+  if (!origin) return '';
+  try {
+    return new URL(origin).origin.toLowerCase();
+  } catch {
+    return origin.replace(/\/+$/, '').toLowerCase();
+  }
+};
 
-app.use(cors({
-  origin: config.nodeEnv === 'production'
-    ? (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) callback(null, true);
-        else callback(new Error('Not allowed by CORS'));
-      }
-    : '*',
+// CORS - allow production domains and subdomains of gende.io
+const allowedOrigins = new Set(
+  [config.frontendUrl, 'https://gende.io', 'https://app.gende.io', 'https://www.gende.io']
+    .map(normalizeOrigin)
+    .filter(Boolean)
+);
+
+const isAllowedOrigin = (origin?: string) => {
+  if (config.nodeEnv !== 'production') return true;
+  if (!origin) return true;
+
+  const normalized = normalizeOrigin(origin);
+  if (allowedOrigins.has(normalized)) return true;
+
+  return /^https:\/\/([a-z0-9-]+\.)?gende\.io$/i.test(normalized);
+};
+
+const corsOptions: CorsOptions = {
+  origin: (origin, callback) => {
+    if (isAllowedOrigin(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    console.error('[CORS] Blocked origin:', origin);
+    callback(new Error('Not allowed by CORS'));
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Authorization', 'Content-Type', 'X-Requested-With', 'X-Cron-Secret', 'X-On-Conflict', 'Prefer'],
-}));
+  allowedHeaders: [
+    'Authorization',
+    'Content-Type',
+    'X-Requested-With',
+    'X-Cron-Secret',
+    'X-On-Conflict',
+    'Prefer',
+    'apikey',
+    'x-client-info',
+    'x-supabase-client-platform',
+    'x-supabase-client-platform-version',
+    'x-supabase-client-runtime',
+    'x-supabase-client-runtime-version',
+  ],
+  exposedHeaders: ['content-range'],
+  optionsSuccessStatus: 204,
+  maxAge: 86400,
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Stripe webhook needs raw body BEFORE json parsing
 app.use('/stripe/webhook', express.raw({ type: 'application/json' }));
