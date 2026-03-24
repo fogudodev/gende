@@ -7,6 +7,7 @@
  */
 
 import { PHP_API_URL } from "./backend-config";
+import { supabase } from "@/integrations/supabase/client";
 // Lazy import to break circular dependency (php-realtime imports from php-client)
 let _phpRealtime: typeof import("./php-realtime")["phpRealtime"] | null = null;
 async function getPhpRealtime() {
@@ -340,6 +341,7 @@ class PhpUpdateBuilder<T = any> {
   private endpoint: string;
   private updates: any;
   private _id: string | null = null;
+  private _filters: Array<{ column: string; value: string }> = [];
 
   constructor(endpoint: string, updates: any) {
     this.endpoint = endpoint;
@@ -348,6 +350,11 @@ class PhpUpdateBuilder<T = any> {
 
   eq(column: string, value: string) {
     if (column === "id") this._id = value;
+    this._filters.push({ column, value });
+    return this;
+  }
+
+  neq(column: string, value: string) {
     return this;
   }
 
@@ -356,8 +363,22 @@ class PhpUpdateBuilder<T = any> {
 
   async then(resolve: (result: { data: T | null; error: Error | null }) => void) {
     if (!this._id) {
-      resolve({ data: null, error: new Error("ID required for update") });
-      return;
+      // Try to find the record first using filters, then update by id
+      if (this._filters.length > 0) {
+        // Build query to find the record
+        const params = new URLSearchParams();
+        this._filters.forEach(f => params.set(`eq[${f.column}]`, f.value));
+        params.set("limit", "1");
+        const { data: rows, error: findErr } = await apiFetch<any[]>(`/${this.endpoint}?${params.toString()}`);
+        if (findErr || !rows || rows.length === 0) {
+          resolve({ data: null, error: findErr || new Error("Record not found") });
+          return;
+        }
+        this._id = rows[0].id;
+      } else {
+        resolve({ data: null, error: new Error("ID required for update") });
+        return;
+      }
     }
 
     const { data, error } = await apiFetch<T>(`/${this.endpoint}/${this._id}`, {
@@ -532,6 +553,9 @@ export const phpClient = {
       },
     };
   },
+
+  // Delegate storage to Supabase client (storage is always Supabase)
+  storage: supabase.storage,
 
   // Edge function equivalent — maps Supabase edge function names to Node backend routes
   functions: {

@@ -1,4 +1,4 @@
-import { Bell, Search, Sun, Moon, Menu, Crown, Headphones, Sparkles, Wallet, CreditCard, MessageSquare, CheckCheck } from "lucide-react";
+import { Bell, Search, Sun, Moon, Menu, Crown, Headphones, Sparkles, Wallet, CreditCard, MessageSquare, CheckCheck, Clock } from "lucide-react";
 import aiAssistantIcon from "@/assets/icon-ai-assistant.png";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
@@ -7,7 +7,8 @@ import { useState, useRef, useEffect } from "react";
 import PlanRenewalModal from "./PlanRenewalModal";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
-import { formatDistanceToNow } from "date-fns";
+import { useSubscription } from "@/hooks/useSubscription";
+import { formatDistanceToNow, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface TopBarProps {
@@ -22,9 +23,19 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
   const [renewalOpen, setRenewalOpen] = useState(false);
   const { currentPlan } = useFeatureAccess();
   const { unreadCount, unreadPayment, unreadSupport, recentMessages, markAllAsSeen } = useUnreadMessages();
+  const { data: subscription } = useSubscription();
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  // Calculate trial remaining days
+  const trialDaysRemaining = (() => {
+    if (!subscription) return null;
+    const endDate = subscription.current_period_end ? new Date(subscription.current_period_end) : null;
+    if (!endDate || subscription.status !== "active") return null;
+    const days = differenceInDays(endDate, new Date());
+    return days >= 0 ? days : null;
+  })();
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -77,6 +88,19 @@ const TopBar = ({ title, subtitle, onMenuClick }: TopBarProps) => {
             {currentPlan === "none" ? "Assinar" : currentPlan === "essencial" ? "Essencial" : "Enterprise"}
           </span>
         </button>
+        {trialDaysRemaining !== null && (
+          <div className={`flex items-center gap-1 px-2 md:px-2.5 py-1 rounded-lg text-[10px] md:text-xs font-semibold ${
+            trialDaysRemaining <= 3
+              ? "bg-destructive/10 text-destructive animate-pulse"
+              : trialDaysRemaining <= 7
+                ? "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
+                : "bg-accent/10 text-accent"
+          }`} title={`Trial expira em ${trialDaysRemaining} dias`}>
+            <Clock size={12} />
+            <span className="hidden sm:inline">{trialDaysRemaining}d restantes</span>
+            <span className="sm:hidden">{trialDaysRemaining}d</span>
+          </div>
+        )}
         <button
           onClick={() => navigate("/ai-assistant")}
           className="hidden sm:flex p-2 rounded-lg hover:bg-accent/10 transition-colors"

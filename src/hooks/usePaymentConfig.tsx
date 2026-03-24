@@ -48,20 +48,16 @@ export const useSavePaymentConfig = () => {
         .maybeSingle();
 
       if (existing) {
-        const { data, error } = await api
+        const { error } = await api
           .from("payment_config")
           .update(config)
-          .eq("id", existing.id)
-          .select()
-          .single();
+          .eq("id", existing.id);
         if (error) throw error;
-        return data;
+        return { ...config, id: existing.id };
       } else {
         const { data, error } = await api
           .from("payment_config")
-          .insert({ ...config, professional_id: professional!.id })
-          .select()
-          .single();
+          .insert({ ...config, professional_id: professional!.id });
         if (error) throw error;
         return data;
       }
