@@ -37,7 +37,8 @@ const AdminPaymentChat = () => {
         .order("created_at", { ascending: false });
       if (error) throw error;
       const map = new Map<string, string>();
-      (data as any[]).forEach((m: any) => {
+      const filtered = (data || []).filter((m: any) => m.chat_type === "payment");
+      filtered.forEach((m: any) => {
         if (!map.has(m.professional_id)) map.set(m.professional_id, m.created_at);
       });
       return map;
@@ -55,7 +56,7 @@ const AdminPaymentChat = () => {
         .eq("chat_type", "payment")
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return data;
+      return (data || []).filter((msg: any) => msg.chat_type === "payment");
     },
     enabled: !!selectedProfId,
     refetchInterval: 3000,
