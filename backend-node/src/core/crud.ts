@@ -185,28 +185,30 @@ export function createCrudRoutes(routePath: string, tableName: string, profColum
           data[profColumn] = profId;
         }
 
-      const columns = Object.keys(data).map(k => `\`${k}\``).join(', ');
-      const placeholders = Object.keys(data).map(() => '?').join(', ');
+        const columns = Object.keys(data).map(k => `\`${k}\``).join(', ');
+        const placeholders = Object.keys(data).map(() => '?').join(', ');
 
-      // Check for upsert (onConflict header)
-      const onConflict = req.headers['x-on-conflict'] as string;
-      if (onConflict) {
-        const updateParts = Object.keys(data)
-          .filter(k => !onConflict.split(',').includes(k) && k !== 'id')
-          .map(k => `\`${k}\` = VALUES(\`${k}\`)`);
-        
-        await db.execute(
-          `INSERT INTO \`${tableName}\` (${columns}) VALUES (${placeholders}) ON DUPLICATE KEY UPDATE ${updateParts.join(', ')}`,
-          Object.values(data)
-        );
-      } else {
-        await db.execute(
-          `INSERT INTO \`${tableName}\` (${columns}) VALUES (${placeholders})`,
-          Object.values(data)
-        );
+        // Check for upsert (onConflict header)
+        const onConflict = req.headers['x-on-conflict'] as string;
+        if (onConflict) {
+          const updateParts = Object.keys(data)
+            .filter(k => !onConflict.split(',').includes(k) && k !== 'id')
+            .map(k => `\`${k}\` = VALUES(\`${k}\`)`);
+          
+          await db.execute(
+            `INSERT INTO \`${tableName}\` (${columns}) VALUES (${placeholders}) ON DUPLICATE KEY UPDATE ${updateParts.join(', ')}`,
+            Object.values(data)
+          );
+        } else {
+          await db.execute(
+            `INSERT INTO \`${tableName}\` (${columns}) VALUES (${placeholders})`,
+            Object.values(data)
+          );
+        }
+        ids.push(data.id);
       }
 
-      res.status(201).json({ id: data.id });
+      res.status(201).json(ids.length === 1 ? { id: ids[0] } : { ids });
     } catch (err: any) {
       console.error(`[CRUD POST /${routePath}]`, err.message);
       res.status(500).json({ error: 'Database error', details: err.message });
