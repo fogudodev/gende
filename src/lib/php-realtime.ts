@@ -12,7 +12,7 @@
 
 import { getAccessToken } from "./php-client";
 
-const WS_URL = import.meta.env.VITE_WS_URL || "wss://seudominio.com/ws";
+const WS_URL = import.meta.env.VITE_WS_URL || "wss://api.gende.io/ws";
 const RECONNECT_DELAY = 3000;
 const PING_INTERVAL = 30000;
 
@@ -46,10 +46,6 @@ class WebSocketManager {
 
   connect(): void {
     if (this.ws?.readyState === WebSocket.OPEN) return;
-    if (!WS_URL || WS_URL.includes("seudominio.com")) {
-      // WebSocket URL not configured — skip silently
-      return;
-    }
 
     try {
       this.ws = new WebSocket(WS_URL);
