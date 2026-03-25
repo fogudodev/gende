@@ -13,7 +13,7 @@ export const BACKEND_MODE: BackendMode =
   (import.meta.env.VITE_BACKEND_MODE as BackendMode) || "supabase";
 
 export const PHP_API_URL: string = 
-  import.meta.env.VITE_PHP_API_URL || "https://api.gende.io";
+  import.meta.env.VITE_API_URL || import.meta.env.VITE_PHP_API_URL || "https://api.gende.io";
 
 export const isPhpBackend = () => BACKEND_MODE === "php";
 export const isSupabaseBackend = () => BACKEND_MODE === "supabase";
